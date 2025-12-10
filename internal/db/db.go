@@ -101,9 +101,12 @@ func (db *DB) isApplied(ctx context.Context, name string) (bool, error) {
 }
 
 // markApplied marks a migration as applied in the migrations table.
-func (db *DB) markApplied(ctx context.Context, name string) error {
+// Can be called on either *DB or *Tx (both implement ExecContext).
+func markApplied(ctx context.Context, exec interface {
+	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
+}, name string) error {
 	query := `INSERT INTO schema_migrations (name, applied_at) VALUES ($1, $2)`
-	_, err := db.ExecContext(ctx, query, name, time.Now())
+	_, err := exec.ExecContext(ctx, query, name, time.Now())
 	return err
 }
 
@@ -175,8 +178,7 @@ func (db *DB) Migrate(ctx context.Context) error {
 			return fmt.Errorf("failed to execute migration %s: %w", migration.Name, err)
 		}
 
-		markQuery := `INSERT INTO schema_migrations (name, applied_at) VALUES ($1, $2)`
-		if _, err := tx.ExecContext(ctx, markQuery, migration.Name, time.Now()); err != nil {
+		if err := markApplied(ctx, tx, migration.Name); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("failed to mark migration %s as applied: %w", migration.Name, err)
 		}

@@ -1,0 +1,159 @@
+version: '3'
+
+vars:
+  BINARY_NAME: baseball
+  BUILD_DIR: tmp
+  MAIN_PATH: ./cli
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build the baseball CLI
+    cmds:
+      - go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.MAIN_PATH}}
+    sources:
+      - "**/*.go"
+    generates:
+      - "{{.BUILD_DIR}}/{{.BINARY_NAME}}"
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
+
+  rebuild:
+    desc: Clean and rebuild
+    cmds:
+      - task: clean
+      - task: build
+
+  # Swagger/OpenAPI tasks
+  swagger:generate:
+    desc: Generate Swagger/OpenAPI documentation
+    cmds:
+      - swag init -g internal/docs/docs.go -o internal/docs --parseDependency --parseInternal
+    sources:
+      - "internal/**/*.go"
+    generates:
+      - "internal/docs/swagger.json"
+      - "internal/docs/swagger.yaml"
+
+  swagger:fmt:
+    desc: Format swagger comments
+    cmds:
+      - swag fmt
+
+  swagger:clean:
+    desc: Clean generated swagger files
+    cmds:
+      - rm -f internal/docs/docs.go internal/docs/swagger.json internal/docs/swagger.yaml
+
+  # Database tasks
+  db:migrate:
+    desc: Run database migrations
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} db migrate
+
+  # ETL tasks
+  etl:fetch:lahman:
+    desc: Get instructions to download Lahman data
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} etl fetch lahman
+
+  etl:fetch:retrosheet:
+    desc: Download Retrosheet data
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} etl fetch retrosheet
+
+  etl:load:lahman:
+    desc: Load Lahman data into database
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} etl load lahman
+
+  etl:status:
+    desc: Check data status
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} etl status
+
+  # Server tasks
+  server:start:
+    desc: Start the API server
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} server start
+
+  server:health:
+    desc: Check server health
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} server health
+
+  # Test endpoint examples
+  test:health:
+    desc: Test health endpoint
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} server fetch http://localhost:8080/v1/health
+
+  test:players:
+    desc: Test players search endpoint
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} server fetch "http://localhost:8080/v1/players?name=ruth&per_page=5"
+
+  test:franchises:
+    desc: Test franchises endpoint
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} server fetch http://localhost:8080/v1/franchises
+
+  test:teams:
+    desc: Test teams endpoint
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} server fetch "http://localhost:8080/v1/teams?year=2023&per_page=5"
+
+  test:leaders:
+    desc: Test batting leaders endpoint
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} server fetch "http://localhost:8080/v1/seasons/2023/leaders/batting?stat=hr&limit=10"
+
+  test:player-detail:
+    desc: Test player detail endpoints (Babe Ruth)
+    cmds:
+      - echo "=== Player Bio ==="
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} server fetch http://localhost:8080/v1/players/ruthba01
+      - echo ""
+      - echo "=== Player Seasons ==="
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} server fetch http://localhost:8080/v1/players/ruthba01/seasons
+      - echo ""
+      - echo "=== Player Awards ==="
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} server fetch http://localhost:8080/v1/players/ruthba01/awards
+      - echo ""
+      - echo "=== Hall of Fame ==="
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} server fetch http://localhost:8080/v1/players/ruthba01/hall-of-fame
+
+  test:all:
+    desc: Run all endpoint tests
+    cmds:
+      - task: test:health
+      - task: test:players
+      - task: test:franchises
+      - task: test:teams
+      - task: test:leaders
+
+  # Development workflow
+  dev:setup:
+    desc: Complete development setup
+    cmds:
+      - task: swagger:generate
+      - task: build
+      - task: db:migrate
+      - echo ""
+      - echo "Setup complete! Run 'task server:start' to start the server"
+
+  dev:reload:
+    desc: Rebuild and restart server
+    cmds:
+      - task: swagger:generate
+      - task: rebuild
+      - echo ""
+      - echo "Rebuild complete! Restart the server to pick up changes"

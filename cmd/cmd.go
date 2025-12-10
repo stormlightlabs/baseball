@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,8 +10,10 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"stormlightlabs.org/baseball/internal/api"
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
+	"stormlightlabs.org/baseball/internal/repository"
 )
 
 // ETLCmd creates the etl command group
@@ -357,31 +361,122 @@ func status(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// TODO: Implement server startup
 func startServer(cmd *cobra.Command, args []string) error {
 	echo.Header("Starting Server")
-	echo.Info("Starting baseball API server...")
-	echo.Success("✓ Server started on :8080 (placeholder)")
-	return nil
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect()
+	if err != nil {
+		return fmt.Errorf("%s %w", echo.ErrorStyle().Render("Error:"), err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+	echo.Info("Initializing repositories...")
+
+	playerRepo := repository.NewPlayerRepository(database.DB)
+	teamRepo := repository.NewTeamRepository(database.DB)
+	statsRepo := repository.NewStatsRepository(database.DB)
+	awardRepo := repository.NewAwardRepository(database.DB)
+
+	echo.Info("Registering routes...")
+
+	server := api.NewServer(
+		api.NewPlayerRoutes(playerRepo, awardRepo),
+		api.NewTeamRoutes(teamRepo),
+		api.NewStatsRoutes(statsRepo),
+	)
+
+	addr := ":8080"
+	echo.Success(fmt.Sprintf("✓ Server starting on %s", addr))
+	echo.Info("Press Ctrl+C to stop")
+	echo.Info("")
+	echo.Info("Available endpoints:")
+	echo.Info("  GET  /v1/health")
+	echo.Info("  GET  /v1/players?name={name}&page={page}&per_page={per_page}")
+	echo.Info("  GET  /v1/players/{id}")
+	echo.Info("  GET  /v1/players/{id}/seasons")
+	echo.Info("  GET  /v1/players/{id}/awards")
+	echo.Info("  GET  /v1/players/{id}/hall-of-fame")
+	echo.Info("  GET  /v1/teams?year={year}&league={league}")
+	echo.Info("  GET  /v1/teams/{id}?year={year}")
+	echo.Info("  GET  /v1/seasons/{year}/teams?league={league}")
+	echo.Info("  GET  /v1/franchises?active={true|false}")
+	echo.Info("  GET  /v1/franchises/{id}")
+	echo.Info("  GET  /v1/seasons/{year}/leaders/batting?stat={stat}&league={league}&limit={limit}")
+	echo.Info("  GET  /v1/seasons/{year}/leaders/pitching?stat={stat}&league={league}&limit={limit}")
+	echo.Info("")
+
+	return http.ListenAndServe(addr, server)
 }
 
-// TODO: Implement API fetching with formatting
 func fetchEndpoint(cmd *cobra.Command, args []string) error {
 	url := args[0]
 	format, _ := cmd.Flags().GetString("format")
 
 	echo.Header("API Test")
 	echo.Infof("Fetching: %s", url)
-	echo.Infof("Format: %s", format)
+	echo.Info("")
 
-	echo.Success("✓ Request completed (placeholder)")
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("%s %w", echo.ErrorStyle().Render("Error:"), err)
+	}
+	defer resp.Body.Close()
+
+	echo.Infof("Status: %s", resp.Status)
+	echo.Info("")
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("%s failed to read response: %w", echo.ErrorStyle().Render("Error:"), err)
+	}
+
+	if format == "table" {
+		echo.Info("Table format not yet implemented, showing JSON:")
+		echo.Info("")
+	}
+
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, body, "", "  "); err != nil {
+		echo.Info(string(body))
+	} else {
+		echo.Info(prettyJSON.String())
+	}
+
+	echo.Info("")
+	echo.Successf("✓ Request completed (%d bytes)", len(body))
 	return nil
 }
 
-// TODO: Implement health check
 func checkHealth(cmd *cobra.Command, args []string) error {
 	echo.Header("Health Check")
-	echo.Info("Checking server health...")
-	echo.Success("✓ Server is healthy (placeholder)")
-	return nil
+
+	serverURL := "http://localhost:8080/v1/health"
+	echo.Infof("Checking: %s", serverURL)
+	echo.Info("")
+
+	resp, err := http.Get(serverURL)
+	if err != nil {
+		return fmt.Errorf("%s server is not running or unreachable: %w",
+			echo.ErrorStyle().Render("Error:"), err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		echo.Successf("✓ Server is healthy (Status: %s)", resp.Status)
+
+		body, err := io.ReadAll(resp.Body)
+		if err == nil && len(body) > 0 {
+			var prettyJSON bytes.Buffer
+			if err := json.Indent(&prettyJSON, body, "", "  "); err == nil {
+				echo.Info("")
+				echo.Info(prettyJSON.String())
+			}
+		}
+		return nil
+	}
+
+	return fmt.Errorf("%s server returned status: %s",
+		echo.ErrorStyle().Render("Error:"), resp.Status)
 }
