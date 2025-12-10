@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
 )
 
@@ -246,11 +247,97 @@ func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// TODO: Implement database loading
 func loadLahman(cmd *cobra.Command, args []string) error {
 	echo.Header("Loading Lahman Data")
-	echo.Info("Loading Lahman CSV files into database...")
-	echo.Success("✓ Lahman data loaded (placeholder)")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect()
+	if err != nil {
+		return fmt.Errorf("%s %w", echo.ErrorStyle().Render("Error:"), err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	dataDir := "data/lahman"
+	csvDir := filepath.Join(dataDir, "csv")
+
+	tables := []string{
+		"AllstarFull",
+		"Appearances",
+		"AwardsManagers",
+		"AwardsPlayers",
+		"AwardsShareManagers",
+		"AwardsSharePlayers",
+		"Batting",
+		"BattingPost",
+		"CollegePlaying",
+		"Fielding",
+		"FieldingOF",
+		"FieldingOFsplit",
+		"FieldingPost",
+		"HomeGames",
+		"HallOfFame",
+		"Managers",
+		"ManagersHalf",
+		"Parks",
+		"People",
+		"Pitching",
+		"PitchingPost",
+		"Salaries",
+		"Schools",
+		"SeriesPost",
+		"Teams",
+		"TeamsFranchises",
+		"TeamsHalf",
+	}
+
+	ctx := cmd.Context()
+	totalRows := int64(0)
+
+	for _, table := range tables {
+		csvFile := filepath.Join(csvDir, table+".csv")
+
+		if _, err := os.Stat(csvFile); os.IsNotExist(err) {
+			echo.Infof("Skipping %s (file not found)", table)
+			continue
+		}
+
+		echo.Infof("Loading %s...", table)
+
+		rows, err := database.CopyCSV(ctx, table, csvFile)
+		if err != nil {
+			return fmt.Errorf("%s failed to load %s: %w",
+				echo.ErrorStyle().Render("Error:"), table, err)
+		}
+
+		totalRows += rows
+		echo.Successf("✓ Loaded %s (%d rows)", table, rows)
+	}
+
+	echo.Success(fmt.Sprintf("✓ All Lahman data loaded successfully (%d total rows)", totalRows))
+	return nil
+}
+
+func migrate(cmd *cobra.Command, args []string) error {
+	echo.Header("Database Migration")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect()
+	if err != nil {
+		return fmt.Errorf("%s %w", echo.ErrorStyle().Render("Error:"), err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+	echo.Info("Running migrations...")
+
+	ctx := cmd.Context()
+	if err := database.Migrate(ctx); err != nil {
+		return fmt.Errorf("%s %w", echo.ErrorStyle().Render("Error:"), err)
+	}
+
+	echo.Success("✓ All migrations applied successfully")
 	return nil
 }
 
@@ -259,14 +346,6 @@ func loadRetrosheet(cmd *cobra.Command, args []string) error {
 	echo.Header("Loading Retrosheet Data")
 	echo.Info("Loading Retrosheet CSV files into database...")
 	echo.Success("✓ Retrosheet data loaded (placeholder)")
-	return nil
-}
-
-// TODO: Implement migration logic
-func migrate(cmd *cobra.Command, args []string) error {
-	echo.Header("Database Migration")
-	echo.Info("Running database migrations...")
-	echo.Success("✓ Database migrated (placeholder)")
 	return nil
 }
 

@@ -46,7 +46,7 @@ Three-layer architecture:
 
 - **Tech Stack**:
     - Router: standard library
-    - DB layer: hand-rolled with sqlc for type safety
+    - DB layer: hand-rolled
     - Config: Viper
     - Migrations: hand-rolled
 
