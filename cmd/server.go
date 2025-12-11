@@ -272,6 +272,9 @@ func startServer(cmd *cobra.Command, args []string) error {
 	playRepo := repository.NewPlayRepository(database.DB)
 	metaRepo := repository.NewMetaRepository(database.DB)
 	managerRepo := repository.NewManagerRepository(database.DB)
+	parkRepo := repository.NewParkRepository(database.DB)
+	umpireRepo := repository.NewUmpireRepository(database.DB)
+	postseasonRepo := repository.NewPostseasonRepository(database.DB)
 
 	userRepo := repository.NewUserRepository(database.DB)
 	apiKeyRepo := repository.NewAPIKeyRepository(database.DB)
@@ -288,6 +291,9 @@ func startServer(cmd *cobra.Command, args []string) error {
 		api.NewPlayRoutes(playRepo, playerRepo),
 		api.NewMetaRoutes(metaRepo),
 		api.NewManagerRoutes(managerRepo),
+		api.NewParkRoutes(parkRepo),
+		api.NewUmpireRoutes(umpireRepo),
+		api.NewPostseasonRoutes(postseasonRepo),
 		api.NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
 		api.NewUIRoutes(apiKeyRepo),
 	)

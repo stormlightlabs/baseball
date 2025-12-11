@@ -470,6 +470,19 @@ type HallOfFameRecord struct {
 	Inducted bool       `json:"inducted"`
 }
 
+// PostseasonSeries represents a postseason series from Lahman SeriesPost table.
+type PostseasonSeries struct {
+	Year         SeasonYear `json:"year" swaggertype:"integer"`
+	Round        string     `json:"round"`
+	WinnerTeam   *TeamID    `json:"winner_team,omitempty" swaggertype:"string"`
+	WinnerLeague *LeagueID  `json:"winner_league,omitempty" swaggertype:"string"`
+	LoserTeam    *TeamID    `json:"loser_team,omitempty" swaggertype:"string"`
+	LoserLeague  *LeagueID  `json:"loser_league,omitempty" swaggertype:"string"`
+	Wins         *int       `json:"wins,omitempty"`
+	Losses       *int       `json:"losses,omitempty"`
+	Ties         *int       `json:"ties,omitempty"`
+}
+
 // DatasetStatus surfaces ETL/coverage metadata for a dataset.
 type DatasetStatus struct {
 	ID           string           `json:"id"`

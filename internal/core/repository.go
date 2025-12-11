@@ -118,6 +118,11 @@ type AwardRepository interface {
 	HallOfFameByPlayer(ctx context.Context, id PlayerID) ([]HallOfFameRecord, error)
 }
 
+// PostseasonRepository for postseason series data.
+type PostseasonRepository interface {
+	ListSeries(ctx context.Context, year SeasonYear) ([]PostseasonSeries, error)
+}
+
 // StatsRepository for season/career leaderboards and arbitrary stat queries.
 // Backed by views or materialized views (batting, pitching, fielding).
 type StatsRepository interface {

@@ -149,13 +149,13 @@ This living roadmap merges the original guidelines and endpoint specifications i
 
 | Status | Endpoint                                  | Dataset | Description                                              |
 | ------ | ----------------------------------------- | ------- | -------------------------------------------------------- |
-| To-Do  | `GET /v1/parks`                           | L+R     | Ballpark directory with locations and active years.      |
-| To-Do  | `GET /v1/parks/{park_id}`                 | L+R     | Single ballpark plus games hosted.                       |
+| Done   | `GET /v1/parks`                           | L+R     | Ballpark directory with locations and active years.      |
+| Done   | `GET /v1/parks/{park_id}`                 | L+R     | Single ballpark plus games hosted.                       |
 | Done   | `GET /v1/managers`                        | L       | Manager careers, totals, and teams managed.              |
 | Done   | `GET /v1/managers/{manager_id}`           | L       | Detailed manager record.                                 |
 | Done   | `GET /v1/managers/{manager_id}/seasons`   | L       | Season-by-season records for a manager.                  |
-| To-Do  | `GET /v1/umpires`                         | L+R     | Umpire list.                                             |
-| To-Do  | `GET /v1/umpires/{umpire_id}`             | L+R     | Umpire details + officiated games.                       |
+| Done   | `GET /v1/umpires`                         | L+R     | Umpire list.                                             |
+| Done   | `GET /v1/umpires/{umpire_id}`             | L+R     | Umpire details + officiated games.                       |
 | To-Do  | `GET /v1/ejections`                       | R       | All ejection events with filters (player, umpire, year). |
 | To-Do  | `GET /v1/seasons/{year}/ejections`        | R       | Season-level slice of ejections.                         |
 
@@ -194,8 +194,8 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | ------ | ------------------------------------------ | ------- | --------------------------------------------- |
 | Done   | `GET /v1/awards`                           | L       | Browse awards data (MVP, Cy Young, ROY).      |
 | Done   | `GET /v1/awards/{award_id}`                | L       | Detailed view for a specific award.           |
-| To-Do  | `GET /v1/seasons/{year}/awards`            | L       | Awards issued during a season.                |
-| To-Do  | `GET /v1/seasons/{year}/postseason/series` | L       | Postseason series list (LCS, WS, etc.).       |
+| Done   | `GET /v1/seasons/{year}/awards`            | L       | Awards issued during a season.                |
+| Done   | `GET /v1/seasons/{year}/postseason/series` | L       | Postseason series list (LCS, WS, etc.).       |
 | To-Do  | `GET /v1/seasons/{year}/postseason/games`  | L+R     | Postseason games joined with Retrosheet data. |
 | To-Do  | `GET /v1/allstar/games`                    | L+R     | All-Star Game history.                        |
 | To-Do  | `GET /v1/allstar/games/{game_id}`          | L+R     | Specific All-Star game box/events.            |
