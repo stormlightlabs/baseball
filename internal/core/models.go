@@ -1,4 +1,7 @@
-// TODO: complete models
+// Note that Retrosheet's `plays` CSV exposes 160+ fields (teams, lineup slots, ball-in-play classification, baserunner state, umpire crew, etc.).
+// All ingestion follows the Retrosheet parsed [play-by-play] specification
+//
+// [play-by-play]: https://retrosheet.org/downloads/plays.html
 package core
 
 import (
@@ -222,7 +225,6 @@ type Game struct {
 	UmpSecond *UmpireID `json:"ump_second,omitempty"`
 	UmpThird  *UmpireID `json:"ump_third,omitempty"`
 
-	// Postseason flags etc.
 	IsPostseason bool    `json:"is_postseason"`
 	SeriesID     *string `json:"series_id,omitempty"`
 	GameInSeries *int    `json:"game_in_series,omitempty"`

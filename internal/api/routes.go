@@ -320,20 +320,25 @@ func (pr *PlayerRoutes) handlePlayerSalaries(w http.ResponseWriter, r *http.Requ
 }
 
 type GameRoutes struct {
-	repo core.GameRepository
+	repo     core.GameRepository
+	playRepo core.PlayRepository
 }
 
-func NewGameRoutes(repo core.GameRepository) *GameRoutes {
-	return &GameRoutes{repo: repo}
+func NewGameRoutes(repo core.GameRepository, playRepo core.PlayRepository) *GameRoutes {
+	return &GameRoutes{repo: repo, playRepo: playRepo}
 }
 
 func (gr *GameRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/games", gr.handleListGames)
 	mux.HandleFunc("GET /v1/games/{id}", gr.handleGetGame)
 	mux.HandleFunc("GET /v1/games/{id}/boxscore", gr.handleGetBoxscore)
+	mux.HandleFunc("GET /v1/games/{id}/summary", gr.handleGetGameSummary)
+	mux.HandleFunc("GET /v1/games/{id}/events", gr.handleGameEvents)
+	mux.HandleFunc("GET /v1/games/{id}/events/{event_seq}", gr.handleSingleEvent)
 	mux.HandleFunc("GET /v1/seasons/{year}/schedule", gr.handleSeasonSchedule)
 	mux.HandleFunc("GET /v1/seasons/{year}/dates/{date}/games", gr.handleGamesByDate)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/games", gr.handleTeamGames)
+	mux.HandleFunc("GET /v1/seasons/{year}/parks/{park_id}/games", gr.handleParkGames)
 }
 
 // handleGetGame godoc
@@ -593,4 +598,188 @@ func (gr *GameRoutes) handleTeamGames(w http.ResponseWriter, r *http.Request) {
 		PerPage: pagination.PerPage,
 		Total:   total,
 	})
+}
+
+// handleParkGames godoc
+// @Summary Get games at a park
+// @Description Get all games played at a specific ballpark in a season
+// @Tags games, parks
+// @Accept json
+// @Produce json
+// @Param year path integer true "Season year"
+// @Param park_id path string true "Park ID"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(100)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{year}/parks/{park_id}/games [get]
+func (gr *GameRoutes) handleParkGames(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	year := core.SeasonYear(getIntPathValue(r, "year"))
+	parkID := core.ParkID(r.PathValue("park_id"))
+
+	pagination := core.Pagination{
+		Page:    getIntQuery(r, "page", 1),
+		PerPage: getIntQuery(r, "per_page", 100),
+	}
+
+	filter := core.GameFilter{
+		Season:     &year,
+		ParkID:     &parkID,
+		Pagination: pagination,
+	}
+
+	games, err := gr.repo.List(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := gr.repo.Count(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    games,
+		Page:    pagination.Page,
+		PerPage: pagination.PerPage,
+		Total:   total,
+	})
+}
+
+// handleGetGameSummary godoc
+// @Summary Get game summary
+// @Description Get narrative summary for a game including winning pitcher, save, and key events
+// @Tags games
+// @Accept json
+// @Produce json
+// @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
+// @Success 200 {object} map[string]interface{}
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /games/{id}/summary [get]
+func (gr *GameRoutes) handleGetGameSummary(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.GameID(r.PathValue("id"))
+
+	game, err := gr.repo.GetByID(ctx, id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	boxscore, err := gr.repo.GetBoxscore(ctx, id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	summary := map[string]interface{}{
+		"game_id":     game.ID,
+		"date":        game.Date,
+		"home_team":   game.HomeTeam,
+		"away_team":   game.AwayTeam,
+		"home_score":  game.HomeScore,
+		"away_score":  game.AwayScore,
+		"innings":     game.Innings,
+		"winner":      determineWinner(game),
+		"home_lineup": boxscore.HomeLineup,
+		"away_lineup": boxscore.AwayLineup,
+	}
+
+	writeJSON(w, http.StatusOK, summary)
+}
+
+// handleGameEvents godoc
+// @Summary Get game events
+// @Description Get all play-by-play events for a game (alias for /games/{id}/plays)
+// @Tags games, plays
+// @Accept json
+// @Produce json
+// @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(200)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /games/{id}/events [get]
+func (gr *GameRoutes) handleGameEvents(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	gameID := core.GameID(r.PathValue("id"))
+
+	pagination := core.Pagination{
+		Page:    getIntQuery(r, "page", 1),
+		PerPage: getIntQuery(r, "per_page", 200),
+	}
+
+	plays, err := gr.playRepo.ListByGame(ctx, gameID, pagination)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	filter := core.PlayFilter{
+		GameID:     &gameID,
+		Pagination: core.Pagination{Page: 1, PerPage: 1},
+	}
+	total, err := gr.playRepo.Count(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    plays,
+		Page:    pagination.Page,
+		PerPage: pagination.PerPage,
+		Total:   total,
+	})
+}
+
+// handleSingleEvent godoc
+// @Summary Get single event
+// @Description Get a single play/event by sequence number
+// @Tags games, plays
+// @Accept json
+// @Produce json
+// @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
+// @Param event_seq path integer true "Event sequence number (play number)"
+// @Success 200 {object} core.Play
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /games/{id}/events/{event_seq} [get]
+func (gr *GameRoutes) handleSingleEvent(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	gameID := core.GameID(r.PathValue("id"))
+	eventSeq := getIntPathValue(r, "event_seq")
+
+	pagination := core.Pagination{
+		Page:    1,
+		PerPage: 1000,
+	}
+
+	plays, err := gr.playRepo.ListByGame(ctx, gameID, pagination)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	for _, play := range plays {
+		if play.PlayNum == eventSeq {
+			writeJSON(w, http.StatusOK, play)
+			return
+		}
+	}
+
+	writeJSON(w, http.StatusNotFound, ErrorResponse{
+		Error: "Event not found",
+	})
+}
+
+func determineWinner(game *core.Game) core.TeamID {
+	if game.HomeScore > game.AwayScore {
+		return game.HomeTeam
+	}
+	return game.AwayTeam
 }

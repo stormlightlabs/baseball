@@ -166,6 +166,7 @@ func ServerFetchCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringP("format", "f", "json", "Output format (json|table)")
+	cmd.Flags().BoolP("raw", "r", false, "Output raw JSON without colors or formatting (suitable for piping to jq)")
 	return cmd
 }
 
@@ -629,9 +630,9 @@ func startServer(cmd *cobra.Command, args []string) error {
 
 	server := api.NewServer(
 		api.NewPlayerRoutes(playerRepo, awardRepo),
-		api.NewTeamRoutes(teamRepo),
+		api.NewTeamRoutes(teamRepo, gameRepo),
 		api.NewStatsRoutes(statsRepo),
-		api.NewGameRoutes(gameRepo),
+		api.NewGameRoutes(gameRepo, playRepo),
 		api.NewPlayRoutes(playRepo, playerRepo),
 		api.NewMetaRoutes(metaRepo),
 	)
@@ -640,39 +641,6 @@ func startServer(cmd *cobra.Command, args []string) error {
 	echo.Success(fmt.Sprintf("✓ Server starting on %s", addr))
 	echo.Info("Press Ctrl+C to stop")
 	echo.Info("")
-	echo.Info("Available endpoints:")
-	echo.Info("  GET  /v1/health")
-	echo.Info("  GET  /v1/players?name={name}&page={page}&per_page={per_page}")
-	echo.Info("  GET  /v1/players/{id}")
-	echo.Info("  GET  /v1/players/{id}/seasons")
-	echo.Info("  GET  /v1/players/{id}/awards")
-	echo.Info("  GET  /v1/players/{id}/hall-of-fame")
-	echo.Info("  GET  /v1/players/{id}/game-logs?season={year}&page={page}&per_page={per_page}")
-	echo.Info("  GET  /v1/players/{id}/appearances")
-	echo.Info("  GET  /v1/players/{id}/teams")
-	echo.Info("  GET  /v1/players/{id}/salaries")
-	echo.Info("  GET  /v1/players/{id}/plays?page={page}&per_page={per_page}")
-	echo.Info("  GET  /v1/players/{id}/plate-appearances?season={year}&pitcher={retro_id}")
-	echo.Info("  GET  /v1/teams?year={year}&league={league}")
-	echo.Info("  GET  /v1/teams/{id}?year={year}")
-	echo.Info("  GET  /v1/seasons/{year}/teams?league={league}")
-	echo.Info("  GET  /v1/franchises?active={true|false}")
-	echo.Info("  GET  /v1/franchises/{id}")
-	echo.Info("  GET  /v1/seasons/{year}/leaders/batting?stat={stat}&league={league}&limit={limit}")
-	echo.Info("  GET  /v1/seasons/{year}/leaders/pitching?stat={stat}&league={league}&limit={limit}")
-	echo.Info("  GET  /v1/stats/batting?player_id={id}&year={year}&team_id={id}")
-	echo.Info("  GET  /v1/stats/pitching?player_id={id}&year={year}&team_id={id}")
-	echo.Info("  GET  /v1/games?season={year}&team_id={id}&date={date}")
-	echo.Info("  GET  /v1/games/{id}")
-	echo.Info("  GET  /v1/games/{id}/boxscore")
-	echo.Info("  GET  /v1/games/{id}/plays?page={page}&per_page={per_page}")
-	echo.Info("  GET  /v1/seasons/{year}/schedule")
-	echo.Info("  GET  /v1/seasons/{year}/dates/{date}/games")
-	echo.Info("  GET  /v1/seasons/{year}/teams/{team_id}/games")
-	echo.Info("  GET  /v1/plays?batter={id}&pitcher={id}&date={YYYYMMDD}")
-	echo.Info("  GET  /v1/meta")
-	echo.Info("  GET  /v1/meta/datasets")
-	echo.Info("")
 	return http.ListenAndServe(addr, server)
 }
 
@@ -680,13 +648,16 @@ func startServer(cmd *cobra.Command, args []string) error {
 func fetchEndpoint(cmd *cobra.Command, args []string) error {
 	path := args[0]
 	format, _ := cmd.Flags().GetString("format")
+	raw, _ := cmd.Flags().GetBool("raw")
 
 	baseURL := "http://localhost:8080/v1/"
 	url := baseURL + path
 
-	echo.Header("API Test")
-	echo.Infof("Fetching: %s", url)
-	echo.Info("")
+	if !raw {
+		echo.Header("API Test")
+		echo.Infof("Fetching: %s", url)
+		echo.Info("")
+	}
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -694,12 +665,24 @@ func fetchEndpoint(cmd *cobra.Command, args []string) error {
 	}
 	defer resp.Body.Close()
 
-	echo.Infof("Status: %s", resp.Status)
-	echo.Info("")
+	if !raw {
+		echo.Infof("Status: %s", resp.Status)
+		echo.Info("")
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("error: failed to read response: %w", err)
+	}
+
+	if raw {
+		var prettyJSON bytes.Buffer
+		if err := json.Indent(&prettyJSON, body, "", "  "); err != nil {
+			fmt.Println(string(body))
+		} else {
+			fmt.Println(prettyJSON.String())
+		}
+		return nil
 	}
 
 	if format == "table" {

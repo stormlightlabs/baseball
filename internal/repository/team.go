@@ -13,6 +13,27 @@ import (
 //go:embed queries/team_roster.sql
 var teamRosterQuery string
 
+//go:embed queries/list_seasons.sql
+var listSeasonsQuery string
+
+//go:embed queries/team_batting_agg.sql
+var teamBattingAggQuery string
+
+//go:embed queries/team_batting_players.sql
+var teamBattingPlayersQuery string
+
+//go:embed queries/team_pitching_agg.sql
+var teamPitchingAggQuery string
+
+//go:embed queries/team_pitching_players.sql
+var teamPitchingPlayersQuery string
+
+//go:embed queries/team_fielding_agg.sql
+var teamFieldingAggQuery string
+
+//go:embed queries/team_fielding_players.sql
+var teamFieldingPlayersQuery string
+
 type TeamRepository struct {
 	db *sql.DB
 }
@@ -230,17 +251,7 @@ func (r *TeamRepository) ListFranchises(ctx context.Context, onlyActive bool) ([
 }
 
 func (r *TeamRepository) ListSeasons(ctx context.Context) ([]core.Season, error) {
-	query := `
-		SELECT
-			"yearID",
-			string_agg(DISTINCT "lgID", ',' ORDER BY "lgID") as leagues,
-			COUNT(*) as team_count
-		FROM "Teams"
-		GROUP BY "yearID"
-		ORDER BY "yearID" DESC
-	`
-
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.QueryContext(ctx, listSeasonsQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list seasons: %w", err)
 	}
@@ -359,32 +370,10 @@ func (r *TeamRepository) Roster(ctx context.Context, year core.SeasonYear, teamI
 }
 
 func (r *TeamRepository) BattingStats(ctx context.Context, year core.SeasonYear, teamID core.TeamID, includePlayers bool) (*core.TeamBattingStats, error) {
-	aggQuery := `
-		SELECT
-			"teamID", "yearID", "lgID",
-			COUNT(DISTINCT "playerID") as g,
-			SUM("AB") as ab,
-			SUM("R") as r,
-			SUM("H") as h,
-			SUM("2B") as doubles,
-			SUM("3B") as triples,
-			SUM("HR") as hr,
-			SUM("RBI") as rbi,
-			SUM("SB") as sb,
-			SUM("CS") as cs,
-			SUM("BB") as bb,
-			SUM("SO") as so,
-			SUM("HBP") as hbp,
-			SUM("SF") as sf
-		FROM "Batting"
-		WHERE "teamID" = $1 AND "yearID" = $2
-		GROUP BY "teamID", "yearID", "lgID"
-	`
-
 	var stats core.TeamBattingStats
 	var ab, h, bb, hbp, sf int
 
-	err := r.db.QueryRowContext(ctx, aggQuery, string(teamID), int(year)).Scan(
+	err := r.db.QueryRowContext(ctx, teamBattingAggQuery, string(teamID), int(year)).Scan(
 		&stats.TeamID, &stats.Year, &stats.League,
 		&stats.G, &ab, &stats.R, &h, &stats.Doubles, &stats.Triples,
 		&stats.HR, &stats.RBI, &stats.SB, &stats.CS, &bb, &stats.SO, &hbp, &sf,
@@ -416,20 +405,7 @@ func (r *TeamRepository) BattingStats(ctx context.Context, year core.SeasonYear,
 	}
 
 	if includePlayers {
-		playerQuery := `
-			SELECT
-				"playerID", "yearID", "teamID", "lgID",
-				"G", SUM("AB") as pa, SUM("AB") as ab, SUM("R") as r, SUM("H") as h,
-				SUM("2B") as doubles, SUM("3B") as triples, SUM("HR") as hr,
-				SUM("RBI") as rbi, SUM("SB") as sb, SUM("CS") as cs,
-				SUM("BB") as bb, SUM("SO") as so, SUM("HBP") as hbp, SUM("SF") as sf
-			FROM "Batting"
-			WHERE "teamID" = $1 AND "yearID" = $2
-			GROUP BY "playerID", "yearID", "teamID", "lgID", "G"
-			ORDER BY SUM("AB") DESC
-		`
-
-		rows, err := r.db.QueryContext(ctx, playerQuery, string(teamID), int(year))
+		rows, err := r.db.QueryContext(ctx, teamBattingPlayersQuery, string(teamID), int(year))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get player batting stats: %w", err)
 		}
@@ -476,22 +452,9 @@ func (r *TeamRepository) BattingStats(ctx context.Context, year core.SeasonYear,
 }
 
 func (r *TeamRepository) PitchingStats(ctx context.Context, year core.SeasonYear, teamID core.TeamID, includePlayers bool) (*core.TeamPitchingStats, error) {
-	aggQuery := `
-		SELECT
-			"teamID", "yearID", "lgID",
-			SUM("W") as w, SUM("L") as l,
-			SUM("G") as g, SUM("GS") as gs, SUM("CG") as cg, SUM("SHO") as sho, SUM("SV") as sv,
-			SUM("IPouts") as ip_outs,
-			SUM("H") as h, SUM("ER") as er, SUM("HR") as hr,
-			SUM("BB") as bb, SUM("SO") as so
-		FROM "Pitching"
-		WHERE "teamID" = $1 AND "yearID" = $2
-		GROUP BY "teamID", "yearID", "lgID"
-	`
-
 	var stats core.TeamPitchingStats
 
-	err := r.db.QueryRowContext(ctx, aggQuery, string(teamID), int(year)).Scan(
+	err := r.db.QueryRowContext(ctx, teamPitchingAggQuery, string(teamID), int(year)).Scan(
 		&stats.TeamID, &stats.Year, &stats.League,
 		&stats.W, &stats.L, &stats.G, &stats.GS, &stats.CG, &stats.SHO, &stats.SV,
 		&stats.IPOuts, &stats.H, &stats.ER, &stats.HR, &stats.BB, &stats.SO,
@@ -510,22 +473,7 @@ func (r *TeamRepository) PitchingStats(ctx context.Context, year core.SeasonYear
 	}
 
 	if includePlayers {
-		playerQuery := `
-			SELECT
-				"playerID", "yearID", "teamID", "lgID",
-				SUM("W") as w, SUM("L") as l,
-				SUM("G") as g, SUM("GS") as gs, SUM("CG") as cg, SUM("SHO") as sho, SUM("SV") as sv,
-				SUM("IPouts") as ip_outs,
-				SUM("H") as h, SUM("ER") as er, SUM("HR") as hr,
-				SUM("BB") as bb, SUM("SO") as so,
-				SUM("HBP") as hbp, SUM("BK") as bk, SUM("WP") as wp
-			FROM "Pitching"
-			WHERE "teamID" = $1 AND "yearID" = $2
-			GROUP BY "playerID", "yearID", "teamID", "lgID"
-			ORDER BY SUM("IPouts") DESC
-		`
-
-		rows, err := r.db.QueryContext(ctx, playerQuery, string(teamID), int(year))
+		rows, err := r.db.QueryContext(ctx, teamPitchingPlayersQuery, string(teamID), int(year))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get player pitching stats: %w", err)
 		}
@@ -561,22 +509,10 @@ func (r *TeamRepository) PitchingStats(ctx context.Context, year core.SeasonYear
 }
 
 func (r *TeamRepository) FieldingStats(ctx context.Context, year core.SeasonYear, teamID core.TeamID, includePlayers bool) (*core.TeamFieldingStats, error) {
-	aggQuery := `
-		SELECT
-			"teamID", "yearID", "lgID",
-			SUM("G") as g,
-			SUM("PO") as po, SUM("A") as a, SUM("E") as e, SUM("DP") as dp,
-			SUM(CASE WHEN "POS" = 'C' THEN "PB" ELSE 0 END) as pb,
-			SUM(CASE WHEN "POS" = 'C' THEN "WP" ELSE 0 END) as wp
-		FROM "Fielding"
-		WHERE "teamID" = $1 AND "yearID" = $2
-		GROUP BY "teamID", "yearID", "lgID"
-	`
-
 	var stats core.TeamFieldingStats
 	var wp int
 
-	err := r.db.QueryRowContext(ctx, aggQuery, string(teamID), int(year)).Scan(
+	err := r.db.QueryRowContext(ctx, teamFieldingAggQuery, string(teamID), int(year)).Scan(
 		&stats.TeamID, &stats.Year, &stats.League,
 		&stats.G, &stats.PO, &stats.A, &stats.E, &stats.DP, &stats.PB, &wp,
 	)
@@ -596,22 +532,7 @@ func (r *TeamRepository) FieldingStats(ctx context.Context, year core.SeasonYear
 	}
 
 	if includePlayers {
-		playerQuery := `
-			SELECT
-				"playerID", "yearID", "teamID", "lgID", "POS",
-				SUM("G") as g, SUM("GS") as gs,
-				SUM("InnOuts") as inn_outs,
-				SUM("PO") as po, SUM("A") as a, SUM("E") as e, SUM("DP") as dp,
-				SUM("PB") as pb,
-				SUM(CASE WHEN "POS" = 'C' THEN 0 ELSE 0 END) as sb,
-				SUM(CASE WHEN "POS" = 'C' THEN 0 ELSE 0 END) as cs
-			FROM "Fielding"
-			WHERE "teamID" = $1 AND "yearID" = $2
-			GROUP BY "playerID", "yearID", "teamID", "lgID", "POS"
-			ORDER BY SUM("InnOuts") DESC
-		`
-
-		rows, err := r.db.QueryContext(ctx, playerQuery, string(teamID), int(year))
+		rows, err := r.db.QueryContext(ctx, teamFieldingPlayersQuery, string(teamID), int(year))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get player fielding stats: %w", err)
 		}

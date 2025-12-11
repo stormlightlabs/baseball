@@ -117,9 +117,9 @@ This living roadmap merges the original guidelines and endpoint specifications i
 
 | Status | Endpoint                                            | Dataset | Description                                  |
 | ------ | --------------------------------------------------- | ------- | -------------------------------------------- |
-| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/schedule`   | R       | Team calendar from Retrosheet schedules.     |
+| Done   | `GET /v1/seasons/{year}/teams/{team_id}/schedule`   | R       | Team calendar from Retrosheet schedules.     |
 | Done   | `GET /v1/seasons/{year}/teams/{team_id}/games`      | R       | All games for a team/season with pagination. |
-| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/daily-logs` | R       | Team daily performance rollups.              |
+| Done   | `GET /v1/seasons/{year}/teams/{team_id}/daily-logs` | R       | Team daily performance rollups.              |
 
 ### 3. Games & Schedules - **(R)**
 
@@ -128,24 +128,22 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/games`                                | R       | Search games by season, teams, park, and date range.           |
 | Done   | `GET /v1/games/{game_id}`                      | R       | Game metadata, score, and key events.                          |
 | Done   | `GET /v1/games/{game_id}/boxscore`             | R       | Expanded boxscore with lineups and per-player lines.           |
-| To-Do  | `GET /v1/games/{game_id}/summary`              | R       | Narrative summary (winning pitcher, save, highlights).         |
+| Done   | `GET /v1/games/{game_id}/summary`              | R       | Narrative summary (winning pitcher, save, highlights).         |
 | Done   | `GET /v1/seasons/{year}/schedule`              | R       | Full season schedule with pagination.                          |
 | Done   | `GET /v1/seasons/{year}/dates/{date}/games`    | R       | All games played on a calendar date.                           |
 | Done   | `GET /v1/seasons/{year}/teams/{team_id}/games` | R       | Team-specific schedule (duplicate of table above for clarity). |
-| To-Do  | `GET /v1/seasons/{year}/parks/{park_id}/games` | R       | Games played in a specific ballpark.                           |
+| Done   | `GET /v1/seasons/{year}/parks/{park_id}/games` | R       | Games played in a specific ballpark.                           |
 
 ### 4. Play-by-Play Events & Context - **(R)**
 
-| Status      | Endpoint                                        | Dataset | Description                                                                 |
-| ----------- | ----------------------------------------------- | ------- | --------------------------------------------------------------------------- |
-| Done        | `GET /v1/plays`                                 | R       | Query parsed plays with batter/pitcher/team filters.                        |
-| Done        | `GET /v1/games/{game_id}/plays`                 | R       | Chronological plays for a game (currently the canonical play-by-play feed). |
-| In-Progress | `GET /v1/games/{game_id}/events`                | R       | Planned raw Retrosheet events (alias/extension on top of `/plays`).         |
-| To-Do       | `GET /v1/games/{game_id}/events/{event_seq}`    | R       | Single event lookup with structured base/out state.                         |
-| To-Do       | `GET /v1/players/{player_id}/plate-appearances` | R       | Player-level PA list with leverage, count, and vs. pitcher filters.         |
-| To-Do       | `GET /v1/pitches`                               | R       | Optional dataset if we derive per-pitch signals.                            |
-
-Retrosheet's `plays` CSV exposes 160+ fields (teams, lineup slots, ball-in-play classification, baserunner state, umpire crew, etc.). All ingestion follows the [Retrosheet parsed play-by-play specification](https://retrosheet.org/downloads/plays.html).
+| Status | Endpoint                                        | Dataset | Description                                                                 |
+| ------ | ----------------------------------------------- | ------- | --------------------------------------------------------------------------- |
+| Done   | `GET /v1/plays`                                 | R       | Query parsed plays with batter/pitcher/team filters.                        |
+| Done   | `GET /v1/games/{game_id}/plays`                 | R       | Chronological plays for a game (currently the canonical play-by-play feed). |
+| Done   | `GET /v1/games/{game_id}/events`                | R       | Planned raw Retrosheet events (alias/extension on top of `/plays`).         |
+| Done   | `GET /v1/games/{game_id}/events/{event_seq}`    | R       | Single event lookup with structured base/out state.                         |
+| Done   | `GET /v1/players/{player_id}/plate-appearances` | R       | Player-level PA list with leverage, count, and vs. pitcher filters.         |
+| To-Do  | `GET /v1/pitches`                               | R       | Optional dataset if we derive per-pitch signals.                            |
 
 ### 5. Parks, Umpires, Managers & Other Entities - **(L+R)**
 

@@ -7,11 +7,12 @@ import (
 )
 
 type TeamRoutes struct {
-	repo core.TeamRepository
+	repo     core.TeamRepository
+	gameRepo core.GameRepository
 }
 
-func NewTeamRoutes(repo core.TeamRepository) *TeamRoutes {
-	return &TeamRoutes{repo: repo}
+func NewTeamRoutes(repo core.TeamRepository, gameRepo core.GameRepository) *TeamRoutes {
+	return &TeamRoutes{repo: repo, gameRepo: gameRepo}
 }
 
 func (tr *TeamRoutes) RegisterRoutes(mux *http.ServeMux) {
@@ -23,6 +24,8 @@ func (tr *TeamRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/batting", tr.handleTeamBatting)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/pitching", tr.handleTeamPitching)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/fielding", tr.handleTeamFielding)
+	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/schedule", tr.handleTeamSchedule)
+	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/daily-logs", tr.handleTeamDailyLogs)
 	mux.HandleFunc("GET /v1/franchises", tr.handleListFranchises)
 	mux.HandleFunc("GET /v1/franchises/{id}", tr.handleGetFranchise)
 }
@@ -337,4 +340,183 @@ func (tr *TeamRoutes) handleGetFranchise(w http.ResponseWriter, r *http.Request)
 	}
 
 	writeJSON(w, http.StatusOK, franchise)
+}
+
+// handleTeamSchedule godoc
+// @Summary Get team schedule
+// @Description Get the game schedule for a team in a season (alias for /seasons/{year}/teams/{team_id}/games)
+// @Tags teams, games
+// @Accept json
+// @Produce json
+// @Param year path integer true "Season year"
+// @Param team_id path string true "Team ID"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(100)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{year}/teams/{team_id}/schedule [get]
+func (tr *TeamRoutes) handleTeamSchedule(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	year := core.SeasonYear(getIntPathValue(r, "year"))
+	teamID := core.TeamID(r.PathValue("team_id"))
+
+	pagination := core.Pagination{
+		Page:    getIntQuery(r, "page", 1),
+		PerPage: getIntQuery(r, "per_page", 100),
+	}
+
+	filter := core.GameFilter{
+		Season:     &year,
+		Pagination: pagination,
+	}
+
+	homeFilter := filter
+	homeFilter.HomeTeam = &teamID
+	homeGames, err := tr.gameRepo.List(ctx, homeFilter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	awayFilter := filter
+	awayFilter.AwayTeam = &teamID
+	awayGames, err := tr.gameRepo.List(ctx, awayFilter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	allGames := append(homeGames, awayGames...)
+
+	homeCount, err := tr.gameRepo.Count(ctx, homeFilter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	awayCount, err := tr.gameRepo.Count(ctx, awayFilter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    allGames,
+		Page:    pagination.Page,
+		PerPage: pagination.PerPage,
+		Total:   homeCount + awayCount,
+	})
+}
+
+// handleTeamDailyLogs godoc
+// @Summary Get team daily logs
+// @Description Get team performance aggregated by date for a season
+// @Tags teams, games
+// @Accept json
+// @Produce json
+// @Param year path integer true "Season year"
+// @Param team_id path string true "Team ID"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(100)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{year}/teams/{team_id}/daily-logs [get]
+func (tr *TeamRoutes) handleTeamDailyLogs(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	year := core.SeasonYear(getIntPathValue(r, "year"))
+	teamID := core.TeamID(r.PathValue("team_id"))
+
+	pagination := core.Pagination{
+		Page:    getIntQuery(r, "page", 1),
+		PerPage: getIntQuery(r, "per_page", 100),
+	}
+
+	filter := core.GameFilter{
+		Season:     &year,
+		Pagination: core.Pagination{Page: 1, PerPage: 1000},
+	}
+
+	homeFilter := filter
+	homeFilter.HomeTeam = &teamID
+	homeGames, err := tr.gameRepo.List(ctx, homeFilter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	awayFilter := filter
+	awayFilter.AwayTeam = &teamID
+	awayGames, err := tr.gameRepo.List(ctx, awayFilter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	type DailyLog struct {
+		Date         string `json:"date"`
+		GamesPlayed  int    `json:"games_played"`
+		Wins         int    `json:"wins"`
+		Losses       int    `json:"losses"`
+		RunsScored   int    `json:"runs_scored"`
+		RunsAllowed  int    `json:"runs_allowed"`
+		RunDiff      int    `json:"run_diff"`
+	}
+
+	dailyLogs := make(map[string]*DailyLog)
+
+	processGames := func(games []core.Game, isHome bool) {
+		for _, game := range games {
+			dateKey := game.Date.Format("2006-01-02")
+			if dailyLogs[dateKey] == nil {
+				dailyLogs[dateKey] = &DailyLog{
+					Date: dateKey,
+				}
+			}
+			log := dailyLogs[dateKey]
+			log.GamesPlayed++
+
+			var runsScored, runsAllowed int
+			if isHome {
+				runsScored = game.HomeScore
+				runsAllowed = game.AwayScore
+			} else {
+				runsScored = game.AwayScore
+				runsAllowed = game.HomeScore
+			}
+
+			log.RunsScored += runsScored
+			log.RunsAllowed += runsAllowed
+
+			if runsScored > runsAllowed {
+				log.Wins++
+			} else {
+				log.Losses++
+			}
+		}
+	}
+
+	processGames(homeGames, true)
+	processGames(awayGames, false)
+
+	logs := make([]DailyLog, 0, len(dailyLogs))
+	for _, log := range dailyLogs {
+		log.RunDiff = log.RunsScored - log.RunsAllowed
+		logs = append(logs, *log)
+	}
+
+	start := (pagination.Page - 1) * pagination.PerPage
+	end := start + pagination.PerPage
+	if start > len(logs) {
+		start = len(logs)
+	}
+	if end > len(logs) {
+		end = len(logs)
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    logs[start:end],
+		Page:    pagination.Page,
+		PerPage: pagination.PerPage,
+		Total:   len(logs),
+	})
 }
