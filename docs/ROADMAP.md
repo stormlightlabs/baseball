@@ -101,14 +101,14 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/teams/{team_id}`        | L       | A single team-season record (wins, losses, runs, etc.). |
 | Done   | `GET /v1/franchises`             | L       | Franchise catalog with active flag.                     |
 | Done   | `GET /v1/franchises/{franch_id}` | L       | Franchise details and historical names.                 |
-| To-Do  | `GET /v1/seasons`                | L       | Summary of available seasons (min/max year, leagues).   |
+| Done   | `GET /v1/seasons`                | L       | Summary of available seasons (min/max year, leagues).   |
 
 #### Team Rosters & Splits
 
 | Status | Endpoint                                          | Dataset | Description                                      |
 | ------ | ------------------------------------------------- | ------- | ------------------------------------------------ |
-| To-Do  | `GET /v1/seasons/{year}/teams`                    | L       | All teams for a season with aggregate stats.     |
-| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/roster`   | L       | Player list with positions and high-level stats. |
+| Done   | `GET /v1/seasons/{year}/teams`                    | L       | All teams for a season with aggregate stats.     |
+| Done   | `GET /v1/seasons/{year}/teams/{team_id}/roster`   | L       | Player list with positions and high-level stats. |
 | To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/batting`  | L       | Aggregated batting stats plus per-player splits. |
 | To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/pitching` | L       | Aggregated pitching stats.                       |
 | To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/fielding` | L       | Aggregated fielding stats.                       |

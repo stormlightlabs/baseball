@@ -107,7 +107,6 @@ type PlayerBattingSeason struct {
 	HBP     int `json:"hbp"`
 	SF      int `json:"sf"`
 
-	// Precomputed rate stats (optional but convenient)
 	AVG float64 `json:"avg"`
 	OBP float64 `json:"obp"`
 	SLG float64 `json:"slg"`
@@ -344,28 +343,23 @@ type Play struct {
 	Date     string `json:"date"`
 	GameType string `json:"game_type"`
 
-	// Players involved
 	Batter  RetroPlayerID `json:"batter"`
 	Pitcher RetroPlayerID `json:"pitcher"`
 	BatHand *string       `json:"bat_hand,omitempty"`
 	PitHand *string       `json:"pit_hand,omitempty"`
 
-	// Score and context
 	ScoreVis  int `json:"score_vis"`
 	ScoreHome int `json:"score_home"`
 	OutsPre   int `json:"outs_pre"`
 	OutsPost  int `json:"outs_post"`
 
-	// Pitch count
 	Balls   *int    `json:"balls,omitempty"`
 	Strikes *int    `json:"strikes,omitempty"`
 	Pitches *string `json:"pitches,omitempty"`
 
-	// Event and outcome
 	Event string `json:"event"` // The play description
 
-	// Plate appearance outcome flags
-	PA     *int `json:"pa,omitempty"`
+	PA     *int `json:"pa,omitempty"` // Plate appearances
 	AB     *int `json:"ab,omitempty"`
 	Single *int `json:"single,omitempty"`
 	Double *int `json:"double,omitempty"`
@@ -375,12 +369,10 @@ type Play struct {
 	K      *int `json:"k,omitempty"`
 	HBP    *int `json:"hbp,omitempty"`
 
-	// Baserunners before play
 	Runner1Pre *RetroPlayerID `json:"runner1_pre,omitempty"`
 	Runner2Pre *RetroPlayerID `json:"runner2_pre,omitempty"`
 	Runner3Pre *RetroPlayerID `json:"runner3_pre,omitempty"`
 
-	// Runs and RBIs
 	Runs *int `json:"runs,omitempty"`
 	RBI  *int `json:"rbi,omitempty"`
 }
@@ -486,4 +478,33 @@ type DatasetStatus struct {
 	LastLoadedAt *time.Time       `json:"last_loaded_at,omitempty"`
 	RowCount     int64            `json:"row_count"`
 	Tables       map[string]int64 `json:"tables,omitempty"`
+}
+
+// Season represents summary information about a season
+type Season struct {
+	Year      SeasonYear `json:"year" swaggertype:"integer"`
+	Leagues   []LeagueID `json:"leagues" swaggertype:"array,string"`
+	TeamCount int        `json:"team_count"`
+	GameCount *int       `json:"game_count,omitempty"`
+}
+
+// RosterPlayer represents a player on a team roster with basic stats
+type RosterPlayer struct {
+	PlayerID  PlayerID `json:"player_id" swaggertype:"string"`
+	FirstName string   `json:"first_name"`
+	LastName  string   `json:"last_name"`
+	Position  *string  `json:"position,omitempty"`
+
+	BattingG *int     `json:"batting_g,omitempty"`
+	AB       *int     `json:"ab,omitempty"`
+	H        *int     `json:"h,omitempty"`
+	HR       *int     `json:"hr,omitempty"`
+	RBI      *int     `json:"rbi,omitempty"`
+	AVG      *float64 `json:"avg,omitempty"`
+
+	PitchingG *int     `json:"pitching_g,omitempty"`
+	W         *int     `json:"w,omitempty"`
+	L         *int     `json:"l,omitempty"`
+	ERA       *float64 `json:"era,omitempty"`
+	SO        *int     `json:"so,omitempty"`
 }

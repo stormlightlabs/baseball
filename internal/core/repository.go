@@ -38,8 +38,11 @@ type TeamRepository interface {
 	GetFranchise(ctx context.Context, id FranchiseID) (*Franchise, error)
 	ListFranchises(ctx context.Context, onlyActive bool) ([]Franchise, error)
 
+	// ListSeasons returns all available seasons with league and team counts
+	ListSeasons(ctx context.Context) ([]Season, error)
+
 	// Roster for a given team & season; built from batting/fielding/pitching joins.
-	Roster(ctx context.Context, year SeasonYear, teamID TeamID) ([]PlayerBattingSeason, error)
+	Roster(ctx context.Context, year SeasonYear, teamID TeamID) ([]RosterPlayer, error)
 }
 
 // GameRepository manages game-log level data.

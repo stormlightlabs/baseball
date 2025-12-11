@@ -17,7 +17,9 @@ func NewTeamRoutes(repo core.TeamRepository) *TeamRoutes {
 func (tr *TeamRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/teams", tr.handleListTeams)
 	mux.HandleFunc("GET /v1/teams/{id}", tr.handleGetTeam)
+	mux.HandleFunc("GET /v1/seasons", tr.handleListSeasons)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams", tr.handleSeasonTeams)
+	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/roster", tr.handleTeamRoster)
 	mux.HandleFunc("GET /v1/franchises", tr.handleListFranchises)
 	mux.HandleFunc("GET /v1/franchises/{id}", tr.handleGetFranchise)
 }
@@ -177,6 +179,53 @@ func (tr *TeamRoutes) handleListFranchises(w http.ResponseWriter, r *http.Reques
 		Franchises: franchises,
 		Total:      len(franchises),
 	})
+}
+
+// handleListSeasons godoc
+// @Summary List all seasons
+// @Description Get summary of all available seasons with league and team counts
+// @Tags seasons
+// @Accept json
+// @Produce json
+// @Success 200 {array} core.Season
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons [get]
+func (tr *TeamRoutes) handleListSeasons(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	seasons, err := tr.repo.ListSeasons(ctx)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, seasons)
+}
+
+// handleTeamRoster godoc
+// @Summary Get team roster
+// @Description Get roster for a specific team and season with basic stats
+// @Tags teams
+// @Accept json
+// @Produce json
+// @Param year path integer true "Season year"
+// @Param team_id path string true "Team ID"
+// @Success 200 {array} core.RosterPlayer
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{year}/teams/{team_id}/roster [get]
+func (tr *TeamRoutes) handleTeamRoster(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	year := core.SeasonYear(getIntPathValue(r, "year"))
+	teamID := core.TeamID(r.PathValue("team_id"))
+
+	roster, err := tr.repo.Roster(ctx, year, teamID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, roster)
 }
 
 // handleGetFranchise godoc
