@@ -33,9 +33,12 @@ type DB struct {
 }
 
 // Connect establishes a connection to the PostgreSQL database.
-// FIXME: remove default connection string for local postgres.app (eventually)
 func Connect() (*DB, error) {
-	connStr := "host=localhost port=5432 user=postgres dbname=baseball_dev sslmode=disable"
+	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		connStr = "host=localhost port=5432 user=postgres dbname=baseball_dev sslmode=disable"
+	}
+
 	sqlDB, err := sql.Open("pgx", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
