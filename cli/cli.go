@@ -17,6 +17,7 @@ var RootCmd = &cobra.Command{
 }
 
 func init() {
+	RootCmd.PersistentFlags().String("config", "conf.toml", "Path to config file")
 	RootCmd.AddCommand(cmd.ETLCmd())
 	RootCmd.AddCommand(cmd.DbCmd())
 	RootCmd.AddCommand(cmd.ServerCmd())

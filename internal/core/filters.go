@@ -115,3 +115,17 @@ type PlayFilter struct {
 	SortOrder  SortOrder
 	Pagination Pagination
 }
+
+type FieldingStatsFilter struct {
+	PlayerID   *PlayerID
+	TeamID     *TeamID
+	Season     *SeasonYear
+	SeasonFrom *SeasonYear
+	SeasonTo   *SeasonYear
+	League     *LeagueID
+	Position   *string // Filter by position
+	MinG       *int    // Minimum games threshold
+	SortBy     string  // "po", "a", "e", "dp", "fpct"
+	SortOrder  SortOrder
+	Pagination Pagination
+}

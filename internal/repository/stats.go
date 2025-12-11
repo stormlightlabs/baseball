@@ -585,3 +585,194 @@ func (r *StatsRepository) QueryPitchingStatsCount(ctx context.Context, filter co
 
 	return count, nil
 }
+
+// QueryFieldingStats provides flexible fielding stats querying with various filters.
+func (r *StatsRepository) QueryFieldingStats(ctx context.Context, filter core.FieldingStatsFilter) ([]core.PlayerFieldingSeason, error) {
+	query := `
+		SELECT
+			"playerID", "yearID", "teamID", "lgID", "POS",
+			"G", "GS", "InnOuts", "PO", "A", "E", "DP", "PB", "SB", "CS"
+		FROM "Fielding"
+		WHERE 1=1
+	`
+
+	args := []any{}
+	argNum := 1
+
+	if filter.PlayerID != nil {
+		query += fmt.Sprintf(" AND \"playerID\" = $%d", argNum)
+		args = append(args, string(*filter.PlayerID))
+		argNum++
+	}
+
+	if filter.TeamID != nil {
+		query += fmt.Sprintf(" AND \"teamID\" = $%d", argNum)
+		args = append(args, string(*filter.TeamID))
+		argNum++
+	}
+
+	if filter.Season != nil {
+		query += fmt.Sprintf(" AND \"yearID\" = $%d", argNum)
+		args = append(args, int(*filter.Season))
+		argNum++
+	}
+
+	if filter.SeasonFrom != nil {
+		query += fmt.Sprintf(" AND \"yearID\" >= $%d", argNum)
+		args = append(args, int(*filter.SeasonFrom))
+		argNum++
+	}
+
+	if filter.SeasonTo != nil {
+		query += fmt.Sprintf(" AND \"yearID\" <= $%d", argNum)
+		args = append(args, int(*filter.SeasonTo))
+		argNum++
+	}
+
+	if filter.League != nil {
+		query += fmt.Sprintf(" AND \"lgID\" = $%d", argNum)
+		args = append(args, string(*filter.League))
+		argNum++
+	}
+
+	if filter.Position != nil {
+		query += fmt.Sprintf(" AND \"POS\" = $%d", argNum)
+		args = append(args, *filter.Position)
+		argNum++
+	}
+
+	if filter.MinG != nil {
+		query += fmt.Sprintf(" AND \"G\" >= $%d", argNum)
+		args = append(args, *filter.MinG)
+		argNum++
+	}
+
+	orderColumn := "\"PO\""
+	sortDir := "DESC"
+
+	if filter.SortBy != "" {
+		switch filter.SortBy {
+		case "po":
+			orderColumn = "\"PO\""
+		case "a":
+			orderColumn = "\"A\""
+		case "e":
+			orderColumn = "\"E\""
+		case "dp":
+			orderColumn = "\"DP\""
+		case "fpct":
+			orderColumn = "CASE WHEN (\"PO\" + \"A\" + \"E\") > 0 THEN CAST(\"PO\" + \"A\" AS FLOAT) / (\"PO\" + \"A\" + \"E\") ELSE 0 END"
+		}
+	}
+
+	if filter.SortOrder == core.SortAsc {
+		sortDir = "ASC"
+	}
+
+	query += fmt.Sprintf(" ORDER BY %s %s LIMIT $%d OFFSET $%d", orderColumn, sortDir, argNum, argNum+1)
+	args = append(args, filter.Pagination.PerPage, (filter.Pagination.Page-1)*filter.Pagination.PerPage)
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query fielding stats: %w", err)
+	}
+	defer rows.Close()
+
+	var stats []core.PlayerFieldingSeason
+	for rows.Next() {
+		var s core.PlayerFieldingSeason
+		var pb, sb, cs sql.NullInt64
+
+		err := rows.Scan(
+			&s.PlayerID, &s.Year, &s.TeamID, &s.League, &s.Position,
+			&s.G, &s.GS, &s.Inn, &s.PO, &s.A, &s.E, &s.DP, &pb, &sb, &cs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan fielding stats: %w", err)
+		}
+
+		if pb.Valid {
+			s.PB = int(pb.Int64)
+		}
+		if sb.Valid {
+			s.SB = int(sb.Int64)
+		}
+		if cs.Valid {
+			s.CS = int(cs.Int64)
+		}
+
+		// Calculate range factor per 9 innings
+		if s.Inn > 0 {
+			innings := float64(s.Inn) / 3.0
+			s.RF9 = (float64(s.PO+s.A) / innings) * 9.0
+		}
+
+		stats = append(stats, s)
+	}
+
+	return stats, nil
+}
+
+// QueryFieldingStatsCount returns the total count for the filter.
+func (r *StatsRepository) QueryFieldingStatsCount(ctx context.Context, filter core.FieldingStatsFilter) (int, error) {
+	query := `SELECT COUNT(*) FROM "Fielding" WHERE 1=1`
+
+	args := []any{}
+	argNum := 1
+
+	if filter.PlayerID != nil {
+		query += fmt.Sprintf(" AND \"playerID\" = $%d", argNum)
+		args = append(args, string(*filter.PlayerID))
+		argNum++
+	}
+
+	if filter.TeamID != nil {
+		query += fmt.Sprintf(" AND \"teamID\" = $%d", argNum)
+		args = append(args, string(*filter.TeamID))
+		argNum++
+	}
+
+	if filter.Season != nil {
+		query += fmt.Sprintf(" AND \"yearID\" = $%d", argNum)
+		args = append(args, int(*filter.Season))
+		argNum++
+	}
+
+	if filter.SeasonFrom != nil {
+		query += fmt.Sprintf(" AND \"yearID\" >= $%d", argNum)
+		args = append(args, int(*filter.SeasonFrom))
+		argNum++
+	}
+
+	if filter.SeasonTo != nil {
+		query += fmt.Sprintf(" AND \"yearID\" <= $%d", argNum)
+		args = append(args, int(*filter.SeasonTo))
+		argNum++
+	}
+
+	if filter.League != nil {
+		query += fmt.Sprintf(" AND \"lgID\" = $%d", argNum)
+		args = append(args, string(*filter.League))
+		argNum++
+	}
+
+	if filter.Position != nil {
+		query += fmt.Sprintf(" AND \"POS\" = $%d", argNum)
+		args = append(args, *filter.Position)
+		argNum++
+	}
+
+	if filter.MinG != nil {
+		query += fmt.Sprintf(" AND \"G\" >= $%d", argNum)
+		args = append(args, *filter.MinG)
+		argNum++
+	}
+
+	var count int
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count fielding stats: %w", err)
+	}
+
+	return count, nil
+}

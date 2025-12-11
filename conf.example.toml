@@ -1,0 +1,26 @@
+# Baseball API Configuration Example
+# Copy this file to conf.toml and customize for your environment
+
+[server]
+host = "localhost"
+port = 8080
+debug_mode = true
+
+[database]
+# Local development (default)
+url = "postgres://postgres:postgres@localhost:5432/baseball_dev?sslmode=disable"
+# Docker: use "postgres" as hostname instead of "localhost"
+# url = "postgres://postgres:postgres@postgres:5432/baseball_dev?sslmode=disable"
+
+[redis]
+url = "redis://localhost:6379/0"
+
+[oauth.github]
+client_id = ""
+client_secret = ""
+callback_url = "http://localhost:8080/v1/auth/github/callback"
+
+[oauth.codeberg]
+client_id = ""
+client_secret = ""
+callback_url = "http://localhost:8080/v1/auth/codeberg/callback"

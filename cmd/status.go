@@ -73,7 +73,7 @@ func status(cmd *cobra.Command, args []string) error {
 	echo.Info("")
 	echo.Info("Database:")
 
-	database, err := db.Connect()
+	database, err := db.Connect("")
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}

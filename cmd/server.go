@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/api"
+	"stormlightlabs.org/baseball/internal/config"
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
 	"stormlightlabs.org/baseball/internal/repository"
@@ -214,15 +215,26 @@ func authInstructions(cmd *cobra.Command, args []string) error {
 }
 
 func startServer(cmd *cobra.Command, args []string) error {
-	debugMode, _ := cmd.Flags().GetBool("debug")
-
 	echo.Header("Starting Server")
+	echo.Info("Loading configuration...")
+
+	configPath, _ := cmd.Flags().GetString("config")
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		return fmt.Errorf("error: failed to load config: %w", err)
+	}
+
+	debugMode, _ := cmd.Flags().GetBool("debug")
 	if debugMode {
+		cfg.Server.DebugMode = true
+	}
+
+	if cfg.Server.DebugMode {
 		echo.Info("⚠ Debug mode enabled - authentication disabled")
 	}
-	echo.Info("Connecting to database...")
 
-	database, err := db.Connect()
+	echo.Info("Connecting to database...")
+	database, err := db.Connect(cfg.Database.URL)
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -238,6 +250,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 	gameRepo := repository.NewGameRepository(database.DB)
 	playRepo := repository.NewPlayRepository(database.DB)
 	metaRepo := repository.NewMetaRepository(database.DB)
+	managerRepo := repository.NewManagerRepository(database.DB)
 
 	userRepo := repository.NewUserRepository(database.DB)
 	apiKeyRepo := repository.NewAPIKeyRepository(database.DB)
@@ -252,13 +265,14 @@ func startServer(cmd *cobra.Command, args []string) error {
 		api.NewGameRoutes(gameRepo, playRepo),
 		api.NewPlayRoutes(playRepo, playerRepo),
 		api.NewMetaRoutes(metaRepo),
+		api.NewManagerRoutes(managerRepo),
 		api.NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
 		api.NewUIRoutes(apiKeyRepo),
 	)
 
-	addr := ":8080"
+	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	echo.Success(fmt.Sprintf("✓ Server starting on %s", addr))
-	if !debugMode {
+	if !cfg.Server.DebugMode {
 		echo.Info("✓ Authentication enabled")
 		echo.Info("  GitHub OAuth: /v1/auth/github")
 		echo.Info("  Codeberg OAuth: /v1/auth/codeberg")

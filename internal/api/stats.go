@@ -19,6 +19,7 @@ func (sr *StatsRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/seasons/{year}/leaders/pitching", sr.handlePitchingLeaders)
 	mux.HandleFunc("GET /v1/stats/batting", sr.handleQueryBattingStats)
 	mux.HandleFunc("GET /v1/stats/pitching", sr.handleQueryPitchingStats)
+	mux.HandleFunc("GET /v1/stats/fielding", sr.handleQueryFieldingStats)
 }
 
 // handleBattingLeaders godoc
@@ -290,6 +291,103 @@ func (sr *StatsRoutes) handleQueryPitchingStats(w http.ResponseWriter, r *http.R
 	}
 
 	total, err := sr.repo.QueryPitchingStatsCount(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    stats,
+		Page:    filter.Pagination.Page,
+		PerPage: filter.Pagination.PerPage,
+		Total:   total,
+	})
+}
+
+// handleQueryFieldingStats godoc
+// @Summary Query fielding statistics
+// @Description Flexible fielding stats query with multiple filter options
+// @Tags stats
+// @Accept json
+// @Produce json
+// @Param player_id query string false "Filter by player ID"
+// @Param team_id query string false "Filter by team ID"
+// @Param season query integer false "Filter by specific season"
+// @Param season_from query integer false "Filter by season range (start)"
+// @Param season_to query integer false "Filter by season range (end)"
+// @Param league query string false "Filter by league (AL, NL)"
+// @Param position query string false "Filter by position (1B, 2B, 3B, SS, OF, C, P, DH)"
+// @Param min_g query integer false "Minimum games threshold" default(0)
+// @Param sort_by query string false "Sort by stat (po, a, e, dp, fpct)" default("po")
+// @Param sort_order query string false "Sort order (asc, desc)" default("desc")
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /stats/fielding [get]
+func (sr *StatsRoutes) handleQueryFieldingStats(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	filter := core.FieldingStatsFilter{
+		Pagination: core.Pagination{
+			Page:    getIntQuery(r, "page", 1),
+			PerPage: getIntQuery(r, "per_page", 50),
+		},
+		SortBy: r.URL.Query().Get("sort_by"),
+	}
+
+	if playerID := r.URL.Query().Get("player_id"); playerID != "" {
+		pid := core.PlayerID(playerID)
+		filter.PlayerID = &pid
+	}
+
+	if teamID := r.URL.Query().Get("team_id"); teamID != "" {
+		tid := core.TeamID(teamID)
+		filter.TeamID = &tid
+	}
+
+	if season := r.URL.Query().Get("season"); season != "" {
+		y := core.SeasonYear(getIntQuery(r, "season", 0))
+		filter.Season = &y
+	}
+
+	if seasonFrom := r.URL.Query().Get("season_from"); seasonFrom != "" {
+		y := core.SeasonYear(getIntQuery(r, "season_from", 0))
+		filter.SeasonFrom = &y
+	}
+
+	if seasonTo := r.URL.Query().Get("season_to"); seasonTo != "" {
+		y := core.SeasonYear(getIntQuery(r, "season_to", 0))
+		filter.SeasonTo = &y
+	}
+
+	if league := r.URL.Query().Get("league"); league != "" {
+		lg := core.LeagueID(league)
+		filter.League = &lg
+	}
+
+	if position := r.URL.Query().Get("position"); position != "" {
+		filter.Position = &position
+	}
+
+	if minG := r.URL.Query().Get("min_g"); minG != "" {
+		g := getIntQuery(r, "min_g", 0)
+		filter.MinG = &g
+	}
+
+	if sortOrder := r.URL.Query().Get("sort_order"); sortOrder == "asc" {
+		filter.SortOrder = core.SortAsc
+	} else {
+		filter.SortOrder = core.SortDesc
+	}
+
+	stats, err := sr.repo.QueryFieldingStats(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := sr.repo.QueryFieldingStatsCount(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return

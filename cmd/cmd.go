@@ -300,7 +300,7 @@ func loadLahman(cmd *cobra.Command, args []string) error {
 	echo.Header("Loading Lahman Data")
 	echo.Info("Connecting to database...")
 
-	database, err := db.Connect()
+	database, err := db.Connect("")
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -363,7 +363,7 @@ func migrate(cmd *cobra.Command, args []string) error {
 	echo.Header("Database Migration")
 	echo.Info("Connecting to database...")
 
-	database, err := db.Connect()
+	database, err := db.Connect("")
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -385,7 +385,7 @@ func loadRetrosheet(cmd *cobra.Command, args []string) error {
 	echo.Header("Loading Retrosheet Data")
 	echo.Info("Connecting to database...")
 
-	database, err := db.Connect()
+	database, err := db.Connect("")
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -516,7 +516,7 @@ func populateLahman(cmd *cobra.Command, csvDir string) error {
 	echo.Header("Seeding Lahman Data")
 	echo.Info("Connecting to database...")
 
-	database, err := db.Connect()
+	database, err := db.Connect("")
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -533,7 +533,7 @@ func populateRetrosheet(cmd *cobra.Command, dataDir, yearsFlag string) error {
 	echo.Header("Seeding Retrosheet Data")
 	echo.Info("Connecting to database...")
 
-	database, err := db.Connect()
+	database, err := db.Connect("")
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -623,7 +623,7 @@ func resetDatabase(cmd *cobra.Command, csvDir, dataDir, yearsFlag string) error 
 	echo.Header("Database Reset")
 	echo.Info("Connecting to database...")
 
-	database, err := db.Connect()
+	database, err := db.Connect("")
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}

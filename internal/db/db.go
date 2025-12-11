@@ -33,10 +33,14 @@ type DB struct {
 }
 
 // Connect establishes a connection to the PostgreSQL database.
-func Connect() (*DB, error) {
-	connStr := os.Getenv("DATABASE_URL")
+// If connStr is empty, it falls back to DATABASE_URL environment variable
+// or a default connection string.
+func Connect(connStr string) (*DB, error) {
 	if connStr == "" {
-		connStr = "host=localhost port=5432 user=postgres dbname=baseball_dev sslmode=disable"
+		connStr = os.Getenv("DATABASE_URL")
+		if connStr == "" {
+			connStr = "host=localhost port=5432 user=postgres dbname=baseball_dev sslmode=disable"
+		}
 	}
 
 	sqlDB, err := sql.Open("pgx", connStr)
