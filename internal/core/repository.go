@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// PlayerRepository encapsulates all “player-centric” access:
+// PlayerRepository encapsulates all "player-centric" access:
 // bio, seasons, per-player stats, game logs.
 type PlayerRepository interface {
 	GetByID(ctx context.Context, id PlayerID) (*Player, error)
@@ -50,7 +50,21 @@ type GameRepository interface {
 	GetBoxscore(ctx context.Context, id GameID) (*Boxscore, error)
 }
 
+// PlayRepository manages play-by-play data from Retrosheet.
+type PlayRepository interface {
+	// List retrieves plays based on filter criteria
+	List(ctx context.Context, filter PlayFilter) ([]Play, error)
+	Count(ctx context.Context, filter PlayFilter) (int, error)
+
+	// ListByGame retrieves all plays for a specific game in order
+	ListByGame(ctx context.Context, gameID GameID, p Pagination) ([]Play, error)
+
+	// ListByPlayer retrieves plays involving a specific player (as batter or pitcher)
+	ListByPlayer(ctx context.Context, playerID RetroPlayerID, p Pagination) ([]Play, error)
+}
+
 // EventRepository manages play-by-play events.
+// Deprecated: Use PlayRepository for new code.
 type EventRepository interface {
 	ListByGame(ctx context.Context, gameID GameID, p Pagination) ([]GameEvent, error)
 	List(ctx context.Context, filter EventFilter) ([]GameEvent, error)

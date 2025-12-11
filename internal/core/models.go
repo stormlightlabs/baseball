@@ -311,7 +311,62 @@ type PlayerAppearance struct {
 	GPR int `json:"g_pr"` // Pinch runner
 }
 
+// Play represents a single play from Retrosheet play-by-play data.
+// This is the core model with essential fields for most use cases.
+type Play struct {
+	// Game identification
+	GameID   GameID     `json:"game_id"`
+	PlayNum  int        `json:"play_num"`
+	Inning   int        `json:"inning"`
+	TopBot   int        `json:"top_bot"` // 0=top, 1=bottom
+	BatTeam  TeamID     `json:"bat_team"`
+	PitTeam  TeamID     `json:"pit_team"`
+	Date     string     `json:"date"`
+	GameType string     `json:"game_type"`
+
+	// Players involved
+	Batter   RetroPlayerID  `json:"batter"`
+	Pitcher  RetroPlayerID  `json:"pitcher"`
+	BatHand  *string        `json:"bat_hand,omitempty"`
+	PitHand  *string        `json:"pit_hand,omitempty"`
+
+	// Score and context
+	ScoreVis int `json:"score_vis"`
+	ScoreHome int `json:"score_home"`
+	OutsPre  int `json:"outs_pre"`
+	OutsPost int `json:"outs_post"`
+
+	// Pitch count
+	Balls   *int    `json:"balls,omitempty"`
+	Strikes *int    `json:"strikes,omitempty"`
+	Pitches *string `json:"pitches,omitempty"`
+
+	// Event and outcome
+	Event string `json:"event"` // The play description
+
+	// Plate appearance outcome flags
+	PA     *int `json:"pa,omitempty"`
+	AB     *int `json:"ab,omitempty"`
+	Single *int `json:"single,omitempty"`
+	Double *int `json:"double,omitempty"`
+	Triple *int `json:"triple,omitempty"`
+	HR     *int `json:"hr,omitempty"`
+	Walk   *int `json:"walk,omitempty"`
+	K      *int `json:"k,omitempty"`
+	HBP    *int `json:"hbp,omitempty"`
+
+	// Baserunners before play
+	Runner1Pre *RetroPlayerID `json:"runner1_pre,omitempty"`
+	Runner2Pre *RetroPlayerID `json:"runner2_pre,omitempty"`
+	Runner3Pre *RetroPlayerID `json:"runner3_pre,omitempty"`
+
+	// Runs and RBIs
+	Runs *int `json:"runs,omitempty"`
+	RBI  *int `json:"rbi,omitempty"`
+}
+
 // GameEvent corresponds to a row in Retrosheet plays.csv (simplified).
+// Deprecated: Use Play instead for new code.
 type GameEvent struct {
 	GameID      GameID `json:"game_id"`
 	EventID     int    `json:"event_id"` // sequential within game
@@ -322,7 +377,6 @@ type GameEvent struct {
 	FieldingTeam TeamID   `json:"fielding_team"`
 	Batter       PlayerID `json:"batter"`
 	Pitcher      PlayerID `json:"pitcher"`
-	// TODO: catcher, runner IDs as needed.
 
 	OutsBefore   int `json:"outs_before"`
 	OutsAfter    int `json:"outs_after"`
@@ -333,8 +387,8 @@ type GameEvent struct {
 	RunnerOnSecond *PlayerID `json:"runner_on_second,omitempty"`
 	RunnerOnThird  *PlayerID `json:"runner_on_third,omitempty"`
 
-	EventText   string  `json:"event_text"`            // e.g. original Retrosheet event text
-	Description *string `json:"description,omitempty"` // cleaned description
+	EventText   string  `json:"event_text"`
+	Description *string `json:"description,omitempty"`
 }
 
 // Park / Ballpark from Lahman & Retrosheet park tables.

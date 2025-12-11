@@ -488,6 +488,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 	statsRepo := repository.NewStatsRepository(database.DB)
 	awardRepo := repository.NewAwardRepository(database.DB)
 	gameRepo := repository.NewGameRepository(database.DB)
+	playRepo := repository.NewPlayRepository(database.DB)
 
 	echo.Info("Registering routes...")
 
@@ -496,6 +497,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 		api.NewTeamRoutes(teamRepo),
 		api.NewStatsRoutes(statsRepo),
 		api.NewGameRoutes(gameRepo),
+		api.NewPlayRoutes(playRepo),
 	)
 
 	addr := ":8080"
@@ -511,6 +513,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 	echo.Info("  GET  /v1/players/{id}/hall-of-fame")
 	echo.Info("  GET  /v1/players/{id}/game-logs?season={year}&page={page}&per_page={per_page}")
 	echo.Info("  GET  /v1/players/{id}/appearances")
+	echo.Info("  GET  /v1/players/{id}/plays?page={page}&per_page={per_page}")
 	echo.Info("  GET  /v1/teams?year={year}&league={league}")
 	echo.Info("  GET  /v1/teams/{id}?year={year}")
 	echo.Info("  GET  /v1/seasons/{year}/teams?league={league}")
@@ -523,9 +526,11 @@ func startServer(cmd *cobra.Command, args []string) error {
 	echo.Info("  GET  /v1/games?season={year}&team_id={id}&date={date}")
 	echo.Info("  GET  /v1/games/{id}")
 	echo.Info("  GET  /v1/games/{id}/boxscore")
+	echo.Info("  GET  /v1/games/{id}/plays?page={page}&per_page={per_page}")
 	echo.Info("  GET  /v1/seasons/{year}/schedule")
 	echo.Info("  GET  /v1/seasons/{year}/dates/{date}/games")
 	echo.Info("  GET  /v1/seasons/{year}/teams/{team_id}/games")
+	echo.Info("  GET  /v1/plays?batter={id}&pitcher={id}&date={YYYYMMDD}")
 	echo.Info("")
 	return http.ListenAndServe(addr, server)
 }

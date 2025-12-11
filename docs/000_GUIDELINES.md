@@ -22,8 +22,8 @@ I’ll walk through a concrete, opinionated plan with tools + example code.
 
 **Opinionated split:**
 
-* **Lahman** → “reference + aggregate stats” API (Players, Teams, Seasons, Leaderboards).
-* **Retrosheet** → “games + play-by-play” API (Games, Game logs, Events, Plate appearances).
+* **Lahman** → "reference + aggregate stats" API (Players, Teams, Seasons, Leaderboards).
+* **Retrosheet** → "games + play-by-play" API (Games, Game logs, Events, Plate appearances).
 
 ## 2. Choose a database schema (don’t reinvent the wheel)
 
@@ -133,7 +133,7 @@ Opinionated set:
 
 ### 4.2. API surface (v1)
 
-Think of two “modules”: **reference** and **game/events**.
+Think of two "modules": **reference** and **game/events**.
 
 **Reference (Lahman)**:
 
@@ -278,7 +278,7 @@ Your Go queries then just hit these views as if they’re tables.
 * Provide clear **attribution**:
 
     * Lahman: mention SABR + Lahman database, including copyright and free-use statement. ([SABR][1])
-    * Retrosheet: their terms require explicit credit: “The information used here was obtained free of charge from and is copyrighted by Retrosheet.” ([GitHub][10])
+    * Retrosheet: their terms require explicit credit: "The information used here was obtained free of charge from and is copyrighted by Retrosheet." ([GitHub][10])
 
 ---
 
@@ -304,7 +304,7 @@ If you want a pragmatic progression:
 
 4. **M4 – Joined endpoints**
 
-   * Add endpoints that combine Lahman’s season stats with Retrosheet game logs (e.g. “show all games where a player hit 3+ homers”).
+   * Add endpoints that combine Lahman’s season stats with Retrosheet game logs (e.g. "show all games where a player hit 3+ homers").
 
 ---
 

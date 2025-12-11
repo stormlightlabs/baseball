@@ -2,11 +2,6 @@ package core
 
 import "time"
 
-type Pagination struct {
-	Page    int
-	PerPage int
-}
-
 type SortOrder string
 
 const (
@@ -14,17 +9,20 @@ const (
 	SortDesc SortOrder = "desc"
 )
 
+type Pagination struct {
+	Page    int
+	PerPage int
+}
+
 type PlayerFilter struct {
-	NameQuery string // partial name
-	DebutYear *SeasonYear
-	TeamIDs   []TeamID
-	Positions []string
-	Bats      []string // "R","L","B"
-	Throws    []string
-
-	SortBy    string // "name","debut","war" etc.
-	SortOrder SortOrder
-
+	NameQuery  string // partial name
+	DebutYear  *SeasonYear
+	TeamIDs    []TeamID
+	Positions  []string
+	Bats       []string // "R","L","B"
+	Throws     []string
+	SortBy     string // "name","debut","war" etc.
+	SortOrder  SortOrder
 	Pagination Pagination
 }
 
@@ -32,10 +30,9 @@ type TeamFilter struct {
 	Year        *SeasonYear
 	League      *LeagueID
 	FranchiseID *FranchiseID
-
-	SortBy     string // "wins","run_diff"
-	SortOrder  SortOrder
-	Pagination Pagination
+	SortBy      string // "wins","run_diff"
+	SortOrder   SortOrder
+	Pagination  Pagination
 }
 
 type GameFilter struct {
@@ -46,10 +43,9 @@ type GameFilter struct {
 	AwayTeam     *TeamID
 	ParkID       *ParkID
 	IsPostseason *bool
-
-	SortBy     string // "date"
-	SortOrder  SortOrder
-	Pagination Pagination
+	SortBy       string // "date"
+	SortOrder    SortOrder
+	Pagination   Pagination
 }
 
 type EventFilter struct {
@@ -58,16 +54,14 @@ type EventFilter struct {
 	Season     *SeasonYear
 	InningFrom *int
 	InningTo   *int
-
 	Pagination Pagination
 }
 
 type AwardFilter struct {
-	AwardID  *AwardID
-	PlayerID *PlayerID
-	Year     *SeasonYear
-	League   *LeagueID
-
+	AwardID    *AwardID
+	PlayerID   *PlayerID
+	Year       *SeasonYear
+	League     *LeagueID
 	Pagination Pagination
 }
 
@@ -85,7 +79,6 @@ type BattingStatsFilter struct {
 	League     *LeagueID
 	MinAB      *int
 	MinPA      *int
-
 	SortBy     string // "avg", "hr", "rbi", "h", "r", "sb"
 	SortOrder  SortOrder
 	Pagination Pagination
@@ -100,8 +93,25 @@ type PitchingStatsFilter struct {
 	League     *LeagueID
 	MinIP      *float64
 	MinGS      *int
-
 	SortBy     string // "era", "w", "so", "sv", "ip"
+	SortOrder  SortOrder
+	Pagination Pagination
+}
+
+type PlayFilter struct {
+	GameID     *GameID
+	Batter     *RetroPlayerID
+	Pitcher    *RetroPlayerID
+	BatTeam    *TeamID
+	PitTeam    *TeamID
+	Date       *string // YYYYMMDD format
+	DateFrom   *string // YYYYMMDD format
+	DateTo     *string // YYYYMMDD format
+	Inning     *int
+	HomeRuns   *bool  // if true, only return plays with HR=1
+	Walks      *bool  // if true, only return plays with walk=1
+	K          *bool  // if true, only return plays with k=1
+	SortBy     string // "pn" (play number), "inning", "date"
 	SortOrder  SortOrder
 	Pagination Pagination
 }

@@ -44,7 +44,7 @@ These help clients know what they can safely query (e.g. Lahman up to 2024, Retr
 
 ## 2. Players (People & careers) – **(L)** w/ some **(R)** joins
 
-### Core “people” endpoints
+### Core "people" endpoints
 
 | Verb | Path                                   | Description                                                                |
 | ---- | -------------------------------------- | -------------------------------------------------------------------------- |
@@ -137,7 +137,7 @@ For advanced consumers who want full detail.
 | GET  | `/v1/players/{player_id}/plate-appearances` | All plate appearances with filters (count, base/out state, vs_pitcher, etc.). |
 | GET  | `/v1/pitches`                               | *Optional later*: if you derive pitch-level data from other sources.          |
 
-Underlying data: parsed Retrosheet “plays” CSV (fully parsed PBP with 160+ columns). ([Retrosheet][9])
+Underlying data: parsed Retrosheet "plays" CSV (fully parsed PBP with 160+ columns). ([Retrosheet][9])
 
 ## 6. Parks, Umpires, Managers & Other Entities – **(L+R)**
 
@@ -219,20 +219,20 @@ Lahman has tables for awards, All-Star games, postseason series and games. ([Boo
 
 ## 9. Search & Lookup Utilities – **(L+R)**
 
-Make it easy to “jump” to IDs from approximate input.
+Make it easy to "jump" to IDs from approximate input.
 
 | Verb | Path                 | Description                                                           |
 | ---- | -------------------- | --------------------------------------------------------------------- |
 | GET  | `/v1/search/players` | Fuzzy search by name, optional filters (era, league, team).           |
 | GET  | `/v1/search/teams`   | Search by name, city, franchise.                                      |
-| GET  | `/v1/search/games`   | Search by natural language query (“Yankees vs Red Sox 2003 ALCS G7”). |
+| GET  | `/v1/search/games`   | Search by natural language query ("Yankees vs Red Sox 2003 ALCS G7"). |
 | GET  | `/v1/search/parks`   | Search ballparks by name/city.                                        |
 
 Under the hood, you can build these on top of simple trigram/fuzzy matching in Postgres, plus straightforward filters.
 
 ## 10. Derived Endpoints
 
-These aren’t directly “available” as raw tables, but they’re natural uses of the data and might be worth planning for:
+These aren’t directly "available" as raw tables, but they’re natural uses of the data and might be worth planning for:
 
 * `/v1/players/{player_id}/streaks` – hitting streaks, scoreless inning streaks.
 * `/v1/players/{player_id}/splits` – home/away, LHP/RHP, month, batting order.
