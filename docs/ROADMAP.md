@@ -1,381 +1,234 @@
 # Baseball API Development Roadmap
 
-This roadmap consolidates the guidelines and endpoint specifications into a prioritized development plan.
+This living roadmap merges the original guidelines and endpoint specifications into a single plan that tracks scope and completion status.
 
-## Overview
+## Architecture & Data Strategy
 
-Three-layer architecture:
+### Three-Layer Approach
 
-1. **Raw data → Postgres** (ETL for Lahman + Retrosheet)
-2. **Postgres → Go domain model** (queries, joins, views)
-3. **Go → HTTP API** (versioned, documented, cached)
+1. **Raw data → Postgres**: ETL pipelines for both the Lahman Baseball Database and Retrosheet archives.
+2. **Postgres → Go domain model**: Typed queries, joins, and views for consistent access patterns.
+3. **Go → HTTP API**: Versioned, cached, and documented endpoints layered on top of the domain model.
 
-## ETL Foundation
+### Data Sources & IDs
 
-### CLI Tool Setup
+- **Lahman** provides season and career aggregates (batting, pitching, fielding, awards, salaries, franchises, etc.) from 1871-2024. ([SABR Lahman Database](https://sabr.org/lahman-database/))
+- **Retrosheet** publishes game logs and parsed play-by-play data. ([Retrosheet.org](https://www.retrosheet.org/)) Chadwick tools help convert raw event files and maintain crosswalks for IDs.
+- Opinionated split: Lahman powers reference, leaderboards, and team/season stats, while Retrosheet powers games, logs, and play-by-play.
+- ID conventions: `player_id` = Lahman `playerID`, `team_id` = Lahman `teamID` or `franchID`, `game_id` = Retrosheet `GAME_ID`. Chadwick mappings keep IDs consistent across sources.
 
-- **Framework**: cobra + lipgloss for beautiful CLI interface
-- **Commands**:
-    - `baseball etl fetch lahman` - Download Lahman CSV archive
-    - `baseball etl fetch retrosheet` - Download Retrosheet data
-    - `baseball etl load lahman` - Load Lahman data into Postgres
-    - `baseball etl load retrosheet` - Load Retrosheet data into Postgres
-    - `baseball etl status` - Check data freshness and completeness
-    - `baseball db migrate` - Run database migrations
-    - `baseball server start` - Start server
-    - `baseball server fetch [url] --format=json|table` - cURL like test tool
-    - `baseball server health` - Health check
+### Database Schema & Storage
 
-### Database Schema
+- Done: Postgres is the target store with reusable DDLs checked in under `internal/db/sql` (Lahman schema, Retrosheet schema, and plays schema derived from [Baseball-PostgreSQL](https://github.com/davidbmitchell/Baseball-PostgreSQL)).
+- In-Progress: Views and crosswalk tables should normalize Lahman ↔ Retrosheet IDs (`player_id_map`, `team_franchise_map`) and pre-aggregate leaderboards for fast reads.
+- To-Do: Materialized views for heavy aggregates (win probability, streaks, etc.) are queued behind upcoming analytics milestones.
 
-- Use existing Postgres DDL from `Baseball-PostgreSQL` repo
-- **Lahman schema**: `people`, `batting`, `pitching`, `fielding`, `teams`, `parks`, etc.
-- **Retrosheet schema**: event-level and game-level tables
-- Create views for common joins between Lahman & Retrosheet data
+### ETL & CLI Tooling
 
-### ETL Implementation
+- Done
+    - Cobra + lipgloss CLI (`cli/`, `cmd/`) delivers:
+        - `baseball etl fetch {lahman|retrosheet}` - instructions/downloaders for raw archives.
+        - `baseball etl load {lahman|retrosheet}` - uses Postgres `COPY` helpers for bulk loading (see `internal/db`).
+        - `baseball db migrate` - applies the bundled DDL.
+        - `baseball server {start|fetch|health}` - runs the API locally and exercises endpoints.
+- In-Progress
+    - `baseball etl status` currently prints a placeholder; add freshness checks comparing DB tables vs. downloaded archives.
+- To-Do
+    - Future work: resumable downloads, checksum validation, resumable play-by-play ingestion, and automated cron-style Taskfile targets.
 
-- Use `COPY` for fast CSV ingestion
-- Generic `CopyCSV` function for reusability
-- Progress bars and status reporting with lipgloss
-- Error handling and data validation
+### API Platform, Docs & Ops
 
-## Core API (Lahman-focused)
+- Done: Server uses the Go standard library HTTP mux, hand-rolled repositories, and `swaggo/swag` generated docs available at `/docs`.
+- Done: All routes are namespaced under `/v1/` to allow future breaking changes.
+- Done: Attribution requirements are documented in `README.md`, but they are also restated here for every release:
+    - Lahman: attribute SABR + Sean Lahman.
+    - Retrosheet: include the required copyright statement.
+- To-Do: Add caching, rate limiting, and deployment scripts after the analytics milestone.
 
-### API Foundation
+### Exposing Joined Data
 
-- **Tech Stack**:
-    - Router: standard library
-    - DB layer: hand-rolled
-    - Config: Viper
-    - Migrations: hand-rolled
+- Done: Lahman + Retrosheet datasets can already be ingested concurrently; the repositories query the normalized tables directly.
+- To-Do: Dedicated SQL views (e.g., `stats_career_batting`, `player_game_logs`) and ID-mapping helpers will simplify SQLC/hand-rolled queries.
+- To-Do: Future endpoints that combine season stats with play-by-play data will rely on these views/materialized views.
 
-### Core Endpoints (v1)
+## API Conventions
 
-#### Players & People
+- Base URL: `https://baseball.stormlightlabs.org/api/v1/...` (prod) and `http://localhost:8080/v1/...` (dev).
+- Dataset tags reused from the original spec:
+    - **(L)** Lahman, **(R)** Retrosheet, **(L+R)** joined view.
+- Common query params: `page`, `per_page`, `sort`, `order`, `from`/`to` (dates as `YYYY-MM-DD`), and stat filters such as `min_pa`, `min_ip`, `min_g`.
+- Paginated responses wrap payloads inside an envelope containing `data`, `page`, `per_page`, and `total`.
+- Default envelope metadata keeps clients backward compatible while letting us add new fields later.
 
-- `GET /v1/players` - Search/browse players
-- `GET /v1/players/{player_id}` - Biographical data + career stats
-- `GET /v1/players/{player_id}/seasons` - Season-by-season stats
-- `GET /v1/players/{player_id}/awards` - Awards history
-- `GET /v1/players/{player_id}/hall-of-fame` - HOF voting data
+## API Roadmap
 
-#### Teams & Franchises
+### 0. Meta / Utility
 
-- `GET /v1/teams` - List teams by year/league
-- `GET /v1/teams/{team_id}` - Single team-season data
-- `GET /v1/franchises` - Franchise information
-- `GET /v1/seasons/{year}/teams` - All teams in season
+| Status | Endpoint                | Dataset | Description                                                         |
+| ------ | ----------------------- | ------- | ------------------------------------------------------------------- |
+| Done   | `GET /v1/health`        | -       | Basic readiness check used by CLI and deploy targets.               |
+| To-Do  | `GET /v1/meta`          | L+R     | Returns API version, dataset refresh timestamps, and schema hashes. |
+| To-Do  | `GET /v1/meta/datasets` | L+R     | Advertises which seasons/leagues/tables are currently loaded.       |
 
-#### Stats & Leaderboards
+### 1. Players (People & Careers) - **(L)** with optional **(R)** joins
 
-- `GET /v1/seasons/{year}/leaders/batting` - Season batting leaders
-- `GET /v1/seasons/{year}/leaders/pitching` - Season pitching leaders
-- `GET /v1/stats/batting` - Generic batting stats query
-- `GET /v1/stats/pitching` - Generic pitching stats query
+| Status | Endpoint                                   | Dataset | Description                                                                  |
+| ------ | ------------------------------------------ | ------- | ---------------------------------------------------------------------------- |
+| Done   | `GET /v1/players`                          | L       | Search/browse players with filters (name, debut year, position, handedness). |
+| Done   | `GET /v1/players/{player_id}`              | L       | Biographical data plus aggregated career stats.                              |
+| Done   | `GET /v1/players/{player_id}/seasons`      | L       | Year-by-year batting and pitching splits.                                    |
+| To-Do  | `GET /v1/players/{player_id}/teams`        | L       | List every team the player suited up for by season.                          |
+| Done   | `GET /v1/players/{player_id}/awards`       | L       | Awards from Lahman `Awards*` tables with pagination.                         |
+| Done   | `GET /v1/players/{player_id}/hall-of-fame` | L       | Hall of Fame voting/induction history.                                       |
+| To-Do  | `GET /v1/players/{player_id}/salaries`     | L       | Salary history via Lahman `Salaries`.                                        |
 
-## Game Data Integration (Retrosheet)
+#### Player Game & Play-by-Play Views - **(R)**
 
-### Game Endpoints
+| Status      | Endpoint                                        | Dataset | Description                                                                                |
+| ----------- | ----------------------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
+| Done        | `GET /v1/players/{player_id}/game-logs`         | R       | Game-by-game performance from Retrosheet logs (currently starters only; see TODO).         |
+| Done        | `GET /v1/players/{player_id}/appearances`       | R       | Detailed appearance records (positions, pinch roles) sourced from Retrosheet lineups.      |
+| In-Progress | `GET /v1/players/{player_id}/plays`             | R       | All plays involving a player as batter or pitcher; evolve into richer `/events` responses. |
+| To-Do       | `GET /v1/players/{player_id}/plate-appearances` | R       | Normalized plate appearance feed with contextual filters (count, leverage, vs_pitcher).    |
 
-- `GET /v1/games` - Search games by date/teams/park
-- `GET /v1/games/{game_id}` - Game metadata and score
-- `GET /v1/games/{game_id}/boxscore` - Detailed boxscore
-- `GET /v1/seasons/{year}/schedule` - Full season schedule
+### 2. Teams, Franchises & Seasons - **(L)** + **(R)**
 
-### Enhanced Player Data
+#### Team & Franchise Reference
 
-- `GET /v1/players/{player_id}/game-logs` - Game-by-game performance
-- `GET /v1/players/{player_id}/appearances` - Detailed appearance records
+| Status | Endpoint                         | Dataset | Description                                             |
+| ------ | -------------------------------- | ------- | ------------------------------------------------------- |
+| Done   | `GET /v1/teams`                  | L       | List team seasons with filters for year/league.         |
+| Done   | `GET /v1/teams/{team_id}`        | L       | A single team-season record (wins, losses, runs, etc.). |
+| Done   | `GET /v1/franchises`             | L       | Franchise catalog with active flag.                     |
+| Done   | `GET /v1/franchises/{franch_id}` | L       | Franchise details and historical names.                 |
+| To-Do  | `GET /v1/seasons`                | L       | Summary of available seasons (min/max year, leagues).   |
 
-## Advanced Features
+#### Team Rosters & Splits
 
-### Play-by-Play Data
+| Status | Endpoint                                          | Dataset | Description                                      |
+| ------ | ------------------------------------------------- | ------- | ------------------------------------------------ |
+| To-Do  | `GET /v1/seasons/{year}/teams`                    | L       | All teams for a season with aggregate stats.     |
+| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/roster`   | L       | Player list with positions and high-level stats. |
+| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/batting`  | L       | Aggregated batting stats plus per-player splits. |
+| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/pitching` | L       | Aggregated pitching stats.                       |
+| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/fielding` | L       | Aggregated fielding stats.                       |
 
-Requires extension of ETL pipeline to include <https://retrosheet.org/downloads/plays.html>
+#### Retrosheet Team Schedule & Logs - **(R)**
 
-1. <https://www.retrosheet.org/downloads/plays/2023plays.zip>
-2. <https://www.retrosheet.org/downloads/plays/2024plays.zip>
-3. <https://www.retrosheet.org/downloads/plays/2025plays.zip>
+| Status | Endpoint                                            | Dataset | Description                                  |
+| ------ | --------------------------------------------------- | ------- | -------------------------------------------- |
+| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/schedule`   | R       | Team calendar from Retrosheet schedules.     |
+| Done   | `GET /v1/seasons/{year}/teams/{team_id}/games`      | R       | All games for a team/season with pagination. |
+| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/daily-logs` | R       | Team daily performance rollups.              |
 
-```text
-gid              Game ID
-event            play as it appears in our event file
-inning           inning
-top_bot          top (0) or bottom (1) of inning
-vis_home         visiting (0) or home (1) team batting
-site	         location (ballpark) of event
-                 - if a game was suspended and later resumed at a different site, the value for 'site' will change mid-game,
-                   indicating the site of specific events
-batteam          batting team
-pitteam          pitching team
-score_v          visiting team score at start of play
-score_h          home team score at start of play
-batter           batter
-pitcher          pitcher
-lp               lineup position of batter
-bat_f            fielding position of batter
-bathand          batter handedness (B, L, R)
-pithand          pitcher handedness
-balls            number of balls
-strikes          number of strikes
-count            pitch count, if known; '??' if unknown
-                 - balls, strikes, and count do not include final pitch of play
-pitches          pitch sequence, if known; blank if unknown
-nump		 number of pitches, if known; blank if unknown
-pa               did the play result in a plate appearance? (1 if yes, 0 if no)
-ab               at bat
-single           single
-double           double
-triple           triple
-hr               home run
-sh               sacrifice bunt
-sf               sacrifice fly, if awarded; in some seasons, sh and sf were combined in official stats; they are separated here
-hbp              hit-by-pitch
-walk             walk
-k                strikeout
-xi               batter reached on interference or obstruction, no at bat
-roe              batter reached on an error
-fc               batter reached on a fielder's choice
-othout           batting out not specified otherwise
-noout            plate appearance not otherwise specified
-                 - plate appearances will be equal to exactly one of the 14 preceding columns ('single' - 'noout')
-oth              sum of 'othout' and 'noout' (legacy from earlier releases of 'plays')
-bip              ball-in-play; the hit type for bip is identified in the next four columns, if known
-bunt             bunt
-ground           ground ball
-fly              fly ball (or pop up)
-line             line drive
-iw               intentional walk - subset of 'walk'
-gdp              grounded into double play; 'gdp' is an official stat
-othdp            double play that was not a 'gdp'
-tp               triple play
-fle              dropped foul-ball error (batter remains at bat)
-wp               wild pitch
-pb               passed ball
-bk               balk
-oa               non-pa not identified by any other stats: either 'out advancing' or 'other advance'
-di               defensive indifference
-sb2              stolen base of second base
-sb3              stolen base of third base
-sbh              stolen base of home
-cs2              caught stealing second base
-cs3              caught stealing third base
-csh              caught stealing home
-pko1             pickoff at first base
-pko2             pickoff at second base
-pko3             pickoff at third base
-k_safe           strikeout on which the batter reached base safely - subset of 'k'
-e1               error(s) by the pitcher; it is possible to be charged multiple errors on a single play
-e2               error(s) by the catcher
-e3               error(s) by the first baseman
-e4               error(s) by the second baseman
-e5               error(s) by the third baseman
-e6               error(s) by the shortstop
-e7               error(s) by the left fielder
-e8               error(s) by the center fielder
-e9               error(s) by the right fielder
-outs_pre         number of outs prior to the play
-outs_post        number of outs at the conclusion of the play
-br1_pre          runner on first base, if any, prior to the play
-br2_pre          runner on second base, if any, prior to the play
-br3_pre          runner on third base, if any, prior to the play
-br1_post         runner on first base, if any, at the conclusion of the play
-br2_post         runner on second base, if any, at the conclusion of the play
-br3_post         runner on third base, if any, at the conclusion of the play
-lob_id1          id of baserunner left on base after third out of inning
-lob_id2          id of baserunner left on base after third out of inning
-lob_id3          id of baserunner left on base after third out of inning
-pr1_pre          pitcher responsible for runner on first base prior to the play
-pr2_pre          pitcher responsible for runner on second base prior to the play
-pr3_pre          pitcher responsible for runner on third base prior to the play
-pr1_post         pitcher responsible for runner on first base at the conclusion of the play
-pr2_post         pitcher responsible for runner on second base at the conclusion of the play
-pr3_post         pitcher responsible for runner on third base at the conclusion of the play
-run_b            batter if he scored a run on the play
-run1             runner on first base if he scored a run on the play
-run2             runner on second base if he scored a run on the play
-run3             runner on third base if he scored a run on the play
-prun_b		 pitcher charged with the run scored by the batter
-prun1            pitcher charged with the run scored by the runner on first base
-prun2            pitcher charged with the run scored by the runner on second base
-prun3            pitcher charged with the run scored by the runner on third base
-ur_b		 unearned run scored by batter
-ur1		 unearned run scored by Unearned runner on first base
-ur2		 unearned run scored by Unearned runner on second base
-ur3		 unearned run scored by Unearned runner on third base
-rbi_b		 RBI credited for run scored by batter
-rbi1		 RBI credited for run scored by runner on first base
-rbi2		 RBI credited for run scored by runner on second base
-rbi3		 RBI credited for run scored by runner on third base
-runs             total runs scored on the play
-rbi              total RBI credited to batter on the play
-er               total earned runs scored on the play
-tur              runs scored on the play credited as (TUR) - team unearned runs
-                 - in modern seasons, relief pitchers do not get the benefit of errors which occurred
-                   before they entered the game in calculating pitcher-specific earned runs; team
-                   earned runs are calculated taking into account all errors in the inning
-l1	 	 batting team lineup position 1
-l2		 batting team lineup position 2
-l3		 batting team lineup position 3
-l4		 batting team lineup position 4
-l5		 batting team lineup position 5
-l6		 batting team lineup position 6
-l7		 batting team lineup position 7
-l8		 batting team lineup position 8
-l9		 batting team lineup position 9
-lf1		 fielding position of batting team lineup position 1
-lf2		 fielding position of batting team lineup position 2
-lf3		 fielding position of batting team lineup position 3
-lf4		 fielding position of batting team lineup position 4
-lf5		 fielding position of batting team lineup position 5
-lf6		 fielding position of batting team lineup position 6
-lf7		 fielding position of batting team lineup position 7
-lf8		 fielding position of batting team lineup position 8
-lf9	 	 fielding position of batting team lineup position 9
-f2               catcher
-f3               first baseman
-f4               second baseman
-f5               third baseman
-f6               shortstop
-f7               left fielder
-f8               center fielder
-f9               right fielder
-po0              putouts on play for which fielder is not identified (scored as 99 in event files)
-po1              putouts on play by pitcher
-po2              putouts on play by catcher
-po3              putouts on play by first baseman
-po4              putouts on play by second baseman
-po5              putouts on play by third baseman
-po6              putouts on play by shortstop
-po7              putouts on play by left fielder
-po8              putouts on play by center fielder
-po9              putouts on play by right fielder
-a1               assists on play by pitcher
-a2               assists on play by catcher
-a3               assists on play by first baseman
-a4               assists on play by second baseman
-a5               assists on play by third baseman
-a6               assists on play by shortstop
-a7               assists on play by left fielder
-a8               assists on play by center fielder
-a9               assists on play by right fielder
-fseq		 fielding sequence for out(s): e.g., 643 for 6-4-3 double play (0 indicates unknown fielder)
-batout1          fielding position of player who initiated first batting out
-batout2          fielding position of player who initiated second batting out (for double play)
-batout3          fielding position of player who initiated third batting out (for triple play)
-brout_b          fielding position of player who initiated baserunning out by batter
-brout1           fielding position of player who initiated baserunning out by runner on first base
-brout2           fielding position of player who initiated baserunning out by runner on second base
-brout3           fielding position of player who initiated baserunning out by runner on third base
-                 - for assisted plays, the player who 'initiated' an out is the player who earned the first assist
-firstf           fielding position of first player to field a ball-in-play (1 - 9; 0 if unknown)
-loc              location of ball in play, if known
-hittype          hit type of ball in play, if known
-                 - BG = bunt ground ball, BP = bunt pop-up, BL = bunt line drive, G = ground ball, P = pop up, F = fly ball, L =line drive
-dpopp            equal to one if there was a runner on first base and fewer than two outs
-pivot            pivot man on double-play opportunity if one existed
-                 - on a ground ball where 'dpopp' = 1, 'pivot' is player who made initial putout if a baserunner was forced out,
-                   or fielder of ground ball ('firstf') if no force out
-                 - idea behind 'pivot' is to establish fielders who deserve to share credit/blame for converting double plays
-pn               play number - sequential order of plays within a particular game
-umphome		 home plate umpire
-ump1b		 1b umpire
-ump2b		 2b umpire
-ump3b		 3b umpire
-umplf		 lf umpire
-umprf		 rf umpire
-date		 date of game
-                 - if a game was suspended and later resumed on a different date, the value for 'date' will change mid-game,
-                   to indicate the resumption of the game; 'date' does not change mid-game for games that are played continuously,
-   		   but end after midnight local time
-gametype         type of game (e.g., regular-season, exhibition, etc.)
-pbp              'deduced' or 'full'
-```
+### 3. Games & Schedules - **(R)**
 
-- `GET /v1/games/{game_id}/plays` - Full play-by-play
-- `GET /v1/games/{game_id}/events` - Raw Retrosheet events
-- `GET /v1/players/{player_id}/plate-appearances` - All PA with context
+| Status | Endpoint                                       | Dataset | Description                                                    |
+| ------ | ---------------------------------------------- | ------- | -------------------------------------------------------------- |
+| Done   | `GET /v1/games`                                | R       | Search games by season, teams, park, and date range.           |
+| Done   | `GET /v1/games/{game_id}`                      | R       | Game metadata, score, and key events.                          |
+| Done   | `GET /v1/games/{game_id}/boxscore`             | R       | Expanded boxscore with lineups and per-player lines.           |
+| To-Do  | `GET /v1/games/{game_id}/summary`              | R       | Narrative summary (winning pitcher, save, highlights).         |
+| Done   | `GET /v1/seasons/{year}/schedule`              | R       | Full season schedule with pagination.                          |
+| Done   | `GET /v1/seasons/{year}/dates/{date}/games`    | R       | All games played on a calendar date.                           |
+| Done   | `GET /v1/seasons/{year}/teams/{team_id}/games` | R       | Team-specific schedule (duplicate of table above for clarity). |
+| To-Do  | `GET /v1/seasons/{year}/parks/{park_id}/games` | R       | Games played in a specific ballpark.                           |
 
-### Additional Entities
+### 4. Play-by-Play Events & Context - **(R)**
 
-- Parks, umpires, managers endpoints
-- Ejections and special events
-- Awards and All-Star game data
-- Postseason series and games
+| Status      | Endpoint                                        | Dataset | Description                                                                 |
+| ----------- | ----------------------------------------------- | ------- | --------------------------------------------------------------------------- |
+| Done        | `GET /v1/plays`                                 | R       | Query parsed plays with batter/pitcher/team filters.                        |
+| Done        | `GET /v1/games/{game_id}/plays`                 | R       | Chronological plays for a game (currently the canonical play-by-play feed). |
+| In-Progress | `GET /v1/games/{game_id}/events`                | R       | Planned raw Retrosheet events (alias/extension on top of `/plays`).         |
+| To-Do       | `GET /v1/games/{game_id}/events/{event_seq}`    | R       | Single event lookup with structured base/out state.                         |
+| To-Do       | `GET /v1/players/{player_id}/plate-appearances` | R       | Player-level PA list with leverage, count, and vs. pitcher filters.         |
+| To-Do       | `GET /v1/pitches`                               | R       | Optional dataset if we derive per-pitch signals.                            |
 
-### Search & Discovery
+Retrosheet's `plays` CSV exposes 160+ fields (teams, lineup slots, ball-in-play classification, baserunner state, umpire crew, etc.). All ingestion follows the [Retrosheet parsed play-by-play specification](https://retrosheet.org/downloads/plays.html).
 
-- `GET /v1/search/players` - Fuzzy player search
-- `GET /v1/search/teams` - Team search
-- `GET /v1/search/games` - Natural language game search
+### 5. Parks, Umpires, Managers & Other Entities - **(L+R)**
 
-## Advanced Analytics
+| Status | Endpoint                           | Dataset | Description                                              |
+| ------ | ---------------------------------- | ------- | -------------------------------------------------------- |
+| To-Do  | `GET /v1/parks`                    | L+R     | Ballpark directory with locations and active years.      |
+| To-Do  | `GET /v1/parks/{park_id}`          | L+R     | Single ballpark plus games hosted.                       |
+| To-Do  | `GET /v1/managers`                 | L       | Manager careers, totals, and teams managed.              |
+| To-Do  | `GET /v1/managers/{manager_id}`    | L       | Detailed manager record.                                 |
+| To-Do  | `GET /v1/umpires`                  | L+R     | Umpire list.                                             |
+| To-Do  | `GET /v1/umpires/{umpire_id}`      | L+R     | Umpire details + officiated games.                       |
+| To-Do  | `GET /v1/ejections`                | R       | All ejection events with filters (player, umpire, year). |
+| To-Do  | `GET /v1/seasons/{year}/ejections` | R       | Season-level slice of ejections.                         |
 
-### Derived Statistics
+### 6. Stats & Leaderboards - **(L)** (with optional **(R)** joins)
 
-- Player streaks and splits
-- Team run differential analysis
-- Win probability calculations
-- Advanced metrics integration
+#### Career & Season Stats
 
-### API Enhancements
+| Status | Endpoint                                     | Dataset | Description                                                           |
+| ------ | -------------------------------------------- | ------- | --------------------------------------------------------------------- |
+| Done   | `GET /v1/stats/batting`                      | L       | Flexible batting query (player/team/season filters, min AB, sorting). |
+| Done   | `GET /v1/stats/pitching`                     | L       | Flexible pitching query (season ranges, min IP).                      |
+| To-Do  | `GET /v1/stats/fielding`                     | L       | Fielding stats (positions, innings).                                  |
+| To-Do  | `GET /v1/players/{player_id}/stats/batting`  | L+R     | Player-specific batting summary (career + optional splits).           |
+| To-Do  | `GET /v1/players/{player_id}/stats/pitching` | L+R     | Player-specific pitching summary.                                     |
 
-- OpenAPI documentation
-- Caching layer
-- Rate limiting
-- Performance optimization
+#### Seasonal Leaders
 
-## Technical Implementation Notes
+| Status | Endpoint                                  | Dataset | Description                 |
+| ------ | ----------------------------------------- | ------- | --------------------------- |
+| Done   | `GET /v1/seasons/{year}/leaders/batting`  | L       | Leaders for HR/AVG/RBI/etc. |
+| Done   | `GET /v1/seasons/{year}/leaders/pitching` | L       | Leaders for ERA/SO/W/etc.   |
+| To-Do  | `GET /v1/leaders/batting/career`          | L       | Career batting leaders.     |
+| To-Do  | `GET /v1/leaders/pitching/career`         | L       | Career pitching leaders.    |
 
-### Data Sources
+#### Team-Level Stats
 
-- **Lahman**: Season/career stats from SABR (1871-2024)
-- **Retrosheet**: Game-level and play-by-play data
-- Both sources provide consistent IDs for joins
+| Status | Endpoint                       | Dataset | Description                               |
+| ------ | ------------------------------ | ------- | ----------------------------------------- |
+| To-Do  | `GET /v1/stats/teams/batting`  | L       | Team batting in a season (league filter). |
+| To-Do  | `GET /v1/stats/teams/pitching` | L       | Team pitching.                            |
+| To-Do  | `GET /v1/stats/teams/fielding` | L       | Team fielding.                            |
 
-### ID Conventions
+### 7. Awards, All-Star Games, Postseason - **(L)**
 
-- `player_id`: Lahman playerID (e.g., "troutmi01")
-- `team_id`: Lahman teamID (e.g., "LAA")
-- `game_id`: Retrosheet GAME_ID (e.g., "ANA201304010")
+| Status | Endpoint                                   | Dataset | Description                                   |
+| ------ | ------------------------------------------ | ------- | --------------------------------------------- |
+| To-Do  | `GET /v1/awards`                           | L       | Browse awards data (MVP, Cy Young, ROY).      |
+| To-Do  | `GET /v1/awards/{award_id}`                | L       | Detailed view for a specific award.           |
+| To-Do  | `GET /v1/seasons/{year}/awards`            | L       | Awards issued during a season.                |
+| To-Do  | `GET /v1/seasons/{year}/postseason/series` | L       | Postseason series list (LCS, WS, etc.).       |
+| To-Do  | `GET /v1/seasons/{year}/postseason/games`  | L+R     | Postseason games joined with Retrosheet data. |
+| To-Do  | `GET /v1/allstar/games`                    | L+R     | All-Star Game history.                        |
+| To-Do  | `GET /v1/allstar/games/{game_id}`          | L+R     | Specific All-Star game box/events.            |
 
-### Response Format
+### 8. Search & Lookup Utilities - **(L+R)**
 
-```json
-{
-  "data": [...],
-  "page": 1,
-  "per_page": 50,
-  "total": 1234
-}
-```
+| Status | Endpoint                 | Dataset | Description                                                         |
+| ------ | ------------------------ | ------- | ------------------------------------------------------------------- |
+| To-Do  | `GET /v1/search/players` | L+R     | Fuzzy player search with optional era/league filters.               |
+| To-Do  | `GET /v1/search/teams`   | L+R     | Search by name, city, franchise.                                    |
+| To-Do  | `GET /v1/search/games`   | R       | Natural language queries such as “Yankees vs Red Sox 2003 ALCS G7.” |
+| To-Do  | `GET /v1/search/parks`   | L+R     | Ballpark lookup by name/city.                                       |
 
-### Attribution Requirements
+### 9. Derived & Advanced Endpoints
 
-- **Lahman**: Credit SABR + Lahman database with copyright notice
-- **Retrosheet**: "The information used here was obtained free of charge from and is copyrighted by Retrosheet"
+- To-Do `/v1/players/{player_id}/streaks` - Track hitting or scoreless inning streaks.
+- To-Do `/v1/players/{player_id}/splits` - Home/away, handedness, month, batting order splits.
+- To-Do `/v1/teams/{team_id}/run-differential` - Season totals and rolling windows.
+- To-Do `/v1/games/{game_id}/win-probability` - Win probability graphs derived from play-by-play.
 
-## Targets
+### 10. Advanced Analytics & Enhancements
 
-### Lahman ETL + Basic API
+- To-Do Derived stats (WAR-like measures, leverage indexes) built atop the Retrosheet plays dataset.
+- To-Do OpenAPI enhancements (schemas per endpoint, examples) plus Markdown docs.
+- To-Do Cache + rate limiting layer for public deployments.
+- To-Do Performance testing and observability hooks before GA release.
 
-- CLI tool with cobra + lipgloss
-- Lahman schema + ingestion
-- Core player/team/stats endpoints
+## Milestones & Targets
 
-### Retrosheet Game Logs
-
-- Retrosheet daily logs ingestion
-- Game and schedule endpoints
-
-### Play-by-Play
-
-- Full Retrosheet event parsing
-- Advanced play-by-play endpoints
-
-### Deployment
-
-- Documentation, caching, optimization
-- Joined Lahman + Retrosheet endpoints
-- Performance testing and deployment
+| Status      | Milestone                              | Scope                                                                                                                 |
+| ----------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| In-Progress | **M1 - Lahman ETL + Basic API**        | CLI + migrations + Lahman ingestion + players/teams/stats endpoints (implemented, needs monitoring/status reporting). |
+| In-Progress | **M2 - Retrosheet Game Logs**          | Retrosheet game-log ingestion + game/schedule endpoints (loaders and endpoints exist; substitute handling still TBD). |
+| In-Progress | **M3 - Play-by-Play**                  | Plays ingestion + `/plays` endpoints are live; need richer event context + player game-log parity.                    |
+| To-Do       | **M4 - Joined & Advanced Experiences** | Lahman + Retrosheet joins, derived analytics, caching, and deployment hardening.                                      |

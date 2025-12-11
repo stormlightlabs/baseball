@@ -14,3 +14,10 @@
 
 1. Add a separate table for all player game appearances (not just starters)
 2. Aggregate individual game stats from play-by-play data for true game logs
+
+### Next Steps
+
+- Finish ETL status reporting
+- Expand season/team stats endpoints
+- Deliver `/meta` dataset visibility
+- Implement the planned advanced analytics endpoints once play-by-play ingestion is lossless.
