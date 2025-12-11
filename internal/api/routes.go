@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
@@ -213,11 +214,250 @@ type GameRoutes struct {
 	repo core.GameRepository
 }
 
-func NewGameRoutes(repo core.GameRepository) *GameRoutes { return &GameRoutes{repo: repo} }
+func NewGameRoutes(repo core.GameRepository) *GameRoutes {
+	return &GameRoutes{repo: repo}
+}
 
-// TODO: retrosheet routing
 func (gr *GameRoutes) RegisterRoutes(mux *http.ServeMux) {
-	// mux.HandleFunc("GET /v1/games", gr.handleListGames)
-	// mux.HandleFunc("GET /v1/games/{id}", gr.handleGetGame)
-	// mux.HandleFunc("GET /v1/games/{id}/events", gr.handleGameEvents)
+	mux.HandleFunc("GET /v1/games", gr.handleListGames)
+	mux.HandleFunc("GET /v1/games/{id}", gr.handleGetGame)
+	mux.HandleFunc("GET /v1/seasons/{year}/schedule", gr.handleSeasonSchedule)
+	mux.HandleFunc("GET /v1/seasons/{year}/dates/{date}/games", gr.handleGamesByDate)
+	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/games", gr.handleTeamGames)
+}
+
+// handleGetGame godoc
+// @Summary Get game by ID
+// @Description Get detailed information for a specific game
+// @Tags games
+// @Accept json
+// @Produce json
+// @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
+// @Success 200 {object} core.Game
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /games/{id} [get]
+func (gr *GameRoutes) handleGetGame(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.GameID(r.PathValue("id"))
+
+	game, err := gr.repo.GetByID(ctx, id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, game)
+}
+
+// handleListGames godoc
+// @Summary List games
+// @Description Search and browse games with optional filters and pagination
+// @Tags games
+// @Accept json
+// @Produce json
+// @Param season query integer false "Filter by season year"
+// @Param home_team query string false "Filter by home team ID"
+// @Param away_team query string false "Filter by away team ID"
+// @Param park_id query string false "Filter by park ID"
+// @Param date_from query string false "Start date (YYYY-MM-DD)"
+// @Param date_to query string false "End date (YYYY-MM-DD)"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /games [get]
+func (gr *GameRoutes) handleListGames(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	filter := core.GameFilter{
+		Pagination: core.Pagination{
+			Page:    getIntQuery(r, "page", 1),
+			PerPage: getIntQuery(r, "per_page", 50),
+		},
+	}
+
+	if season := r.URL.Query().Get("season"); season != "" {
+		y := core.SeasonYear(getIntQuery(r, "season", 0))
+		filter.Season = &y
+	}
+
+	if homeTeam := r.URL.Query().Get("home_team"); homeTeam != "" {
+		t := core.TeamID(homeTeam)
+		filter.HomeTeam = &t
+	}
+
+	if awayTeam := r.URL.Query().Get("away_team"); awayTeam != "" {
+		t := core.TeamID(awayTeam)
+		filter.AwayTeam = &t
+	}
+
+	if parkID := r.URL.Query().Get("park_id"); parkID != "" {
+		p := core.ParkID(parkID)
+		filter.ParkID = &p
+	}
+
+	if dateFrom := r.URL.Query().Get("date_from"); dateFrom != "" {
+		if d, err := time.Parse("2006-01-02", dateFrom); err == nil {
+			filter.DateFrom = &d
+		}
+	}
+
+	if dateTo := r.URL.Query().Get("date_to"); dateTo != "" {
+		if d, err := time.Parse("2006-01-02", dateTo); err == nil {
+			filter.DateTo = &d
+		}
+	}
+
+	games, err := gr.repo.List(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := gr.repo.Count(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    games,
+		Page:    filter.Pagination.Page,
+		PerPage: filter.Pagination.PerPage,
+		Total:   total,
+	})
+}
+
+// handleSeasonSchedule godoc
+// @Summary Get season schedule
+// @Description Get all games for a specific season
+// @Tags games
+// @Accept json
+// @Produce json
+// @Param year path integer true "Season year"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(100)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{year}/schedule [get]
+func (gr *GameRoutes) handleSeasonSchedule(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	year := core.SeasonYear(getIntPathValue(r, "year"))
+
+	filter := core.GameFilter{
+		Season: &year,
+		Pagination: core.Pagination{
+			Page:    getIntQuery(r, "page", 1),
+			PerPage: getIntQuery(r, "per_page", 100),
+		},
+	}
+
+	games, err := gr.repo.List(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := gr.repo.Count(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    games,
+		Page:    filter.Pagination.Page,
+		PerPage: filter.Pagination.PerPage,
+		Total:   total,
+	})
+}
+
+// handleGamesByDate godoc
+// @Summary Get games by date
+// @Description Get all games played on a specific date
+// @Tags games
+// @Accept json
+// @Produce json
+// @Param year path integer true "Season year"
+// @Param date path string true "Date (YYYY-MM-DD format)"
+// @Success 200 {array} core.Game
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{year}/dates/{date}/games [get]
+func (gr *GameRoutes) handleGamesByDate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	year := getIntPathValue(r, "year")
+	dateStr := r.PathValue("date")
+
+	targetDate, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid date format. Use YYYY-MM-DD",
+		})
+		return
+	}
+
+	if targetDate.Year() != year {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{
+			Error: "Date year must match season year",
+		})
+		return
+	}
+
+	games, err := gr.repo.ListByDate(ctx, targetDate)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, games)
+}
+
+// handleTeamGames godoc
+// @Summary Get team games for a season
+// @Description Get all games for a specific team in a season
+// @Tags games
+// @Accept json
+// @Produce json
+// @Param year path integer true "Season year"
+// @Param team_id path string true "Team ID"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(100)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{year}/teams/{team_id}/games [get]
+func (gr *GameRoutes) handleTeamGames(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	year := core.SeasonYear(getIntPathValue(r, "year"))
+	teamID := core.TeamID(r.PathValue("team_id"))
+
+	pagination := core.Pagination{
+		Page:    getIntQuery(r, "page", 1),
+		PerPage: getIntQuery(r, "per_page", 100),
+	}
+
+	games, err := gr.repo.ListByTeamSeason(ctx, teamID, year, pagination)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	filter := core.GameFilter{
+		HomeTeam:   &teamID,
+		Season:     &year,
+		Pagination: pagination,
+	}
+
+	total, err := gr.repo.Count(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    games,
+		Page:    pagination.Page,
+		PerPage: pagination.PerPage,
+		Total:   total,
+	})
 }

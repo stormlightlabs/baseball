@@ -83,3 +83,16 @@ func getIntQuery(r *http.Request, key string, defaultVal int) int {
 	}
 	return i
 }
+
+func getIntPathValue(r *http.Request, key string) int {
+	val := r.PathValue(key)
+	if val == "" {
+		return 0
+	}
+
+	i, err := strconv.Atoi(val)
+	if err != nil {
+		return 0
+	}
+	return i
+}

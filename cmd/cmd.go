@@ -412,6 +412,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 	teamRepo := repository.NewTeamRepository(database.DB)
 	statsRepo := repository.NewStatsRepository(database.DB)
 	awardRepo := repository.NewAwardRepository(database.DB)
+	gameRepo := repository.NewGameRepository(database.DB)
 
 	echo.Info("Registering routes...")
 
@@ -419,6 +420,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 		api.NewPlayerRoutes(playerRepo, awardRepo),
 		api.NewTeamRoutes(teamRepo),
 		api.NewStatsRoutes(statsRepo),
+		api.NewGameRoutes(gameRepo),
 	)
 
 	addr := ":8080"
@@ -439,6 +441,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 	echo.Info("  GET  /v1/franchises/{id}")
 	echo.Info("  GET  /v1/seasons/{year}/leaders/batting?stat={stat}&league={league}&limit={limit}")
 	echo.Info("  GET  /v1/seasons/{year}/leaders/pitching?stat={stat}&league={league}&limit={limit}")
+	// TODO: game routes
 	echo.Info("")
 
 	return http.ListenAndServe(addr, server)
