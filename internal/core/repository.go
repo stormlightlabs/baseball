@@ -5,8 +5,7 @@ import (
 	"time"
 )
 
-// PlayerRepository encapsulates all "player-centric" access:
-// bio, seasons, per-player stats, game logs.
+// PlayerRepository encapsulates all "player-centric" access: bio, seasons, per-player stats, game logs.
 type PlayerRepository interface {
 	GetByID(ctx context.Context, id PlayerID) (*Player, error)
 	List(ctx context.Context, filter PlayerFilter) ([]Player, error)
@@ -43,6 +42,11 @@ type TeamRepository interface {
 
 	// Roster for a given team & season; built from batting/fielding/pitching joins.
 	Roster(ctx context.Context, year SeasonYear, teamID TeamID) ([]RosterPlayer, error)
+
+	// Team aggregate stats with optional per-player splits
+	BattingStats(ctx context.Context, year SeasonYear, teamID TeamID, includePlayers bool) (*TeamBattingStats, error)
+	PitchingStats(ctx context.Context, year SeasonYear, teamID TeamID, includePlayers bool) (*TeamPitchingStats, error)
+	FieldingStats(ctx context.Context, year SeasonYear, teamID TeamID, includePlayers bool) (*TeamFieldingStats, error)
 }
 
 // GameRepository manages game-log level data.

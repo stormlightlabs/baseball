@@ -256,7 +256,6 @@ func (r *TeamRepository) ListSeasons(ctx context.Context) ([]core.Season, error)
 			return nil, fmt.Errorf("failed to scan season: %w", err)
 		}
 
-		// Parse comma-separated leagues
 		if leaguesStr != "" {
 			for _, lg := range splitAndTrim(leaguesStr, ",") {
 				s.Leagues = append(s.Leagues, core.LeagueID(lg))
@@ -357,4 +356,287 @@ func (r *TeamRepository) Roster(ctx context.Context, year core.SeasonYear, teamI
 	}
 
 	return roster, nil
+}
+
+func (r *TeamRepository) BattingStats(ctx context.Context, year core.SeasonYear, teamID core.TeamID, includePlayers bool) (*core.TeamBattingStats, error) {
+	aggQuery := `
+		SELECT
+			"teamID", "yearID", "lgID",
+			COUNT(DISTINCT "playerID") as g,
+			SUM("AB") as ab,
+			SUM("R") as r,
+			SUM("H") as h,
+			SUM("2B") as doubles,
+			SUM("3B") as triples,
+			SUM("HR") as hr,
+			SUM("RBI") as rbi,
+			SUM("SB") as sb,
+			SUM("CS") as cs,
+			SUM("BB") as bb,
+			SUM("SO") as so,
+			SUM("HBP") as hbp,
+			SUM("SF") as sf
+		FROM "Batting"
+		WHERE "teamID" = $1 AND "yearID" = $2
+		GROUP BY "teamID", "yearID", "lgID"
+	`
+
+	var stats core.TeamBattingStats
+	var ab, h, bb, hbp, sf int
+
+	err := r.db.QueryRowContext(ctx, aggQuery, string(teamID), int(year)).Scan(
+		&stats.TeamID, &stats.Year, &stats.League,
+		&stats.G, &ab, &stats.R, &h, &stats.Doubles, &stats.Triples,
+		&stats.HR, &stats.RBI, &stats.SB, &stats.CS, &bb, &stats.SO, &hbp, &sf,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("no batting stats found for team %s in year %d", teamID, year)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get team batting stats: %w", err)
+	}
+
+	stats.AB = ab
+	stats.H = h
+	stats.BB = bb
+	stats.HBP = hbp
+	stats.SF = sf
+
+	if ab > 0 {
+		stats.AVG = float64(h) / float64(ab)
+	}
+	if ab+bb+hbp+sf > 0 {
+		stats.OBP = float64(h+bb+hbp) / float64(ab+bb+hbp+sf)
+	}
+	singles := h - stats.Doubles - stats.Triples - stats.HR
+	totalBases := singles + (stats.Doubles * 2) + (stats.Triples * 3) + (stats.HR * 4)
+	if ab > 0 {
+		stats.SLG = float64(totalBases) / float64(ab)
+		stats.OPS = stats.OBP + stats.SLG
+	}
+
+	if includePlayers {
+		playerQuery := `
+			SELECT
+				"playerID", "yearID", "teamID", "lgID",
+				"G", SUM("AB") as pa, SUM("AB") as ab, SUM("R") as r, SUM("H") as h,
+				SUM("2B") as doubles, SUM("3B") as triples, SUM("HR") as hr,
+				SUM("RBI") as rbi, SUM("SB") as sb, SUM("CS") as cs,
+				SUM("BB") as bb, SUM("SO") as so, SUM("HBP") as hbp, SUM("SF") as sf
+			FROM "Batting"
+			WHERE "teamID" = $1 AND "yearID" = $2
+			GROUP BY "playerID", "yearID", "teamID", "lgID", "G"
+			ORDER BY SUM("AB") DESC
+		`
+
+		rows, err := r.db.QueryContext(ctx, playerQuery, string(teamID), int(year))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get player batting stats: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var ps core.PlayerBattingSeason
+			var pa, ab, h, bb, hbp, sf int
+
+			err := rows.Scan(
+				&ps.PlayerID, &ps.Year, &ps.TeamID, &ps.League,
+				&ps.G, &pa, &ab, &ps.R, &h, &ps.Doubles, &ps.Triples,
+				&ps.HR, &ps.RBI, &ps.SB, &ps.CS, &bb, &ps.SO, &hbp, &sf,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to scan player batting: %w", err)
+			}
+
+			ps.PA = pa
+			ps.AB = ab
+			ps.H = h
+			ps.BB = bb
+			ps.HBP = hbp
+			ps.SF = sf
+
+			if ab > 0 {
+				ps.AVG = float64(h) / float64(ab)
+			}
+			if ab+bb+hbp+sf > 0 {
+				ps.OBP = float64(h+bb+hbp) / float64(ab+bb+hbp+sf)
+			}
+			singles := h - ps.Doubles - ps.Triples - ps.HR
+			totalBases := singles + (ps.Doubles * 2) + (ps.Triples * 3) + (ps.HR * 4)
+			if ab > 0 {
+				ps.SLG = float64(totalBases) / float64(ab)
+				ps.OPS = ps.OBP + ps.SLG
+			}
+
+			stats.Players = append(stats.Players, ps)
+		}
+	}
+
+	return &stats, nil
+}
+
+func (r *TeamRepository) PitchingStats(ctx context.Context, year core.SeasonYear, teamID core.TeamID, includePlayers bool) (*core.TeamPitchingStats, error) {
+	aggQuery := `
+		SELECT
+			"teamID", "yearID", "lgID",
+			SUM("W") as w, SUM("L") as l,
+			SUM("G") as g, SUM("GS") as gs, SUM("CG") as cg, SUM("SHO") as sho, SUM("SV") as sv,
+			SUM("IPouts") as ip_outs,
+			SUM("H") as h, SUM("ER") as er, SUM("HR") as hr,
+			SUM("BB") as bb, SUM("SO") as so
+		FROM "Pitching"
+		WHERE "teamID" = $1 AND "yearID" = $2
+		GROUP BY "teamID", "yearID", "lgID"
+	`
+
+	var stats core.TeamPitchingStats
+
+	err := r.db.QueryRowContext(ctx, aggQuery, string(teamID), int(year)).Scan(
+		&stats.TeamID, &stats.Year, &stats.League,
+		&stats.W, &stats.L, &stats.G, &stats.GS, &stats.CG, &stats.SHO, &stats.SV,
+		&stats.IPOuts, &stats.H, &stats.ER, &stats.HR, &stats.BB, &stats.SO,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("no pitching stats found for team %s in year %d", teamID, year)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get team pitching stats: %w", err)
+	}
+
+	if stats.IPOuts > 0 {
+		stats.ERA = (float64(stats.ER) * 27.0) / float64(stats.IPOuts)
+		innings := float64(stats.IPOuts) / 3.0
+		stats.WHIP = (float64(stats.H) + float64(stats.BB)) / innings
+	}
+
+	if includePlayers {
+		playerQuery := `
+			SELECT
+				"playerID", "yearID", "teamID", "lgID",
+				SUM("W") as w, SUM("L") as l,
+				SUM("G") as g, SUM("GS") as gs, SUM("CG") as cg, SUM("SHO") as sho, SUM("SV") as sv,
+				SUM("IPouts") as ip_outs,
+				SUM("H") as h, SUM("ER") as er, SUM("HR") as hr,
+				SUM("BB") as bb, SUM("SO") as so,
+				SUM("HBP") as hbp, SUM("BK") as bk, SUM("WP") as wp
+			FROM "Pitching"
+			WHERE "teamID" = $1 AND "yearID" = $2
+			GROUP BY "playerID", "yearID", "teamID", "lgID"
+			ORDER BY SUM("IPouts") DESC
+		`
+
+		rows, err := r.db.QueryContext(ctx, playerQuery, string(teamID), int(year))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get player pitching stats: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var ps core.PlayerPitchingSeason
+
+			err := rows.Scan(
+				&ps.PlayerID, &ps.Year, &ps.TeamID, &ps.League,
+				&ps.W, &ps.L, &ps.G, &ps.GS, &ps.CG, &ps.SHO, &ps.SV,
+				&ps.IPOuts, &ps.H, &ps.ER, &ps.HR, &ps.BB, &ps.SO,
+				&ps.HBP, &ps.BK, &ps.WP,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to scan player pitching: %w", err)
+			}
+
+			if ps.IPOuts > 0 {
+				ps.ERA = (float64(ps.ER) * 27.0) / float64(ps.IPOuts)
+				innings := float64(ps.IPOuts) / 3.0
+				ps.WHIP = (float64(ps.H) + float64(ps.BB)) / innings
+				ps.KPer9 = (float64(ps.SO) * 27.0) / float64(ps.IPOuts)
+				ps.BBPer9 = (float64(ps.BB) * 27.0) / float64(ps.IPOuts)
+				ps.HRPer9 = (float64(ps.HR) * 27.0) / float64(ps.IPOuts)
+			}
+
+			stats.Players = append(stats.Players, ps)
+		}
+	}
+
+	return &stats, nil
+}
+
+func (r *TeamRepository) FieldingStats(ctx context.Context, year core.SeasonYear, teamID core.TeamID, includePlayers bool) (*core.TeamFieldingStats, error) {
+	aggQuery := `
+		SELECT
+			"teamID", "yearID", "lgID",
+			SUM("G") as g,
+			SUM("PO") as po, SUM("A") as a, SUM("E") as e, SUM("DP") as dp,
+			SUM(CASE WHEN "POS" = 'C' THEN "PB" ELSE 0 END) as pb,
+			SUM(CASE WHEN "POS" = 'C' THEN "WP" ELSE 0 END) as wp
+		FROM "Fielding"
+		WHERE "teamID" = $1 AND "yearID" = $2
+		GROUP BY "teamID", "yearID", "lgID"
+	`
+
+	var stats core.TeamFieldingStats
+	var wp int
+
+	err := r.db.QueryRowContext(ctx, aggQuery, string(teamID), int(year)).Scan(
+		&stats.TeamID, &stats.Year, &stats.League,
+		&stats.G, &stats.PO, &stats.A, &stats.E, &stats.DP, &stats.PB, &wp,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("no fielding stats found for team %s in year %d", teamID, year)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get team fielding stats: %w", err)
+	}
+
+	stats.SB = 0
+	stats.CS = 0
+
+	totalChances := stats.PO + stats.A + stats.E
+	if totalChances > 0 {
+		stats.FPct = float64(stats.PO+stats.A) / float64(totalChances)
+	}
+
+	if includePlayers {
+		playerQuery := `
+			SELECT
+				"playerID", "yearID", "teamID", "lgID", "POS",
+				SUM("G") as g, SUM("GS") as gs,
+				SUM("InnOuts") as inn_outs,
+				SUM("PO") as po, SUM("A") as a, SUM("E") as e, SUM("DP") as dp,
+				SUM("PB") as pb,
+				SUM(CASE WHEN "POS" = 'C' THEN 0 ELSE 0 END) as sb,
+				SUM(CASE WHEN "POS" = 'C' THEN 0 ELSE 0 END) as cs
+			FROM "Fielding"
+			WHERE "teamID" = $1 AND "yearID" = $2
+			GROUP BY "playerID", "yearID", "teamID", "lgID", "POS"
+			ORDER BY SUM("InnOuts") DESC
+		`
+
+		rows, err := r.db.QueryContext(ctx, playerQuery, string(teamID), int(year))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get player fielding stats: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var ps core.PlayerFieldingSeason
+
+			err := rows.Scan(
+				&ps.PlayerID, &ps.Year, &ps.TeamID, &ps.League, &ps.Position,
+				&ps.G, &ps.GS, &ps.Inn, &ps.PO, &ps.A, &ps.E, &ps.DP,
+				&ps.PB, &ps.SB, &ps.CS,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to scan player fielding: %w", err)
+			}
+
+			if ps.Inn > 0 {
+				innings := float64(ps.Inn) / 3.0
+				ps.RF9 = (float64(ps.PO) + float64(ps.A)) * 9.0 / innings
+			}
+
+			stats.Players = append(stats.Players, ps)
+		}
+	}
+
+	return &stats, nil
 }

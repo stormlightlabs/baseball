@@ -109,9 +109,9 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | ------ | ------------------------------------------------- | ------- | ------------------------------------------------ |
 | Done   | `GET /v1/seasons/{year}/teams`                    | L       | All teams for a season with aggregate stats.     |
 | Done   | `GET /v1/seasons/{year}/teams/{team_id}/roster`   | L       | Player list with positions and high-level stats. |
-| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/batting`  | L       | Aggregated batting stats plus per-player splits. |
-| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/pitching` | L       | Aggregated pitching stats.                       |
-| To-Do  | `GET /v1/seasons/{year}/teams/{team_id}/fielding` | L       | Aggregated fielding stats.                       |
+| Done   | `GET /v1/seasons/{year}/teams/{team_id}/batting`  | L       | Aggregated batting stats plus per-player splits. |
+| Done   | `GET /v1/seasons/{year}/teams/{team_id}/pitching` | L       | Aggregated pitching stats.                       |
+| Done   | `GET /v1/seasons/{year}/teams/{team_id}/fielding` | L       | Aggregated fielding stats.                       |
 
 #### Retrosheet Team Schedule & Logs - **(R)**
 

@@ -20,6 +20,9 @@ func (tr *TeamRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/seasons", tr.handleListSeasons)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams", tr.handleSeasonTeams)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/roster", tr.handleTeamRoster)
+	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/batting", tr.handleTeamBatting)
+	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/pitching", tr.handleTeamPitching)
+	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/fielding", tr.handleTeamFielding)
 	mux.HandleFunc("GET /v1/franchises", tr.handleListFranchises)
 	mux.HandleFunc("GET /v1/franchises/{id}", tr.handleGetFranchise)
 }
@@ -226,6 +229,90 @@ func (tr *TeamRoutes) handleTeamRoster(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, roster)
+}
+
+// handleTeamBatting godoc
+// @Summary Get team batting stats
+// @Description Get aggregated batting statistics for a team with optional per-player splits
+// @Tags teams
+// @Accept json
+// @Produce json
+// @Param year path integer true "Season year"
+// @Param team_id path string true "Team ID"
+// @Param players query boolean false "Include per-player splits"
+// @Success 200 {object} core.TeamBattingStats
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{year}/teams/{team_id}/batting [get]
+func (tr *TeamRoutes) handleTeamBatting(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	year := core.SeasonYear(getIntPathValue(r, "year"))
+	teamID := core.TeamID(r.PathValue("team_id"))
+	includePlayers := r.URL.Query().Get("players") == "true"
+
+	stats, err := tr.repo.BattingStats(ctx, year, teamID, includePlayers)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, stats)
+}
+
+// handleTeamPitching godoc
+// @Summary Get team pitching stats
+// @Description Get aggregated pitching statistics for a team with optional per-player splits
+// @Tags teams
+// @Accept json
+// @Produce json
+// @Param year path integer true "Season year"
+// @Param team_id path string true "Team ID"
+// @Param players query boolean false "Include per-player splits"
+// @Success 200 {object} core.TeamPitchingStats
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{year}/teams/{team_id}/pitching [get]
+func (tr *TeamRoutes) handleTeamPitching(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	year := core.SeasonYear(getIntPathValue(r, "year"))
+	teamID := core.TeamID(r.PathValue("team_id"))
+	includePlayers := r.URL.Query().Get("players") == "true"
+
+	stats, err := tr.repo.PitchingStats(ctx, year, teamID, includePlayers)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, stats)
+}
+
+// handleTeamFielding godoc
+// @Summary Get team fielding stats
+// @Description Get aggregated fielding statistics for a team with optional per-player/position splits
+// @Tags teams
+// @Accept json
+// @Produce json
+// @Param year path integer true "Season year"
+// @Param team_id path string true "Team ID"
+// @Param players query boolean false "Include per-player splits"
+// @Success 200 {object} core.TeamFieldingStats
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{year}/teams/{team_id}/fielding [get]
+func (tr *TeamRoutes) handleTeamFielding(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	year := core.SeasonYear(getIntPathValue(r, "year"))
+	teamID := core.TeamID(r.PathValue("team_id"))
+	includePlayers := r.URL.Query().Get("players") == "true"
+
+	stats, err := tr.repo.FieldingStats(ctx, year, teamID, includePlayers)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, stats)
 }
 
 // handleGetFranchise godoc

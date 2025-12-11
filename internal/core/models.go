@@ -508,3 +508,75 @@ type RosterPlayer struct {
 	ERA       *float64 `json:"era,omitempty"`
 	SO        *int     `json:"so,omitempty"`
 }
+
+// TeamBattingStats represents aggregated batting statistics for a team
+type TeamBattingStats struct {
+	TeamID TeamID     `json:"team_id" swaggertype:"string"`
+	Year   SeasonYear `json:"year" swaggertype:"integer"`
+	League LeagueID   `json:"league" swaggertype:"string"`
+
+	G       int     `json:"g"`
+	AB      int     `json:"ab"`
+	R       int     `json:"r"`
+	H       int     `json:"h"`
+	Doubles int     `json:"doubles"`
+	Triples int     `json:"triples"`
+	HR      int     `json:"hr"`
+	RBI     int     `json:"rbi"`
+	SB      int     `json:"sb"`
+	CS      int     `json:"cs"`
+	BB      int     `json:"bb"`
+	SO      int     `json:"so"`
+	HBP     int     `json:"hbp"`
+	SF      int     `json:"sf"`
+	AVG     float64 `json:"avg"`
+	OBP     float64 `json:"obp"`
+	SLG     float64 `json:"slg"`
+	OPS     float64 `json:"ops"`
+
+	Players []PlayerBattingSeason `json:"players,omitempty"`
+}
+
+// TeamPitchingStats represents aggregated pitching statistics for a team
+type TeamPitchingStats struct {
+	TeamID TeamID     `json:"team_id" swaggertype:"string"`
+	Year   SeasonYear `json:"year" swaggertype:"integer"`
+	League LeagueID   `json:"league" swaggertype:"string"`
+
+	W      int     `json:"w"`
+	L      int     `json:"l"`
+	G      int     `json:"g"`
+	GS     int     `json:"gs"`
+	CG     int     `json:"cg"`
+	SHO    int     `json:"sho"`
+	SV     int     `json:"sv"`
+	IPOuts int     `json:"ip_outs"`
+	H      int     `json:"h"`
+	ER     int     `json:"er"`
+	HR     int     `json:"hr"`
+	BB     int     `json:"bb"`
+	SO     int     `json:"so"`
+	ERA    float64 `json:"era"`
+	WHIP   float64 `json:"whip"`
+
+	Players []PlayerPitchingSeason `json:"players,omitempty"`
+}
+
+// TeamFieldingStats represents aggregated fielding statistics for a team
+type TeamFieldingStats struct {
+	TeamID TeamID     `json:"team_id" swaggertype:"string"`
+	Year   SeasonYear `json:"year" swaggertype:"integer"`
+	League LeagueID   `json:"league" swaggertype:"string"`
+
+	G    int     `json:"g"`
+	PO   int     `json:"po"`
+	A    int     `json:"a"`
+	E    int     `json:"e"`
+	DP   int     `json:"dp"`
+	PB   int     `json:"pb"`
+	SB   int     `json:"sb"`
+	CS   int     `json:"cs"`
+	FPct float64 `json:"fpct"` // Fielding percentage
+
+	Players []PlayerFieldingSeason `json:"players,omitempty"`
+}
