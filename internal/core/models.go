@@ -582,3 +582,53 @@ type TeamFieldingStats struct {
 
 	Players []PlayerFieldingSeason `json:"players,omitempty"`
 }
+
+// UserID is a unique identifier for a user
+type UserID string
+
+// User represents an authenticated user in the system
+type User struct {
+	ID          UserID     `json:"id"`
+	Email       string     `json:"email"`
+	Name        *string    `json:"name,omitempty"`
+	AvatarURL   *string    `json:"avatar_url,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	LastLoginAt *time.Time `json:"last_login_at,omitempty"`
+	IsActive    bool       `json:"is_active"`
+}
+
+// APIKey represents an API key for programmatic access
+type APIKey struct {
+	ID         string     `json:"id"`
+	UserID     UserID     `json:"user_id"`
+	KeyPrefix  string     `json:"key_prefix"`
+	Name       *string    `json:"name,omitempty"`
+	CreatedAt  time.Time  `json:"created_at"`
+	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
+	ExpiresAt  *time.Time `json:"expires_at,omitempty"`
+	IsActive   bool       `json:"is_active"`
+}
+
+// OAuthToken represents an OAuth2 token for session management
+type OAuthToken struct {
+	ID           string    `json:"id"`
+	UserID       UserID    `json:"user_id"`
+	AccessToken  string    `json:"access_token"`
+	RefreshToken *string   `json:"refresh_token,omitempty"`
+	TokenType    string    `json:"token_type"`
+	ExpiresAt    time.Time `json:"expires_at"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+// APIUsage represents a single API request for usage tracking
+type APIUsage struct {
+	ID             int64     `json:"id"`
+	UserID         *UserID   `json:"user_id,omitempty"`
+	APIKeyID       *string   `json:"api_key_id,omitempty"`
+	Endpoint       string    `json:"endpoint"`
+	Method         string    `json:"method"`
+	StatusCode     int       `json:"status_code"`
+	ResponseTimeMs *int      `json:"response_time_ms,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+}

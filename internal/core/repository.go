@@ -158,3 +158,75 @@ type SearchRepository interface {
 	SearchGames(ctx context.Context, filter GameFilter) ([]Game, error)
 	SearchParks(ctx context.Context, filter SearchFilter) ([]Park, error)
 }
+
+// UserRepository handles user authentication and management.
+type UserRepository interface {
+	// GetByID retrieves a user by ID
+	GetByID(ctx context.Context, id UserID) (*User, error)
+
+	// GetByEmail retrieves a user by email address
+	GetByEmail(ctx context.Context, email string) (*User, error)
+
+	// Create creates a new user account
+	Create(ctx context.Context, email string, name *string, avatarURL *string) (*User, error)
+
+	// Update updates user information
+	Update(ctx context.Context, user *User) error
+
+	// UpdateLastLogin updates the last login timestamp
+	UpdateLastLogin(ctx context.Context, id UserID) error
+
+	// List retrieves all users (for admin purposes)
+	List(ctx context.Context, p Pagination) ([]User, error)
+}
+
+// APIKeyRepository handles API key generation and validation.
+type APIKeyRepository interface {
+	// Create generates a new API key for a user
+	Create(ctx context.Context, userID UserID, name *string, expiresAt *time.Time) (*APIKey, string, error)
+
+	// GetByKey retrieves an API key by its value (for validation)
+	GetByKey(ctx context.Context, key string) (*APIKey, error)
+
+	// GetByID retrieves an API key by ID
+	GetByID(ctx context.Context, id string) (*APIKey, error)
+
+	// ListByUser retrieves all API keys for a user
+	ListByUser(ctx context.Context, userID UserID) ([]APIKey, error)
+
+	// Revoke deactivates an API key
+	Revoke(ctx context.Context, id string) error
+
+	// UpdateLastUsed updates the last used timestamp
+	UpdateLastUsed(ctx context.Context, id string) error
+}
+
+// OAuthTokenRepository handles OAuth2 token storage and validation.
+type OAuthTokenRepository interface {
+	// Create stores a new OAuth token
+	Create(ctx context.Context, userID UserID, accessToken string, refreshToken *string, expiresAt time.Time) (*OAuthToken, error)
+
+	// GetByAccessToken retrieves a token by access token value
+	GetByAccessToken(ctx context.Context, accessToken string) (*OAuthToken, error)
+
+	// GetByUserID retrieves the active token for a user
+	GetByUserID(ctx context.Context, userID UserID) (*OAuthToken, error)
+
+	// Delete removes a token (for logout)
+	Delete(ctx context.Context, id string) error
+
+	// DeleteExpired removes all expired tokens
+	DeleteExpired(ctx context.Context) (int64, error)
+}
+
+// UsageRepository tracks API usage for rate limiting and analytics.
+type UsageRepository interface {
+	// Record logs an API request
+	Record(ctx context.Context, userID *UserID, apiKeyID *string, endpoint string, method string, statusCode int, responseTimeMs *int) error
+
+	// GetUserUsage retrieves usage stats for a user
+	GetUserUsage(ctx context.Context, userID UserID, since time.Time) ([]APIUsage, error)
+
+	// GetAPIKeyUsage retrieves usage stats for an API key
+	GetAPIKeyUsage(ctx context.Context, apiKeyID string, since time.Time) ([]APIUsage, error)
+}
