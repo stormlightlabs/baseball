@@ -80,6 +80,52 @@ definitions:
       name:
         type: string
     type: object
+  core.Game:
+    properties:
+      attendance:
+        type: integer
+      away_league:
+        type: string
+      away_score:
+        type: integer
+      away_team:
+        type: string
+      date:
+        type: string
+      day_of_week:
+        type: string
+      duration_min:
+        type: integer
+      game_in_series:
+        type: integer
+      home_league:
+        type: string
+      home_score:
+        type: integer
+      home_team:
+        type: string
+      id:
+        type: string
+      innings:
+        type: integer
+      is_postseason:
+        description: Postseason flags etc.
+        type: boolean
+      park_id:
+        type: string
+      season:
+        type: integer
+      series_id:
+        type: string
+      ump_first:
+        type: string
+      ump_home:
+        type: string
+      ump_second:
+        type: string
+      ump_third:
+        type: string
+    type: object
   core.HallOfFameRecord:
     properties:
       ballots:
@@ -357,6 +403,89 @@ paths:
       summary: Get franchise
       tags:
       - franchises
+  /games:
+    get:
+      consumes:
+      - application/json
+      description: Search and browse games with optional filters and pagination
+      parameters:
+      - description: Filter by season year
+        in: query
+        name: season
+        type: integer
+      - description: Filter by home team ID
+        in: query
+        name: home_team
+        type: string
+      - description: Filter by away team ID
+        in: query
+        name: away_team
+        type: string
+      - description: Filter by park ID
+        in: query
+        name: park_id
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: date_from
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: date_to
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: List games
+      tags:
+      - games
+  /games/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information for a specific game
+      parameters:
+      - description: 'Game ID (format: YYYYMMDD + game_number + home_team)'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.Game'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get game by ID
+      tags:
+      - games
   /players:
     get:
       consumes:
@@ -513,6 +642,42 @@ paths:
       summary: Get player season statistics
       tags:
       - players
+  /seasons/{year}/dates/{date}/games:
+    get:
+      consumes:
+      - application/json
+      description: Get all games played on a specific date
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Date (YYYY-MM-DD format)
+        in: path
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.Game'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get games by date
+      tags:
+      - games
   /seasons/{year}/leaders/batting:
     get:
       consumes:
@@ -601,6 +766,41 @@ paths:
       summary: Get pitching leaders
       tags:
       - stats
+  /seasons/{year}/schedule:
+    get:
+      consumes:
+      - application/json
+      description: Get all games for a specific season
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 100
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get season schedule
+      tags:
+      - games
   /seasons/{year}/teams:
     get:
       consumes:
@@ -640,6 +840,189 @@ paths:
       summary: Get all teams for a season
       tags:
       - teams
+  /seasons/{year}/teams/{team_id}/games:
+    get:
+      consumes:
+      - application/json
+      description: Get all games for a specific team in a season
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 100
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get team games for a season
+      tags:
+      - games
+  /stats/batting:
+    get:
+      consumes:
+      - application/json
+      description: Flexible batting stats query with multiple filter options
+      parameters:
+      - description: Filter by player ID
+        in: query
+        name: player_id
+        type: string
+      - description: Filter by team ID
+        in: query
+        name: team_id
+        type: string
+      - description: Filter by specific season
+        in: query
+        name: season
+        type: integer
+      - description: Filter by season range (start)
+        in: query
+        name: season_from
+        type: integer
+      - description: Filter by season range (end)
+        in: query
+        name: season_to
+        type: integer
+      - description: Filter by league (AL, NL)
+        in: query
+        name: league
+        type: string
+      - default: 0
+        description: Minimum at-bats threshold
+        in: query
+        name: min_ab
+        type: integer
+      - default: '"h"'
+        description: Sort by stat (avg, hr, rbi, sb, h, r)
+        in: query
+        name: sort_by
+        type: string
+      - default: '"desc"'
+        description: Sort order (asc, desc)
+        in: query
+        name: sort_order
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Query batting statistics
+      tags:
+      - stats
+  /stats/pitching:
+    get:
+      consumes:
+      - application/json
+      description: Flexible pitching stats query with multiple filter options
+      parameters:
+      - description: Filter by player ID
+        in: query
+        name: player_id
+        type: string
+      - description: Filter by team ID
+        in: query
+        name: team_id
+        type: string
+      - description: Filter by specific season
+        in: query
+        name: season
+        type: integer
+      - description: Filter by season range (start)
+        in: query
+        name: season_from
+        type: integer
+      - description: Filter by season range (end)
+        in: query
+        name: season_to
+        type: integer
+      - description: Filter by league (AL, NL)
+        in: query
+        name: league
+        type: string
+      - default: 0
+        description: Minimum innings pitched threshold
+        in: query
+        name: min_ip
+        type: number
+      - default: 0
+        description: Minimum games started threshold
+        in: query
+        name: min_gs
+        type: integer
+      - default: '"so"'
+        description: Sort by stat (era, w, so, sv, ip)
+        in: query
+        name: sort_by
+        type: string
+      - default: '"desc"'
+        description: Sort order (asc, desc)
+        in: query
+        name: sort_order
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Query pitching statistics
+      tags:
+      - stats
   /teams:
     get:
       consumes:

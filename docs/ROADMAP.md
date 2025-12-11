@@ -92,6 +92,8 @@ Three-layer architecture:
 
 ### Play-by-Play Data
 
+Requires extension of ETL pipeline to include <https://retrosheet.org/downloads/plays.html>
+
 - `GET /v1/games/{game_id}/plays` - Full play-by-play
 - `GET /v1/games/{game_id}/events` - Raw Retrosheet events
 - `GET /v1/players/{player_id}/plate-appearances` - All PA with context

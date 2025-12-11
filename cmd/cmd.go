@@ -155,9 +155,9 @@ func ServerStartCmd() *cobra.Command {
 // ServerFetchCmd creates the server fetch command
 func ServerFetchCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fetch [url]",
+		Use:   "fetch [path]",
 		Short: "Test API endpoints",
-		Long:  "cURL-like tool for testing API endpoints with formatted output.",
+		Long:  "cURL-like tool for testing API endpoints with formatted output. Path should be relative to /v1/ (e.g., 'players?name=ruth' or 'teams/BOS?year=2023').",
 		Args:  cobra.ExactArgs(1),
 		RunE:  fetchEndpoint,
 	}
@@ -247,7 +247,6 @@ func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Retrosheet data downloaded successfully")
 	echo.Infof("  Saved to: %s", dataDir)
-
 	return nil
 }
 
@@ -269,31 +268,20 @@ func loadLahman(cmd *cobra.Command, args []string) error {
 	tables := []string{
 		"AllstarFull",
 		"Appearances",
-		"AwardsManagers",
-		"AwardsPlayers",
-		"AwardsShareManagers",
-		"AwardsSharePlayers",
-		"Batting",
-		"BattingPost",
+		"AwardsManagers", "AwardsPlayers", "AwardsShareManagers", "AwardsSharePlayers",
+		"Batting", "BattingPost",
 		"CollegePlaying",
-		"Fielding",
-		"FieldingOF",
-		"FieldingOFsplit",
-		"FieldingPost",
+		"Fielding", "FieldingOF", "FieldingOFsplit", "FieldingPost",
 		"HomeGames",
 		"HallOfFame",
-		"Managers",
-		"ManagersHalf",
+		"Managers", "ManagersHalf",
 		"Parks",
 		"People",
-		"Pitching",
-		"PitchingPost",
+		"Pitching", "PitchingPost",
 		"Salaries",
 		"Schools",
 		"SeriesPost",
-		"Teams",
-		"TeamsFranchises",
-		"TeamsHalf",
+		"Teams", "TeamsFranchises", "TeamsHalf",
 	}
 
 	ctx := cmd.Context()
@@ -441,15 +429,24 @@ func startServer(cmd *cobra.Command, args []string) error {
 	echo.Info("  GET  /v1/franchises/{id}")
 	echo.Info("  GET  /v1/seasons/{year}/leaders/batting?stat={stat}&league={league}&limit={limit}")
 	echo.Info("  GET  /v1/seasons/{year}/leaders/pitching?stat={stat}&league={league}&limit={limit}")
-	// TODO: game routes
+	echo.Info("  GET  /v1/stats/batting?player_id={id}&year={year}&team_id={id}")
+	echo.Info("  GET  /v1/stats/pitching?player_id={id}&year={year}&team_id={id}")
+	echo.Info("  GET  /v1/games?season={year}&team_id={id}&date={date}")
+	echo.Info("  GET  /v1/games/{id}")
+	echo.Info("  GET  /v1/seasons/{year}/schedule")
+	echo.Info("  GET  /v1/seasons/{year}/dates/{date}/games")
+	echo.Info("  GET  /v1/seasons/{year}/teams/{team_id}/games")
 	echo.Info("")
-
 	return http.ListenAndServe(addr, server)
 }
 
+// TODO: configurable baseURL
 func fetchEndpoint(cmd *cobra.Command, args []string) error {
-	url := args[0]
+	path := args[0]
 	format, _ := cmd.Flags().GetString("format")
+
+	baseURL := "http://localhost:8080/v1/"
+	url := baseURL + path
 
 	echo.Header("API Test")
 	echo.Infof("Fetching: %s", url)
@@ -514,6 +511,5 @@ func checkHealth(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	return fmt.Errorf("%s server returned status: %s",
-		echo.ErrorStyle().Render("Error:"), resp.Status)
+	return fmt.Errorf("Error: server returned status: %s", resp.Status)
 }

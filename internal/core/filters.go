@@ -75,3 +75,33 @@ type SearchFilter struct {
 	Query string
 	Limit int
 }
+
+type BattingStatsFilter struct {
+	PlayerID   *PlayerID
+	TeamID     *TeamID
+	Season     *SeasonYear
+	SeasonFrom *SeasonYear
+	SeasonTo   *SeasonYear
+	League     *LeagueID
+	MinAB      *int
+	MinPA      *int
+
+	SortBy     string // "avg", "hr", "rbi", "h", "r", "sb"
+	SortOrder  SortOrder
+	Pagination Pagination
+}
+
+type PitchingStatsFilter struct {
+	PlayerID   *PlayerID
+	TeamID     *TeamID
+	Season     *SeasonYear
+	SeasonFrom *SeasonYear
+	SeasonTo   *SeasonYear
+	League     *LeagueID
+	MinIP      *float64
+	MinGS      *int
+
+	SortBy     string // "era", "w", "so", "sv", "ip"
+	SortOrder  SortOrder
+	Pagination Pagination
+}

@@ -1,3 +1,4 @@
+// TODO: refactor [RootCmd] to be a func
 package main
 
 import (
@@ -16,7 +17,6 @@ var RootCmd = &cobra.Command{
 }
 
 func init() {
-	// Add command groups to root
 	RootCmd.AddCommand(cmd.ETLCmd())
 	RootCmd.AddCommand(cmd.DbCmd())
 	RootCmd.AddCommand(cmd.ServerCmd())

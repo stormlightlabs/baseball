@@ -17,6 +17,8 @@ func NewStatsRoutes(repo core.StatsRepository) *StatsRoutes {
 func (sr *StatsRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/seasons/{year}/leaders/batting", sr.handleBattingLeaders)
 	mux.HandleFunc("GET /v1/seasons/{year}/leaders/pitching", sr.handlePitchingLeaders)
+	mux.HandleFunc("GET /v1/stats/batting", sr.handleQueryBattingStats)
+	mux.HandleFunc("GET /v1/stats/pitching", sr.handleQueryPitchingStats)
 }
 
 // handleBattingLeaders godoc
@@ -36,7 +38,7 @@ func (sr *StatsRoutes) RegisterRoutes(mux *http.ServeMux) {
 func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	year := core.SeasonYear(getIntQuery(r, "year", 2024))
+	year := core.SeasonYear(getIntPathValue(r, "year"))
 	stat := r.URL.Query().Get("stat")
 	if stat == "" {
 		stat = "hr"
@@ -82,7 +84,7 @@ func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Reque
 func (sr *StatsRoutes) handlePitchingLeaders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	year := core.SeasonYear(getIntQuery(r, "year", 2024))
+	year := core.SeasonYear(getIntPathValue(r, "year"))
 	stat := r.URL.Query().Get("stat")
 	if stat == "" {
 		stat = "era"
@@ -108,5 +110,195 @@ func (sr *StatsRoutes) handlePitchingLeaders(w http.ResponseWriter, r *http.Requ
 		Stat:    stat,
 		League:  league,
 		Leaders: leaders,
+	})
+}
+
+// handleQueryBattingStats godoc
+// @Summary Query batting statistics
+// @Description Flexible batting stats query with multiple filter options
+// @Tags stats
+// @Accept json
+// @Produce json
+// @Param player_id query string false "Filter by player ID"
+// @Param team_id query string false "Filter by team ID"
+// @Param season query integer false "Filter by specific season"
+// @Param season_from query integer false "Filter by season range (start)"
+// @Param season_to query integer false "Filter by season range (end)"
+// @Param league query string false "Filter by league (AL, NL)"
+// @Param min_ab query integer false "Minimum at-bats threshold" default(0)
+// @Param sort_by query string false "Sort by stat (avg, hr, rbi, sb, h, r)" default("h")
+// @Param sort_order query string false "Sort order (asc, desc)" default("desc")
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /stats/batting [get]
+func (sr *StatsRoutes) handleQueryBattingStats(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	filter := core.BattingStatsFilter{
+		Pagination: core.Pagination{
+			Page:    getIntQuery(r, "page", 1),
+			PerPage: getIntQuery(r, "per_page", 50),
+		},
+		SortBy: r.URL.Query().Get("sort_by"),
+	}
+
+	if playerID := r.URL.Query().Get("player_id"); playerID != "" {
+		pid := core.PlayerID(playerID)
+		filter.PlayerID = &pid
+	}
+
+	if teamID := r.URL.Query().Get("team_id"); teamID != "" {
+		tid := core.TeamID(teamID)
+		filter.TeamID = &tid
+	}
+
+	if season := r.URL.Query().Get("season"); season != "" {
+		y := core.SeasonYear(getIntQuery(r, "season", 0))
+		filter.Season = &y
+	}
+
+	if seasonFrom := r.URL.Query().Get("season_from"); seasonFrom != "" {
+		y := core.SeasonYear(getIntQuery(r, "season_from", 0))
+		filter.SeasonFrom = &y
+	}
+
+	if seasonTo := r.URL.Query().Get("season_to"); seasonTo != "" {
+		y := core.SeasonYear(getIntQuery(r, "season_to", 0))
+		filter.SeasonTo = &y
+	}
+
+	if league := r.URL.Query().Get("league"); league != "" {
+		lg := core.LeagueID(league)
+		filter.League = &lg
+	}
+
+	if minAB := r.URL.Query().Get("min_ab"); minAB != "" {
+		ab := getIntQuery(r, "min_ab", 0)
+		filter.MinAB = &ab
+	}
+
+	if sortOrder := r.URL.Query().Get("sort_order"); sortOrder == "asc" {
+		filter.SortOrder = core.SortAsc
+	} else {
+		filter.SortOrder = core.SortDesc
+	}
+
+	stats, err := sr.repo.QueryBattingStats(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := sr.repo.QueryBattingStatsCount(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    stats,
+		Page:    filter.Pagination.Page,
+		PerPage: filter.Pagination.PerPage,
+		Total:   total,
+	})
+}
+
+// handleQueryPitchingStats godoc
+// @Summary Query pitching statistics
+// @Description Flexible pitching stats query with multiple filter options
+// @Tags stats
+// @Accept json
+// @Produce json
+// @Param player_id query string false "Filter by player ID"
+// @Param team_id query string false "Filter by team ID"
+// @Param season query integer false "Filter by specific season"
+// @Param season_from query integer false "Filter by season range (start)"
+// @Param season_to query integer false "Filter by season range (end)"
+// @Param league query string false "Filter by league (AL, NL)"
+// @Param min_ip query number false "Minimum innings pitched threshold" default(0)
+// @Param min_gs query integer false "Minimum games started threshold" default(0)
+// @Param sort_by query string false "Sort by stat (era, w, so, sv, ip)" default("so")
+// @Param sort_order query string false "Sort order (asc, desc)" default("desc")
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /stats/pitching [get]
+func (sr *StatsRoutes) handleQueryPitchingStats(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	filter := core.PitchingStatsFilter{
+		Pagination: core.Pagination{
+			Page:    getIntQuery(r, "page", 1),
+			PerPage: getIntQuery(r, "per_page", 50),
+		},
+		SortBy: r.URL.Query().Get("sort_by"),
+	}
+
+	if playerID := r.URL.Query().Get("player_id"); playerID != "" {
+		pid := core.PlayerID(playerID)
+		filter.PlayerID = &pid
+	}
+
+	if teamID := r.URL.Query().Get("team_id"); teamID != "" {
+		tid := core.TeamID(teamID)
+		filter.TeamID = &tid
+	}
+
+	if season := r.URL.Query().Get("season"); season != "" {
+		y := core.SeasonYear(getIntQuery(r, "season", 0))
+		filter.Season = &y
+	}
+
+	if seasonFrom := r.URL.Query().Get("season_from"); seasonFrom != "" {
+		y := core.SeasonYear(getIntQuery(r, "season_from", 0))
+		filter.SeasonFrom = &y
+	}
+
+	if seasonTo := r.URL.Query().Get("season_to"); seasonTo != "" {
+		y := core.SeasonYear(getIntQuery(r, "season_to", 0))
+		filter.SeasonTo = &y
+	}
+
+	if league := r.URL.Query().Get("league"); league != "" {
+		lg := core.LeagueID(league)
+		filter.League = &lg
+	}
+
+	if minIP := r.URL.Query().Get("min_ip"); minIP != "" {
+		ip := float64(getIntQuery(r, "min_ip", 0))
+		filter.MinIP = &ip
+	}
+
+	if minGS := r.URL.Query().Get("min_gs"); minGS != "" {
+		gs := getIntQuery(r, "min_gs", 0)
+		filter.MinGS = &gs
+	}
+
+	if sortOrder := r.URL.Query().Get("sort_order"); sortOrder == "asc" {
+		filter.SortOrder = core.SortAsc
+	} else {
+		filter.SortOrder = core.SortDesc
+	}
+
+	stats, err := sr.repo.QueryPitchingStats(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := sr.repo.QueryPitchingStatsCount(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    stats,
+		Page:    filter.Pagination.Page,
+		PerPage: filter.Pagination.PerPage,
+		Total:   total,
 	})
 }
