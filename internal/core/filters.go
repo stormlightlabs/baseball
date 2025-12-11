@@ -129,3 +129,14 @@ type FieldingStatsFilter struct {
 	SortOrder  SortOrder
 	Pagination Pagination
 }
+
+type TeamStatsFilter struct {
+	TeamID     *TeamID
+	Season     *SeasonYear
+	SeasonFrom *SeasonYear
+	SeasonTo   *SeasonYear
+	League     *LeagueID
+	SortBy     string // stat-specific: "hr", "avg", "era", "so", "po", "e", etc.
+	SortOrder  SortOrder
+	Pagination Pagination
+}

@@ -137,6 +137,15 @@ type StatsRepository interface {
 
 	QueryFieldingStats(ctx context.Context, filter FieldingStatsFilter) ([]PlayerFieldingSeason, error)
 	QueryFieldingStatsCount(ctx context.Context, filter FieldingStatsFilter) (int, error)
+
+	TeamBattingStats(ctx context.Context, filter TeamStatsFilter) ([]TeamBattingStats, error)
+	TeamBattingStatsCount(ctx context.Context, filter TeamStatsFilter) (int, error)
+
+	TeamPitchingStats(ctx context.Context, filter TeamStatsFilter) ([]TeamPitchingStats, error)
+	TeamPitchingStatsCount(ctx context.Context, filter TeamStatsFilter) (int, error)
+
+	TeamFieldingStats(ctx context.Context, filter TeamStatsFilter) ([]TeamFieldingStats, error)
+	TeamFieldingStatsCount(ctx context.Context, filter TeamStatsFilter) (int, error)
 }
 
 // MetaRepository for API/dataset metadata.

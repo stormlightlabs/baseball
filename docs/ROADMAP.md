@@ -180,13 +180,13 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/leaders/batting/career`          | L       | Career batting leaders.     |
 | Done   | `GET /v1/leaders/pitching/career`         | L       | Career pitching leaders.    |
 
-#### Team-Level Stats
+#### Team-Level Stats ✓
 
 | Status | Endpoint                       | Dataset | Description                               |
 | ------ | ------------------------------ | ------- | ----------------------------------------- |
-| To-Do  | `GET /v1/stats/teams/batting`  | L       | Team batting in a season (league filter). |
-| To-Do  | `GET /v1/stats/teams/pitching` | L       | Team pitching.                            |
-| To-Do  | `GET /v1/stats/teams/fielding` | L       | Team fielding.                            |
+| Done   | `GET /v1/stats/teams/batting`  | L       | Team batting in a season (league filter). |
+| Done   | `GET /v1/stats/teams/pitching` | L       | Team pitching.                            |
+| Done   | `GET /v1/stats/teams/fielding` | L       | Team fielding.                            |
 
 ### 7. Awards, All-Star Games, Postseason - **(L)**
 
