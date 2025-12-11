@@ -221,6 +221,314 @@
                 }
             }
         },
+        "/games/{id}/boxscore": {
+            "get": {
+                "description": "Get detailed boxscore statistics for a specific game including team stats and lineups",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "games"
+                ],
+                "summary": "Get game boxscore",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID (format: YYYYMMDD + game_number + home_team)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.Boxscore"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/games/{id}/events": {
+            "get": {
+                "description": "Get all play-by-play events for a game (alias for /games/{id}/plays)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "games",
+                    "plays"
+                ],
+                "summary": "Get game events",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID (format: YYYYMMDD + game_number + home_team)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 200,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/games/{id}/events/{event_seq}": {
+            "get": {
+                "description": "Get a single play/event by sequence number",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "games",
+                    "plays"
+                ],
+                "summary": "Get single event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID (format: YYYYMMDD + game_number + home_team)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Event sequence number (play number)",
+                        "name": "event_seq",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.Play"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/games/{id}/plays": {
+            "get": {
+                "description": "Get all plays for a specific game in chronological order",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plays",
+                    "games"
+                ],
+                "summary": "Get plays for a game",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID (format: YYYYMMDD + game_number + home_team)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 200,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/games/{id}/summary": {
+            "get": {
+                "description": "Get narrative summary for a game including winning pitcher, save, and key events",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "games"
+                ],
+                "summary": "Get game summary",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID (format: YYYYMMDD + game_number + home_team)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/meta": {
+            "get": {
+                "description": "Returns API version, dataset freshness, coverage, and schema fingerprints",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meta"
+                ],
+                "summary": "API metadata",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.metaResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/meta/datasets": {
+            "get": {
+                "description": "Returns dataset ETL metadata and coverage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meta"
+                ],
+                "summary": "Dataset status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.DatasetStatus"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/players": {
             "get": {
                 "description": "Search and browse players with optional name filter and pagination",
@@ -322,6 +630,47 @@
                 }
             }
         },
+        "/players/{id}/appearances": {
+            "get": {
+                "description": "Get appearance records by position for a player across all seasons",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players"
+                ],
+                "summary": "Get player appearances",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.PlayerAppearance"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/players/{id}/awards": {
             "get": {
                 "description": "Get all awards won by a player",
@@ -347,6 +696,64 @@
                         "type": "integer",
                         "description": "Filter by year",
                         "name": "year",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/players/{id}/game-logs": {
+            "get": {
+                "description": "Get list of games where the player appeared in the starting lineup",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players"
+                ],
+                "summary": "Get player game logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by season",
+                        "name": "season",
                         "in": "query"
                     },
                     {
@@ -418,6 +825,189 @@
                 }
             }
         },
+        "/players/{id}/plate-appearances": {
+            "get": {
+                "description": "Return plate appearances where the player is the batter with optional filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plays",
+                    "players"
+                ],
+                "summary": "Get plate appearances for a player",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "date_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Retrosheet game ID",
+                        "name": "game_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by pitcher Retrosheet ID",
+                        "name": "pitcher",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Lahman pitcher ID",
+                        "name": "vs_pitcher",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/players/{id}/plays": {
+            "get": {
+                "description": "Get all plays involving a specific player (as batter or pitcher)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plays",
+                    "players"
+                ],
+                "summary": "Get plays for a player",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/players/{id}/salaries": {
+            "get": {
+                "description": "Return all salary records for a player from Lahman Salaries table",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players"
+                ],
+                "summary": "Get player's salary history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.PlayerSalary"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/players/{id}/seasons": {
             "get": {
                 "description": "Get season-by-season batting and pitching statistics for a player",
@@ -445,6 +1035,190 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/api.PlayerSeasonsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/players/{id}/teams": {
+            "get": {
+                "description": "List every season/team combination a player appeared in",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players"
+                ],
+                "summary": "Get player's team history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.PlayerTeamSeason"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/plays": {
+            "get": {
+                "description": "Query plays with various filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plays"
+                ],
+                "summary": "List plays",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Batter Retrosheet ID",
+                        "name": "batter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pitcher Retrosheet ID",
+                        "name": "pitcher",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Batting team ID",
+                        "name": "bat_team",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pitching team ID",
+                        "name": "pit_team",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Game date (YYYYMMDD)",
+                        "name": "date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYYMMDD)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYYMMDD)",
+                        "name": "date_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by inning",
+                        "name": "inning",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter to only home runs",
+                        "name": "home_runs",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter to only walks",
+                        "name": "walks",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter to only strikeouts",
+                        "name": "strikeouts",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/seasons": {
+            "get": {
+                "description": "Get summary of all available seasons with league and team counts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "seasons"
+                ],
+                "summary": "List all seasons",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.Season"
+                            }
                         }
                     },
                     "500": {
@@ -640,6 +1414,66 @@
                 }
             }
         },
+        "/seasons/{year}/parks/{park_id}/games": {
+            "get": {
+                "description": "Get all games played at a specific ballpark in a season",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "games",
+                    "parks"
+                ],
+                "summary": "Get games at a park",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Park ID",
+                        "name": "park_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/seasons/{year}/schedule": {
             "get": {
                 "description": "Get all games for a specific season",
@@ -750,6 +1584,180 @@
                 }
             }
         },
+        "/seasons/{year}/teams/{team_id}/batting": {
+            "get": {
+                "description": "Get aggregated batting statistics for a team with optional per-player splits",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Get team batting stats",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include per-player splits",
+                        "name": "players",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.TeamBattingStats"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/seasons/{year}/teams/{team_id}/daily-logs": {
+            "get": {
+                "description": "Get team performance aggregated by date for a season",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams",
+                    "games"
+                ],
+                "summary": "Get team daily logs",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/seasons/{year}/teams/{team_id}/fielding": {
+            "get": {
+                "description": "Get aggregated fielding statistics for a team with optional per-player/position splits",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Get team fielding stats",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include per-player splits",
+                        "name": "players",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.TeamFieldingStats"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/seasons/{year}/teams/{team_id}/games": {
             "get": {
                 "description": "Get all games for a specific team in a season",
@@ -763,6 +1771,177 @@
                     "games"
                 ],
                 "summary": "Get team games for a season",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/seasons/{year}/teams/{team_id}/pitching": {
+            "get": {
+                "description": "Get aggregated pitching statistics for a team with optional per-player splits",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Get team pitching stats",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include per-player splits",
+                        "name": "players",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.TeamPitchingStats"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/seasons/{year}/teams/{team_id}/roster": {
+            "get": {
+                "description": "Get roster for a specific team and season with basic stats",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Get team roster",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.RosterPlayer"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/seasons/{year}/teams/{team_id}/schedule": {
+            "get": {
+                "description": "Get the game schedule for a team in a season (alias for /seasons/{year}/teams/{team_id}/games)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams",
+                    "games"
+                ],
+                "summary": "Get team schedule",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1235,6 +2414,120 @@
                 }
             }
         },
+        "api.datasetCoverage": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "integer"
+                },
+                "to": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.metaResponse": {
+            "type": "object",
+            "properties": {
+                "coverage": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/api.datasetCoverage"
+                    }
+                },
+                "datasets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.DatasetStatus"
+                    }
+                },
+                "generated_at": {
+                    "type": "string"
+                },
+                "schema_hashes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.Boxscore": {
+            "type": "object",
+            "properties": {
+                "away_lineup": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.LineupPlayer"
+                    }
+                },
+                "away_score": {
+                    "type": "integer"
+                },
+                "away_stats": {
+                    "$ref": "#/definitions/core.TeamGameStats"
+                },
+                "away_team": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "game_id": {
+                    "type": "string"
+                },
+                "home_lineup": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.LineupPlayer"
+                    }
+                },
+                "home_score": {
+                    "type": "integer"
+                },
+                "home_stats": {
+                    "$ref": "#/definitions/core.TeamGameStats"
+                },
+                "home_team": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.DatasetStatus": {
+            "type": "object",
+            "properties": {
+                "coverage_from": {
+                    "type": "integer"
+                },
+                "coverage_to": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_loaded_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "row_count": {
+                    "type": "integer"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "tables": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            }
+        },
         "core.Franchise": {
             "type": "object",
             "properties": {
@@ -1298,7 +2591,6 @@
                     "type": "integer"
                 },
                 "is_postseason": {
-                    "description": "Postseason flags etc.",
                     "type": "boolean"
                 },
                 "park_id": {
@@ -1346,6 +2638,131 @@
                     "type": "integer"
                 },
                 "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.LineupPlayer": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.Play": {
+            "type": "object",
+            "properties": {
+                "ab": {
+                    "type": "integer"
+                },
+                "balls": {
+                    "type": "integer"
+                },
+                "bat_hand": {
+                    "type": "string"
+                },
+                "bat_team": {
+                    "type": "string"
+                },
+                "batter": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "double": {
+                    "type": "integer"
+                },
+                "event": {
+                    "description": "The play description",
+                    "type": "string"
+                },
+                "game_id": {
+                    "description": "Game identification",
+                    "type": "string"
+                },
+                "game_type": {
+                    "type": "string"
+                },
+                "hbp": {
+                    "type": "integer"
+                },
+                "hr": {
+                    "type": "integer"
+                },
+                "inning": {
+                    "type": "integer"
+                },
+                "k": {
+                    "type": "integer"
+                },
+                "outs_post": {
+                    "type": "integer"
+                },
+                "outs_pre": {
+                    "type": "integer"
+                },
+                "pa": {
+                    "description": "Plate appearances",
+                    "type": "integer"
+                },
+                "pit_hand": {
+                    "type": "string"
+                },
+                "pit_team": {
+                    "type": "string"
+                },
+                "pitcher": {
+                    "type": "string"
+                },
+                "pitches": {
+                    "type": "string"
+                },
+                "play_num": {
+                    "type": "integer"
+                },
+                "rbi": {
+                    "type": "integer"
+                },
+                "runner1_pre": {
+                    "type": "string"
+                },
+                "runner2_pre": {
+                    "type": "string"
+                },
+                "runner3_pre": {
+                    "type": "string"
+                },
+                "runs": {
+                    "type": "integer"
+                },
+                "score_home": {
+                    "type": "integer"
+                },
+                "score_vis": {
+                    "type": "integer"
+                },
+                "single": {
+                    "type": "integer"
+                },
+                "strikes": {
+                    "type": "integer"
+                },
+                "top_bot": {
+                    "description": "0=top, 1=bottom",
+                    "type": "integer"
+                },
+                "triple": {
+                    "type": "integer"
+                },
+                "walk": {
                     "type": "integer"
                 }
             }
@@ -1432,6 +2849,87 @@
                 }
             }
         },
+        "core.PlayerAppearance": {
+            "type": "object",
+            "properties": {
+                "g_1b": {
+                    "description": "First base",
+                    "type": "integer"
+                },
+                "g_2b": {
+                    "description": "Second base",
+                    "type": "integer"
+                },
+                "g_3b": {
+                    "description": "Third base",
+                    "type": "integer"
+                },
+                "g_all": {
+                    "type": "integer"
+                },
+                "g_batting": {
+                    "type": "integer"
+                },
+                "g_c": {
+                    "description": "Catcher",
+                    "type": "integer"
+                },
+                "g_cf": {
+                    "description": "Center field",
+                    "type": "integer"
+                },
+                "g_defense": {
+                    "type": "integer"
+                },
+                "g_dh": {
+                    "description": "Designated hitter",
+                    "type": "integer"
+                },
+                "g_lf": {
+                    "description": "Left field",
+                    "type": "integer"
+                },
+                "g_of": {
+                    "description": "Outfield",
+                    "type": "integer"
+                },
+                "g_p": {
+                    "description": "Pitcher",
+                    "type": "integer"
+                },
+                "g_ph": {
+                    "description": "Pinch hitter",
+                    "type": "integer"
+                },
+                "g_pr": {
+                    "description": "Pinch runner",
+                    "type": "integer"
+                },
+                "g_rf": {
+                    "description": "Right field",
+                    "type": "integer"
+                },
+                "g_ss": {
+                    "description": "Shortstop",
+                    "type": "integer"
+                },
+                "gs": {
+                    "type": "integer"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "core.PlayerBattingSeason": {
             "type": "object",
             "properties": {
@@ -1439,7 +2937,6 @@
                     "type": "integer"
                 },
                 "avg": {
-                    "description": "Precomputed rate stats (optional but convenient)",
                     "type": "number"
                 },
                 "bb": {
@@ -1507,6 +3004,62 @@
                 }
             }
         },
+        "core.PlayerFieldingSeason": {
+            "type": "object",
+            "properties": {
+                "a": {
+                    "type": "integer"
+                },
+                "cs": {
+                    "type": "integer"
+                },
+                "dp": {
+                    "type": "integer"
+                },
+                "e": {
+                    "type": "integer"
+                },
+                "g": {
+                    "type": "integer"
+                },
+                "gs": {
+                    "type": "integer"
+                },
+                "inn_outs": {
+                    "description": "or innings * 3",
+                    "type": "integer"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "pb": {
+                    "description": "catchers",
+                    "type": "integer"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "po": {
+                    "type": "integer"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "rf9": {
+                    "description": "TODO: compute range factor per 9",
+                    "type": "number"
+                },
+                "sb": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "core.PlayerPitchingSeason": {
             "type": "object",
             "properties": {
@@ -1529,7 +3082,7 @@
                     "type": "number"
                 },
                 "fip": {
-                    "description": "if you compute it",
+                    "description": "TODO: compute it",
                     "type": "number"
                 },
                 "g": {
@@ -1586,6 +3139,395 @@
                 },
                 "wp": {
                     "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.PlayerSalary": {
+            "type": "object",
+            "properties": {
+                "league": {
+                    "type": "string"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "salary": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.PlayerTeamSeason": {
+            "type": "object",
+            "properties": {
+                "games": {
+                    "type": "integer"
+                },
+                "games_started": {
+                    "type": "integer"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "team_name": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.RosterPlayer": {
+            "type": "object",
+            "properties": {
+                "ab": {
+                    "type": "integer"
+                },
+                "avg": {
+                    "type": "number"
+                },
+                "batting_g": {
+                    "type": "integer"
+                },
+                "era": {
+                    "type": "number"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "h": {
+                    "type": "integer"
+                },
+                "hr": {
+                    "type": "integer"
+                },
+                "l": {
+                    "type": "integer"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "pitching_g": {
+                    "type": "integer"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "rbi": {
+                    "type": "integer"
+                },
+                "so": {
+                    "type": "integer"
+                },
+                "w": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.Season": {
+            "type": "object",
+            "properties": {
+                "game_count": {
+                    "type": "integer"
+                },
+                "leagues": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "team_count": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.TeamBattingStats": {
+            "type": "object",
+            "properties": {
+                "ab": {
+                    "type": "integer"
+                },
+                "avg": {
+                    "type": "number"
+                },
+                "bb": {
+                    "type": "integer"
+                },
+                "cs": {
+                    "type": "integer"
+                },
+                "doubles": {
+                    "type": "integer"
+                },
+                "g": {
+                    "type": "integer"
+                },
+                "h": {
+                    "type": "integer"
+                },
+                "hbp": {
+                    "type": "integer"
+                },
+                "hr": {
+                    "type": "integer"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "obp": {
+                    "type": "number"
+                },
+                "ops": {
+                    "type": "number"
+                },
+                "players": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.PlayerBattingSeason"
+                    }
+                },
+                "r": {
+                    "type": "integer"
+                },
+                "rbi": {
+                    "type": "integer"
+                },
+                "sb": {
+                    "type": "integer"
+                },
+                "sf": {
+                    "type": "integer"
+                },
+                "slg": {
+                    "type": "number"
+                },
+                "so": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "triples": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.TeamFieldingStats": {
+            "type": "object",
+            "properties": {
+                "a": {
+                    "type": "integer"
+                },
+                "cs": {
+                    "type": "integer"
+                },
+                "dp": {
+                    "type": "integer"
+                },
+                "e": {
+                    "type": "integer"
+                },
+                "fpct": {
+                    "description": "Fielding percentage",
+                    "type": "number"
+                },
+                "g": {
+                    "type": "integer"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "pb": {
+                    "type": "integer"
+                },
+                "players": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.PlayerFieldingSeason"
+                    }
+                },
+                "po": {
+                    "type": "integer"
+                },
+                "sb": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.TeamGameStats": {
+            "type": "object",
+            "properties": {
+                "a": {
+                    "type": "integer"
+                },
+                "ab": {
+                    "type": "integer"
+                },
+                "balks": {
+                    "type": "integer"
+                },
+                "bb": {
+                    "type": "integer"
+                },
+                "cs": {
+                    "type": "integer"
+                },
+                "doubles": {
+                    "type": "integer"
+                },
+                "dp": {
+                    "type": "integer"
+                },
+                "e": {
+                    "type": "integer"
+                },
+                "er": {
+                    "type": "integer"
+                },
+                "gdp": {
+                    "type": "integer"
+                },
+                "h": {
+                    "type": "integer"
+                },
+                "hbp": {
+                    "type": "integer"
+                },
+                "hr": {
+                    "type": "integer"
+                },
+                "ibb": {
+                    "type": "integer"
+                },
+                "lob": {
+                    "type": "integer"
+                },
+                "pb": {
+                    "type": "integer"
+                },
+                "pitchers_used": {
+                    "type": "integer"
+                },
+                "po": {
+                    "type": "integer"
+                },
+                "r": {
+                    "type": "integer"
+                },
+                "rbi": {
+                    "type": "integer"
+                },
+                "sb": {
+                    "type": "integer"
+                },
+                "sf": {
+                    "type": "integer"
+                },
+                "sh": {
+                    "type": "integer"
+                },
+                "so": {
+                    "type": "integer"
+                },
+                "tp": {
+                    "type": "integer"
+                },
+                "triples": {
+                    "type": "integer"
+                },
+                "wp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.TeamPitchingStats": {
+            "type": "object",
+            "properties": {
+                "bb": {
+                    "type": "integer"
+                },
+                "cg": {
+                    "type": "integer"
+                },
+                "er": {
+                    "type": "integer"
+                },
+                "era": {
+                    "type": "number"
+                },
+                "g": {
+                    "type": "integer"
+                },
+                "gs": {
+                    "type": "integer"
+                },
+                "h": {
+                    "type": "integer"
+                },
+                "hr": {
+                    "type": "integer"
+                },
+                "ip_outs": {
+                    "type": "integer"
+                },
+                "l": {
+                    "type": "integer"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "players": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.PlayerPitchingSeason"
+                    }
+                },
+                "sho": {
+                    "type": "integer"
+                },
+                "so": {
+                    "type": "integer"
+                },
+                "sv": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "w": {
+                    "type": "integer"
+                },
+                "whip": {
+                    "type": "number"
                 },
                 "year": {
                     "type": "integer"

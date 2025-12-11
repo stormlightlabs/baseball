@@ -67,6 +67,81 @@ definitions:
           $ref: '#/definitions/core.PlayerPitchingSeason'
         type: array
     type: object
+  api.datasetCoverage:
+    properties:
+      from:
+        type: integer
+      to:
+        type: integer
+    type: object
+  api.metaResponse:
+    properties:
+      coverage:
+        additionalProperties:
+          $ref: '#/definitions/api.datasetCoverage'
+        type: object
+      datasets:
+        items:
+          $ref: '#/definitions/core.DatasetStatus'
+        type: array
+      generated_at:
+        type: string
+      schema_hashes:
+        additionalProperties:
+          type: string
+        type: object
+      version:
+        type: string
+    type: object
+  core.Boxscore:
+    properties:
+      away_lineup:
+        items:
+          $ref: '#/definitions/core.LineupPlayer'
+        type: array
+      away_score:
+        type: integer
+      away_stats:
+        $ref: '#/definitions/core.TeamGameStats'
+      away_team:
+        type: string
+      date:
+        type: string
+      game_id:
+        type: string
+      home_lineup:
+        items:
+          $ref: '#/definitions/core.LineupPlayer'
+        type: array
+      home_score:
+        type: integer
+      home_stats:
+        $ref: '#/definitions/core.TeamGameStats'
+      home_team:
+        type: string
+    type: object
+  core.DatasetStatus:
+    properties:
+      coverage_from:
+        type: integer
+      coverage_to:
+        type: integer
+      id:
+        type: string
+      last_loaded_at:
+        type: string
+      name:
+        type: string
+      row_count:
+        type: integer
+      source:
+        type: string
+      tables:
+        additionalProperties:
+          format: int64
+          type: integer
+        type: object
+    type: object
   core.Franchise:
     properties:
       active:
@@ -109,7 +184,6 @@ definitions:
       innings:
         type: integer
       is_postseason:
-        description: Postseason flags etc.
         type: boolean
       park_id:
         type: string
@@ -141,6 +215,90 @@ definitions:
       votes:
         type: integer
       year:
+        type: integer
+    type: object
+  core.LineupPlayer:
+    properties:
+      name:
+        type: string
+      player_id:
+        type: string
+      position:
+        type: integer
+    type: object
+  core.Play:
+    properties:
+      ab:
+        type: integer
+      balls:
+        type: integer
+      bat_hand:
+        type: string
+      bat_team:
+        type: string
+      batter:
+        type: string
+      date:
+        type: string
+      double:
+        type: integer
+      event:
+        description: The play description
+        type: string
+      game_id:
+        description: Game identification
+        type: string
+      game_type:
+        type: string
+      hbp:
+        type: integer
+      hr:
+        type: integer
+      inning:
+        type: integer
+      k:
+        type: integer
+      outs_post:
+        type: integer
+      outs_pre:
+        type: integer
+      pa:
+        description: Plate appearances
+        type: integer
+      pit_hand:
+        type: string
+      pit_team:
+        type: string
+      pitcher:
+        type: string
+      pitches:
+        type: string
+      play_num:
+        type: integer
+      rbi:
+        type: integer
+      runner1_pre:
+        type: string
+      runner2_pre:
+        type: string
+      runner3_pre:
+        type: string
+      runs:
+        type: integer
+      score_home:
+        type: integer
+      score_vis:
+        type: integer
+      single:
+        type: integer
+      strikes:
+        type: integer
+      top_bot:
+        description: 0=top, 1=bottom
+        type: integer
+      triple:
+        type: integer
+      walk:
         type: integer
     type: object
   core.Player:
@@ -199,12 +357,69 @@ definitions:
       weight_lbs:
         type: integer
     type: object
+  core.PlayerAppearance:
+    properties:
+      g_1b:
+        description: First base
+        type: integer
+      g_2b:
+        description: Second base
+        type: integer
+      g_3b:
+        description: Third base
+        type: integer
+      g_all:
+        type: integer
+      g_batting:
+        type: integer
+      g_c:
+        description: Catcher
+        type: integer
+      g_cf:
+        description: Center field
+        type: integer
+      g_defense:
+        type: integer
+      g_dh:
+        description: Designated hitter
+        type: integer
+      g_lf:
+        description: Left field
+        type: integer
+      g_of:
+        description: Outfield
+        type: integer
+      g_p:
+        description: Pitcher
+        type: integer
+      g_ph:
+        description: Pinch hitter
+        type: integer
+      g_pr:
+        description: Pinch runner
+        type: integer
+      g_rf:
+        description: Right field
+        type: integer
+      g_ss:
+        description: Shortstop
+        type: integer
+      gs:
+        type: integer
+      league:
+        type: string
+      player_id:
+        type: string
+      team_id:
+        type: string
+      year:
+        type: integer
+    type: object
   core.PlayerBattingSeason:
     properties:
       ab:
         type: integer
       avg:
-        description: Precomputed rate stats (optional but convenient)
         type: number
       bb:
         type: integer
@@ -249,6 +464,44 @@ definitions:
       year:
         type: integer
     type: object
+  core.PlayerFieldingSeason:
+    properties:
+      a:
+        type: integer
+      cs:
+        type: integer
+      dp:
+        type: integer
+      e:
+        type: integer
+      g:
+        type: integer
+      gs:
+        type: integer
+      inn_outs:
+        description: or innings * 3
+        type: integer
+      league:
+        type: string
+      pb:
+        description: catchers
+        type: integer
+      player_id:
+        type: string
+      po:
+        type: integer
+      position:
+        type: string
+      rf9:
+        description: 'TODO: compute range factor per 9'
+        type: number
+      sb:
+        type: integer
+      team_id:
+        type: string
+      year:
+        type: integer
+    type: object
   core.PlayerPitchingSeason:
     properties:
       bb:
@@ -264,7 +517,7 @@ definitions:
       era:
         type: number
       fip:
-        description: if you compute it
+        description: 'TODO: compute it'
         type: number
       g:
         type: integer
@@ -303,6 +556,263 @@ definitions:
         type: number
       wp:
         type: integer
+      year:
+        type: integer
+    type: object
+  core.PlayerSalary:
+    properties:
+      league:
+        type: string
+      player_id:
+        type: string
+      salary:
+        type: integer
+      team_id:
+        type: string
+      year:
+        type: integer
+    type: object
+  core.PlayerTeamSeason:
+    properties:
+      games:
+        type: integer
+      games_started:
+        type: integer
+      league:
+        type: string
+      player_id:
+        type: string
+      team_id:
+        type: string
+      team_name:
+        type: string
+      year:
+        type: integer
+    type: object
+  core.RosterPlayer:
+    properties:
+      ab:
+        type: integer
+      avg:
+        type: number
+      batting_g:
+        type: integer
+      era:
+        type: number
+      first_name:
+        type: string
+      h:
+        type: integer
+      hr:
+        type: integer
+      l:
+        type: integer
+      last_name:
+        type: string
+      pitching_g:
+        type: integer
+      player_id:
+        type: string
+      position:
+        type: string
+      rbi:
+        type: integer
+      so:
+        type: integer
+      w:
+        type: integer
+    type: object
+  core.Season:
+    properties:
+      game_count:
+        type: integer
+      leagues:
+        items:
+          type: string
+        type: array
+      team_count:
+        type: integer
+      year:
+        type: integer
+    type: object
+  core.TeamBattingStats:
+    properties:
+      ab:
+        type: integer
+      avg:
+        type: number
+      bb:
+        type: integer
+      cs:
+        type: integer
+      doubles:
+        type: integer
+      g:
+        type: integer
+      h:
+        type: integer
+      hbp:
+        type: integer
+      hr:
+        type: integer
+      league:
+        type: string
+      obp:
+        type: number
+      ops:
+        type: number
+      players:
+        items:
+          $ref: '#/definitions/core.PlayerBattingSeason'
+        type: array
+      r:
+        type: integer
+      rbi:
+        type: integer
+      sb:
+        type: integer
+      sf:
+        type: integer
+      slg:
+        type: number
+      so:
+        type: integer
+      team_id:
+        type: string
+      triples:
+        type: integer
+      year:
+        type: integer
+    type: object
+  core.TeamFieldingStats:
+    properties:
+      a:
+        type: integer
+      cs:
+        type: integer
+      dp:
+        type: integer
+      e:
+        type: integer
+      fpct:
+        description: Fielding percentage
+        type: number
+      g:
+        type: integer
+      league:
+        type: string
+      pb:
+        type: integer
+      players:
+        items:
+          $ref: '#/definitions/core.PlayerFieldingSeason'
+        type: array
+      po:
+        type: integer
+      sb:
+        type: integer
+      team_id:
+        type: string
+      year:
+        type: integer
+    type: object
+  core.TeamGameStats:
+    properties:
+      a:
+        type: integer
+      ab:
+        type: integer
+      balks:
+        type: integer
+      bb:
+        type: integer
+      cs:
+        type: integer
+      doubles:
+        type: integer
+      dp:
+        type: integer
+      e:
+        type: integer
+      er:
+        type: integer
+      gdp:
+        type: integer
+      h:
+        type: integer
+      hbp:
+        type: integer
+      hr:
+        type: integer
+      ibb:
+        type: integer
+      lob:
+        type: integer
+      pb:
+        type: integer
+      pitchers_used:
+        type: integer
+      po:
+        type: integer
+      r:
+        type: integer
+      rbi:
+        type: integer
+      sb:
+        type: integer
+      sf:
+        type: integer
+      sh:
+        type: integer
+      so:
+        type: integer
+      tp:
+        type: integer
+      triples:
+        type: integer
+      wp:
+        type: integer
+    type: object
+  core.TeamPitchingStats:
+    properties:
+      bb:
+        type: integer
+      cg:
+        type: integer
+      er:
+        type: integer
+      era:
+        type: number
+      g:
+        type: integer
+      gs:
+        type: integer
+      h:
+        type: integer
+      hr:
+        type: integer
+      ip_outs:
+        type: integer
+      l:
+        type: integer
+      league:
+        type: string
+      players:
+        items:
+          $ref: '#/definitions/core.PlayerPitchingSeason'
+        type: array
+      sho:
+        type: integer
+      so:
+        type: integer
+      sv:
+        type: integer
+      team_id:
+        type: string
+      w:
+        type: integer
+      whip:
+        type: number
       year:
         type: integer
     type: object
@@ -486,6 +996,214 @@ paths:
       summary: Get game by ID
       tags:
       - games
+  /games/{id}/boxscore:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed boxscore statistics for a specific game including
+        team stats and lineups
+      parameters:
+      - description: 'Game ID (format: YYYYMMDD + game_number + home_team)'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.Boxscore'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get game boxscore
+      tags:
+      - games
+  /games/{id}/events:
+    get:
+      consumes:
+      - application/json
+      description: Get all play-by-play events for a game (alias for /games/{id}/plays)
+      parameters:
+      - description: 'Game ID (format: YYYYMMDD + game_number + home_team)'
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 200
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get game events
+      tags:
+      - games
+      - plays
+  /games/{id}/events/{event_seq}:
+    get:
+      consumes:
+      - application/json
+      description: Get a single play/event by sequence number
+      parameters:
+      - description: 'Game ID (format: YYYYMMDD + game_number + home_team)'
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Event sequence number (play number)
+        in: path
+        name: event_seq
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.Play'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get single event
+      tags:
+      - games
+      - plays
+  /games/{id}/plays:
+    get:
+      consumes:
+      - application/json
+      description: Get all plays for a specific game in chronological order
+      parameters:
+      - description: 'Game ID (format: YYYYMMDD + game_number + home_team)'
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 200
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get plays for a game
+      tags:
+      - plays
+      - games
+  /games/{id}/summary:
+    get:
+      consumes:
+      - application/json
+      description: Get narrative summary for a game including winning pitcher, save,
+        and key events
+      parameters:
+      - description: 'Game ID (format: YYYYMMDD + game_number + home_team)'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get game summary
+      tags:
+      - games
+  /meta:
+    get:
+      consumes:
+      - application/json
+      description: Returns API version, dataset freshness, coverage, and schema fingerprints
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.metaResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: API metadata
+      tags:
+      - meta
+  /meta/datasets:
+    get:
+      consumes:
+      - application/json
+      description: Returns dataset ETL metadata and coverage
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.DatasetStatus'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Dataset status
+      tags:
+      - meta
   /players:
     get:
       consumes:
@@ -553,6 +1271,33 @@ paths:
       summary: Get player by ID
       tags:
       - players
+  /players/{id}/appearances:
+    get:
+      consumes:
+      - application/json
+      description: Get appearance records by position for a player across all seasons
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.PlayerAppearance'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get player appearances
+      tags:
+      - players
   /players/{id}/awards:
     get:
       consumes:
@@ -592,6 +1337,45 @@ paths:
       summary: Get player awards
       tags:
       - players
+  /players/{id}/game-logs:
+    get:
+      consumes:
+      - application/json
+      description: Get list of games where the player appeared in the starting lineup
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Filter by season
+        in: query
+        name: season
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get player game logs
+      tags:
+      - players
   /players/{id}/hall-of-fame:
     get:
       consumes:
@@ -615,6 +1399,130 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
       summary: Get player Hall of Fame records
+      tags:
+      - players
+  /players/{id}/plate-appearances:
+    get:
+      consumes:
+      - application/json
+      description: Return plate appearances where the player is the batter with optional
+        filters
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Filter by season year
+        in: query
+        name: season
+        type: integer
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: date_from
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: date_to
+        type: string
+      - description: Retrosheet game ID
+        in: query
+        name: game_id
+        type: string
+      - description: Filter by pitcher Retrosheet ID
+        in: query
+        name: pitcher
+        type: string
+      - description: Filter by Lahman pitcher ID
+        in: query
+        name: vs_pitcher
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get plate appearances for a player
+      tags:
+      - plays
+      - players
+  /players/{id}/plays:
+    get:
+      consumes:
+      - application/json
+      description: Get all plays involving a specific player (as batter or pitcher)
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get plays for a player
+      tags:
+      - plays
+      - players
+  /players/{id}/salaries:
+    get:
+      consumes:
+      - application/json
+      description: Return all salary records for a player from Lahman Salaries table
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.PlayerSalary'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get player's salary history
       tags:
       - players
   /players/{id}/seasons:
@@ -642,6 +1550,128 @@ paths:
       summary: Get player season statistics
       tags:
       - players
+  /players/{id}/teams:
+    get:
+      consumes:
+      - application/json
+      description: List every season/team combination a player appeared in
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.PlayerTeamSeason'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get player's team history
+      tags:
+      - players
+  /plays:
+    get:
+      consumes:
+      - application/json
+      description: Query plays with various filters
+      parameters:
+      - description: Batter Retrosheet ID
+        in: query
+        name: batter
+        type: string
+      - description: Pitcher Retrosheet ID
+        in: query
+        name: pitcher
+        type: string
+      - description: Batting team ID
+        in: query
+        name: bat_team
+        type: string
+      - description: Pitching team ID
+        in: query
+        name: pit_team
+        type: string
+      - description: Game date (YYYYMMDD)
+        in: query
+        name: date
+        type: string
+      - description: Start date (YYYYMMDD)
+        in: query
+        name: date_from
+        type: string
+      - description: End date (YYYYMMDD)
+        in: query
+        name: date_to
+        type: string
+      - description: Filter by inning
+        in: query
+        name: inning
+        type: integer
+      - description: Filter to only home runs
+        in: query
+        name: home_runs
+        type: boolean
+      - description: Filter to only walks
+        in: query
+        name: walks
+        type: boolean
+      - description: Filter to only strikeouts
+        in: query
+        name: strikeouts
+        type: boolean
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: List plays
+      tags:
+      - plays
+  /seasons:
+    get:
+      consumes:
+      - application/json
+      description: Get summary of all available seasons with league and team counts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.Season'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: List all seasons
+      tags:
+      - seasons
   /seasons/{year}/dates/{date}/games:
     get:
       consumes:
@@ -766,6 +1796,47 @@ paths:
       summary: Get pitching leaders
       tags:
       - stats
+  /seasons/{year}/parks/{park_id}/games:
+    get:
+      consumes:
+      - application/json
+      description: Get all games played at a specific ballpark in a season
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Park ID
+        in: path
+        name: park_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 100
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get games at a park
+      tags:
+      - games
+      - parks
   /seasons/{year}/schedule:
     get:
       consumes:
@@ -840,6 +1911,125 @@ paths:
       summary: Get all teams for a season
       tags:
       - teams
+  /seasons/{year}/teams/{team_id}/batting:
+    get:
+      consumes:
+      - application/json
+      description: Get aggregated batting statistics for a team with optional per-player
+        splits
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - description: Include per-player splits
+        in: query
+        name: players
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.TeamBattingStats'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get team batting stats
+      tags:
+      - teams
+  /seasons/{year}/teams/{team_id}/daily-logs:
+    get:
+      consumes:
+      - application/json
+      description: Get team performance aggregated by date for a season
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 100
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get team daily logs
+      tags:
+      - teams
+      - games
+  /seasons/{year}/teams/{team_id}/fielding:
+    get:
+      consumes:
+      - application/json
+      description: Get aggregated fielding statistics for a team with optional per-player/position
+        splits
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - description: Include per-player splits
+        in: query
+        name: players
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.TeamFieldingStats'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get team fielding stats
+      tags:
+      - teams
   /seasons/{year}/teams/{team_id}/games:
     get:
       consumes:
@@ -879,6 +2069,122 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: Get team games for a season
       tags:
+      - games
+  /seasons/{year}/teams/{team_id}/pitching:
+    get:
+      consumes:
+      - application/json
+      description: Get aggregated pitching statistics for a team with optional per-player
+        splits
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - description: Include per-player splits
+        in: query
+        name: players
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.TeamPitchingStats'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get team pitching stats
+      tags:
+      - teams
+  /seasons/{year}/teams/{team_id}/roster:
+    get:
+      consumes:
+      - application/json
+      description: Get roster for a specific team and season with basic stats
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.RosterPlayer'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get team roster
+      tags:
+      - teams
+  /seasons/{year}/teams/{team_id}/schedule:
+    get:
+      consumes:
+      - application/json
+      description: Get the game schedule for a team in a season (alias for /seasons/{year}/teams/{team_id}/games)
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 100
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get team schedule
+      tags:
+      - teams
       - games
   /stats/batting:
     get:

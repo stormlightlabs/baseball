@@ -566,6 +566,7 @@ func AuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepos
 							}
 						}
 
+						// TODO: pass API key as X-API-KEY header
 						apiKey, err := apiKeyRepo.GetByKey(r.Context(), credentials)
 						if err == nil && apiKey.IsActive {
 							user, err := userRepo.GetByID(r.Context(), apiKey.UserID)
