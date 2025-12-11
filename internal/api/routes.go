@@ -31,7 +31,7 @@ func (pr *PlayerRoutes) RegisterRoutes(mux *http.ServeMux) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Player ID"
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} core.Player
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /players/{id} [get]
@@ -103,7 +103,7 @@ func (pr *PlayerRoutes) handleListPlayers(w http.ResponseWriter, r *http.Request
 // @Accept json
 // @Produce json
 // @Param id path string true "Player ID"
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} PlayerSeasonsResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /players/{id}/seasons [get]
 func (pr *PlayerRoutes) handlePlayerSeasons(w http.ResponseWriter, r *http.Request) {
@@ -122,9 +122,9 @@ func (pr *PlayerRoutes) handlePlayerSeasons(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"batting":  batting,
-		"pitching": pitching,
+	writeJSON(w, http.StatusOK, PlayerSeasonsResponse{
+		Batting:  batting,
+		Pitching: pitching,
 	})
 }
 
@@ -185,7 +185,7 @@ func (pr *PlayerRoutes) handlePlayerAwards(w http.ResponseWriter, r *http.Reques
 // @Accept json
 // @Produce json
 // @Param id path string true "Player ID"
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} HallOfFameResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /players/{id}/hall-of-fame [get]
 func (pr *PlayerRoutes) handlePlayerHallOfFame(w http.ResponseWriter, r *http.Request) {
@@ -198,8 +198,8 @@ func (pr *PlayerRoutes) handlePlayerHallOfFame(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"records": records,
+	writeJSON(w, http.StatusOK, HallOfFameResponse{
+		Records: records,
 	})
 }
 
@@ -215,6 +215,7 @@ type GameRoutes struct {
 
 func NewGameRoutes(repo core.GameRepository) *GameRoutes { return &GameRoutes{repo: repo} }
 
+// TODO: retrosheet routing
 func (gr *GameRoutes) RegisterRoutes(mux *http.ServeMux) {
 	// mux.HandleFunc("GET /v1/games", gr.handleListGames)
 	// mux.HandleFunc("GET /v1/games/{id}", gr.handleGetGame)

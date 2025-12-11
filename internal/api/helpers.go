@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"stormlightlabs.org/baseball/internal/core"
 )
 
 type PaginatedResponse struct {
@@ -16,6 +18,44 @@ type PaginatedResponse struct {
 
 type ErrorResponse struct {
 	Error string `json:"error"`
+}
+
+// PlayerSeasonsResponse wraps batting and pitching season stats
+type PlayerSeasonsResponse struct {
+	Batting  []core.PlayerBattingSeason  `json:"batting"`
+	Pitching []core.PlayerPitchingSeason `json:"pitching"`
+}
+
+// HallOfFameResponse wraps Hall of Fame records
+type HallOfFameResponse struct {
+	Records []core.HallOfFameRecord `json:"records"`
+}
+
+// BattingLeadersResponse wraps season batting leaders with metadata
+type BattingLeadersResponse struct {
+	Year    core.SeasonYear            `json:"year" swaggertype:"integer"`
+	Stat    string                     `json:"stat"`
+	League  *core.LeagueID             `json:"league,omitempty" swaggertype:"string"`
+	Leaders []core.PlayerBattingSeason `json:"leaders"`
+}
+
+// PitchingLeadersResponse wraps season pitching leaders with metadata
+type PitchingLeadersResponse struct {
+	Year    core.SeasonYear             `json:"year" swaggertype:"integer"`
+	Stat    string                      `json:"stat"`
+	League  *core.LeagueID              `json:"league,omitempty" swaggertype:"string"`
+	Leaders []core.PlayerPitchingSeason `json:"leaders"`
+}
+
+// FranchisesResponse wraps franchise list with total count
+type FranchisesResponse struct {
+	Franchises []core.Franchise `json:"franchises"`
+	Total      int              `json:"total"`
+}
+
+// HealthResponse is the health check response
+type HealthResponse struct {
+	Status string `json:"status"`
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

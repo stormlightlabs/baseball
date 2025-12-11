@@ -1,3 +1,15 @@
+// Package api provides HTTP handlers for the Baseball API
+//
+// @title Baseball API
+// @version 1.0
+// @description A comprehensive REST API for baseball statistics serving data from the Lahman Baseball Database and Retrosheet
+//
+// @contact.name API Support
+// @contact.url https://github.com/stormlightlabs/baseball
+// @contact.email info@stormlightlabs.org
+//
+// @license.name MPL-2.0
+// @license.url https://opensource.org/license/mpl-2-0
 package api
 
 import (
@@ -25,20 +37,16 @@ func NewServer(registrars ...Registrar) *Server {
 	// @Tags health
 	// @Accept json
 	// @Produce json
-	// @Success 200 {object} map[string]string
+	// @Success 200 {object} HealthResponse
 	// @Router /health [get]
 	mux.HandleFunc("GET /v1/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
+		writeJSON(w, http.StatusOK, HealthResponse{Status: "ok"})
 	})
 
-	// Swagger documentation at root and /docs
-	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/docs/", httpSwagger.WrapHandler)
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/docs/", http.StatusMovedPermanently)
 	})
-	mux.HandleFunc("/docs/", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/doc.json"),
-	))
 
 	return &Server{mux: mux}
 }

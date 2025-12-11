@@ -1,26 +1,19 @@
 {
-    "schemes": [
-        "http",
-        "https"
-    ],
     "swagger": "2.0",
     "info": {
-        "description": "API for accessing historical baseball statistics from the Lahman database",
+        "description": "A comprehensive REST API for baseball statistics serving data from the Lahman Baseball Database and Retrosheet",
         "title": "Baseball API",
-        "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
+            "url": "https://github.com/stormlightlabs/baseball",
+            "email": "info@stormlightlabs.org"
         },
         "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+            "name": "MPL-2.0",
+            "url": "https://opensource.org/license/mpl-2-0"
         },
-        "version": "1.0.0"
+        "version": "1.0"
     },
-    "host": "localhost:8080",
-    "basePath": "/v1",
     "paths": {
         "/franchises": {
             "get": {
@@ -47,8 +40,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/api.FranchisesResponse"
                         }
                     },
                     "500": {
@@ -86,8 +78,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.Franchise"
                         }
                     },
                     "404": {
@@ -188,8 +179,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.Player"
                         }
                     },
                     "404": {
@@ -291,8 +281,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/api.HallOfFameResponse"
                         }
                     },
                     "500": {
@@ -330,8 +319,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/api.PlayerSeasonsResponse"
                         }
                     },
                     "500": {
@@ -396,8 +384,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/api.BattingLeadersResponse"
                         }
                     },
                     "500": {
@@ -462,8 +449,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/api.PitchingLeadersResponse"
                         }
                     },
                     "500": {
@@ -623,8 +609,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.TeamSeason"
                         }
                     },
                     "404": {
@@ -644,11 +629,56 @@
         }
     },
     "definitions": {
+        "api.BattingLeadersResponse": {
+            "type": "object",
+            "properties": {
+                "leaders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.PlayerBattingSeason"
+                    }
+                },
+                "league": {
+                    "type": "string"
+                },
+                "stat": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "api.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
                     "type": "string"
+                }
+            }
+        },
+        "api.FranchisesResponse": {
+            "type": "object",
+            "properties": {
+                "franchises": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.Franchise"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.HallOfFameResponse": {
+            "type": "object",
+            "properties": {
+                "records": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.HallOfFameRecord"
+                    }
                 }
             }
         },
@@ -663,6 +693,378 @@
                     "type": "integer"
                 },
                 "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.PitchingLeadersResponse": {
+            "type": "object",
+            "properties": {
+                "leaders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.PlayerPitchingSeason"
+                    }
+                },
+                "league": {
+                    "type": "string"
+                },
+                "stat": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.PlayerSeasonsResponse": {
+            "type": "object",
+            "properties": {
+                "batting": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.PlayerBattingSeason"
+                    }
+                },
+                "pitching": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.PlayerPitchingSeason"
+                    }
+                }
+            }
+        },
+        "core.Franchise": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "active_from": {
+                    "type": "integer"
+                },
+                "active_to": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.HallOfFameRecord": {
+            "type": "object",
+            "properties": {
+                "ballots": {
+                    "type": "integer"
+                },
+                "inducted": {
+                    "type": "boolean"
+                },
+                "needed": {
+                    "type": "integer"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "voted_by": {
+                    "type": "string"
+                },
+                "votes": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.Player": {
+            "type": "object",
+            "properties": {
+                "bats": {
+                    "description": "\"R\", \"L\", \"B\"",
+                    "type": "string"
+                },
+                "birth_city": {
+                    "type": "string"
+                },
+                "birth_country": {
+                    "type": "string"
+                },
+                "birth_day": {
+                    "type": "integer"
+                },
+                "birth_month": {
+                    "type": "integer"
+                },
+                "birth_state": {
+                    "type": "string"
+                },
+                "birth_year": {
+                    "type": "integer"
+                },
+                "death_city": {
+                    "type": "string"
+                },
+                "death_country": {
+                    "type": "string"
+                },
+                "death_day": {
+                    "type": "integer"
+                },
+                "death_month": {
+                    "type": "integer"
+                },
+                "death_state": {
+                    "type": "string"
+                },
+                "death_year": {
+                    "type": "integer"
+                },
+                "debut": {
+                    "type": "string"
+                },
+                "final_game": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "given_name": {
+                    "description": "e.g., \"Michael Nelson\"",
+                    "type": "string"
+                },
+                "height_inches": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "ruthba01"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "retro_id": {
+                    "type": "string",
+                    "example": "ruthb101"
+                },
+                "throws": {
+                    "description": "\"R\", \"L\"",
+                    "type": "string"
+                },
+                "weight_lbs": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.PlayerBattingSeason": {
+            "type": "object",
+            "properties": {
+                "ab": {
+                    "type": "integer"
+                },
+                "avg": {
+                    "description": "Precomputed rate stats (optional but convenient)",
+                    "type": "number"
+                },
+                "bb": {
+                    "type": "integer"
+                },
+                "cs": {
+                    "type": "integer"
+                },
+                "doubles": {
+                    "type": "integer"
+                },
+                "g": {
+                    "type": "integer"
+                },
+                "h": {
+                    "type": "integer"
+                },
+                "hbp": {
+                    "type": "integer"
+                },
+                "hr": {
+                    "type": "integer"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "obp": {
+                    "type": "number"
+                },
+                "ops": {
+                    "type": "number"
+                },
+                "pa": {
+                    "type": "integer"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "r": {
+                    "type": "integer"
+                },
+                "rbi": {
+                    "type": "integer"
+                },
+                "sb": {
+                    "type": "integer"
+                },
+                "sf": {
+                    "type": "integer"
+                },
+                "slg": {
+                    "type": "number"
+                },
+                "so": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "triples": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.PlayerPitchingSeason": {
+            "type": "object",
+            "properties": {
+                "bb": {
+                    "type": "integer"
+                },
+                "bb_per_9": {
+                    "type": "number"
+                },
+                "bk": {
+                    "type": "integer"
+                },
+                "cg": {
+                    "type": "integer"
+                },
+                "er": {
+                    "type": "integer"
+                },
+                "era": {
+                    "type": "number"
+                },
+                "fip": {
+                    "description": "if you compute it",
+                    "type": "number"
+                },
+                "g": {
+                    "type": "integer"
+                },
+                "gs": {
+                    "type": "integer"
+                },
+                "h": {
+                    "type": "integer"
+                },
+                "hbp": {
+                    "type": "integer"
+                },
+                "hr": {
+                    "type": "integer"
+                },
+                "hr_per_9": {
+                    "type": "number"
+                },
+                "ip_outs": {
+                    "description": "3 * IP",
+                    "type": "integer"
+                },
+                "k_per_9": {
+                    "type": "number"
+                },
+                "l": {
+                    "type": "integer"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "sho": {
+                    "type": "integer"
+                },
+                "so": {
+                    "type": "integer"
+                },
+                "sv": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "w": {
+                    "type": "integer"
+                },
+                "whip": {
+                    "type": "number"
+                },
+                "wp": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.TeamSeason": {
+            "type": "object",
+            "properties": {
+                "attendance": {
+                    "type": "integer"
+                },
+                "division": {
+                    "type": "string"
+                },
+                "franchise_id": {
+                    "type": "string"
+                },
+                "games": {
+                    "type": "integer"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "losses": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "park_id": {
+                    "type": "string"
+                },
+                "runs_allowed": {
+                    "type": "integer"
+                },
+                "runs_scored": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "ties": {
+                    "type": "integer"
+                },
+                "wins": {
+                    "type": "integer"
+                },
+                "year": {
                     "type": "integer"
                 }
             }

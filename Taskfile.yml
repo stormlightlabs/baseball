@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 vars:
   BINARY_NAME: baseball
@@ -35,12 +35,26 @@ tasks:
   swagger:generate:
     desc: Generate Swagger/OpenAPI documentation
     cmds:
-      - swag init -g internal/docs/docs.go -o internal/docs --parseDependency --parseInternal
+      - swag init --dir ./internal/api --generalInfo server.go --output ./internal/docs --parseDependency --parseInternal
+      - task: swagger:fix
     sources:
       - "internal/**/*.go"
     generates:
       - "internal/docs/swagger.json"
       - "internal/docs/swagger.yaml"
+
+  swagger:fix:
+    desc: Fix generated swagger docs (remove LeftDelim/RightDelim fields)
+    cmds:
+      - |
+        # Remove LeftDelim and RightDelim fields from generated docs.go
+        # These fields cause build errors due to swag version incompatibility
+        if [ -f internal/docs/docs.go ]; then
+          sed -i.bak '/LeftDelim:/d; /RightDelim:/d' internal/docs/docs.go && rm -f internal/docs/docs.go.bak
+          echo "✓ Fixed swagger docs (removed LeftDelim/RightDelim fields)"
+        else
+          echo "⚠ internal/docs/docs.go not found, skipping fix"
+        fi
 
   swagger:fmt:
     desc: Format swagger comments

@@ -83,7 +83,7 @@ func (tr *TeamRoutes) handleListTeams(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "Team ID"
 // @Param year query integer false "Year" default(2024)
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} core.TeamSeason
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /teams/{id} [get]
@@ -159,7 +159,7 @@ func (tr *TeamRoutes) handleSeasonTeams(w http.ResponseWriter, r *http.Request) 
 // @Accept json
 // @Produce json
 // @Param active query boolean false "Filter to only active franchises"
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} FranchisesResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /franchises [get]
 func (tr *TeamRoutes) handleListFranchises(w http.ResponseWriter, r *http.Request) {
@@ -173,9 +173,9 @@ func (tr *TeamRoutes) handleListFranchises(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"franchises": franchises,
-		"total":      len(franchises),
+	writeJSON(w, http.StatusOK, FranchisesResponse{
+		Franchises: franchises,
+		Total:      len(franchises),
 	})
 }
 
@@ -186,7 +186,7 @@ func (tr *TeamRoutes) handleListFranchises(w http.ResponseWriter, r *http.Reques
 // @Accept json
 // @Produce json
 // @Param id path string true "Franchise ID"
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} core.Franchise
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /franchises/{id} [get]

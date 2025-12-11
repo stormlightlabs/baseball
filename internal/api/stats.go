@@ -30,7 +30,7 @@ func (sr *StatsRoutes) RegisterRoutes(mux *http.ServeMux) {
 // @Param league query string false "Filter by league (AL, NL)"
 // @Param limit query integer false "Number of results" default(10)
 // @Param offset query integer false "Offset for pagination" default(0)
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} BattingLeadersResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /seasons/{year}/leaders/batting [get]
 func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Request) {
@@ -57,11 +57,11 @@ func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"year":    year,
-		"stat":    stat,
-		"league":  league,
-		"leaders": leaders,
+	writeJSON(w, http.StatusOK, BattingLeadersResponse{
+		Year:    year,
+		Stat:    stat,
+		League:  league,
+		Leaders: leaders,
 	})
 }
 
@@ -76,7 +76,7 @@ func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Reque
 // @Param league query string false "Filter by league (AL, NL)"
 // @Param limit query integer false "Number of results" default(10)
 // @Param offset query integer false "Offset for pagination" default(0)
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} PitchingLeadersResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /seasons/{year}/leaders/pitching [get]
 func (sr *StatsRoutes) handlePitchingLeaders(w http.ResponseWriter, r *http.Request) {
@@ -103,10 +103,10 @@ func (sr *StatsRoutes) handlePitchingLeaders(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"year":    year,
-		"stat":    stat,
-		"league":  league,
-		"leaders": leaders,
+	writeJSON(w, http.StatusOK, PitchingLeadersResponse{
+		Year:    year,
+		Stat:    stat,
+		League:  league,
+		Leaders: leaders,
 	})
 }

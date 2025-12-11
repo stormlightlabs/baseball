@@ -1,9 +1,37 @@
-basePath: /v1
 definitions:
+  api.BattingLeadersResponse:
+    properties:
+      leaders:
+        items:
+          $ref: '#/definitions/core.PlayerBattingSeason'
+        type: array
+      league:
+        type: string
+      stat:
+        type: string
+      year:
+        type: integer
+    type: object
   api.ErrorResponse:
     properties:
       error:
         type: string
+    type: object
+  api.FranchisesResponse:
+    properties:
+      franchises:
+        items:
+          $ref: '#/definitions/core.Franchise'
+        type: array
+      total:
+        type: integer
+    type: object
+  api.HallOfFameResponse:
+    properties:
+      records:
+        items:
+          $ref: '#/definitions/core.HallOfFameRecord'
+        type: array
     type: object
   api.PaginatedResponse:
     properties:
@@ -15,19 +43,266 @@ definitions:
       total:
         type: integer
     type: object
-host: localhost:8080
+  api.PitchingLeadersResponse:
+    properties:
+      leaders:
+        items:
+          $ref: '#/definitions/core.PlayerPitchingSeason'
+        type: array
+      league:
+        type: string
+      stat:
+        type: string
+      year:
+        type: integer
+    type: object
+  api.PlayerSeasonsResponse:
+    properties:
+      batting:
+        items:
+          $ref: '#/definitions/core.PlayerBattingSeason'
+        type: array
+      pitching:
+        items:
+          $ref: '#/definitions/core.PlayerPitchingSeason'
+        type: array
+    type: object
+  core.Franchise:
+    properties:
+      active:
+        type: boolean
+      active_from:
+        type: integer
+      active_to:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  core.HallOfFameRecord:
+    properties:
+      ballots:
+        type: integer
+      inducted:
+        type: boolean
+      needed:
+        type: integer
+      player_id:
+        type: string
+      voted_by:
+        type: string
+      votes:
+        type: integer
+      year:
+        type: integer
+    type: object
+  core.Player:
+    properties:
+      bats:
+        description: '"R", "L", "B"'
+        type: string
+      birth_city:
+        type: string
+      birth_country:
+        type: string
+      birth_day:
+        type: integer
+      birth_month:
+        type: integer
+      birth_state:
+        type: string
+      birth_year:
+        type: integer
+      death_city:
+        type: string
+      death_country:
+        type: string
+      death_day:
+        type: integer
+      death_month:
+        type: integer
+      death_state:
+        type: string
+      death_year:
+        type: integer
+      debut:
+        type: string
+      final_game:
+        type: string
+      first_name:
+        type: string
+      given_name:
+        description: e.g., "Michael Nelson"
+        type: string
+      height_inches:
+        type: integer
+      id:
+        example: ruthba01
+        type: string
+      last_name:
+        type: string
+      nickname:
+        type: string
+      retro_id:
+        example: ruthb101
+        type: string
+      throws:
+        description: '"R", "L"'
+        type: string
+      weight_lbs:
+        type: integer
+    type: object
+  core.PlayerBattingSeason:
+    properties:
+      ab:
+        type: integer
+      avg:
+        description: Precomputed rate stats (optional but convenient)
+        type: number
+      bb:
+        type: integer
+      cs:
+        type: integer
+      doubles:
+        type: integer
+      g:
+        type: integer
+      h:
+        type: integer
+      hbp:
+        type: integer
+      hr:
+        type: integer
+      league:
+        type: string
+      obp:
+        type: number
+      ops:
+        type: number
+      pa:
+        type: integer
+      player_id:
+        type: string
+      r:
+        type: integer
+      rbi:
+        type: integer
+      sb:
+        type: integer
+      sf:
+        type: integer
+      slg:
+        type: number
+      so:
+        type: integer
+      team_id:
+        type: string
+      triples:
+        type: integer
+      year:
+        type: integer
+    type: object
+  core.PlayerPitchingSeason:
+    properties:
+      bb:
+        type: integer
+      bb_per_9:
+        type: number
+      bk:
+        type: integer
+      cg:
+        type: integer
+      er:
+        type: integer
+      era:
+        type: number
+      fip:
+        description: if you compute it
+        type: number
+      g:
+        type: integer
+      gs:
+        type: integer
+      h:
+        type: integer
+      hbp:
+        type: integer
+      hr:
+        type: integer
+      hr_per_9:
+        type: number
+      ip_outs:
+        description: 3 * IP
+        type: integer
+      k_per_9:
+        type: number
+      l:
+        type: integer
+      league:
+        type: string
+      player_id:
+        type: string
+      sho:
+        type: integer
+      so:
+        type: integer
+      sv:
+        type: integer
+      team_id:
+        type: string
+      w:
+        type: integer
+      whip:
+        type: number
+      wp:
+        type: integer
+      year:
+        type: integer
+    type: object
+  core.TeamSeason:
+    properties:
+      attendance:
+        type: integer
+      division:
+        type: string
+      franchise_id:
+        type: string
+      games:
+        type: integer
+      league:
+        type: string
+      losses:
+        type: integer
+      name:
+        type: string
+      park_id:
+        type: string
+      runs_allowed:
+        type: integer
+      runs_scored:
+        type: integer
+      team_id:
+        type: string
+      ties:
+        type: integer
+      wins:
+        type: integer
+      year:
+        type: integer
+    type: object
 info:
   contact:
-    email: support@swagger.io
+    email: info@stormlightlabs.org
     name: API Support
-    url: http://www.swagger.io/support
-  description: API for accessing historical baseball statistics from the Lahman database
+    url: https://github.com/stormlightlabs/baseball
+  description: A comprehensive REST API for baseball statistics serving data from
+    the Lahman Baseball Database and Retrosheet
   license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
+    name: MPL-2.0
+    url: https://opensource.org/license/mpl-2-0
   title: Baseball API
-  version: 1.0.0
+  version: "1.0"
 paths:
   /franchises:
     get:
@@ -45,8 +320,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/api.FranchisesResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -71,8 +345,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.Franchise'
         "404":
           description: Not Found
           schema:
@@ -139,8 +412,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.Player'
         "404":
           description: Not Found
           schema:
@@ -208,8 +480,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/api.HallOfFameResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -234,8 +505,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/api.PlayerSeasonsResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -279,8 +549,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/api.BattingLeadersResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -324,8 +593,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/api.PitchingLeadersResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -432,8 +700,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.TeamSeason'
         "404":
           description: Not Found
           schema:
@@ -445,7 +712,4 @@ paths:
       summary: Get team season
       tags:
       - teams
-schemes:
-- http
-- https
 swagger: "2.0"
