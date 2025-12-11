@@ -47,10 +47,27 @@ type PitchingLeadersResponse struct {
 	Leaders []core.PlayerPitchingSeason `json:"leaders"`
 }
 
+// CareerBattingLeadersResponse wraps career batting leaders with metadata
+type CareerBattingLeadersResponse struct {
+	Stat    string                     `json:"stat"`
+	Leaders []core.PlayerBattingSeason `json:"leaders"`
+}
+
+// CareerPitchingLeadersResponse wraps career pitching leaders with metadata
+type CareerPitchingLeadersResponse struct {
+	Stat    string                      `json:"stat"`
+	Leaders []core.PlayerPitchingSeason `json:"leaders"`
+}
+
 // FranchisesResponse wraps franchise list with total count
 type FranchisesResponse struct {
 	Franchises []core.Franchise `json:"franchises"`
 	Total      int              `json:"total"`
+}
+
+// AwardsListResponse wraps awards list
+type AwardsListResponse struct {
+	Awards []core.Award `json:"awards"`
 }
 
 // HealthResponse is the health check response

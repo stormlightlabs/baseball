@@ -17,6 +17,8 @@ func NewStatsRoutes(repo core.StatsRepository) *StatsRoutes {
 func (sr *StatsRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/seasons/{year}/leaders/batting", sr.handleBattingLeaders)
 	mux.HandleFunc("GET /v1/seasons/{year}/leaders/pitching", sr.handlePitchingLeaders)
+	mux.HandleFunc("GET /v1/leaders/batting/career", sr.handleCareerBattingLeaders)
+	mux.HandleFunc("GET /v1/leaders/pitching/career", sr.handleCareerPitchingLeaders)
 	mux.HandleFunc("GET /v1/stats/batting", sr.handleQueryBattingStats)
 	mux.HandleFunc("GET /v1/stats/pitching", sr.handleQueryPitchingStats)
 	mux.HandleFunc("GET /v1/stats/fielding", sr.handleQueryFieldingStats)
@@ -398,5 +400,75 @@ func (sr *StatsRoutes) handleQueryFieldingStats(w http.ResponseWriter, r *http.R
 		Page:    filter.Pagination.Page,
 		PerPage: filter.Pagination.PerPage,
 		Total:   total,
+	})
+}
+
+// handleCareerBattingLeaders godoc
+// @Summary Get career batting leaders
+// @Description Get all-time career batting leaders for a specific statistic
+// @Tags stats
+// @Accept json
+// @Produce json
+// @Param stat query string false "Statistic (hr, avg, rbi, sb, h, r, ops)" default("hr")
+// @Param limit query integer false "Number of results" default(10)
+// @Param offset query integer false "Offset for pagination" default(0)
+// @Success 200 {object} CareerBattingLeadersResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /leaders/batting/career [get]
+func (sr *StatsRoutes) handleCareerBattingLeaders(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	stat := r.URL.Query().Get("stat")
+	if stat == "" {
+		stat = "hr"
+	}
+
+	limit := getIntQuery(r, "limit", 10)
+	offset := getIntQuery(r, "offset", 0)
+
+	leaders, err := sr.repo.CareerBattingLeaders(ctx, stat, limit, offset)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, CareerBattingLeadersResponse{
+		Stat:    stat,
+		Leaders: leaders,
+	})
+}
+
+// handleCareerPitchingLeaders godoc
+// @Summary Get career pitching leaders
+// @Description Get all-time career pitching leaders for a specific statistic
+// @Tags stats
+// @Accept json
+// @Produce json
+// @Param stat query string false "Statistic (era, so, w, sv, ip)" default("w")
+// @Param limit query integer false "Number of results" default(10)
+// @Param offset query integer false "Offset for pagination" default(0)
+// @Success 200 {object} CareerPitchingLeadersResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /leaders/pitching/career [get]
+func (sr *StatsRoutes) handleCareerPitchingLeaders(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	stat := r.URL.Query().Get("stat")
+	if stat == "" {
+		stat = "w"
+	}
+
+	limit := getIntQuery(r, "limit", 10)
+	offset := getIntQuery(r, "offset", 0)
+
+	leaders, err := sr.repo.CareerPitchingLeaders(ctx, stat, limit, offset)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, CareerPitchingLeadersResponse{
+		Stat:    stat,
+		Leaders: leaders,
 	})
 }

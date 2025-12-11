@@ -6,12 +6,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
+	"github.com/charmbracelet/log"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/api"
 	"stormlightlabs.org/baseball/internal/config"
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
+	"stormlightlabs.org/baseball/internal/middleware"
 	"stormlightlabs.org/baseball/internal/repository"
 )
 
@@ -241,6 +245,23 @@ func startServer(cmd *cobra.Command, args []string) error {
 	defer database.Close()
 
 	echo.Success("✓ Connected to database")
+	echo.Info("Connecting to Redis...")
+
+	redisOpts, err := redis.ParseURL(cfg.Redis.URL)
+	if err != nil {
+		return fmt.Errorf("error: failed to parse Redis URL: %w", err)
+	}
+	redisClient := redis.NewClient(redisOpts)
+	defer redisClient.Close()
+
+	if _, err := redisClient.Ping(cmd.Context()).Result(); err != nil {
+		echo.Infof("⚠ Redis connection failed: %v", err)
+		echo.Info("  Rate limiting will be disabled")
+		redisClient = nil
+	} else {
+		echo.Success("✓ Connected to Redis")
+	}
+
 	echo.Info("Initializing repositories...")
 
 	playerRepo := repository.NewPlayerRepository(database.DB)
@@ -262,6 +283,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 		api.NewPlayerRoutes(playerRepo, awardRepo),
 		api.NewTeamRoutes(teamRepo, gameRepo),
 		api.NewStatsRoutes(statsRepo),
+		api.NewAwardRoutes(awardRepo),
 		api.NewGameRoutes(gameRepo, playRepo),
 		api.NewPlayRoutes(playRepo, playerRepo),
 		api.NewMetaRoutes(metaRepo),
@@ -269,6 +291,26 @@ func startServer(cmd *cobra.Command, args []string) error {
 		api.NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
 		api.NewUIRoutes(apiKeyRepo),
 	)
+
+	logger := log.NewWithOptions(cmd.OutOrStdout(), log.Options{
+		ReportTimestamp: true,
+		TimeFormat:      time.DateTime,
+		Prefix:          "⚾️",
+	})
+
+	rateLimiter := middleware.NewRateLimiter(redisClient, cfg.Server.DebugMode, 60, time.Minute)
+
+	var handler http.Handler = server
+	handler = middleware.Logger(logger)(handler)
+
+	if !cfg.Server.DebugMode && redisClient != nil {
+		handler = rateLimiter.Middleware(handler)
+		echo.Info("✓ Rate limiting enabled (60 req/min per IP)")
+	} else {
+		echo.Info("⚠ Rate limiting disabled (debug mode or Redis unavailable)")
+	}
+
+	echo.Info("✓ Request logging enabled")
 
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	echo.Success(fmt.Sprintf("✓ Server starting on %s", addr))
@@ -280,5 +322,5 @@ func startServer(cmd *cobra.Command, args []string) error {
 	}
 	echo.Info("Press Ctrl+C to stop")
 	echo.Info("")
-	return http.ListenAndServe(addr, server)
+	return http.ListenAndServe(addr, handler)
 }

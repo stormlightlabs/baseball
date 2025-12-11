@@ -17,7 +17,71 @@ func NewAwardRepository(db *sql.DB) *AwardRepository {
 }
 
 func (r *AwardRepository) ListAwards(ctx context.Context) ([]core.Award, error) {
-	return nil, nil
+	query := `
+		SELECT DISTINCT "awardID"
+		FROM "AwardsPlayers"
+		ORDER BY "awardID"
+	`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list awards: %w", err)
+	}
+	defer rows.Close()
+
+	var awards []core.Award
+	for rows.Next() {
+		var awardID string
+		if err := rows.Scan(&awardID); err != nil {
+			return nil, fmt.Errorf("failed to scan award: %w", err)
+		}
+
+		name := awardID
+		description := ""
+		switch awardID {
+		case "MVP":
+			name = "Most Valuable Player"
+			description = "Awarded to the best player in each league"
+		case "Cy Young Award":
+			name = "Cy Young Award"
+			description = "Awarded to the best pitcher in each league"
+		case "Rookie of the Year":
+			name = "Rookie of the Year"
+			description = "Awarded to the best rookie in each league"
+		case "Gold Glove":
+			name = "Gold Glove Award"
+			description = "Awarded to the best defensive player at each position"
+		case "Silver Slugger":
+			name = "Silver Slugger Award"
+			description = "Awarded to the best offensive player at each position"
+		case "TSN All-Star":
+			name = "The Sporting News All-Star"
+			description = "The Sporting News All-Star selection"
+		case "World Series MVP":
+			name = "World Series MVP"
+			description = "Most Valuable Player of the World Series"
+		case "All-Star Game MVP":
+			name = "All-Star Game MVP"
+			description = "Most Valuable Player of the All-Star Game"
+		case "Babe Ruth Award":
+			name = "Babe Ruth Award"
+			description = "Awarded to the best postseason performer"
+		case "Hank Aaron Award":
+			name = "Hank Aaron Award"
+			description = "Awarded to the best overall offensive performer"
+		case "Roberto Clemente Award":
+			name = "Roberto Clemente Award"
+			description = "Awarded for sportsmanship and community involvement"
+		}
+
+		awards = append(awards, core.Award{
+			ID:          core.AwardID(awardID),
+			Name:        name,
+			Description: description,
+		})
+	}
+
+	return awards, nil
 }
 
 func (r *AwardRepository) ListAwardResults(ctx context.Context, filter core.AwardFilter) ([]core.AwardResult, error) {
