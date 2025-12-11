@@ -342,3 +342,46 @@ func (db *DB) LoadRetrosheetGameLog(ctx context.Context, zipPath string) (int64,
 
 	return tag.RowsAffected(), nil
 }
+
+// LoadRetrosheetPlays extracts a retrosheet plays zip file and loads it into the plays table.
+// The CSV files already have headers, so this is simpler than game logs.
+func (db *DB) LoadRetrosheetPlays(ctx context.Context, zipPath string) (int64, error) {
+	r, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open zip file: %w", err)
+	}
+	defer r.Close()
+
+	var csvFile *zip.File
+	for _, f := range r.File {
+		if strings.HasSuffix(strings.ToLower(f.Name), ".csv") {
+			csvFile = f
+			break
+		}
+	}
+
+	if csvFile == nil {
+		return 0, fmt.Errorf("no .csv file found in zip archive")
+	}
+
+	rc, err := csvFile.Open()
+	if err != nil {
+		return 0, fmt.Errorf("failed to open file from zip: %w", err)
+	}
+	defer rc.Close()
+
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for COPY: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	copySQL := `COPY plays FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`
+
+	tag, err := conn.PgConn().CopyFrom(ctx, rc, copySQL)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy data: %w", err)
+	}
+
+	return tag.RowsAffected(), nil
+}

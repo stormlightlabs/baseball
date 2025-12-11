@@ -208,29 +208,52 @@ func fetchLahman(cmd *cobra.Command, args []string) error {
 
 func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 	echo.Header("Fetching Retrosheet Data")
-	echo.Info("Downloading Retrosheet game logs and events...")
+	echo.Info("Downloading Retrosheet game logs and play-by-play data...")
 
 	dataDir := "data/retrosheet"
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return fmt.Errorf("error: failed to create data directory: %w", err)
 	}
 
-	retrosheetFiles := map[string]string{
+	gameLogsDir := filepath.Join(dataDir, "gamelogs")
+	playsDir := filepath.Join(dataDir, "plays")
+	if err := os.MkdirAll(gameLogsDir, 0755); err != nil {
+		return fmt.Errorf("error: failed to create gamelogs directory: %w", err)
+	}
+
+	if err := os.MkdirAll(playsDir, 0755); err != nil {
+		return fmt.Errorf("error: failed to create plays directory: %w", err)
+	}
+
+	gameLogFiles := map[string]string{
 		"GL2025.zip": "https://www.retrosheet.org/gamelogs/gl2025.zip",
 		"GL2024.zip": "https://www.retrosheet.org/gamelogs/gl2024.zip",
 		"GL2023.zip": "https://www.retrosheet.org/gamelogs/gl2023.zip",
 	}
 
-	for filename, url := range retrosheetFiles {
-		echo.Infof("Downloading %s...", filename)
+	playFiles := map[string]string{
+		"2025plays.zip": "https://www.retrosheet.org/downloads/plays/2025plays.zip",
+		"2024plays.zip": "https://www.retrosheet.org/downloads/plays/2024plays.zip",
+		"2023plays.zip": "https://www.retrosheet.org/downloads/plays/2023plays.zip",
+	}
+
+	echo.Info("Downloading game logs...")
+	for filename, url := range gameLogFiles {
+		echo.Infof("  Downloading %s...", filename)
 
 		resp, err := http.Get(url)
 		if err != nil {
-			return fmt.Errorf("error: failed to download %s: %w", filename, err)
+			echo.Infof("  ⚠ Failed to download %s: %v", filename, err)
+			continue
 		}
 		defer resp.Body.Close()
 
-		outputPath := filepath.Join(dataDir, filename)
+		if resp.StatusCode != http.StatusOK {
+			echo.Infof("  ⚠ %s not available (HTTP %d)", filename, resp.StatusCode)
+			continue
+		}
+
+		outputPath := filepath.Join(gameLogsDir, filename)
 		out, err := os.Create(outputPath)
 		if err != nil {
 			return fmt.Errorf("error: failed to create %s: %w", filename, err)
@@ -242,11 +265,45 @@ func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("error: failed to save %s: %w", filename, err)
 		}
 
-		echo.Successf("✓ %s downloaded", filename)
+		echo.Successf("  ✓ %s downloaded", filename)
 	}
 
+	echo.Info("")
+	echo.Info("Downloading play-by-play data...")
+	for filename, url := range playFiles {
+		echo.Infof("  Downloading %s...", filename)
+
+		resp, err := http.Get(url)
+		if err != nil {
+			echo.Infof("  ⚠ Failed to download %s: %v", filename, err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			echo.Infof("  ⚠ %s not available (HTTP %d)", filename, resp.StatusCode)
+			continue
+		}
+
+		outputPath := filepath.Join(playsDir, filename)
+		out, err := os.Create(outputPath)
+		if err != nil {
+			return fmt.Errorf("error: failed to create %s: %w", filename, err)
+		}
+		defer out.Close()
+
+		_, err = io.Copy(out, resp.Body)
+		if err != nil {
+			return fmt.Errorf("error: failed to save %s: %w", filename, err)
+		}
+
+		echo.Successf("  ✓ %s downloaded", filename)
+	}
+
+	echo.Info("")
 	echo.Success("✓ Retrosheet data downloaded successfully")
-	echo.Infof("  Saved to: %s", dataDir)
+	echo.Infof("  Game logs: %s", gameLogsDir)
+	echo.Infof("  Play-by-play: %s", playsDir)
 	return nil
 }
 
@@ -346,20 +403,22 @@ func loadRetrosheet(cmd *cobra.Command, args []string) error {
 	echo.Success("✓ Connected to database")
 
 	dataDir := "data/retrosheet"
+	gameLogsDir := filepath.Join(dataDir, "gamelogs")
 	years := []string{"2023", "2024", "2025"}
 
 	ctx := cmd.Context()
 	totalRows := int64(0)
 
+	echo.Info("Loading game logs...")
 	for _, year := range years {
-		zipFile := filepath.Join(dataDir, fmt.Sprintf("GL%s.zip", year))
+		zipFile := filepath.Join(gameLogsDir, fmt.Sprintf("GL%s.zip", year))
 
 		if _, err := os.Stat(zipFile); os.IsNotExist(err) {
-			echo.Infof("Skipping %s (file not found)", year)
+			echo.Infof("  Skipping %s (file not found)", year)
 			continue
 		}
 
-		echo.Infof("Loading %s game logs...", year)
+		echo.Infof("  Loading %s game logs...", year)
 
 		rows, err := database.LoadRetrosheetGameLog(ctx, zipFile)
 		if err != nil {
@@ -368,10 +427,38 @@ func loadRetrosheet(cmd *cobra.Command, args []string) error {
 		}
 
 		totalRows += rows
-		echo.Successf("✓ Loaded %s (%d rows)", year, rows)
+		echo.Successf("  ✓ Loaded %s (%d rows)", year, rows)
 	}
 
-	echo.Success(fmt.Sprintf("✓ All Retrosheet data loaded successfully (%d total rows)", totalRows))
+	echo.Info("")
+	echo.Info("Loading play-by-play data...")
+	playsDir := filepath.Join(dataDir, "plays")
+	playsLoaded := int64(0)
+	for _, year := range years {
+		zipFile := filepath.Join(playsDir, fmt.Sprintf("%splays.zip", year))
+
+		if _, err := os.Stat(zipFile); os.IsNotExist(err) {
+			echo.Infof("  Skipping %s (file not found)", year)
+			continue
+		}
+
+		echo.Infof("  Loading %s plays...", year)
+
+		rows, err := database.LoadRetrosheetPlays(ctx, zipFile)
+		if err != nil {
+			return fmt.Errorf("%s failed to load %s plays: %w",
+				echo.ErrorStyle().Render("Error:"), year, err)
+		}
+
+		playsLoaded += rows
+		totalRows += rows
+		echo.Successf("  ✓ Loaded %s (%d rows)", year, rows)
+	}
+
+	echo.Info("")
+	echo.Success("✓ All Retrosheet data loaded successfully")
+	echo.Infof("  Total rows: %d", totalRows)
+	echo.Infof("  Play-by-play rows: %d", playsLoaded)
 	return nil
 }
 
