@@ -6,10 +6,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
+	"stormlightlabs.org/baseball/internal/seed"
 )
 
 // ETLCmd creates the etl command group
@@ -35,6 +39,8 @@ func DbCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(DbMigrateCmd())
+	cmd.AddCommand(DbResetCmd())
+	cmd.AddCommand(DbPopulateCmd())
 	return cmd
 }
 
@@ -112,6 +118,53 @@ func DbMigrateCmd() *cobra.Command {
 		Long:  "Create and update database schema for baseball data.",
 		RunE:  migrate,
 	}
+}
+
+// DbResetCmd creates the reset command
+func DbResetCmd() *cobra.Command {
+	var csvDir string
+	var yearsFlag string
+	var dataDir string
+
+	cmd := &cobra.Command{
+		Use:   "reset",
+		Short: "Clear Lahman and Retrosheet data before reseeding",
+		Long:  "Truncate Lahman and Retrosheet tables, clear refresh metadata, and reseed datasets.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return resetDatabase(cmd, csvDir, dataDir, yearsFlag)
+		},
+	}
+
+	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
+	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
+	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
+
+	return cmd
+}
+
+// DbPopulateCmd creates the populate command
+func DbPopulateCmd() *cobra.Command {
+	var csvDir string
+	var yearsFlag string
+	var dataDir string
+
+	cmd := &cobra.Command{
+		Use:   "populate",
+		Short: "Seed the database with Lahman and Retrosheet data",
+		Long:  "Seed the database with Lahman CSVs and Retrosheet zip files.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPopulateAll(cmd, csvDir, dataDir, yearsFlag)
+		},
+	}
+
+	cmd.AddCommand(DbPopulateLahmanCmd())
+	cmd.AddCommand(DbPopulateRetrosheetCmd())
+	cmd.AddCommand(DbPopulateAllCmd())
+
+	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
+	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
+	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
+	return cmd
 }
 
 func fetchLahman(cmd *cobra.Command, args []string) error {
@@ -405,4 +458,206 @@ func loadRetrosheet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error: failed to record Retrosheet plays refresh: %w", err)
 	}
 	return nil
+}
+
+func DbPopulateLahmanCmd() *cobra.Command {
+	var csvDir string
+
+	cmd := &cobra.Command{
+		Use:   "lahman",
+		Short: "Seed Lahman data only",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return populateLahman(cmd, csvDir)
+		},
+	}
+
+	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
+	return cmd
+}
+
+func DbPopulateRetrosheetCmd() *cobra.Command {
+	var yearsFlag string
+	var dataDir string
+
+	cmd := &cobra.Command{
+		Use:   "retrosheet",
+		Short: "Seed Retrosheet data only",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return populateRetrosheet(cmd, dataDir, yearsFlag)
+		},
+	}
+
+	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
+	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
+	return cmd
+}
+
+func DbPopulateAllCmd() *cobra.Command {
+	var csvDir string
+	var yearsFlag string
+	var dataDir string
+
+	cmd := &cobra.Command{
+		Use:   "all",
+		Short: "Seed both Lahman and Retrosheet data",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPopulateAll(cmd, csvDir, dataDir, yearsFlag)
+		},
+	}
+
+	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
+	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
+	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
+
+	return cmd
+}
+
+func populateLahman(cmd *cobra.Command, csvDir string) error {
+	echo.Header("Seeding Lahman Data")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect()
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	ctx := cmd.Context()
+	_, err = seed.LoadLahman(ctx, database, seed.LahmanOptions{CSVDir: csvDir})
+	return err
+}
+
+func populateRetrosheet(cmd *cobra.Command, dataDir, yearsFlag string) error {
+	echo.Header("Seeding Retrosheet Data")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect()
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	years, err := parseYearFlag(yearsFlag)
+	if err != nil {
+		return err
+	}
+
+	ctx := cmd.Context()
+	_, err = seed.LoadRetrosheet(ctx, database, seed.RetrosheetOptions{DataDir: dataDir, Years: years})
+	return err
+}
+
+func parseYearFlag(flagValue string) ([]int, error) {
+	if strings.TrimSpace(flagValue) == "" {
+		return nil, nil
+	}
+
+	var years []int
+	tokens := strings.Split(flagValue, ",")
+	for _, token := range tokens {
+		token = strings.TrimSpace(token)
+		if token == "" {
+			continue
+		}
+
+		if strings.Contains(token, "-") {
+			parts := strings.SplitN(token, "-", 2)
+			start, err := strconv.Atoi(strings.TrimSpace(parts[0]))
+			if err != nil {
+				return nil, fmt.Errorf("invalid year in range: %s", parts[0])
+			}
+			end, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+			if err != nil {
+				return nil, fmt.Errorf("invalid year in range: %s", parts[1])
+			}
+			if end < start {
+				return nil, fmt.Errorf("invalid range %s: end before start", token)
+			}
+			for year := start; year <= end; year++ {
+				years = append(years, year)
+			}
+			continue
+		}
+
+		year, err := strconv.Atoi(token)
+		if err != nil {
+			return nil, fmt.Errorf("invalid year: %s", token)
+		}
+		years = append(years, year)
+	}
+
+	if len(years) == 0 {
+		return nil, nil
+	}
+
+	sort.Ints(years)
+	years = uniqueInts(years)
+	return years, nil
+}
+
+func uniqueInts(values []int) []int {
+	if len(values) == 0 {
+		return values
+	}
+
+	result := make([]int, 0, len(values))
+	prev := values[0]
+	result = append(result, prev)
+
+	for _, v := range values[1:] {
+		if v == prev {
+			continue
+		}
+		result = append(result, v)
+		prev = v
+	}
+
+	return result
+}
+
+func resetDatabase(cmd *cobra.Command, csvDir, dataDir, yearsFlag string) error {
+	echo.Header("Database Reset")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect()
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	years, err := parseYearFlag(yearsFlag)
+	if err != nil {
+		return err
+	}
+
+	ctx := cmd.Context()
+
+	echo.Info("Clearing Lahman tables...")
+	if err := seed.ResetLahman(ctx, database, nil); err != nil {
+		return err
+	}
+	echo.Success("✓ Lahman tables cleared")
+
+	echo.Info("Clearing Retrosheet tables...")
+	if err := seed.ResetRetrosheet(ctx, database, years); err != nil {
+		return err
+	}
+	echo.Success("✓ Retrosheet tables cleared")
+
+	echo.Info("Reseeding datasets...")
+	return runPopulateAll(cmd, csvDir, dataDir, yearsFlag)
+}
+
+func runPopulateAll(cmd *cobra.Command, csvDir, dataDir, yearsFlag string) error {
+	if err := populateLahman(cmd, csvDir); err != nil {
+		return err
+	}
+
+	return populateRetrosheet(cmd, dataDir, yearsFlag)
 }

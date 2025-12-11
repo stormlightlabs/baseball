@@ -51,11 +51,7 @@ func newCodebergConf() *oauth2.Config {
 }
 
 // NewAuthRoutes creates a new AuthRoutes instance
-func NewAuthRoutes(
-	userRepo core.UserRepository,
-	tokenRepo core.OAuthTokenRepository,
-	apiKeyRepo core.APIKeyRepository,
-) *AuthRoutes {
+func NewAuthRoutes(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepository, apiKeyRepo core.APIKeyRepository) *AuthRoutes {
 	return &AuthRoutes{
 		userRepo:       userRepo,
 		tokenRepo:      tokenRepo,
@@ -548,18 +544,13 @@ func AuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepos
 				return
 			}
 
-			authHeader := r.Header.Get("Authorization")
-			if authHeader != "" {
-				parts := strings.SplitN(authHeader, " ", 2)
-				if len(parts) == 2 {
-					scheme := strings.ToLower(parts[0])
+			if authHeader := r.Header.Get("Authorization"); authHeader != "" {
+				if parts := strings.SplitN(authHeader, " ", 2); len(parts) == 2 {
 					credentials := parts[1]
 
-					if scheme == "bearer" {
-						token, err := tokenRepo.GetByAccessToken(r.Context(), credentials)
-						if err == nil {
-							user, err := userRepo.GetByID(r.Context(), token.UserID)
-							if err == nil && user.IsActive {
+					if scheme := strings.ToLower(parts[0]); scheme == "bearer" {
+						if token, err := tokenRepo.GetByAccessToken(r.Context(), credentials); err == nil {
+							if user, err := userRepo.GetByID(r.Context(), token.UserID); err == nil && user.IsActive {
 								ctx := context.WithValue(r.Context(), "user", user)
 								next.ServeHTTP(w, r.WithContext(ctx))
 								return
@@ -567,10 +558,8 @@ func AuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepos
 						}
 
 						// TODO: pass API key as X-API-KEY header
-						apiKey, err := apiKeyRepo.GetByKey(r.Context(), credentials)
-						if err == nil && apiKey.IsActive {
-							user, err := userRepo.GetByID(r.Context(), apiKey.UserID)
-							if err == nil && user.IsActive {
+						if apiKey, err := apiKeyRepo.GetByKey(r.Context(), credentials); err == nil && apiKey.IsActive {
+							if user, err := userRepo.GetByID(r.Context(), apiKey.UserID); err == nil && user.IsActive {
 								apiKeyRepo.UpdateLastUsed(r.Context(), apiKey.ID)
 								ctx := context.WithValue(r.Context(), "user", user)
 								ctx = context.WithValue(ctx, "api_key", apiKey)
@@ -582,12 +571,9 @@ func AuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepos
 				}
 			}
 
-			cookie, err := r.Cookie("session_token")
-			if err == nil {
-				token, err := tokenRepo.GetByAccessToken(r.Context(), cookie.Value)
-				if err == nil {
-					user, err := userRepo.GetByID(r.Context(), token.UserID)
-					if err == nil && user.IsActive {
+			if cookie, err := r.Cookie("session_token"); err == nil {
+				if token, err := tokenRepo.GetByAccessToken(r.Context(), cookie.Value); err == nil {
+					if user, err := userRepo.GetByID(r.Context(), token.UserID); err == nil && user.IsActive {
 						ctx := context.WithValue(r.Context(), "user", user)
 						next.ServeHTTP(w, r.WithContext(ctx))
 						return
@@ -604,26 +590,20 @@ func AuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepos
 func OptionalAuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepository, apiKeyRepo core.APIKeyRepository) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authHeader := r.Header.Get("Authorization")
-			if authHeader != "" {
-				parts := strings.SplitN(authHeader, " ", 2)
-				if len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
+			if authHeader := r.Header.Get("Authorization"); authHeader != "" {
+				if parts := strings.SplitN(authHeader, " ", 2); len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
 					credentials := parts[1]
 
-					token, err := tokenRepo.GetByAccessToken(r.Context(), credentials)
-					if err == nil {
-						user, err := userRepo.GetByID(r.Context(), token.UserID)
-						if err == nil && user.IsActive {
+					if token, err := tokenRepo.GetByAccessToken(r.Context(), credentials); err == nil {
+						if user, err := userRepo.GetByID(r.Context(), token.UserID); err == nil && user.IsActive {
 							ctx := context.WithValue(r.Context(), "user", user)
 							next.ServeHTTP(w, r.WithContext(ctx))
 							return
 						}
 					}
 
-					apiKey, err := apiKeyRepo.GetByKey(r.Context(), credentials)
-					if err == nil && apiKey.IsActive {
-						user, err := userRepo.GetByID(r.Context(), apiKey.UserID)
-						if err == nil && user.IsActive {
+					if apiKey, err := apiKeyRepo.GetByKey(r.Context(), credentials); err == nil && apiKey.IsActive {
+						if user, err := userRepo.GetByID(r.Context(), apiKey.UserID); err == nil && user.IsActive {
 							apiKeyRepo.UpdateLastUsed(r.Context(), apiKey.ID)
 							ctx := context.WithValue(r.Context(), "user", user)
 							ctx = context.WithValue(ctx, "api_key", apiKey)
@@ -634,12 +614,9 @@ func OptionalAuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTo
 				}
 			}
 
-			cookie, err := r.Cookie("session_token")
-			if err == nil {
-				token, err := tokenRepo.GetByAccessToken(r.Context(), cookie.Value)
-				if err == nil {
-					user, err := userRepo.GetByID(r.Context(), token.UserID)
-					if err == nil && user.IsActive {
+			if cookie, err := r.Cookie("session_token"); err == nil {
+				if token, err := tokenRepo.GetByAccessToken(r.Context(), cookie.Value); err == nil {
+					if user, err := userRepo.GetByID(r.Context(), token.UserID); err == nil && user.IsActive {
 						ctx := context.WithValue(r.Context(), "user", user)
 						next.ServeHTTP(w, r.WithContext(ctx))
 						return
