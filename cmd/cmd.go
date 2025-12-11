@@ -345,11 +345,45 @@ func migrate(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// TODO: Implement database loading
 func loadRetrosheet(cmd *cobra.Command, args []string) error {
 	echo.Header("Loading Retrosheet Data")
-	echo.Info("Loading Retrosheet CSV files into database...")
-	echo.Success("✓ Retrosheet data loaded (placeholder)")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect()
+	if err != nil {
+		return fmt.Errorf("%s %w", echo.ErrorStyle().Render("Error:"), err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	dataDir := "data/retrosheet"
+	years := []string{"2023", "2024", "2025"}
+
+	ctx := cmd.Context()
+	totalRows := int64(0)
+
+	for _, year := range years {
+		zipFile := filepath.Join(dataDir, fmt.Sprintf("GL%s.zip", year))
+
+		if _, err := os.Stat(zipFile); os.IsNotExist(err) {
+			echo.Infof("Skipping %s (file not found)", year)
+			continue
+		}
+
+		echo.Infof("Loading %s game logs...", year)
+
+		rows, err := database.LoadRetrosheetGameLog(ctx, zipFile)
+		if err != nil {
+			return fmt.Errorf("%s failed to load %s: %w",
+				echo.ErrorStyle().Render("Error:"), year, err)
+		}
+
+		totalRows += rows
+		echo.Successf("✓ Loaded %s (%d rows)", year, rows)
+	}
+
+	echo.Success(fmt.Sprintf("✓ All Retrosheet data loaded successfully (%d total rows)", totalRows))
 	return nil
 }
 

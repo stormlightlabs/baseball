@@ -88,6 +88,11 @@ tasks:
     cmds:
       - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} etl load lahman
 
+  etl:load:retrosheet:
+    desc: Load Retrosheet data into database
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} etl load retrosheet
+
   etl:status:
     desc: Check data status
     cmds:
