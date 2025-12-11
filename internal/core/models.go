@@ -50,7 +50,7 @@ type AwardID string
 type LeagueID string
 
 // Player is a person row + a few commonly needed derived fields.
-// Based primarily on Lahman People table. :contentReference[oaicite:1]{index=1}
+// Based primarily on Lahman People table.
 type Player struct {
 	ID        PlayerID       `json:"id" swaggertype:"string" example:"ruthba01"`
 	RetroID   *RetroPlayerID `json:"retro_id,omitempty" swaggertype:"string" example:"ruthb101"`
@@ -84,7 +84,7 @@ type Player struct {
 }
 
 // PlayerBattingSeason is a single season/team batting line.
-// Loosely mapped from Lahman Batting table. :contentReference[oaicite:2]{index=2}
+// Loosely mapped from Lahman Batting table.
 type PlayerBattingSeason struct {
 	PlayerID PlayerID   `json:"player_id" swaggertype:"string"`
 	Year     SeasonYear `json:"year" swaggertype:"integer"`
@@ -143,10 +143,10 @@ type PlayerPitchingSeason struct {
 	KPer9  float64  `json:"k_per_9"`
 	BBPer9 float64  `json:"bb_per_9"`
 	HRPer9 float64  `json:"hr_per_9"`
-	FIP    *float64 `json:"fip,omitempty"` // if you compute it
+	FIP    *float64 `json:"fip,omitempty"` // TODO: compute it
 }
 
-// PlayerFieldingSeason from Lahman Fielding. :contentReference[oaicite:3]{index=3}
+// PlayerFieldingSeason from Lahman Fielding.
 type PlayerFieldingSeason struct {
 	PlayerID PlayerID   `json:"player_id"`
 	Year     SeasonYear `json:"year"`
@@ -165,10 +165,10 @@ type PlayerFieldingSeason struct {
 	PB  int     `json:"pb"` // catchers
 	SB  int     `json:"sb"`
 	CS  int     `json:"cs"`
-	RF9 float64 `json:"rf9"` // range factor per 9 (if computed)
+	RF9 float64 `json:"rf9"` // TODO: compute range factor per 9
 }
 
-// TeamSeason corresponds to a row in Lahman Teams. :contentReference[oaicite:4]{index=4}
+// TeamSeason corresponds to a row in Lahman Teams.
 type TeamSeason struct {
 	TeamID      TeamID      `json:"team_id" swaggertype:"string"`
 	Year        SeasonYear  `json:"year" swaggertype:"integer"`
@@ -198,7 +198,7 @@ type Franchise struct {
 	ActiveTo   *SeasonYear `json:"active_to,omitempty" swaggertype:"integer"`
 }
 
-// Game combines Retrosheet’s game-log level data. :contentReference[oaicite:5]{index=5}
+// Game combines Retrosheet’s game-log level data.
 type Game struct {
 	ID        GameID     `json:"id"`
 	Season    SeasonYear `json:"season"`
@@ -229,7 +229,89 @@ type Game struct {
 	GameInSeries *int    `json:"game_in_series,omitempty"`
 }
 
-// GameEvent corresponds to a row in Retrosheet plays.csv (simplified). :contentReference[oaicite:6]{index=6}
+// Boxscore contains detailed team and player statistics for a game
+type Boxscore struct {
+	GameID    GameID    `json:"game_id"`
+	Date      time.Time `json:"date"`
+	HomeTeam  TeamID    `json:"home_team"`
+	AwayTeam  TeamID    `json:"away_team"`
+	HomeScore int       `json:"home_score"`
+	AwayScore int       `json:"away_score"`
+
+	HomeStats  TeamGameStats  `json:"home_stats"`
+	AwayStats  TeamGameStats  `json:"away_stats"`
+	HomeLineup []LineupPlayer `json:"home_lineup,omitempty"`
+	AwayLineup []LineupPlayer `json:"away_lineup,omitempty"`
+}
+
+// TeamGameStats contains aggregate statistics for a team in a game
+type TeamGameStats struct {
+	AB      int `json:"ab"`
+	H       int `json:"h"`
+	R       int `json:"r"`
+	Doubles int `json:"doubles"`
+	Triples int `json:"triples"`
+	HR      int `json:"hr"`
+	RBI     int `json:"rbi"`
+	SH      int `json:"sh"`
+	SF      int `json:"sf"`
+	HBP     int `json:"hbp"`
+	BB      int `json:"bb"`
+	IBB     int `json:"ibb"`
+	SO      int `json:"so"`
+	SB      int `json:"sb"`
+	CS      int `json:"cs"`
+	GDP     int `json:"gdp"`
+	LOB     int `json:"lob"`
+
+	PitchersUsed int `json:"pitchers_used"`
+	ER           int `json:"er"`
+	WP           int `json:"wp"`
+	Balks        int `json:"balks"`
+
+	PO int `json:"po"`
+	A  int `json:"a"`
+	E  int `json:"e"`
+	PB int `json:"pb"`
+	DP int `json:"dp"`
+	TP int `json:"tp"`
+}
+
+// LineupPlayer represents a starting lineup player with position
+type LineupPlayer struct {
+	PlayerID PlayerID `json:"player_id"`
+	Name     string   `json:"name,omitempty"`
+	Position int      `json:"position"`
+}
+
+// PlayerAppearance represents a player's appearance data for a season
+type PlayerAppearance struct {
+	PlayerID PlayerID   `json:"player_id"`
+	Year     SeasonYear `json:"year"`
+	TeamID   TeamID     `json:"team_id"`
+	League   *LeagueID  `json:"league,omitempty"`
+
+	GamesAll     int `json:"g_all"`
+	GamesStarted int `json:"gs"`
+	GBatting     int `json:"g_batting"`
+	GDefense     int `json:"g_defense"`
+
+	GP  int `json:"g_p"`  // Pitcher
+	GC  int `json:"g_c"`  // Catcher
+	G1B int `json:"g_1b"` // First base
+	G2B int `json:"g_2b"` // Second base
+	G3B int `json:"g_3b"` // Third base
+	GSS int `json:"g_ss"` // Shortstop
+	GLF int `json:"g_lf"` // Left field
+	GCF int `json:"g_cf"` // Center field
+	GRF int `json:"g_rf"` // Right field
+	GOF int `json:"g_of"` // Outfield
+	GDH int `json:"g_dh"` // Designated hitter
+	GPH int `json:"g_ph"` // Pinch hitter
+	GPR int `json:"g_pr"` // Pinch runner
+}
+
+// GameEvent corresponds to a row in Retrosheet plays.csv (simplified).
 type GameEvent struct {
 	GameID      GameID `json:"game_id"`
 	EventID     int    `json:"event_id"` // sequential within game
@@ -240,14 +322,13 @@ type GameEvent struct {
 	FieldingTeam TeamID   `json:"fielding_team"`
 	Batter       PlayerID `json:"batter"`
 	Pitcher      PlayerID `json:"pitcher"`
-	// Optional: catcher, runner IDs as needed.
+	// TODO: catcher, runner IDs as needed.
 
 	OutsBefore   int `json:"outs_before"`
 	OutsAfter    int `json:"outs_after"`
 	RunsScored   int `json:"runs_scored"`
 	RunsBattedIn int `json:"runs_batted_in"`
 
-	// Base/out state; there are many ways to encode this; here’s a simple one.
 	RunnerOnFirst  *PlayerID `json:"runner_on_first,omitempty"`
 	RunnerOnSecond *PlayerID `json:"runner_on_second,omitempty"`
 	RunnerOnThird  *PlayerID `json:"runner_on_third,omitempty"`
@@ -256,7 +337,7 @@ type GameEvent struct {
 	Description *string `json:"description,omitempty"` // cleaned description
 }
 
-// Park / Ballpark from Lahman & Retrosheet park tables. :contentReference[oaicite:7]{index=7}
+// Park / Ballpark from Lahman & Retrosheet park tables.
 type Park struct {
 	ID        ParkID `json:"id"`
 	Name      string `json:"name"`
@@ -293,7 +374,7 @@ type Umpire struct {
 	LastName  string   `json:"last_name"`
 }
 
-// Award and award results from Lahman Awards*. :contentReference[oaicite:8]{index=8}
+// Award and award results from Lahman Awards*.
 type Award struct {
 	ID          AwardID `json:"id"`
 	Name        string  `json:"name"`

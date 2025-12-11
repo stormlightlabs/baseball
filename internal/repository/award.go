@@ -34,7 +34,7 @@ func (r *AwardRepository) ListAwardResults(ctx context.Context, filter core.Awar
 		WHERE 1=1
 	`
 
-	args := []interface{}{}
+	args := []any{}
 	argNum := 1
 
 	if filter.PlayerID != nil {
@@ -111,7 +111,7 @@ func (r *AwardRepository) ListAwardResults(ctx context.Context, filter core.Awar
 
 func (r *AwardRepository) CountAwardResults(ctx context.Context, filter core.AwardFilter) (int, error) {
 	query := `SELECT COUNT(*) FROM "AwardsPlayers" ap WHERE 1=1`
-	args := []interface{}{}
+	args := []any{}
 	argNum := 1
 
 	if filter.PlayerID != nil {

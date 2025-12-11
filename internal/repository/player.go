@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
@@ -67,7 +68,7 @@ func (r *PlayerRepository) List(ctx context.Context, filter core.PlayerFilter) (
 		WHERE 1=1
 	`
 
-	args := []interface{}{}
+	args := []any{}
 	argNum := 1
 
 	if filter.NameQuery != "" {
@@ -121,7 +122,7 @@ func (r *PlayerRepository) List(ctx context.Context, filter core.PlayerFilter) (
 
 func (r *PlayerRepository) Count(ctx context.Context, filter core.PlayerFilter) (int, error) {
 	query := `SELECT COUNT(*) FROM "People" WHERE 1=1`
-	args := []interface{}{}
+	args := []any{}
 	argNum := 1
 
 	if filter.NameQuery != "" {
@@ -257,6 +258,209 @@ func (r *PlayerRepository) FieldingSeasons(ctx context.Context, id core.PlayerID
 	return nil, nil
 }
 
+// GameLogs retrieves games where the player appeared in the starting lineup.
+// It uses the Retrosheet player ID to query the games table
 func (r *PlayerRepository) GameLogs(ctx context.Context, id core.PlayerID, filter core.GameFilter) ([]core.Game, error) {
-	return nil, nil
+	var retroID sql.NullString
+	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("player not found: %s", id)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get player retroID: %w", err)
+	}
+
+	// If the player doesn't have a Retrosheet ID, they won't have game logs
+	if !retroID.Valid || retroID.String == "" {
+		return []core.Game{}, nil
+	}
+
+	query := `
+		SELECT
+			date,
+			game_number,
+			visiting_team,
+			home_team,
+			visiting_team_league,
+			home_team_league,
+			visiting_score,
+			home_score,
+			game_length_outs,
+			day_of_week,
+			attendance,
+			game_time_minutes,
+			park_id,
+			hp_ump_id,
+			b1_ump_id,
+			b2_ump_id,
+			b3_ump_id
+		FROM games
+		WHERE (
+			v_player_1_id = $1 OR v_player_2_id = $1 OR v_player_3_id = $1 OR
+			v_player_4_id = $1 OR v_player_5_id = $1 OR v_player_6_id = $1 OR
+			v_player_7_id = $1 OR v_player_8_id = $1 OR v_player_9_id = $1 OR
+			h_player_1_id = $1 OR h_player_2_id = $1 OR h_player_3_id = $1 OR
+			h_player_4_id = $1 OR h_player_5_id = $1 OR h_player_6_id = $1 OR
+			h_player_7_id = $1 OR h_player_8_id = $1 OR h_player_9_id = $1
+		)
+	`
+
+	args := []any{retroID.String}
+	argNum := 2
+
+	if filter.Season != nil {
+		query += fmt.Sprintf(" AND SUBSTRING(date, 1, 4) = $%d", argNum)
+		args = append(args, fmt.Sprintf("%04d", int(*filter.Season)))
+		argNum++
+	}
+
+	if filter.DateFrom != nil {
+		query += fmt.Sprintf(" AND date >= $%d", argNum)
+		args = append(args, filter.DateFrom.Format("20060102"))
+		argNum++
+	}
+
+	if filter.DateTo != nil {
+		query += fmt.Sprintf(" AND date <= $%d", argNum)
+		args = append(args, filter.DateTo.Format("20060102"))
+		argNum++
+	}
+
+	query += fmt.Sprintf(" ORDER BY date DESC, game_number LIMIT $%d OFFSET $%d", argNum, argNum+1)
+	args = append(args, filter.Pagination.PerPage, (filter.Pagination.Page-1)*filter.Pagination.PerPage)
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list player game logs: %w", err)
+	}
+	defer rows.Close()
+
+	var games []core.Game
+	for rows.Next() {
+		var g core.Game
+		var date string
+		var gameNumber int
+		var attendance, durationMin sql.NullInt64
+		var umpHome, umpFirst, umpSecond, umpThird sql.NullString
+		var homeTeam, awayTeam, homeLeague, awayLeague, parkID string
+
+		err := rows.Scan(
+			&date,
+			&gameNumber,
+			&awayTeam,
+			&homeTeam,
+			&awayLeague,
+			&homeLeague,
+			&g.AwayScore,
+			&g.HomeScore,
+			&g.Innings,
+			&g.DayOfWeek,
+			&attendance,
+			&durationMin,
+			&parkID,
+			&umpHome,
+			&umpFirst,
+			&umpSecond,
+			&umpThird,
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan game log: %w", err)
+		}
+
+		g.ID = core.GameID(fmt.Sprintf("%s%d%s", date, gameNumber, homeTeam))
+		g.HomeTeam = core.TeamID(homeTeam)
+		g.AwayTeam = core.TeamID(awayTeam)
+		g.HomeLeague = core.LeagueID(homeLeague)
+		g.AwayLeague = core.LeagueID(awayLeague)
+		g.ParkID = core.ParkID(parkID)
+
+		parsedDate, err := time.Parse("20060102", date)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse date: %w", err)
+		}
+		g.Date = parsedDate
+		g.Season = core.SeasonYear(parsedDate.Year())
+
+		g.Innings = g.Innings / 3
+
+		if attendance.Valid {
+			a := int(attendance.Int64)
+			g.Attendance = &a
+		}
+		if durationMin.Valid {
+			d := int(durationMin.Int64)
+			g.DurationMin = &d
+		}
+		if umpHome.Valid {
+			u := core.UmpireID(umpHome.String)
+			g.UmpHome = &u
+		}
+		if umpFirst.Valid {
+			u := core.UmpireID(umpFirst.String)
+			g.UmpFirst = &u
+		}
+		if umpSecond.Valid {
+			u := core.UmpireID(umpSecond.String)
+			g.UmpSecond = &u
+		}
+		if umpThird.Valid {
+			u := core.UmpireID(umpThird.String)
+			g.UmpThird = &u
+		}
+
+		games = append(games, g)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating game logs: %w", err)
+	}
+
+	return games, nil
+}
+
+// Appearances retrieves appearance records by position for a player across all seasons.
+func (r *PlayerRepository) Appearances(ctx context.Context, id core.PlayerID) ([]core.PlayerAppearance, error) {
+	query := `
+		SELECT
+			"yearID", "teamID", "lgID", "G_all", "GS", "G_batting", "G_defense",
+			"G_p", "G_c", "G_1b", "G_2b", "G_3b", "G_ss", "G_lf", "G_cf", "G_rf", "G_of", "G_dh", "G_ph", "G_pr"
+		FROM "Appearances"
+		WHERE "playerID" = $1
+		ORDER BY "yearID" DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, string(id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to query appearances: %w", err)
+	}
+	defer rows.Close()
+
+	var appearances []core.PlayerAppearance
+	for rows.Next() {
+		var a core.PlayerAppearance
+		var league sql.NullString
+
+		err := rows.Scan(
+			&a.Year, &a.TeamID, &league, &a.GamesAll, &a.GamesStarted, &a.GBatting, &a.GDefense,
+			&a.GP, &a.GC, &a.G1B, &a.G2B, &a.G3B, &a.GSS, &a.GLF, &a.GCF, &a.GRF, &a.GOF, &a.GDH, &a.GPH, &a.GPR,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan appearance: %w", err)
+		}
+
+		a.PlayerID = id
+		if league.Valid {
+			lg := core.LeagueID(league.String)
+			a.League = &lg
+		}
+
+		appearances = append(appearances, a)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating appearances: %w", err)
+	}
+
+	return appearances, nil
 }

@@ -106,7 +106,7 @@ func (db *DB) isApplied(ctx context.Context, name string) (bool, error) {
 // markApplied marks a migration as applied in the migrations table.
 // Can be called on either *DB or *Tx (both implement ExecContext).
 func markApplied(ctx context.Context, exec interface {
-	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
+	ExecContext(context.Context, string, ...any) (sql.Result, error)
 }, name string) error {
 	query := `INSERT INTO schema_migrations (name, applied_at) VALUES ($1, $2)`
 	_, err := exec.ExecContext(ctx, query, name, time.Now())

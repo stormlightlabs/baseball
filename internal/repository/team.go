@@ -62,7 +62,7 @@ func (r *TeamRepository) ListTeamSeasons(ctx context.Context, filter core.TeamFi
 		WHERE 1=1
 	`
 
-	args := []interface{}{}
+	args := []any{}
 	argNum := 1
 
 	if filter.Year != nil {
@@ -127,7 +127,7 @@ func (r *TeamRepository) ListTeamSeasons(ctx context.Context, filter core.TeamFi
 
 func (r *TeamRepository) CountTeamSeasons(ctx context.Context, filter core.TeamFilter) (int, error) {
 	query := `SELECT COUNT(*) FROM "Teams" WHERE 1=1`
-	args := []interface{}{}
+	args := []any{}
 	argNum := 1
 
 	if filter.Year != nil {
@@ -189,7 +189,7 @@ func (r *TeamRepository) ListFranchises(ctx context.Context, onlyActive bool) ([
 		WHERE 1=1
 	`
 
-	args := []interface{}{}
+	args := []any{}
 	if onlyActive {
 		query += " AND \"active\" = 'Y'"
 	}

@@ -7,21 +7,11 @@ import (
 )
 
 var (
-	// Styles for beautiful CLI output
-	headerStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FAFAFA")).
-		Background(lipgloss.Color("#7D56F4")).
-		Padding(0, 1).
-		Bold(true)
-
-	successStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#02BA84"))
-
-	errorStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FF5F87"))
-
-	infoStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#7D56F4"))
+	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#02BA84"))
+	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5F87"))
+	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#7D56F4"))
+	headerStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FAFAFA")).
+			Background(lipgloss.Color("#7D56F4")).Padding(0, 1).Bold(true)
 )
 
 // Header prints a styled header message
@@ -35,7 +25,7 @@ func Success(message string) {
 }
 
 // Successf prints a styled success message with formatting
-func Successf(format string, args ...interface{}) {
+func Successf(format string, args ...any) {
 	fmt.Println(successStyle.Render(fmt.Sprintf(format, args...)))
 }
 
@@ -45,7 +35,7 @@ func Error(message string) {
 }
 
 // Errorf prints a styled error message with formatting
-func Errorf(format string, args ...interface{}) {
+func Errorf(format string, args ...any) {
 	fmt.Println(errorStyle.Render(fmt.Sprintf(format, args...)))
 }
 
@@ -55,7 +45,7 @@ func Info(message string) {
 }
 
 // Infof prints a styled info message with formatting
-func Infof(format string, args ...interface{}) {
+func Infof(format string, args ...any) {
 	fmt.Println(infoStyle.Render(fmt.Sprintf(format, args...)))
 }
 

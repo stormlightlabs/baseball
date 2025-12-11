@@ -16,8 +16,11 @@ type PlayerRepository interface {
 	PitchingSeasons(ctx context.Context, id PlayerID) ([]PlayerPitchingSeason, error)
 	FieldingSeasons(ctx context.Context, id PlayerID) ([]PlayerFieldingSeason, error)
 
-	// Game-level view for a player (from Retrosheet logs / day-by-day). :contentReference[oaicite:9]{index=9}
+	// Game-level view for a player (from Retrosheet logs / day-by-day).
 	GameLogs(ctx context.Context, id PlayerID, filter GameFilter) ([]Game, error)
+
+	// Appearance records by position for a player
+	Appearances(ctx context.Context, id PlayerID) ([]PlayerAppearance, error)
 }
 
 // TeamRepository handles team & franchise views.
@@ -42,6 +45,9 @@ type GameRepository interface {
 	// Convenience helpers for common views:
 	ListByDate(ctx context.Context, date time.Time) ([]Game, error)
 	ListByTeamSeason(ctx context.Context, teamID TeamID, year SeasonYear, p Pagination) ([]Game, error)
+
+	// Get detailed boxscore for a game
+	GetBoxscore(ctx context.Context, id GameID) (*Boxscore, error)
 }
 
 // EventRepository manages play-by-play events.
@@ -83,7 +89,7 @@ type AwardRepository interface {
 }
 
 // StatsRepository for season/career leaderboards and arbitrary stat queries.
-// Backed by views or materialized views (batting, pitching, fielding). :contentReference[oaicite:10]{index=10}
+// Backed by views or materialized views (batting, pitching, fielding).
 type StatsRepository interface {
 	SeasonBattingLeaders(ctx context.Context, year SeasonYear, stat string, limit, offset int, league *LeagueID) ([]PlayerBattingSeason, error)
 	CareerBattingLeaders(ctx context.Context, stat string, limit, offset int) ([]PlayerBattingSeason, error)
@@ -102,7 +108,7 @@ type StatsRepository interface {
 
 // MetaRepository for API/dataset metadata (useful for /meta endpoints).
 type MetaRepository interface {
-	// Returns min/max seasons available from Lahman and Retrosheet. :contentReference[oaicite:11]{index=11}
+	// Returns min/max seasons available from Lahman and Retrosheet.
 	SeasonCoverage(ctx context.Context) (minLahman, maxLahman, minRetrosheet, maxRetrosheet SeasonYear, err error)
 
 	// When each dataset was last refreshed.

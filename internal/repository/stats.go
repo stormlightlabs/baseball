@@ -1,3 +1,4 @@
+// TODO: construct param structs
 package repository
 
 import (
@@ -42,7 +43,7 @@ func (r *StatsRepository) SeasonBattingLeaders(ctx context.Context, year core.Se
 		WHERE "yearID" = $1 AND "AB" >= 300
 	`
 
-	args := []interface{}{int(year)}
+	args := []any{int(year)}
 	argNum := 2
 
 	if league != nil {
@@ -129,7 +130,7 @@ func (r *StatsRepository) SeasonPitchingLeaders(ctx context.Context, year core.S
 		WHERE "yearID" = $1 AND "IPouts" >= 450
 	`
 
-	args := []interface{}{int(year)}
+	args := []any{int(year)}
 	argNum := 2
 
 	if league != nil {
@@ -201,7 +202,7 @@ func (r *StatsRepository) QueryBattingStats(ctx context.Context, filter core.Bat
 		WHERE 1=1
 	`
 
-	args := []interface{}{}
+	args := []any{}
 	argNum := 1
 
 	if filter.PlayerID != nil {
@@ -338,7 +339,7 @@ func (r *StatsRepository) QueryBattingStats(ctx context.Context, filter core.Bat
 func (r *StatsRepository) QueryBattingStatsCount(ctx context.Context, filter core.BattingStatsFilter) (int, error) {
 	query := `SELECT COUNT(*) FROM "Batting" WHERE 1=1`
 
-	args := []interface{}{}
+	args := []any{}
 	argNum := 1
 
 	if filter.PlayerID != nil {
@@ -403,7 +404,7 @@ func (r *StatsRepository) QueryPitchingStats(ctx context.Context, filter core.Pi
 		WHERE 1=1
 	`
 
-	args := []interface{}{}
+	args := []any{}
 	argNum := 1
 
 	if filter.PlayerID != nil {
@@ -524,7 +525,7 @@ func (r *StatsRepository) QueryPitchingStats(ctx context.Context, filter core.Pi
 func (r *StatsRepository) QueryPitchingStatsCount(ctx context.Context, filter core.PitchingStatsFilter) (int, error) {
 	query := `SELECT COUNT(*) FROM "Pitching" WHERE 1=1`
 
-	args := []interface{}{}
+	args := []any{}
 	argNum := 1
 
 	if filter.PlayerID != nil {

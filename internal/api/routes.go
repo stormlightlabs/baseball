@@ -23,6 +23,7 @@ func (pr *PlayerRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/players/{id}/awards", pr.handlePlayerAwards)
 	mux.HandleFunc("GET /v1/players/{id}/hall-of-fame", pr.handlePlayerHallOfFame)
 	mux.HandleFunc("GET /v1/players/{id}/game-logs", pr.handlePlayerGameLogs)
+	mux.HandleFunc("GET /v1/players/{id}/appearances", pr.handlePlayerAppearances)
 }
 
 // handleGetPlayer godoc
@@ -204,10 +205,70 @@ func (pr *PlayerRoutes) handlePlayerHallOfFame(w http.ResponseWriter, r *http.Re
 	})
 }
 
+// handlePlayerGameLogs godoc
+// @Summary Get player game logs
+// @Description Get list of games where the player appeared in the starting lineup
+// @Tags players
+// @Accept json
+// @Produce json
+// @Param id path string true "Player ID"
+// @Param season query integer false "Filter by season"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{id}/game-logs [get]
 func (pr *PlayerRoutes) handlePlayerGameLogs(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, ErrorResponse{
-		Error: "game logs endpoint not yet implemented",
+	ctx := r.Context()
+	id := core.PlayerID(r.PathValue("id"))
+
+	filter := core.GameFilter{
+		Pagination: core.Pagination{
+			Page:    getIntQuery(r, "page", 1),
+			PerPage: getIntQuery(r, "per_page", 50),
+		},
+	}
+
+	if season := r.URL.Query().Get("season"); season != "" {
+		y := core.SeasonYear(getIntQuery(r, "season", 0))
+		filter.Season = &y
+	}
+
+	games, err := pr.repo.GameLogs(ctx, id, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    games,
+		Page:    filter.Pagination.Page,
+		PerPage: filter.Pagination.PerPage,
+		Total:   len(games),
 	})
+}
+
+// handlePlayerAppearances godoc
+// @Summary Get player appearances
+// @Description Get appearance records by position for a player across all seasons
+// @Tags players
+// @Accept json
+// @Produce json
+// @Param id path string true "Player ID"
+// @Success 200 {object} []core.PlayerAppearance
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{id}/appearances [get]
+func (pr *PlayerRoutes) handlePlayerAppearances(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.PlayerID(r.PathValue("id"))
+
+	appearances, err := pr.repo.Appearances(ctx, id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, appearances)
 }
 
 type GameRoutes struct {
@@ -221,6 +282,7 @@ func NewGameRoutes(repo core.GameRepository) *GameRoutes {
 func (gr *GameRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/games", gr.handleListGames)
 	mux.HandleFunc("GET /v1/games/{id}", gr.handleGetGame)
+	mux.HandleFunc("GET /v1/games/{id}/boxscore", gr.handleGetBoxscore)
 	mux.HandleFunc("GET /v1/seasons/{year}/schedule", gr.handleSeasonSchedule)
 	mux.HandleFunc("GET /v1/seasons/{year}/dates/{date}/games", gr.handleGamesByDate)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/games", gr.handleTeamGames)
@@ -247,6 +309,29 @@ func (gr *GameRoutes) handleGetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, game)
+}
+
+// handleGetBoxscore godoc
+// @Summary Get game boxscore
+// @Description Get detailed boxscore statistics for a specific game including team stats and lineups
+// @Tags games
+// @Accept json
+// @Produce json
+// @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
+// @Success 200 {object} core.Boxscore
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /games/{id}/boxscore [get]
+func (gr *GameRoutes) handleGetBoxscore(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.GameID(r.PathValue("id"))
+
+	boxscore, err := gr.repo.GetBoxscore(ctx, id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, boxscore)
 }
 
 // handleListGames godoc

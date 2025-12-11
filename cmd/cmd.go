@@ -422,6 +422,8 @@ func startServer(cmd *cobra.Command, args []string) error {
 	echo.Info("  GET  /v1/players/{id}/seasons")
 	echo.Info("  GET  /v1/players/{id}/awards")
 	echo.Info("  GET  /v1/players/{id}/hall-of-fame")
+	echo.Info("  GET  /v1/players/{id}/game-logs?season={year}&page={page}&per_page={per_page}")
+	echo.Info("  GET  /v1/players/{id}/appearances")
 	echo.Info("  GET  /v1/teams?year={year}&league={league}")
 	echo.Info("  GET  /v1/teams/{id}?year={year}")
 	echo.Info("  GET  /v1/seasons/{year}/teams?league={league}")
@@ -433,6 +435,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 	echo.Info("  GET  /v1/stats/pitching?player_id={id}&year={year}&team_id={id}")
 	echo.Info("  GET  /v1/games?season={year}&team_id={id}&date={date}")
 	echo.Info("  GET  /v1/games/{id}")
+	echo.Info("  GET  /v1/games/{id}/boxscore")
 	echo.Info("  GET  /v1/seasons/{year}/schedule")
 	echo.Info("  GET  /v1/seasons/{year}/dates/{date}/games")
 	echo.Info("  GET  /v1/seasons/{year}/teams/{team_id}/games")
@@ -492,8 +495,7 @@ func checkHealth(cmd *cobra.Command, args []string) error {
 
 	resp, err := http.Get(serverURL)
 	if err != nil {
-		return fmt.Errorf("%s server is not running or unreachable: %w",
-			echo.ErrorStyle().Render("Error:"), err)
+		return fmt.Errorf("error: server is not running or unreachable: %w", err)
 	}
 	defer resp.Body.Close()
 
