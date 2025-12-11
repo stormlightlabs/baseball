@@ -21,6 +21,12 @@ type PlayerRepository interface {
 
 	// Appearance records by position for a player
 	Appearances(ctx context.Context, id PlayerID) ([]PlayerAppearance, error)
+
+	// Team history (season-by-season)
+	Teams(ctx context.Context, id PlayerID) ([]PlayerTeamSeason, error)
+
+	// Salary history (Lahman Salaries table)
+	Salaries(ctx context.Context, id PlayerID) ([]PlayerSalary, error)
 }
 
 // TeamRepository handles team & franchise views.
@@ -61,6 +67,9 @@ type PlayRepository interface {
 
 	// ListByPlayer retrieves plays involving a specific player (as batter or pitcher)
 	ListByPlayer(ctx context.Context, playerID RetroPlayerID, p Pagination) ([]Play, error)
+
+	// CountByPlayer returns the number of plays where the player was batter or pitcher.
+	CountByPlayer(ctx context.Context, playerID RetroPlayerID) (int, error)
 }
 
 // EventRepository manages play-by-play events.
@@ -120,13 +129,19 @@ type StatsRepository interface {
 	QueryPitchingStatsCount(ctx context.Context, filter PitchingStatsFilter) (int, error)
 }
 
-// MetaRepository for API/dataset metadata (useful for /meta endpoints).
+// MetaRepository for API/dataset metadata.
 type MetaRepository interface {
 	// Returns min/max seasons available from Lahman and Retrosheet.
 	SeasonCoverage(ctx context.Context) (minLahman, maxLahman, minRetrosheet, maxRetrosheet SeasonYear, err error)
 
 	// When each dataset was last refreshed.
 	LastUpdated(ctx context.Context) (lahman time.Time, retrosheet time.Time, err error)
+
+	// DatasetStatuses surfaces ETL and coverage metadata per dataset.
+	DatasetStatuses(ctx context.Context) ([]DatasetStatus, error)
+
+	// SchemaHashes returns hashes grouped by migration family/dataset.
+	SchemaHashes(ctx context.Context) (map[string]string, error)
 }
 
 // SearchRepository lets you do fuzzy lookups across entities.

@@ -67,8 +67,8 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Status | Endpoint                | Dataset | Description                                                         |
 | ------ | ----------------------- | ------- | ------------------------------------------------------------------- |
 | Done   | `GET /v1/health`        | -       | Basic readiness check used by CLI and deploy targets.               |
-| To-Do  | `GET /v1/meta`          | L+R     | Returns API version, dataset refresh timestamps, and schema hashes. |
-| To-Do  | `GET /v1/meta/datasets` | L+R     | Advertises which seasons/leagues/tables are currently loaded.       |
+| Done   | `GET /v1/meta`          | L+R     | Returns API version, dataset refresh timestamps, and schema hashes. |
+| Done   | `GET /v1/meta/datasets` | L+R     | Advertises which seasons/leagues/tables are currently loaded.       |
 
 ### 1. Players (People & Careers) - **(L)** with optional **(R)** joins
 
@@ -77,10 +77,10 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/players`                          | L       | Search/browse players with filters (name, debut year, position, handedness). |
 | Done   | `GET /v1/players/{player_id}`              | L       | Biographical data plus aggregated career stats.                              |
 | Done   | `GET /v1/players/{player_id}/seasons`      | L       | Year-by-year batting and pitching splits.                                    |
-| To-Do  | `GET /v1/players/{player_id}/teams`        | L       | List every team the player suited up for by season.                          |
+| Done   | `GET /v1/players/{player_id}/teams`        | L       | List every team the player suited up for by season.                          |
 | Done   | `GET /v1/players/{player_id}/awards`       | L       | Awards from Lahman `Awards*` tables with pagination.                         |
 | Done   | `GET /v1/players/{player_id}/hall-of-fame` | L       | Hall of Fame voting/induction history.                                       |
-| To-Do  | `GET /v1/players/{player_id}/salaries`     | L       | Salary history via Lahman `Salaries`.                                        |
+| Done   | `GET /v1/players/{player_id}/salaries`     | L       | Salary history via Lahman `Salaries`.                                        |
 
 #### Player Game & Play-by-Play Views - **(R)**
 
@@ -88,8 +88,8 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | ----------- | ----------------------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
 | Done        | `GET /v1/players/{player_id}/game-logs`         | R       | Game-by-game performance from Retrosheet logs (currently starters only; see TODO).         |
 | Done        | `GET /v1/players/{player_id}/appearances`       | R       | Detailed appearance records (positions, pinch roles) sourced from Retrosheet lineups.      |
-| In-Progress | `GET /v1/players/{player_id}/plays`             | R       | All plays involving a player as batter or pitcher; evolve into richer `/events` responses. |
-| To-Do       | `GET /v1/players/{player_id}/plate-appearances` | R       | Normalized plate appearance feed with contextual filters (count, leverage, vs_pitcher).    |
+| Done        | `GET /v1/players/{player_id}/plays`             | R       | All plays involving a player as batter or pitcher with Lahman ↔ Retrosheet ID mapping.     |
+| Done        | `GET /v1/players/{player_id}/plate-appearances` | R       | Normalized plate appearance feed with batter-facing filters (season, pitcher, date range).  |
 
 ### 2. Teams, Franchises & Seasons - **(L)** + **(R)**
 

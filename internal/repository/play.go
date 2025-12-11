@@ -447,3 +447,16 @@ func (r *PlayRepository) ListByPlayer(ctx context.Context, playerID core.RetroPl
 
 	return plays, nil
 }
+
+// CountByPlayer returns the total number of plays where the player was batter or pitcher.
+func (r *PlayRepository) CountByPlayer(ctx context.Context, playerID core.RetroPlayerID) (int, error) {
+	var count int
+	err := r.db.QueryRowContext(ctx, `
+		SELECT COUNT(*) FROM plays
+		WHERE batter = $1 OR pitcher = $1
+	`, string(playerID)).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count plays for player: %w", err)
+	}
+	return count, nil
+}

@@ -464,3 +464,101 @@ func (r *PlayerRepository) Appearances(ctx context.Context, id core.PlayerID) ([
 
 	return appearances, nil
 }
+
+func (r *PlayerRepository) Teams(ctx context.Context, id core.PlayerID) ([]core.PlayerTeamSeason, error) {
+	query := `
+		SELECT
+			a."yearID", a."teamID", a."lgID", a."G_all", a."GS",
+			t."name"
+		FROM "Appearances" a
+		LEFT JOIN "Teams" t
+			ON t."teamID" = a."teamID" AND t."yearID" = a."yearID"
+		WHERE a."playerID" = $1
+		ORDER BY a."yearID"
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, string(id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch team history: %w", err)
+	}
+	defer rows.Close()
+
+	var seasons []core.PlayerTeamSeason
+	for rows.Next() {
+		var season core.PlayerTeamSeason
+		var league sql.NullString
+		var teamName sql.NullString
+		var games, starts sql.NullInt64
+
+		if err := rows.Scan(&season.Year, &season.TeamID, &league, &games, &starts, &teamName); err != nil {
+			return nil, fmt.Errorf("failed to scan team season: %w", err)
+		}
+
+		season.PlayerID = id
+		if league.Valid {
+			lg := core.LeagueID(league.String)
+			season.League = &lg
+		}
+		if teamName.Valid {
+			name := teamName.String
+			season.TeamName = &name
+		}
+		if games.Valid {
+			season.Games = int(games.Int64)
+		}
+		if starts.Valid {
+			season.GamesStarted = int(starts.Int64)
+		}
+
+		seasons = append(seasons, season)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate team history: %w", err)
+	}
+
+	return seasons, nil
+}
+
+func (r *PlayerRepository) Salaries(ctx context.Context, id core.PlayerID) ([]core.PlayerSalary, error) {
+	query := `
+		SELECT "yearID", "teamID", "lgID", "salary"
+		FROM "Salaries"
+		WHERE "playerID" = $1
+		ORDER BY "yearID"
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, string(id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch salaries: %w", err)
+	}
+	defer rows.Close()
+
+	var salaries []core.PlayerSalary
+	for rows.Next() {
+		var salary core.PlayerSalary
+		var league sql.NullString
+		var amount sql.NullInt64
+
+		if err := rows.Scan(&salary.Year, &salary.TeamID, &league, &amount); err != nil {
+			return nil, fmt.Errorf("failed to scan salary row: %w", err)
+		}
+
+		salary.PlayerID = id
+		if league.Valid {
+			lg := core.LeagueID(league.String)
+			salary.League = &lg
+		}
+		if amount.Valid {
+			salary.Salary = amount.Int64
+		}
+
+		salaries = append(salaries, salary)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate salaries: %w", err)
+	}
+
+	return salaries, nil
+}

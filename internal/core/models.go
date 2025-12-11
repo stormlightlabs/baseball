@@ -311,30 +311,50 @@ type PlayerAppearance struct {
 	GPR int `json:"g_pr"` // Pinch runner
 }
 
+// PlayerTeamSeason represents the teams and seasons a player suited up for.
+type PlayerTeamSeason struct {
+	PlayerID     PlayerID   `json:"player_id"`
+	Year         SeasonYear `json:"year"`
+	TeamID       TeamID     `json:"team_id"`
+	TeamName     *string    `json:"team_name,omitempty"`
+	League       *LeagueID  `json:"league,omitempty"`
+	Games        int        `json:"games"`
+	GamesStarted int        `json:"games_started"`
+}
+
+// PlayerSalary captures a single salary record for a player.
+type PlayerSalary struct {
+	PlayerID PlayerID   `json:"player_id"`
+	Year     SeasonYear `json:"year"`
+	TeamID   TeamID     `json:"team_id"`
+	League   *LeagueID  `json:"league,omitempty"`
+	Salary   int64      `json:"salary"`
+}
+
 // Play represents a single play from Retrosheet play-by-play data.
 // This is the core model with essential fields for most use cases.
 type Play struct {
 	// Game identification
-	GameID   GameID     `json:"game_id"`
-	PlayNum  int        `json:"play_num"`
-	Inning   int        `json:"inning"`
-	TopBot   int        `json:"top_bot"` // 0=top, 1=bottom
-	BatTeam  TeamID     `json:"bat_team"`
-	PitTeam  TeamID     `json:"pit_team"`
-	Date     string     `json:"date"`
-	GameType string     `json:"game_type"`
+	GameID   GameID `json:"game_id"`
+	PlayNum  int    `json:"play_num"`
+	Inning   int    `json:"inning"`
+	TopBot   int    `json:"top_bot"` // 0=top, 1=bottom
+	BatTeam  TeamID `json:"bat_team"`
+	PitTeam  TeamID `json:"pit_team"`
+	Date     string `json:"date"`
+	GameType string `json:"game_type"`
 
 	// Players involved
-	Batter   RetroPlayerID  `json:"batter"`
-	Pitcher  RetroPlayerID  `json:"pitcher"`
-	BatHand  *string        `json:"bat_hand,omitempty"`
-	PitHand  *string        `json:"pit_hand,omitempty"`
+	Batter  RetroPlayerID `json:"batter"`
+	Pitcher RetroPlayerID `json:"pitcher"`
+	BatHand *string       `json:"bat_hand,omitempty"`
+	PitHand *string       `json:"pit_hand,omitempty"`
 
 	// Score and context
-	ScoreVis int `json:"score_vis"`
+	ScoreVis  int `json:"score_vis"`
 	ScoreHome int `json:"score_home"`
-	OutsPre  int `json:"outs_pre"`
-	OutsPost int `json:"outs_post"`
+	OutsPre   int `json:"outs_pre"`
+	OutsPost  int `json:"outs_post"`
 
 	// Pitch count
 	Balls   *int    `json:"balls,omitempty"`
@@ -454,4 +474,16 @@ type HallOfFameRecord struct {
 	Ballots  *int       `json:"ballots,omitempty"`
 	Needed   *int       `json:"needed,omitempty"`
 	Inducted bool       `json:"inducted"`
+}
+
+// DatasetStatus surfaces ETL/coverage metadata for a dataset.
+type DatasetStatus struct {
+	ID           string           `json:"id"`
+	Name         string           `json:"name"`
+	Source       string           `json:"source"`
+	CoverageFrom *SeasonYear      `json:"coverage_from,omitempty"`
+	CoverageTo   *SeasonYear      `json:"coverage_to,omitempty"`
+	LastLoadedAt *time.Time       `json:"last_loaded_at,omitempty"`
+	RowCount     int64            `json:"row_count"`
+	Tables       map[string]int64 `json:"tables,omitempty"`
 }

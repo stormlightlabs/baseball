@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"embed"
-	"encoding/csv"
 	"fmt"
 	"io"
 	"os"
@@ -17,39 +16,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
-
-type csvSource struct {
-	reader  *csv.Reader
-	current []string
-	err     error
-}
-
-func (c *csvSource) Next() bool {
-	c.current, c.err = c.reader.Read()
-	return c.err == nil
-}
-
-func (c *csvSource) Values() ([]any, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-	values := make([]any, len(c.current))
-	for i, v := range c.current {
-		if v == "" {
-			values[i] = nil
-		} else {
-			values[i] = v
-		}
-	}
-	return values, nil
-}
-
-func (c *csvSource) Err() error {
-	if c.err == io.EOF {
-		return nil
-	}
-	return c.err
-}
 
 //go:embed sql/*.sql
 var migrationFiles embed.FS
@@ -384,4 +350,53 @@ func (db *DB) LoadRetrosheetPlays(ctx context.Context, zipPath string) (int64, e
 	}
 
 	return tag.RowsAffected(), nil
+}
+
+// DatasetRefresh represents the last time a dataset was ingested.
+type DatasetRefresh struct {
+	Dataset      string
+	LastLoadedAt time.Time
+	RowCount     int64
+}
+
+// RecordDatasetRefresh upserts the refresh timestamp for a dataset after an ETL run.
+func (db *DB) RecordDatasetRefresh(ctx context.Context, dataset string, rowCount int64) error {
+	_, err := db.ExecContext(ctx, `
+		INSERT INTO dataset_refreshes (dataset, last_loaded_at, row_count)
+		VALUES ($1, NOW(), $2)
+		ON CONFLICT (dataset) DO UPDATE
+		SET last_loaded_at = EXCLUDED.last_loaded_at,
+		    row_count = EXCLUDED.row_count
+	`, dataset, rowCount)
+	if err != nil {
+		return fmt.Errorf("failed to record dataset refresh for %s: %w", dataset, err)
+	}
+	return nil
+}
+
+// DatasetRefreshes returns the last-known refresh metadata for all tracked datasets.
+func (db *DB) DatasetRefreshes(ctx context.Context) (map[string]DatasetRefresh, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT dataset, last_loaded_at, row_count
+		FROM dataset_refreshes
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query dataset refreshes: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(map[string]DatasetRefresh)
+	for rows.Next() {
+		var entry DatasetRefresh
+		if err := rows.Scan(&entry.Dataset, &entry.LastLoadedAt, &entry.RowCount); err != nil {
+			return nil, fmt.Errorf("failed to scan dataset refresh: %w", err)
+		}
+		result[entry.Dataset] = entry
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate dataset refreshes: %w", err)
+	}
+
+	return result, nil
 }

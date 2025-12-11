@@ -24,6 +24,8 @@ func (pr *PlayerRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/players/{id}/hall-of-fame", pr.handlePlayerHallOfFame)
 	mux.HandleFunc("GET /v1/players/{id}/game-logs", pr.handlePlayerGameLogs)
 	mux.HandleFunc("GET /v1/players/{id}/appearances", pr.handlePlayerAppearances)
+	mux.HandleFunc("GET /v1/players/{id}/teams", pr.handlePlayerTeams)
+	mux.HandleFunc("GET /v1/players/{id}/salaries", pr.handlePlayerSalaries)
 }
 
 // handleGetPlayer godoc
@@ -269,6 +271,52 @@ func (pr *PlayerRoutes) handlePlayerAppearances(w http.ResponseWriter, r *http.R
 	}
 
 	writeJSON(w, http.StatusOK, appearances)
+}
+
+// handlePlayerTeams godoc
+// @Summary Get player's team history
+// @Description List every season/team combination a player appeared in
+// @Tags players
+// @Accept json
+// @Produce json
+// @Param id path string true "Player ID"
+// @Success 200 {array} core.PlayerTeamSeason
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{id}/teams [get]
+func (pr *PlayerRoutes) handlePlayerTeams(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.PlayerID(r.PathValue("id"))
+
+	teams, err := pr.repo.Teams(ctx, id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, teams)
+}
+
+// handlePlayerSalaries godoc
+// @Summary Get player's salary history
+// @Description Return all salary records for a player from Lahman Salaries table
+// @Tags players
+// @Accept json
+// @Produce json
+// @Param id path string true "Player ID"
+// @Success 200 {array} core.PlayerSalary
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{id}/salaries [get]
+func (pr *PlayerRoutes) handlePlayerSalaries(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.PlayerID(r.PathValue("id"))
+
+	salaries, err := pr.repo.Salaries(ctx, id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, salaries)
 }
 
 type GameRoutes struct {
