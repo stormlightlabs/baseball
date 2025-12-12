@@ -146,3 +146,16 @@ type TeamStatsFilter struct {
 	SortOrder  SortOrder
 	Pagination Pagination
 }
+
+type EjectionFilter struct {
+	Season     *SeasonYear
+	PlayerID   *RetroPlayerID
+	UmpireID   *UmpireID
+	TeamID     *TeamID
+	Role       *string // P, M, C
+	DateFrom   *string // YYYYMMDD format
+	DateTo     *string // YYYYMMDD format
+	SortBy     string  // "date", "inning"
+	SortOrder  SortOrder
+	Pagination Pagination
+}

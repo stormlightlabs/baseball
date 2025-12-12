@@ -226,6 +226,11 @@ func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 		"2023plays.zip": "https://www.retrosheet.org/downloads/plays/2023plays.zip",
 	}
 
+	ejectionsDir := filepath.Join(dataDir, "ejections")
+	if err := os.MkdirAll(ejectionsDir, 0755); err != nil {
+		return fmt.Errorf("error: failed to create ejections directory: %w", err)
+	}
+
 	echo.Info("Downloading game logs...")
 	for filename, url := range gameLogFiles {
 		echo.Infof("  Downloading %s...", filename)
@@ -290,9 +295,40 @@ func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 	}
 
 	echo.Info("")
+	echo.Info("Downloading ejections data...")
+	ejectionsURL := "https://www.retrosheet.org/ejections.zip"
+	echo.Infof("  Downloading ejections.zip...")
+
+	resp, err := http.Get(ejectionsURL)
+	if err != nil {
+		echo.Infof("  ⚠ Failed to download ejections: %v", err)
+	} else {
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			echo.Infof("  ⚠ ejections.zip not available (HTTP %d)", resp.StatusCode)
+		} else {
+			outputPath := filepath.Join(ejectionsDir, "ejections.zip")
+			out, err := os.Create(outputPath)
+			if err != nil {
+				return fmt.Errorf("error: failed to create ejections.zip: %w", err)
+			}
+			defer out.Close()
+
+			_, err = io.Copy(out, resp.Body)
+			if err != nil {
+				return fmt.Errorf("error: failed to save ejections.zip: %w", err)
+			}
+
+			echo.Successf("  ✓ ejections.zip downloaded")
+		}
+	}
+
+	echo.Info("")
 	echo.Success("✓ Retrosheet data downloaded successfully")
 	echo.Infof("  Game logs: %s", gameLogsDir)
 	echo.Infof("  Play-by-play: %s", playsDir)
+	echo.Infof("  Ejections: %s", ejectionsDir)
 	return nil
 }
 
@@ -448,14 +484,42 @@ func loadRetrosheet(cmd *cobra.Command, args []string) error {
 	}
 
 	echo.Info("")
+	echo.Info("Loading ejections data...")
+	ejectionsDir := filepath.Join(dataDir, "ejections")
+	ejectionsZip := filepath.Join(ejectionsDir, "ejections.zip")
+	ejectionsLoaded := int64(0)
+
+	if _, err := os.Stat(ejectionsZip); os.IsNotExist(err) {
+		echo.Info("  Skipping ejections (file not found)")
+	} else {
+		echo.Info("  Loading ejections...")
+
+		rows, err := database.LoadRetrosheetEjections(ctx, ejectionsZip)
+		if err != nil {
+			return fmt.Errorf("error: failed to load ejections: %w", err)
+		}
+
+		ejectionsLoaded = rows
+		totalRows += rows
+		echo.Successf("  ✓ Loaded ejections (%d rows)", rows)
+	}
+
+	echo.Info("")
 	echo.Success("✓ All Retrosheet data loaded successfully")
 	echo.Infof("  Total rows: %d", totalRows)
+	echo.Infof("  Game logs: %d", gamesLoaded)
 	echo.Infof("  Play-by-play rows: %d", playsLoaded)
+	echo.Infof("  Ejections: %d", ejectionsLoaded)
 	if err := database.RecordDatasetRefresh(ctx, "retrosheet_games", gamesLoaded); err != nil {
 		return fmt.Errorf("error: failed to record Retrosheet games refresh: %w", err)
 	}
 	if err := database.RecordDatasetRefresh(ctx, "retrosheet_plays", playsLoaded); err != nil {
 		return fmt.Errorf("error: failed to record Retrosheet plays refresh: %w", err)
+	}
+	if ejectionsLoaded > 0 {
+		if err := database.RecordDatasetRefresh(ctx, "retrosheet_ejections", ejectionsLoaded); err != nil {
+			return fmt.Errorf("error: failed to record Retrosheet ejections refresh: %w", err)
+		}
 	}
 	return nil
 }

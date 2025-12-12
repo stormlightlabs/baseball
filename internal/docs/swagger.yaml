@@ -1653,6 +1653,61 @@ paths:
       summary: Get award details
       tags:
       - awards
+  /ejections:
+    get:
+      consumes:
+      - application/json
+      description: Get ejections with optional filters for player, umpire, team, and
+        role
+      parameters:
+      - description: Filter by ejected player ID
+        in: query
+        name: player_id
+        type: string
+      - description: Filter by umpire ID
+        in: query
+        name: umpire_id
+        type: string
+      - description: Filter by team
+        in: query
+        name: team
+        type: string
+      - description: Filter by role
+        enum:
+        - P
+        - M
+        - C
+        in: query
+        name: role
+        type: string
+      - description: Filter by season year
+        in: query
+        name: season
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: List ejections
+      tags:
+      - ejections
   /franchises:
     get:
       consumes:
@@ -3356,6 +3411,42 @@ paths:
       summary: Get games by date
       tags:
       - games
+  /seasons/{year}/ejections:
+    get:
+      consumes:
+      - application/json
+      description: Get all ejections that occurred during a specific season
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get ejections for a specific season
+      tags:
+      - ejections
+      - seasons
   /seasons/{year}/leaders/batting:
     get:
       consumes:

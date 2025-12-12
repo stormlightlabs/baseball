@@ -145,7 +145,7 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/players/{player_id}/plate-appearances` | R       | Player-level PA list with leverage, count, and vs. pitcher filters.         |
 | To-Do  | `GET /v1/pitches`                               | R       | Derive per-pitch signals.                                                   |
 
-### 5. Parks, Umpires, Managers & Other Entities - **(L+R)**
+### 5. Parks, Umpires, Managers & Other Entities - **(L+R)** ✓
 
 | Status | Endpoint                                | Dataset | Description                                              |
 | ------ | --------------------------------------- | ------- | -------------------------------------------------------- |
@@ -156,8 +156,8 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/managers/{manager_id}/seasons` | L       | Season-by-season records for a manager.                  |
 | Done   | `GET /v1/umpires`                       | L+R     | Umpire list.                                             |
 | Done   | `GET /v1/umpires/{umpire_id}`           | L+R     | Umpire details + officiated games.                       |
-| To-Do  | `GET /v1/ejections`                     | R       | All ejection events with filters (player, umpire, year). |
-| To-Do  | `GET /v1/seasons/{year}/ejections`      | R       | Season-level slice of ejections.                         |
+| Done   | `GET /v1/ejections`                     | R       | All ejection events with filters (player, umpire, year). |
+| Done   | `GET /v1/seasons/{year}/ejections`      | R       | Season-level slice of ejections.                         |
 
 ### 6. Stats & Leaderboards - **(L)** (with optional **(R)** joins) ✓
 

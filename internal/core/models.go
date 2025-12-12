@@ -669,3 +669,18 @@ type APIUsage struct {
 	ResponseTimeMs *int      `json:"response_time_ms,omitempty"`
 	CreatedAt      time.Time `json:"created_at"`
 }
+
+// Ejection represents an ejection event from Retrosheet data.
+type Ejection struct {
+	GameID      GameID        `json:"game_id" swaggertype:"string"`
+	Date        string        `json:"date"`
+	GameNumber  *int          `json:"game_number,omitempty"`
+	EjecteeID   RetroPlayerID `json:"ejectee_id" swaggertype:"string"`
+	EjecteeName string        `json:"ejectee_name"`
+	Team        *TeamID       `json:"team,omitempty" swaggertype:"string"`
+	Role        string        `json:"role" enums:"P,M,C" example:"P"` // P=Player, M=Manager, C=Coach
+	UmpireID    *UmpireID     `json:"umpire_id,omitempty" swaggertype:"string"`
+	UmpireName  *string       `json:"umpire_name,omitempty"`
+	Inning      *int          `json:"inning,omitempty"` // -1 if unknown
+	Reason      *string       `json:"reason,omitempty"`
+}

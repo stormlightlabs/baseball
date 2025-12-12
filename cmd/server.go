@@ -275,6 +275,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 	parkRepo := repository.NewParkRepository(database.DB)
 	umpireRepo := repository.NewUmpireRepository(database.DB)
 	postseasonRepo := repository.NewPostseasonRepository(database.DB)
+	ejectionRepo := repository.NewEjectionRepository(database.DB)
 
 	userRepo := repository.NewUserRepository(database.DB)
 	apiKeyRepo := repository.NewAPIKeyRepository(database.DB)
@@ -296,6 +297,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 		api.NewPostseasonRoutes(postseasonRepo, gameRepo),
 		api.NewAllStarRoutes(awardRepo),
 		api.NewSearchRoutes(playerRepo, teamRepo, parkRepo),
+		api.NewEjectionRoutes(ejectionRepo),
 		api.NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
 		api.NewUIRoutes(apiKeyRepo),
 		api.NewMLBRoutes(nil),

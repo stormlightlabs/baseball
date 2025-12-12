@@ -427,6 +427,126 @@ func (db *DB) LoadRetrosheetPlays(ctx context.Context, zipPath string) (int64, e
 	return result.RowsAffected(), nil
 }
 
+// LoadRetrosheetEjections extracts a retrosheet ejections zip file and loads it into the ejections table.
+// The CSV file has headers: GAMEID,DATE,DH,EJECTEE,EJECTEENAME,TEAM,JOB,UMPIRE,UMPIRENAME,INNING,REASON
+func (db *DB) LoadRetrosheetEjections(ctx context.Context, zipPath string) (int64, error) {
+	r, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open zip file: %w", err)
+	}
+	defer r.Close()
+
+	var csvFile *zip.File
+	for _, f := range r.File {
+		if strings.HasSuffix(strings.ToLower(f.Name), ".csv") {
+			csvFile = f
+			break
+		}
+	}
+
+	if csvFile == nil {
+		return 0, fmt.Errorf("no .csv file found in zip archive")
+	}
+
+	rc, err := csvFile.Open()
+	if err != nil {
+		return 0, fmt.Errorf("failed to open file from zip: %w", err)
+	}
+	defer rc.Close()
+
+	tmpDir, err := os.MkdirTemp("", "ejections-*")
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	tmpCSV := filepath.Join(tmpDir, "ejections.csv")
+	outFile, err := os.Create(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp CSV: %w", err)
+	}
+
+	if _, err := outFile.WriteString("game_id,date,game_number,ejectee_id,ejectee_name,team,role,umpire_id,umpire_name,inning,reason\n"); err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("failed to write headers: %w", err)
+	}
+
+	data, err := io.ReadAll(rc)
+	if err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("failed to read data: %w", err)
+	}
+
+	cleaned := strings.ReplaceAll(string(data), "\r\n", "\n")
+	lines := strings.Split(cleaned, "\n")
+
+	for _, line := range lines[1:] {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		fields := strings.Split(line, ",")
+		if len(fields) == 12 {
+			line = strings.Join(append(fields[:5], fields[6:]...), ",")
+		}
+
+		if _, err := outFile.WriteString(line + "\n"); err != nil {
+			outFile.Close()
+			return 0, fmt.Errorf("failed to write data: %w", err)
+		}
+	}
+
+	if err := outFile.Close(); err != nil {
+		return 0, fmt.Errorf("failed to close temp file: %w", err)
+	}
+
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for COPY: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	file, err := os.Open(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open CSV file: %w", err)
+	}
+	defer file.Close()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		CREATE TEMP TABLE ejections_temp (LIKE ejections INCLUDING DEFAULTS)
+		ON COMMIT DROP
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp table: %w", err)
+	}
+
+	copySQL := `COPY ejections_temp FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`
+	_, err = conn.PgConn().CopyFrom(ctx, file, copySQL)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy data: %w", err)
+	}
+
+	result, err := tx.Exec(ctx, `
+		INSERT INTO ejections SELECT * FROM ejections_temp
+		ON CONFLICT (game_id, ejectee_id) DO NOTHING
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 // RecordDatasetRefresh upserts the refresh timestamp for a dataset after an ETL run.
 func (db *DB) RecordDatasetRefresh(ctx context.Context, dataset string, rowCount int64) error {
 	_, err := db.ExecContext(ctx, `

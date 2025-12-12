@@ -251,3 +251,14 @@ type UsageRepository interface {
 	// GetAPIKeyUsage retrieves usage stats for an API key
 	GetAPIKeyUsage(ctx context.Context, apiKeyID string, since time.Time) ([]APIUsage, error)
 }
+
+// EjectionRepository manages ejection data from Retrosheet.
+type EjectionRepository interface {
+	// List retrieves ejections based on filter criteria
+	List(ctx context.Context, filter EjectionFilter) ([]Ejection, error)
+	Count(ctx context.Context, filter EjectionFilter) (int, error)
+
+	// ListBySeason retrieves all ejections for a specific season
+	ListBySeason(ctx context.Context, year SeasonYear, p Pagination) ([]Ejection, error)
+	CountBySeason(ctx context.Context, year SeasonYear) (int, error)
+}
