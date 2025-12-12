@@ -298,6 +298,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 		api.NewSearchRoutes(playerRepo, teamRepo, parkRepo),
 		api.NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
 		api.NewUIRoutes(apiKeyRepo),
+		api.NewMLBRoutes(nil),
 	)
 
 	logger := log.NewWithOptions(cmd.OutOrStdout(), log.Options{

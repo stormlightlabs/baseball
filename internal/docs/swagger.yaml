@@ -1671,6 +1671,374 @@ paths:
       summary: Dataset status
       tags:
       - meta
+  /mlb:
+    get:
+      description: Lists available MLB Stats API proxy routes surfaced under /v1/mlb
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      summary: MLB Stats proxy catalog
+      tags:
+      - mlb
+  /mlb/awards:
+    get:
+      consumes:
+      - application/json
+      description: Proxy to MLB Stats API /v1/awards
+      parameters:
+      - description: Sport filter
+        in: query
+        name: sportId
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB awards catalog
+      tags:
+      - mlb
+  /mlb/awards/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Proxy to MLB Stats API /v1/awards/{awardId}
+      parameters:
+      - description: MLB awardId
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        type: string
+      - description: Hydrate relationships
+        in: query
+        name: hydrate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB award by ID
+      tags:
+      - mlb
+  /mlb/people:
+    get:
+      consumes:
+      - application/json
+      description: Proxy to MLB Stats API /v1/people for live roster metadata
+      parameters:
+      - description: Comma-separated MLBAM personIds
+        in: query
+        name: personIds
+        type: string
+      - description: Filter by sportId
+        in: query
+        name: sportId
+        type: string
+      - description: Hydrate relationships
+        in: query
+        name: hydrate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB people search
+      tags:
+      - mlb
+  /mlb/people/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Proxy to MLB Stats API /v1/people/{personId}
+      parameters:
+      - description: MLBAM personId
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Hydrate relationships
+        in: query
+        name: hydrate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB person by ID
+      tags:
+      - mlb
+  /mlb/schedule:
+    get:
+      consumes:
+      - application/json
+      description: Proxy to MLB Stats API /v1/schedule
+      parameters:
+      - description: Sport filter
+        in: query
+        name: sportId
+        type: string
+      - description: Team filter
+        in: query
+        name: teamId
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        type: string
+      - description: Specific date (YYYY-MM-DD)
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB schedule
+      tags:
+      - mlb
+  /mlb/seasons:
+    get:
+      consumes:
+      - application/json
+      description: Proxy to MLB Stats API /v1/seasons
+      parameters:
+      - description: Sport filter
+        in: query
+        name: sportId
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB seasons
+      tags:
+      - mlb
+  /mlb/standings:
+    get:
+      consumes:
+      - application/json
+      description: Proxy to MLB Stats API /v1/standings
+      parameters:
+      - description: League filter
+        in: query
+        name: leagueId
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        type: string
+      - description: Standings type (byLeague, etc.)
+        in: query
+        name: standingsTypes
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB standings
+      tags:
+      - mlb
+  /mlb/stats:
+    get:
+      consumes:
+      - application/json
+      description: Proxy to MLB Stats API /v1/stats for ad-hoc stats lookups
+      parameters:
+      - description: Stat group(s) to query
+        in: query
+        name: stats
+        required: true
+        type: string
+      - description: Grouping (e.g., hitting, pitching)
+        in: query
+        name: group
+        required: true
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        type: string
+      - description: Game type (R, S, etc.)
+        in: query
+        name: gameType
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB stats queries
+      tags:
+      - mlb
+  /mlb/teams:
+    get:
+      consumes:
+      - application/json
+      description: Proxy to MLB Stats API /v1/teams
+      parameters:
+      - description: Sport filter
+        in: query
+        name: sportId
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB teams
+      tags:
+      - mlb
+  /mlb/teams/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Proxy to MLB Stats API /v1/teams/{teamId}
+      parameters:
+      - description: MLB teamId
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB team by ID
+      tags:
+      - mlb
+  /mlb/venues:
+    get:
+      consumes:
+      - application/json
+      description: Proxy to MLB Stats API /v1/venues
+      parameters:
+      - description: Comma-separated venue IDs
+        in: query
+        name: venueIds
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB venues directory
+      tags:
+      - mlb
   /parks:
     get:
       consumes:

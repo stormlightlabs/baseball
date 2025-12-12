@@ -959,6 +959,561 @@ const docTemplate = `{
                 }
             }
         },
+        "/mlb": {
+            "get": {
+                "description": "Lists available MLB Stats API proxy routes surfaced under /v1/mlb",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB Stats proxy catalog",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mlb/awards": {
+            "get": {
+                "description": "Proxy to MLB Stats API /v1/awards",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB awards catalog",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Sport filter",
+                        "name": "sportId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mlb/awards/{id}": {
+            "get": {
+                "description": "Proxy to MLB Stats API /v1/awards/{awardId}",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB award by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "MLB awardId",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Hydrate relationships",
+                        "name": "hydrate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mlb/people": {
+            "get": {
+                "description": "Proxy to MLB Stats API /v1/people for live roster metadata",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB people search",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comma-separated MLBAM personIds",
+                        "name": "personIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by sportId",
+                        "name": "sportId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Hydrate relationships",
+                        "name": "hydrate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mlb/people/{id}": {
+            "get": {
+                "description": "Proxy to MLB Stats API /v1/people/{personId}",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB person by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "MLBAM personId",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Hydrate relationships",
+                        "name": "hydrate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mlb/schedule": {
+            "get": {
+                "description": "Proxy to MLB Stats API /v1/schedule",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB schedule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Sport filter",
+                        "name": "sportId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team filter",
+                        "name": "teamId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Specific date (YYYY-MM-DD)",
+                        "name": "date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mlb/seasons": {
+            "get": {
+                "description": "Proxy to MLB Stats API /v1/seasons",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB seasons",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Sport filter",
+                        "name": "sportId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mlb/standings": {
+            "get": {
+                "description": "Proxy to MLB Stats API /v1/standings",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB standings",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "League filter",
+                        "name": "leagueId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Standings type (byLeague, etc.)",
+                        "name": "standingsTypes",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mlb/stats": {
+            "get": {
+                "description": "Proxy to MLB Stats API /v1/stats for ad-hoc stats lookups",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB stats queries",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Stat group(s) to query",
+                        "name": "stats",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Grouping (e.g., hitting, pitching)",
+                        "name": "group",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Game type (R, S, etc.)",
+                        "name": "gameType",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mlb/teams": {
+            "get": {
+                "description": "Proxy to MLB Stats API /v1/teams",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB teams",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Sport filter",
+                        "name": "sportId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mlb/teams/{id}": {
+            "get": {
+                "description": "Proxy to MLB Stats API /v1/teams/{teamId}",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB team by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "MLB teamId",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mlb/venues": {
+            "get": {
+                "description": "Proxy to MLB Stats API /v1/venues",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB venues directory",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comma-separated venue IDs",
+                        "name": "venueIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/parks": {
             "get": {
                 "description": "Get a paginated list of all ballparks",
