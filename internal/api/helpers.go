@@ -90,8 +90,16 @@ type PlayerPitchingStatsResponse struct {
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		log.Printf("writeJSON error: %v", err)
+
+	// Use Marshal for compact output with no extra spacing
+	data, err := json.Marshal(v)
+	if err != nil {
+		log.Printf("writeJSON marshal error: %v", err)
+		return
+	}
+
+	if _, err := w.Write(data); err != nil {
+		log.Printf("writeJSON write error: %v", err)
 	}
 }
 

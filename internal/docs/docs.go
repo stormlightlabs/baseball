@@ -961,7 +961,7 @@ const docTemplate = `{
         },
         "/mlb": {
             "get": {
-                "description": "Lists available MLB Stats API proxy routes surfaced under /v1/mlb",
+                "description": "Lists available MLB Stats API proxy routes surfaced under /v1/mlb. All endpoints default to sportId=1 (Major League Baseball) unless specified.",
                 "produces": [
                     "application/json"
                 ],
@@ -973,11 +973,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
+                            "$ref": "#/definitions/core.MLBOverviewResponse"
                         }
                     }
                 }
@@ -985,7 +981,7 @@ const docTemplate = `{
         },
         "/mlb/awards": {
             "get": {
-                "description": "Proxy to MLB Stats API /v1/awards",
+                "description": "Proxy to MLB Stats API /v1/awards. Defaults to sportId=1 (Major League Baseball) if not provided.",
                 "consumes": [
                     "application/json"
                 ],
@@ -999,7 +995,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Sport filter",
+                        "description": "Sport filter (defaults to 1 for MLB)",
                         "name": "sportId",
                         "in": "query"
                     },
@@ -1014,8 +1010,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBAwardsResponse"
                         }
                     },
                     "500": {
@@ -1065,8 +1060,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBAwardsResponse"
                         }
                     },
                     "500": {
@@ -1080,7 +1074,7 @@ const docTemplate = `{
         },
         "/mlb/people": {
             "get": {
-                "description": "Proxy to MLB Stats API /v1/people for live roster metadata",
+                "description": "Proxy to MLB Stats API /v1/people for live roster metadata. Defaults to sportId=1 (Major League Baseball) if not provided.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1100,7 +1094,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter by sportId",
+                        "description": "Filter by sportId (defaults to 1 for MLB)",
                         "name": "sportId",
                         "in": "query"
                     },
@@ -1115,8 +1109,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBPeopleResponse"
                         }
                     },
                     "500": {
@@ -1160,8 +1153,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBPeopleResponse"
                         }
                     },
                     "500": {
@@ -1175,7 +1167,7 @@ const docTemplate = `{
         },
         "/mlb/schedule": {
             "get": {
-                "description": "Proxy to MLB Stats API /v1/schedule",
+                "description": "Proxy to MLB Stats API /v1/schedule. Defaults to sportId=1 (Major League Baseball) if not provided.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1189,7 +1181,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Sport filter",
+                        "description": "Sport filter (defaults to 1 for MLB)",
                         "name": "sportId",
                         "in": "query"
                     },
@@ -1216,8 +1208,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBScheduleResponse"
                         }
                     },
                     "500": {
@@ -1231,7 +1222,7 @@ const docTemplate = `{
         },
         "/mlb/seasons": {
             "get": {
-                "description": "Proxy to MLB Stats API /v1/seasons",
+                "description": "Proxy to MLB Stats API /v1/seasons. Defaults to sportId=1 (Major League Baseball) if not provided.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1245,7 +1236,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Sport filter",
+                        "description": "Sport filter (defaults to 1 for MLB)",
                         "name": "sportId",
                         "in": "query"
                     },
@@ -1260,8 +1251,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBSeasonsResponse"
                         }
                     },
                     "500": {
@@ -1275,7 +1265,7 @@ const docTemplate = `{
         },
         "/mlb/standings": {
             "get": {
-                "description": "Proxy to MLB Stats API /v1/standings",
+                "description": "Proxy to MLB Stats API /v1/standings. Note: sportId defaults to 1 (Major League Baseball).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1310,8 +1300,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBStandingsResponse"
                         }
                     },
                     "500": {
@@ -1325,7 +1314,7 @@ const docTemplate = `{
         },
         "/mlb/stats": {
             "get": {
-                "description": "Proxy to MLB Stats API /v1/stats for ad-hoc stats lookups",
+                "description": "Proxy to MLB Stats API /v1/stats for ad-hoc stats lookups. Note: sportId defaults to 1 (Major League Baseball).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1383,7 +1372,7 @@ const docTemplate = `{
         },
         "/mlb/teams": {
             "get": {
-                "description": "Proxy to MLB Stats API /v1/teams",
+                "description": "Proxy to MLB Stats API /v1/teams. Defaults to sportId=1 (Major League Baseball) if not provided.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1397,7 +1386,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Sport filter",
+                        "description": "Sport filter (defaults to 1 for MLB)",
                         "name": "sportId",
                         "in": "query"
                     },
@@ -1412,8 +1401,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBTeamsResponse"
                         }
                     },
                     "500": {
@@ -1457,8 +1445,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBTeamsResponse"
                         }
                     },
                     "500": {
@@ -1472,7 +1459,7 @@ const docTemplate = `{
         },
         "/mlb/venues": {
             "get": {
-                "description": "Proxy to MLB Stats API /v1/venues",
+                "description": "Proxy to MLB Stats API /v1/venues. Defaults to sportId=1 (Major League Baseball) if not provided.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1495,14 +1482,19 @@ const docTemplate = `{
                         "description": "Season year",
                         "name": "season",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sport filter (defaults to 1 for MLB)",
+                        "name": "sportId",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBVenuesResponse"
                         }
                     },
                     "500": {
@@ -4918,6 +4910,747 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "position": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.MLBAward": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "sport": {
+                    "$ref": "#/definitions/core.MLBSportRef"
+                }
+            }
+        },
+        "core.MLBAwardsResponse": {
+            "type": "object",
+            "properties": {
+                "awards": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBAward"
+                    }
+                },
+                "copyright": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBDivisionRecord": {
+            "type": "object",
+            "properties": {
+                "division": {
+                    "$ref": "#/definitions/core.MLBDivisionRef"
+                },
+                "losses": {
+                    "type": "integer"
+                },
+                "pct": {
+                    "type": "string"
+                },
+                "wins": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.MLBDivisionRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBGame": {
+            "type": "object",
+            "properties": {
+                "gameDate": {
+                    "type": "string"
+                },
+                "gamePk": {
+                    "type": "integer"
+                },
+                "gameType": {
+                    "type": "string"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "season": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBHandedness": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBLeagueRef": {
+            "type": "object",
+            "properties": {
+                "abbreviation": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBOverviewResponse": {
+            "type": "object",
+            "properties": {
+                "base_url": {
+                    "type": "string"
+                },
+                "routes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBProxyCatalogItem"
+                    }
+                },
+                "target": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBPeopleResponse": {
+            "type": "object",
+            "properties": {
+                "copyright": {
+                    "type": "string"
+                },
+                "people": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBPerson"
+                    }
+                }
+            }
+        },
+        "core.MLBPerson": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "batSide": {
+                    "$ref": "#/definitions/core.MLBHandedness"
+                },
+                "birthCity": {
+                    "type": "string"
+                },
+                "birthCountry": {
+                    "type": "string"
+                },
+                "birthDate": {
+                    "type": "string"
+                },
+                "boxscoreName": {
+                    "type": "string"
+                },
+                "currentAge": {
+                    "type": "integer"
+                },
+                "firstLastName": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "fullFMLName": {
+                    "type": "string"
+                },
+                "fullLFMName": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "height": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "initLastName": {
+                    "type": "string"
+                },
+                "isPlayer": {
+                    "type": "boolean"
+                },
+                "isVerified": {
+                    "type": "boolean"
+                },
+                "lastFirstName": {
+                    "type": "string"
+                },
+                "lastInitName": {
+                    "type": "string"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "mlbDebutDate": {
+                    "type": "string"
+                },
+                "nameFirstLast": {
+                    "type": "string"
+                },
+                "nameSlug": {
+                    "type": "string"
+                },
+                "nickName": {
+                    "type": "string"
+                },
+                "pitchHand": {
+                    "$ref": "#/definitions/core.MLBHandedness"
+                },
+                "primaryNumber": {
+                    "type": "string"
+                },
+                "primaryPosition": {
+                    "$ref": "#/definitions/core.MLBPosition"
+                },
+                "pronunciation": {
+                    "type": "string"
+                },
+                "strikeZoneBottom": {
+                    "type": "number"
+                },
+                "strikeZoneTop": {
+                    "type": "number"
+                },
+                "useLastName": {
+                    "type": "string"
+                },
+                "useName": {
+                    "type": "string"
+                },
+                "weight": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.MLBPosition": {
+            "type": "object",
+            "properties": {
+                "abbreviation": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBProxyCatalogItem": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "route": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBRecordDetails": {
+            "type": "object",
+            "properties": {
+                "divisionRecords": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBDivisionRecord"
+                    }
+                },
+                "splitRecords": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBSplitRecord"
+                    }
+                }
+            }
+        },
+        "core.MLBRoundRobin": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBScheduleDate": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "events": {
+                    "type": "array",
+                    "items": {}
+                },
+                "games": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBGame"
+                    }
+                },
+                "totalEvents": {
+                    "type": "integer"
+                },
+                "totalGames": {
+                    "type": "integer"
+                },
+                "totalGamesInProgress": {
+                    "type": "integer"
+                },
+                "totalItems": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.MLBScheduleResponse": {
+            "type": "object",
+            "properties": {
+                "copyright": {
+                    "type": "string"
+                },
+                "dates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBScheduleDate"
+                    }
+                },
+                "totalEvents": {
+                    "type": "integer"
+                },
+                "totalGames": {
+                    "type": "integer"
+                },
+                "totalGamesInProgress": {
+                    "type": "integer"
+                },
+                "totalItems": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.MLBSeason": {
+            "type": "object",
+            "properties": {
+                "allStarDate": {
+                    "type": "string"
+                },
+                "firstDate2ndHalf": {
+                    "type": "string"
+                },
+                "gameLevelGamedayType": {
+                    "type": "string"
+                },
+                "hasWildcard": {
+                    "type": "boolean"
+                },
+                "lastDate1stHalf": {
+                    "type": "string"
+                },
+                "offSeasonEndDate": {
+                    "type": "string"
+                },
+                "offseasonStartDate": {
+                    "type": "string"
+                },
+                "postSeasonEndDate": {
+                    "type": "string"
+                },
+                "postSeasonStartDate": {
+                    "type": "string"
+                },
+                "preSeasonEndDate": {
+                    "type": "string"
+                },
+                "preSeasonStartDate": {
+                    "type": "string"
+                },
+                "qualifierOutsPitched": {
+                    "type": "number"
+                },
+                "qualifierPlateAppearances": {
+                    "type": "number"
+                },
+                "regularSeasonEndDate": {
+                    "type": "string"
+                },
+                "regularSeasonStartDate": {
+                    "type": "string"
+                },
+                "seasonEndDate": {
+                    "type": "string"
+                },
+                "seasonId": {
+                    "type": "string"
+                },
+                "seasonLevelGamedayType": {
+                    "type": "string"
+                },
+                "seasonStartDate": {
+                    "type": "string"
+                },
+                "springEndDate": {
+                    "type": "string"
+                },
+                "springStartDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBSeasonsResponse": {
+            "type": "object",
+            "properties": {
+                "copyright": {
+                    "type": "string"
+                },
+                "seasons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBSeason"
+                    }
+                }
+            }
+        },
+        "core.MLBSplitRecord": {
+            "type": "object",
+            "properties": {
+                "losses": {
+                    "type": "integer"
+                },
+                "pct": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "wins": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.MLBSportRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBStandingsRecord": {
+            "type": "object",
+            "properties": {
+                "division": {
+                    "$ref": "#/definitions/core.MLBDivisionRef"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "league": {
+                    "$ref": "#/definitions/core.MLBLeagueRef"
+                },
+                "roundRobin": {
+                    "$ref": "#/definitions/core.MLBRoundRobin"
+                },
+                "sport": {
+                    "$ref": "#/definitions/core.MLBSportRef"
+                },
+                "standingsType": {
+                    "type": "string"
+                },
+                "teamRecords": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBTeamRecord"
+                    }
+                }
+            }
+        },
+        "core.MLBStandingsResponse": {
+            "type": "object",
+            "properties": {
+                "copyright": {
+                    "type": "string"
+                },
+                "records": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBStandingsRecord"
+                    }
+                }
+            }
+        },
+        "core.MLBStreak": {
+            "type": "object",
+            "properties": {
+                "streakCode": {
+                    "type": "string"
+                },
+                "streakNumber": {
+                    "type": "integer"
+                },
+                "streakType": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBTeam": {
+            "type": "object",
+            "properties": {
+                "abbreviation": {
+                    "type": "string"
+                },
+                "active": {
+                    "type": "boolean"
+                },
+                "allStarStatus": {
+                    "type": "string"
+                },
+                "clubName": {
+                    "type": "string"
+                },
+                "division": {
+                    "$ref": "#/definitions/core.MLBDivisionRef"
+                },
+                "fileCode": {
+                    "type": "string"
+                },
+                "firstYearOfPlay": {
+                    "type": "string"
+                },
+                "franchiseName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "league": {
+                    "$ref": "#/definitions/core.MLBLeagueRef"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "locationName": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "season": {
+                    "type": "integer"
+                },
+                "shortName": {
+                    "type": "string"
+                },
+                "sport": {
+                    "$ref": "#/definitions/core.MLBSportRef"
+                },
+                "springLeague": {
+                    "$ref": "#/definitions/core.MLBLeagueRef"
+                },
+                "springVenue": {
+                    "$ref": "#/definitions/core.MLBVenueRef"
+                },
+                "teamCode": {
+                    "type": "string"
+                },
+                "teamName": {
+                    "type": "string"
+                },
+                "venue": {
+                    "$ref": "#/definitions/core.MLBVenueRef"
+                }
+            }
+        },
+        "core.MLBTeamRecord": {
+            "type": "object",
+            "properties": {
+                "clinchIndicator": {
+                    "type": "string"
+                },
+                "divisionRank": {
+                    "type": "string"
+                },
+                "gamesBack": {
+                    "type": "string"
+                },
+                "gamesPlayed": {
+                    "type": "integer"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "leagueRank": {
+                    "type": "string"
+                },
+                "leagueRecord": {
+                    "$ref": "#/definitions/core.MLBWinLossRecord"
+                },
+                "records": {
+                    "$ref": "#/definitions/core.MLBRecordDetails"
+                },
+                "season": {
+                    "type": "string"
+                },
+                "sportRank": {
+                    "type": "string"
+                },
+                "streak": {
+                    "$ref": "#/definitions/core.MLBStreak"
+                },
+                "team": {
+                    "$ref": "#/definitions/core.MLBTeamRef"
+                },
+                "wildCardGamesBack": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBTeamRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBTeamsResponse": {
+            "type": "object",
+            "properties": {
+                "copyright": {
+                    "type": "string"
+                },
+                "teams": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBTeam"
+                    }
+                }
+            }
+        },
+        "core.MLBVenue": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "season": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBVenueRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBVenuesResponse": {
+            "type": "object",
+            "properties": {
+                "copyright": {
+                    "type": "string"
+                },
+                "venues": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBVenue"
+                    }
+                }
+            }
+        },
+        "core.MLBWinLossRecord": {
+            "type": "object",
+            "properties": {
+                "losses": {
+                    "type": "integer"
+                },
+                "pct": {
+                    "type": "string"
+                },
+                "ties": {
+                    "type": "integer"
+                },
+                "wins": {
                     "type": "integer"
                 }
             }

@@ -335,6 +335,490 @@ definitions:
       position:
         type: integer
     type: object
+  core.MLBAward:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      sortOrder:
+        type: integer
+      sport:
+        $ref: '#/definitions/core.MLBSportRef'
+    type: object
+  core.MLBAwardsResponse:
+    properties:
+      awards:
+        items:
+          $ref: '#/definitions/core.MLBAward'
+        type: array
+      copyright:
+        type: string
+    type: object
+  core.MLBDivisionRecord:
+    properties:
+      division:
+        $ref: '#/definitions/core.MLBDivisionRef'
+      losses:
+        type: integer
+      pct:
+        type: string
+      wins:
+        type: integer
+    type: object
+  core.MLBDivisionRef:
+    properties:
+      id:
+        type: integer
+      link:
+        type: string
+      name:
+        type: string
+    type: object
+  core.MLBGame:
+    properties:
+      gameDate:
+        type: string
+      gamePk:
+        type: integer
+      gameType:
+        type: string
+      link:
+        type: string
+      season:
+        type: string
+    type: object
+  core.MLBHandedness:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+    type: object
+  core.MLBLeagueRef:
+    properties:
+      abbreviation:
+        type: string
+      id:
+        type: integer
+      link:
+        type: string
+      name:
+        type: string
+    type: object
+  core.MLBOverviewResponse:
+    properties:
+      base_url:
+        type: string
+      routes:
+        items:
+          $ref: '#/definitions/core.MLBProxyCatalogItem'
+        type: array
+      target:
+        type: string
+    type: object
+  core.MLBPeopleResponse:
+    properties:
+      copyright:
+        type: string
+      people:
+        items:
+          $ref: '#/definitions/core.MLBPerson'
+        type: array
+    type: object
+  core.MLBPerson:
+    properties:
+      active:
+        type: boolean
+      batSide:
+        $ref: '#/definitions/core.MLBHandedness'
+      birthCity:
+        type: string
+      birthCountry:
+        type: string
+      birthDate:
+        type: string
+      boxscoreName:
+        type: string
+      currentAge:
+        type: integer
+      firstLastName:
+        type: string
+      firstName:
+        type: string
+      fullFMLName:
+        type: string
+      fullLFMName:
+        type: string
+      fullName:
+        type: string
+      gender:
+        type: string
+      height:
+        type: string
+      id:
+        type: integer
+      initLastName:
+        type: string
+      isPlayer:
+        type: boolean
+      isVerified:
+        type: boolean
+      lastFirstName:
+        type: string
+      lastInitName:
+        type: string
+      lastName:
+        type: string
+      link:
+        type: string
+      mlbDebutDate:
+        type: string
+      nameFirstLast:
+        type: string
+      nameSlug:
+        type: string
+      nickName:
+        type: string
+      pitchHand:
+        $ref: '#/definitions/core.MLBHandedness'
+      primaryNumber:
+        type: string
+      primaryPosition:
+        $ref: '#/definitions/core.MLBPosition'
+      pronunciation:
+        type: string
+      strikeZoneBottom:
+        type: number
+      strikeZoneTop:
+        type: number
+      useLastName:
+        type: string
+      useName:
+        type: string
+      weight:
+        type: integer
+    type: object
+  core.MLBPosition:
+    properties:
+      abbreviation:
+        type: string
+      code:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  core.MLBProxyCatalogItem:
+    properties:
+      description:
+        type: string
+      route:
+        type: string
+      target:
+        type: string
+    type: object
+  core.MLBRecordDetails:
+    properties:
+      divisionRecords:
+        items:
+          $ref: '#/definitions/core.MLBDivisionRecord'
+        type: array
+      splitRecords:
+        items:
+          $ref: '#/definitions/core.MLBSplitRecord'
+        type: array
+    type: object
+  core.MLBRoundRobin:
+    properties:
+      status:
+        type: string
+    type: object
+  core.MLBScheduleDate:
+    properties:
+      date:
+        type: string
+      events:
+        items: {}
+        type: array
+      games:
+        items:
+          $ref: '#/definitions/core.MLBGame'
+        type: array
+      totalEvents:
+        type: integer
+      totalGames:
+        type: integer
+      totalGamesInProgress:
+        type: integer
+      totalItems:
+        type: integer
+    type: object
+  core.MLBScheduleResponse:
+    properties:
+      copyright:
+        type: string
+      dates:
+        items:
+          $ref: '#/definitions/core.MLBScheduleDate'
+        type: array
+      totalEvents:
+        type: integer
+      totalGames:
+        type: integer
+      totalGamesInProgress:
+        type: integer
+      totalItems:
+        type: integer
+    type: object
+  core.MLBSeason:
+    properties:
+      allStarDate:
+        type: string
+      firstDate2ndHalf:
+        type: string
+      gameLevelGamedayType:
+        type: string
+      hasWildcard:
+        type: boolean
+      lastDate1stHalf:
+        type: string
+      offSeasonEndDate:
+        type: string
+      offseasonStartDate:
+        type: string
+      postSeasonEndDate:
+        type: string
+      postSeasonStartDate:
+        type: string
+      preSeasonEndDate:
+        type: string
+      preSeasonStartDate:
+        type: string
+      qualifierOutsPitched:
+        type: number
+      qualifierPlateAppearances:
+        type: number
+      regularSeasonEndDate:
+        type: string
+      regularSeasonStartDate:
+        type: string
+      seasonEndDate:
+        type: string
+      seasonId:
+        type: string
+      seasonLevelGamedayType:
+        type: string
+      seasonStartDate:
+        type: string
+      springEndDate:
+        type: string
+      springStartDate:
+        type: string
+    type: object
+  core.MLBSeasonsResponse:
+    properties:
+      copyright:
+        type: string
+      seasons:
+        items:
+          $ref: '#/definitions/core.MLBSeason'
+        type: array
+    type: object
+  core.MLBSplitRecord:
+    properties:
+      losses:
+        type: integer
+      pct:
+        type: string
+      type:
+        type: string
+      wins:
+        type: integer
+    type: object
+  core.MLBSportRef:
+    properties:
+      id:
+        type: integer
+      link:
+        type: string
+      name:
+        type: string
+    type: object
+  core.MLBStandingsRecord:
+    properties:
+      division:
+        $ref: '#/definitions/core.MLBDivisionRef'
+      lastUpdated:
+        type: string
+      league:
+        $ref: '#/definitions/core.MLBLeagueRef'
+      roundRobin:
+        $ref: '#/definitions/core.MLBRoundRobin'
+      sport:
+        $ref: '#/definitions/core.MLBSportRef'
+      standingsType:
+        type: string
+      teamRecords:
+        items:
+          $ref: '#/definitions/core.MLBTeamRecord'
+        type: array
+    type: object
+  core.MLBStandingsResponse:
+    properties:
+      copyright:
+        type: string
+      records:
+        items:
+          $ref: '#/definitions/core.MLBStandingsRecord'
+        type: array
+    type: object
+  core.MLBStreak:
+    properties:
+      streakCode:
+        type: string
+      streakNumber:
+        type: integer
+      streakType:
+        type: string
+    type: object
+  core.MLBTeam:
+    properties:
+      abbreviation:
+        type: string
+      active:
+        type: boolean
+      allStarStatus:
+        type: string
+      clubName:
+        type: string
+      division:
+        $ref: '#/definitions/core.MLBDivisionRef'
+      fileCode:
+        type: string
+      firstYearOfPlay:
+        type: string
+      franchiseName:
+        type: string
+      id:
+        type: integer
+      league:
+        $ref: '#/definitions/core.MLBLeagueRef'
+      link:
+        type: string
+      locationName:
+        type: string
+      name:
+        type: string
+      season:
+        type: integer
+      shortName:
+        type: string
+      sport:
+        $ref: '#/definitions/core.MLBSportRef'
+      springLeague:
+        $ref: '#/definitions/core.MLBLeagueRef'
+      springVenue:
+        $ref: '#/definitions/core.MLBVenueRef'
+      teamCode:
+        type: string
+      teamName:
+        type: string
+      venue:
+        $ref: '#/definitions/core.MLBVenueRef'
+    type: object
+  core.MLBTeamRecord:
+    properties:
+      clinchIndicator:
+        type: string
+      divisionRank:
+        type: string
+      gamesBack:
+        type: string
+      gamesPlayed:
+        type: integer
+      lastUpdated:
+        type: string
+      leagueRank:
+        type: string
+      leagueRecord:
+        $ref: '#/definitions/core.MLBWinLossRecord'
+      records:
+        $ref: '#/definitions/core.MLBRecordDetails'
+      season:
+        type: string
+      sportRank:
+        type: string
+      streak:
+        $ref: '#/definitions/core.MLBStreak'
+      team:
+        $ref: '#/definitions/core.MLBTeamRef'
+      wildCardGamesBack:
+        type: string
+    type: object
+  core.MLBTeamRef:
+    properties:
+      id:
+        type: integer
+      link:
+        type: string
+      name:
+        type: string
+    type: object
+  core.MLBTeamsResponse:
+    properties:
+      copyright:
+        type: string
+      teams:
+        items:
+          $ref: '#/definitions/core.MLBTeam'
+        type: array
+    type: object
+  core.MLBVenue:
+    properties:
+      active:
+        type: boolean
+      id:
+        type: integer
+      link:
+        type: string
+      name:
+        type: string
+      season:
+        type: string
+    type: object
+  core.MLBVenueRef:
+    properties:
+      id:
+        type: integer
+      link:
+        type: string
+      name:
+        type: string
+    type: object
+  core.MLBVenuesResponse:
+    properties:
+      copyright:
+        type: string
+      venues:
+        items:
+          $ref: '#/definitions/core.MLBVenue'
+        type: array
+    type: object
+  core.MLBWinLossRecord:
+    properties:
+      losses:
+        type: integer
+      pct:
+        type: string
+      ties:
+        type: integer
+      wins:
+        type: integer
+    type: object
   core.Manager:
     properties:
       first_name:
@@ -1673,17 +2157,15 @@ paths:
       - meta
   /mlb:
     get:
-      description: Lists available MLB Stats API proxy routes surfaced under /v1/mlb
+      description: Lists available MLB Stats API proxy routes surfaced under /v1/mlb.
+        All endpoints default to sportId=1 (Major League Baseball) unless specified.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              additionalProperties: true
-              type: object
-            type: array
+            $ref: '#/definitions/core.MLBOverviewResponse'
       summary: MLB Stats proxy catalog
       tags:
       - mlb
@@ -1691,9 +2173,10 @@ paths:
     get:
       consumes:
       - application/json
-      description: Proxy to MLB Stats API /v1/awards
+      description: Proxy to MLB Stats API /v1/awards. Defaults to sportId=1 (Major
+        League Baseball) if not provided.
       parameters:
-      - description: Sport filter
+      - description: Sport filter (defaults to 1 for MLB)
         in: query
         name: sportId
         type: string
@@ -1707,8 +2190,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBAwardsResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -1741,8 +2223,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBAwardsResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -1754,13 +2235,14 @@ paths:
     get:
       consumes:
       - application/json
-      description: Proxy to MLB Stats API /v1/people for live roster metadata
+      description: Proxy to MLB Stats API /v1/people for live roster metadata. Defaults
+        to sportId=1 (Major League Baseball) if not provided.
       parameters:
       - description: Comma-separated MLBAM personIds
         in: query
         name: personIds
         type: string
-      - description: Filter by sportId
+      - description: Filter by sportId (defaults to 1 for MLB)
         in: query
         name: sportId
         type: string
@@ -1774,8 +2256,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBPeopleResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -1804,8 +2285,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBPeopleResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -1817,9 +2297,10 @@ paths:
     get:
       consumes:
       - application/json
-      description: Proxy to MLB Stats API /v1/schedule
+      description: Proxy to MLB Stats API /v1/schedule. Defaults to sportId=1 (Major
+        League Baseball) if not provided.
       parameters:
-      - description: Sport filter
+      - description: Sport filter (defaults to 1 for MLB)
         in: query
         name: sportId
         type: string
@@ -1841,8 +2322,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBScheduleResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -1854,9 +2334,10 @@ paths:
     get:
       consumes:
       - application/json
-      description: Proxy to MLB Stats API /v1/seasons
+      description: Proxy to MLB Stats API /v1/seasons. Defaults to sportId=1 (Major
+        League Baseball) if not provided.
       parameters:
-      - description: Sport filter
+      - description: Sport filter (defaults to 1 for MLB)
         in: query
         name: sportId
         type: string
@@ -1870,8 +2351,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBSeasonsResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -1883,7 +2363,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Proxy to MLB Stats API /v1/standings
+      description: 'Proxy to MLB Stats API /v1/standings. Note: sportId defaults to
+        1 (Major League Baseball).'
       parameters:
       - description: League filter
         in: query
@@ -1903,8 +2384,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBStandingsResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -1916,7 +2396,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Proxy to MLB Stats API /v1/stats for ad-hoc stats lookups
+      description: 'Proxy to MLB Stats API /v1/stats for ad-hoc stats lookups. Note:
+        sportId defaults to 1 (Major League Baseball).'
       parameters:
       - description: Stat group(s) to query
         in: query
@@ -1955,9 +2436,10 @@ paths:
     get:
       consumes:
       - application/json
-      description: Proxy to MLB Stats API /v1/teams
+      description: Proxy to MLB Stats API /v1/teams. Defaults to sportId=1 (Major
+        League Baseball) if not provided.
       parameters:
-      - description: Sport filter
+      - description: Sport filter (defaults to 1 for MLB)
         in: query
         name: sportId
         type: string
@@ -1971,8 +2453,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBTeamsResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -2001,8 +2482,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBTeamsResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -2014,7 +2494,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Proxy to MLB Stats API /v1/venues
+      description: Proxy to MLB Stats API /v1/venues. Defaults to sportId=1 (Major
+        League Baseball) if not provided.
       parameters:
       - description: Comma-separated venue IDs
         in: query
@@ -2024,14 +2505,17 @@ paths:
         in: query
         name: season
         type: string
+      - description: Sport filter (defaults to 1 for MLB)
+        in: query
+        name: sportId
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBVenuesResponse'
         "500":
           description: Internal Server Error
           schema:
