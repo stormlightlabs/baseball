@@ -13,8 +13,8 @@ import (
 	"stormlightlabs.org/baseball/internal/echo"
 )
 
-// StatusCmd creates the status command
-func StatusCmd() *cobra.Command {
+// EtlStatusCmd creates the status command
+func EtlStatusCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Check data freshness and completeness",

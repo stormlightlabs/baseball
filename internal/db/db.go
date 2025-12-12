@@ -32,9 +32,19 @@ type DB struct {
 	connStr string
 }
 
+// DatasetRefresh represents the last time a dataset was ingested.
+type DatasetRefresh struct {
+	Dataset      string
+	LastLoadedAt time.Time
+	RowCount     int64
+}
+
+type Exec interface {
+	ExecContext(context.Context, string, ...any) (sql.Result, error)
+}
+
 // Connect establishes a connection to the PostgreSQL database.
-// If connStr is empty, it falls back to DATABASE_URL environment variable
-// or a default connection string.
+// If connStr is empty, it falls back to DATABASE_URL environment variable or a default connection string.
 func Connect(connStr string) (*DB, error) {
 	if connStr == "" {
 		connStr = os.Getenv("DATABASE_URL")
@@ -78,9 +88,7 @@ func (db *DB) isApplied(ctx context.Context, name string) (bool, error) {
 
 // markApplied marks a migration as applied in the migrations table.
 // Can be called on either *DB or *Tx (both implement ExecContext).
-func markApplied(ctx context.Context, exec interface {
-	ExecContext(context.Context, string, ...any) (sql.Result, error)
-}, name string) error {
+func markApplied(ctx context.Context, exec Exec, name string) error {
 	query := `INSERT INTO schema_migrations (name, applied_at) VALUES ($1, $2)`
 	_, err := exec.ExecContext(ctx, query, name, time.Now())
 	return err
@@ -194,7 +202,8 @@ func (db *DB) CopyCSV(ctx context.Context, tableName, csvPath string) (int64, er
 
 // LoadRetrosheetGameLog extracts a retrosheet game log zip file and loads it into the games table.
 // Retrosheet CSVs don't have headers, so this function adds them before loading.
-func (db *DB) LoadRetrosheetGameLog(ctx context.Context, zipPath string) (int64, error) {
+// The gameType parameter is used to tag all games from this file (e.g., "regular", "allstar", "worldseries").
+func (db *DB) LoadRetrosheetGameLog(ctx context.Context, zipPath string, gameType string) (int64, error) {
 	tmpDir, err := os.MkdirTemp("", "retrosheet-*")
 	if err != nil {
 		return 0, fmt.Errorf("failed to create temp directory: %w", err)
@@ -270,7 +279,7 @@ func (db *DB) LoadRetrosheetGameLog(ctx context.Context, zipPath string) (int64,
 		"h_player_6_name", "h_player_6_pos", "h_player_7_id", "h_player_7_name",
 		"h_player_7_pos", "h_player_8_id", "h_player_8_name", "h_player_8_pos",
 		"h_player_9_id", "h_player_9_name", "h_player_9_pos", "additional_info",
-		"acquisition_info",
+		"acquisition_info", "game_type",
 	}
 
 	if _, err := outFile.WriteString(strings.Join(headers, ",") + "\n"); err != nil {
@@ -285,9 +294,17 @@ func (db *DB) LoadRetrosheetGameLog(ctx context.Context, zipPath string) (int64,
 	}
 
 	cleaned := strings.ReplaceAll(string(data), "\r\n", "\n")
-	if _, err := outFile.WriteString(cleaned); err != nil {
-		outFile.Close()
-		return 0, fmt.Errorf("failed to write data: %w", err)
+	lines := strings.SplitSeq(cleaned, "\n")
+
+	for line := range lines {
+		if line == "" {
+			continue
+		}
+
+		if _, err := outFile.WriteString(line + "," + gameType + "\n"); err != nil {
+			outFile.Close()
+			return 0, fmt.Errorf("failed to write data: %w", err)
+		}
 	}
 
 	if err := outFile.Close(); err != nil {
@@ -306,14 +323,40 @@ func (db *DB) LoadRetrosheetGameLog(ctx context.Context, zipPath string) (int64,
 	}
 	defer file.Close()
 
-	copySQL := `COPY games FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
 
-	tag, err := conn.PgConn().CopyFrom(ctx, file, copySQL)
+	_, err = tx.Exec(ctx, `
+		CREATE TEMP TABLE games_temp (LIKE games INCLUDING DEFAULTS)
+		ON COMMIT DROP
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp table: %w", err)
+	}
+
+	copySQL := `COPY games_temp FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`
+	_, err = conn.PgConn().CopyFrom(ctx, file, copySQL)
 	if err != nil {
 		return 0, fmt.Errorf("failed to copy data: %w", err)
 	}
 
-	return tag.RowsAffected(), nil
+	result, err := tx.Exec(ctx, `
+		INSERT INTO games SELECT * FROM games_temp
+		ON CONFLICT (date, home_team, game_number)
+		DO UPDATE SET game_type = EXCLUDED.game_type
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
 }
 
 // LoadRetrosheetPlays extracts a retrosheet plays zip file and loads it into the plays table.
@@ -349,21 +392,39 @@ func (db *DB) LoadRetrosheetPlays(ctx context.Context, zipPath string) (int64, e
 	}
 	defer conn.Close(ctx)
 
-	copySQL := `COPY plays FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
 
-	tag, err := conn.PgConn().CopyFrom(ctx, rc, copySQL)
+	_, err = tx.Exec(ctx, `
+		CREATE TEMP TABLE plays_temp (LIKE plays INCLUDING DEFAULTS)
+		ON COMMIT DROP
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp table: %w", err)
+	}
+
+	copySQL := `COPY plays_temp FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`
+	_, err = conn.PgConn().CopyFrom(ctx, rc, copySQL)
 	if err != nil {
 		return 0, fmt.Errorf("failed to copy data: %w", err)
 	}
 
-	return tag.RowsAffected(), nil
-}
+	result, err := tx.Exec(ctx, `
+		INSERT INTO plays SELECT * FROM plays_temp
+		ON CONFLICT (gid, pn) DO NOTHING
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
+	}
 
-// DatasetRefresh represents the last time a dataset was ingested.
-type DatasetRefresh struct {
-	Dataset      string
-	LastLoadedAt time.Time
-	RowCount     int64
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
 }
 
 // RecordDatasetRefresh upserts the refresh timestamp for a dataset after an ETL run.

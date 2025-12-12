@@ -133,7 +133,7 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 
 		echo.Infof("  Loading %d game logs...", year)
 
-		rows, err := database.LoadRetrosheetGameLog(ctx, zipFile)
+		rows, err := database.LoadRetrosheetGameLog(ctx, zipFile, "regular")
 		if err != nil {
 			return result, fmt.Errorf("error: failed to load %d: %w", year, err)
 		}
@@ -185,11 +185,60 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 		refreshes[playsKey] = db.DatasetRefresh{}
 	}
 
+	specialGameTypes := []struct {
+		name         string
+		file         string
+		gameType     string
+		downloadFunc func(string) error
+		refreshKey   string
+	}{
+		{"All-Star games", filepath.Join(gameLogsDir, "glas.zip"), "allstar", downloadRetrosheetAllStarGames, "retrosheet_allstar_games"},
+		{"World Series games", filepath.Join(gameLogsDir, "glws.zip"), "worldseries", downloadRetrosheetWorldSeriesGames, "retrosheet_worldseries_games"},
+		{"Division Series games", filepath.Join(gameLogsDir, "gldv.zip"), "divisionseries", downloadRetrosheetDivisionSeriesGames, "retrosheet_divisional_games"},
+		{"Championship Series games", filepath.Join(gameLogsDir, "gllc.zip"), "lcs", downloadRetrosheetChampionshipSeriesGames, "retrosheet_championship_games"},
+		{"Wild Card games", filepath.Join(gameLogsDir, "glwc.zip"), "wildcard", downloadRetrosheetWildCardGames, "retrosheet_wildcard_games"},
+	}
+
+	echo.Info("")
+	echo.Info("Loading special game types...")
+	for _, gameType := range specialGameTypes {
+		if _, ok := refreshes[gameType.refreshKey]; ok {
+			echo.Infof("  Skipping %s (already loaded)", gameType.name)
+			continue
+		}
+
+		if _, err := os.Stat(gameType.file); errors.Is(err, os.ErrNotExist) {
+			echo.Infof("  Downloading %s...", gameType.name)
+			if err := gameType.downloadFunc(gameType.file); err != nil {
+				return result, fmt.Errorf("error: failed to download %s: %w", gameType.name, err)
+			}
+		} else if err != nil {
+			return result, fmt.Errorf("error: unable to stat %s: %w", gameType.file, err)
+		} else {
+			echo.Infof("  ✓ Using cached %s", gameType.name)
+		}
+
+		echo.Infof("  Loading %s...", gameType.name)
+		rows, err := database.LoadRetrosheetGameLog(ctx, gameType.file, gameType.gameType)
+		if err != nil {
+			return result, fmt.Errorf("error: failed to load %s: %w", gameType.name, err)
+		}
+
+		result.GameRows += rows
+		echo.Successf("  ✓ Loaded %s (%d rows)", gameType.name, rows)
+
+		if err := database.RecordDatasetRefresh(ctx, gameType.refreshKey, rows); err != nil {
+			return result, fmt.Errorf("error: failed to record %s refresh: %w", gameType.name, err)
+		}
+		refreshes[gameType.refreshKey] = db.DatasetRefresh{}
+	}
+
 	totalRows := result.GameRows + result.PlayRows
 
 	echo.Info("")
 	echo.Success("✓ All Retrosheet data loaded successfully")
 	echo.Infof("  Total rows: %d", totalRows)
+	echo.Infof("  Game log rows: %d", result.GameRows)
 	echo.Infof("  Play-by-play rows: %d", result.PlayRows)
 
 	if result.GameRows > 0 {
@@ -309,6 +358,31 @@ func downloadRetrosheetGameLog(year int, dest string) error {
 
 func downloadRetrosheetPlays(year int, dest string) error {
 	url := fmt.Sprintf("https://www.retrosheet.org/downloads/plays/%dplays.zip", year)
+	return downloadFile(url, dest)
+}
+
+func downloadRetrosheetAllStarGames(dest string) error {
+	url := "https://www.retrosheet.org/gamelogs/glas.zip"
+	return downloadFile(url, dest)
+}
+
+func downloadRetrosheetWorldSeriesGames(dest string) error {
+	url := "https://www.retrosheet.org/gamelogs/glws.zip"
+	return downloadFile(url, dest)
+}
+
+func downloadRetrosheetDivisionSeriesGames(dest string) error {
+	url := "https://www.retrosheet.org/gamelogs/gldv.zip"
+	return downloadFile(url, dest)
+}
+
+func downloadRetrosheetChampionshipSeriesGames(dest string) error {
+	url := "https://www.retrosheet.org/gamelogs/gllc.zip"
+	return downloadFile(url, dest)
+}
+
+func downloadRetrosheetWildCardGames(dest string) error {
+	url := "https://www.retrosheet.org/gamelogs/glwc.zip"
 	return downloadFile(url, dest)
 }
 

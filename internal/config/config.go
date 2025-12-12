@@ -53,7 +53,6 @@ var globalConfig *Config
 func Load(configPath string) (*Config, error) {
 	v := viper.New()
 
-	// Set configuration file
 	if configPath != "" {
 		v.SetConfigFile(configPath)
 	} else {
@@ -64,14 +63,12 @@ func Load(configPath string) (*Config, error) {
 		v.AddConfigPath("/etc/baseball")
 	}
 
-	// Set defaults
 	v.SetDefault("server.host", "localhost")
 	v.SetDefault("server.port", 8080)
 	v.SetDefault("server.debug_mode", false)
 	v.SetDefault("database.url", "postgres://postgres:postgres@localhost:5432/baseball_dev?sslmode=disable")
 	v.SetDefault("redis.url", "redis://localhost:6379/0")
 
-	// Environment variable overrides
 	v.AutomaticEnv()
 	v.BindEnv("database.url", "DATABASE_URL")
 	v.BindEnv("redis.url", "REDIS_URL")
@@ -82,12 +79,11 @@ func Load(configPath string) (*Config, error) {
 	v.BindEnv("oauth.codeberg.client_id", "CODEBERG_CLIENT_ID")
 	v.BindEnv("oauth.codeberg.client_secret", "CODEBERG_CLIENT_SECRET")
 
-	// Try to read config file (non-fatal if not found)
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return nil, fmt.Errorf("failed to read config file: %w", err)
 		}
-		// Config file not found; using defaults and environment variables
+
 		fmt.Fprintf(os.Stderr, "No config file found, using defaults and environment variables\n")
 	}
 

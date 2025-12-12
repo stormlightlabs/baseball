@@ -24,9 +24,9 @@ func ETLCmd() *cobra.Command {
 		Long:  "Extract, Transform, and Load operations for Lahman and Retrosheet data sources.",
 	}
 
-	cmd.AddCommand(FetchCmd())
-	cmd.AddCommand(LoadCmd())
-	cmd.AddCommand(StatusCmd())
+	cmd.AddCommand(EtlFetchCmd())
+	cmd.AddCommand(EtlLoadCmd())
+	cmd.AddCommand(EtlStatusCmd())
 	return cmd
 }
 
@@ -44,8 +44,8 @@ func DbCmd() *cobra.Command {
 	return cmd
 }
 
-// FetchCmd creates the fetch command group under etl
-func FetchCmd() *cobra.Command {
+// EtlFetchCmd creates the fetch command group under etl
+func EtlFetchCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "fetch",
 		Short: "Download baseball data sources",
@@ -57,8 +57,8 @@ func FetchCmd() *cobra.Command {
 	return cmd
 }
 
-// LoadCmd creates the load command group under etl
-func LoadCmd() *cobra.Command {
+// EtlLoadCmd creates the load command group under etl
+func EtlLoadCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "load",
 		Short: "Load data into database",
@@ -412,7 +412,7 @@ func loadRetrosheet(cmd *cobra.Command, args []string) error {
 
 		echo.Infof("  Loading %s game logs...", year)
 
-		rows, err := database.LoadRetrosheetGameLog(ctx, zipFile)
+		rows, err := database.LoadRetrosheetGameLog(ctx, zipFile, "regular")
 		if err != nil {
 			return fmt.Errorf("error: failed to load %s: %w", year, err)
 		}
@@ -557,8 +557,8 @@ func parseYearFlag(flagValue string) ([]int, error) {
 	}
 
 	var years []int
-	tokens := strings.Split(flagValue, ",")
-	for _, token := range tokens {
+	tokens := strings.SplitSeq(flagValue, ",")
+	for token := range tokens {
 		token = strings.TrimSpace(token)
 		if token == "" {
 			continue
