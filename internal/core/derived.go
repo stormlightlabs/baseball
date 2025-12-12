@@ -19,11 +19,15 @@ const (
 	StreakKindScorelessInnings StreakKind       = "scoreless_innings" // Scoreless innings streak for a pitcher or team staff.
 	StreakEntityPlayer         StreakEntityType = "player"
 	StreakEntityTeam           StreakEntityType = "team"
-	SplitDimHomeAway           SplitDimension   = "home_away"      // home vs away
-	SplitDimBatterHanded       SplitDimension   = "batter_handed"  // vs RHP/LHP by batter side
-	SplitDimPitcherHanded      SplitDimension   = "pitcher_handed" // pitcher side
-	SplitDimMonth              SplitDimension   = "month"          // calendar or season month
-	SplitDimBattingOrder       SplitDimension   = "batting_order"  // lineup spot 1–9
+	SplitDimHomeAway           SplitDimension   = "home_away"         // home vs away
+	SplitDimBatterHanded       SplitDimension   = "batter_handed"     // vs RHP/LHP by batter side
+	SplitDimPitcherHanded      SplitDimension   = "pitcher_handed"    // pitcher side
+	SplitDimMonth              SplitDimension   = "month"             // calendar or season month
+	SplitDimBattingOrder       SplitDimension   = "batting_order"     // lineup spot 1–9
+	SplitDimInning             SplitDimension   = "inning"            // inning number
+	SplitDimDayNight           SplitDimension   = "day_night"         // day vs night games
+	SplitDimBeforeAfterASG     SplitDimension   = "before_after_asg"  // before/after all-star break
+	SplitDimGroundBallsFlys    SplitDimension   = "ground_balls_flys" // batted ball type
 )
 
 // Streak represents a contiguous run of games or innings.

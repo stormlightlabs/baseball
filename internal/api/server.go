@@ -46,6 +46,10 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 	ejectionRepo := repository.NewEjectionRepository(db)
 	derivedRepo := repository.NewDerivedStatsRepository(db)
 
+	advancedStatsRepo := repository.NewAdvancedStatsRepository(db)
+	leverageRepo := repository.NewLeverageRepository(db)
+	parkFactorRepo := repository.NewParkFactorRepository(db)
+
 	userRepo := repository.NewUserRepository(db)
 	apiKeyRepo := repository.NewAPIKeyRepository(db)
 	tokenRepo := repository.NewOAuthTokenRepository(db)
@@ -68,6 +72,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewSearchRoutes(playerRepo, teamRepo, parkRepo, gameRepo),
 		NewEjectionRoutes(ejectionRepo),
 		NewDerivedRoutes(derivedRepo),
+		NewComputedRoutes(advancedStatsRepo, leverageRepo, parkFactorRepo),
 		NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
 		NewUIRoutes(apiKeyRepo),
 		NewMLBRoutes(cacheClient),

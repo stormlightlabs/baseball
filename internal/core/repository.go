@@ -290,3 +290,66 @@ type DerivedStatsRepository interface {
 	// PlayerSplits calculates batting splits for a player by dimension
 	PlayerSplits(ctx context.Context, playerID PlayerID, dimension SplitDimension, season SeasonYear) (*SplitResult, error)
 }
+
+// AdvancedStatsRepository computes sabermetric stats (wOBA, wRC+, FIP, WAR, etc.).
+// These calculations require both Lahman stats and FanGraphs constants (year-specific weights).
+type AdvancedStatsRepository interface {
+	// PlayerAdvancedBatting computes wOBA, wRC+, ISO, BABIP, etc. for a player
+	// Supports splits by home/away, pitcher handedness, month, etc.
+	PlayerAdvancedBatting(ctx context.Context, playerID PlayerID, filter AdvancedBattingFilter) (*AdvancedBattingStats, error)
+
+	// PlayerAdvancedBattingSplits returns advanced batting stats split by dimension
+	PlayerAdvancedBattingSplits(ctx context.Context, playerID PlayerID, filter AdvancedBattingFilter) ([]AdvancedBattingStats, error)
+
+	// PlayerAdvancedPitching computes FIP, xFIP, ERA+, etc. for a pitcher
+	PlayerAdvancedPitching(ctx context.Context, playerID PlayerID, filter AdvancedPitchingFilter) (*AdvancedPitchingStats, error)
+
+	// PlayerWAR computes WAR components and total WAR for a player
+	// Provider indicates which formula to use (fangraphs, bbref, internal)
+	PlayerWAR(ctx context.Context, playerID PlayerID, filter WARFilter) (*PlayerWARSummary, error)
+
+	// SeasonBattingLeaders returns top N players by advanced batting stat
+	SeasonBattingLeaders(ctx context.Context, season SeasonYear, stat string, limit int, filter AdvancedBattingFilter) ([]AdvancedBattingStats, error)
+
+	// SeasonPitchingLeaders returns top N pitchers by advanced pitching stat
+	SeasonPitchingLeaders(ctx context.Context, season SeasonYear, stat string, limit int, filter AdvancedPitchingFilter) ([]AdvancedPitchingStats, error)
+
+	// SeasonWARLeaders returns top N players by WAR
+	SeasonWARLeaders(ctx context.Context, season SeasonYear, limit int, filter WARFilter) ([]PlayerWARSummary, error)
+}
+
+// LeverageRepository computes leverage index and win probability metrics from play-by-play data.
+type LeverageRepository interface {
+	// GamePlateLeverages returns leverage index for each plate appearance in a game
+	GamePlateLeverages(ctx context.Context, gameID GameID, minLI *float64) ([]PlateAppearanceLeverage, error)
+
+	// PlayerLeverageSummary aggregates leverage metrics for a player (aLI, gmLI, etc.)
+	// Most commonly used for pitchers to understand usage patterns
+	PlayerLeverageSummary(ctx context.Context, playerID PlayerID, season SeasonYear, role string) (*PlayerLeverageSummary, error)
+
+	// PlayerHighLeveragePAs returns high-leverage plate appearances for a player
+	PlayerHighLeveragePAs(ctx context.Context, playerID PlayerID, season SeasonYear, minLI float64) ([]PlateAppearanceLeverage, error)
+
+	// GameWinProbabilitySummary returns summary stats for a game's win probability
+	GameWinProbabilitySummary(ctx context.Context, gameID GameID) (*GameWinProbabilitySummary, error)
+}
+
+// ParkFactorRepository computes and retrieves park factors.
+// Park factors measure how hitter/pitcher-friendly a ballpark is relative to league average.
+type ParkFactorRepository interface {
+	// ParkFactor returns park factors for a specific park and season
+	// Includes runs, HR, BB, and hits factors
+	ParkFactor(ctx context.Context, parkID ParkID, season SeasonYear) (*ParkFactor, error)
+
+	// ParkFactorSeries returns park factors over a range of seasons
+	// Supports multi-year averaging for stability
+	ParkFactorSeries(ctx context.Context, parkID ParkID, fromSeason, toSeason SeasonYear) ([]ParkFactor, error)
+
+	// SeasonParkFactors returns all park factors for a given season
+	// Optionally filter by factor type (runs, hr, etc.)
+	SeasonParkFactors(ctx context.Context, season SeasonYear, factorType *string) ([]ParkFactor, error)
+
+	// MultiYearParkFactor returns a park factor averaged over multiple seasons
+	// Used for more stable estimates
+	MultiYearParkFactor(ctx context.Context, parkID ParkID, fromSeason, toSeason SeasonYear) (*ParkFactor, error)
+}

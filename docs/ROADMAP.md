@@ -69,10 +69,17 @@ See [Derived & Advanced Endpoints Overview](./api-derived-advanced.md) for the a
 
 | Status      | Description                                                                                  |
 | ----------- | -------------------------------------------------------------------------------------------- |
-| To-Do       | Derived stats (WAR-like measures, leverage indexes) built atop the Retrosheet plays dataset. |
+| In-Progress | Derived stats (WAR-like measures, leverage indexes) built atop the Retrosheet plays dataset. |
 | In-Progress | Markdown docs                                                                                |
 | Done        | Cache + rate limiting layer for public deployments.                                          |
 | To-Do       | Performance testing and observability hooks before GA release.                               |
+
+#### Notes
+
+- wOBA requires year-specific FanGraphs constants
+- wRC+ requires league constants
+- Leverage index uses simplified heuristic and could be enhanced with historical win expectancy tables
+- WAR and leaderboards marked as TODO in code
 
 ## Milestones & Targets
 

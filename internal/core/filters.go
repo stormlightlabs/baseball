@@ -180,3 +180,41 @@ type PitchFilter struct {
 	SortOrder   SortOrder
 	Pagination  Pagination
 }
+
+type AdvancedBattingFilter struct {
+	Season     *SeasonYear
+	SeasonFrom *SeasonYear
+	SeasonTo   *SeasonYear
+	TeamID     *TeamID
+	League     *LeagueID
+	MinPA      *int // Minimum plate appearances
+	Split      *SplitDimension
+	Provider   *StatProvider // fangraphs, bbref, internal
+	ParkAdjust bool          // Apply park adjustments
+	Pagination Pagination
+}
+
+type AdvancedPitchingFilter struct {
+	Season     *SeasonYear
+	SeasonFrom *SeasonYear
+	SeasonTo   *SeasonYear
+	TeamID     *TeamID
+	League     *LeagueID
+	MinIP      *float64 // Minimum innings pitched
+	Split      *SplitDimension
+	Provider   *StatProvider
+	ParkAdjust bool
+	Pagination Pagination
+}
+
+type WARFilter struct {
+	Season     *SeasonYear
+	SeasonFrom *SeasonYear
+	SeasonTo   *SeasonYear
+	TeamID     *TeamID
+	League     *LeagueID
+	MinPA      *int          // For position players
+	MinIP      *float64      // For pitchers
+	Provider   *StatProvider // fangraphs, bbref, internal
+	Pagination Pagination
+}
