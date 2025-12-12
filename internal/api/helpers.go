@@ -75,6 +75,18 @@ type HealthResponse struct {
 	Status string `json:"status"`
 }
 
+// PlayerBattingStatsResponse wraps player career and season batting stats
+type PlayerBattingStatsResponse struct {
+	Career  core.PlayerBattingSeason   `json:"career"`
+	Seasons []core.PlayerBattingSeason `json:"seasons"`
+}
+
+// PlayerPitchingStatsResponse wraps player career and season pitching stats
+type PlayerPitchingStatsResponse struct {
+	Career  core.PlayerPitchingSeason   `json:"career"`
+	Seasons []core.PlayerPitchingSeason `json:"seasons"`
+}
+
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)

@@ -17,6 +17,7 @@ func NewParkRoutes(repo core.ParkRepository) *ParkRoutes {
 func (pr *ParkRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/parks", pr.handleListParks)
 	mux.HandleFunc("GET /v1/parks/{park_id}", pr.handleGetPark)
+	mux.HandleFunc("GET /v1/parks/{park_id}/games", pr.handleParkGames)
 }
 
 // handleListParks godoc
@@ -76,4 +77,47 @@ func (pr *ParkRoutes) handleGetPark(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, park)
+}
+
+// handleParkGames godoc
+// @Summary Get games played at a ballpark
+// @Description Get all games played at a specific ballpark
+// @Tags parks, games
+// @Accept json
+// @Produce json
+// @Param park_id path string true "Park ID (park key)"
+// @Param season query integer false "Filter by season year"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /parks/{park_id}/games [get]
+func (pr *ParkRoutes) handleParkGames(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	parkID := core.ParkID(r.PathValue("park_id"))
+
+	filter := core.GameFilter{
+		Pagination: core.Pagination{
+			Page:    getIntQuery(r, "page", 1),
+			PerPage: getIntQuery(r, "per_page", 50),
+		},
+	}
+
+	if seasonStr := r.URL.Query().Get("season"); seasonStr != "" {
+		season := core.SeasonYear(getIntQuery(r, "season", 0))
+		filter.Season = &season
+	}
+
+	games, err := pr.repo.GamesAtPark(ctx, parkID, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    games,
+		Page:    filter.Pagination.Page,
+		PerPage: filter.Pagination.PerPage,
+		Total:   len(games),
+	})
 }

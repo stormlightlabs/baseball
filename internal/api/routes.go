@@ -20,6 +20,8 @@ func (pr *PlayerRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/players", pr.handleListPlayers)
 	mux.HandleFunc("GET /v1/players/{id}", pr.handleGetPlayer)
 	mux.HandleFunc("GET /v1/players/{id}/seasons", pr.handlePlayerSeasons)
+	mux.HandleFunc("GET /v1/players/{id}/stats/batting", pr.handlePlayerBattingStats)
+	mux.HandleFunc("GET /v1/players/{id}/stats/pitching", pr.handlePlayerPitchingStats)
 	mux.HandleFunc("GET /v1/players/{id}/awards", pr.handlePlayerAwards)
 	mux.HandleFunc("GET /v1/players/{id}/hall-of-fame", pr.handlePlayerHallOfFame)
 	mux.HandleFunc("GET /v1/players/{id}/game-logs", pr.handlePlayerGameLogs)
@@ -317,6 +319,128 @@ func (pr *PlayerRoutes) handlePlayerSalaries(w http.ResponseWriter, r *http.Requ
 	}
 
 	writeJSON(w, http.StatusOK, salaries)
+}
+
+// handlePlayerBattingStats godoc
+// @Summary Get player's batting statistics
+// @Description Get comprehensive batting statistics for a player including career totals and season-by-season breakdowns
+// @Tags players, stats
+// @Accept json
+// @Produce json
+// @Param id path string true "Player ID"
+// @Success 200 {object} PlayerBattingStatsResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{id}/stats/batting [get]
+func (pr *PlayerRoutes) handlePlayerBattingStats(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.PlayerID(r.PathValue("id"))
+
+	seasons, err := pr.repo.BattingSeasons(ctx, id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	var career core.PlayerBattingSeason
+	career.PlayerID = id
+	career.TeamID = core.TeamID("TOTAL")
+	career.League = core.LeagueID("")
+
+	for _, season := range seasons {
+		career.G += season.G
+		career.PA += season.PA
+		career.AB += season.AB
+		career.R += season.R
+		career.H += season.H
+		career.Doubles += season.Doubles
+		career.Triples += season.Triples
+		career.HR += season.HR
+		career.RBI += season.RBI
+		career.SB += season.SB
+		career.CS += season.CS
+		career.BB += season.BB
+		career.SO += season.SO
+		career.HBP += season.HBP
+		career.SF += season.SF
+	}
+
+	if career.AB > 0 {
+		career.AVG = float64(career.H) / float64(career.AB)
+	}
+
+	if career.AB+career.BB+career.HBP+career.SF > 0 {
+		career.OBP = float64(career.H+career.BB+career.HBP) / float64(career.AB+career.BB+career.HBP+career.SF)
+	}
+
+	if career.AB > 0 {
+		career.SLG = float64(career.H+career.Doubles+(2*career.Triples)+(3*career.HR)) / float64(career.AB)
+	}
+
+	career.OPS = career.OBP + career.SLG
+
+	writeJSON(w, http.StatusOK, PlayerBattingStatsResponse{
+		Career:  career,
+		Seasons: seasons,
+	})
+}
+
+// handlePlayerPitchingStats godoc
+// @Summary Get player's pitching statistics
+// @Description Get comprehensive pitching statistics for a player including career totals and season-by-season breakdowns
+// @Tags players, stats
+// @Accept json
+// @Produce json
+// @Param id path string true "Player ID"
+// @Success 200 {object} PlayerPitchingStatsResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{id}/stats/pitching [get]
+func (pr *PlayerRoutes) handlePlayerPitchingStats(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.PlayerID(r.PathValue("id"))
+
+	seasons, err := pr.repo.PitchingSeasons(ctx, id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	var career core.PlayerPitchingSeason
+	career.PlayerID = id
+	career.TeamID = core.TeamID("TOTAL")
+	career.League = core.LeagueID("")
+
+	for _, season := range seasons {
+		career.W += season.W
+		career.L += season.L
+		career.G += season.G
+		career.GS += season.GS
+		career.CG += season.CG
+		career.SHO += season.SHO
+		career.SV += season.SV
+		career.IPOuts += season.IPOuts
+		career.H += season.H
+		career.ER += season.ER
+		career.HR += season.HR
+		career.BB += season.BB
+		career.SO += season.SO
+		career.WP += season.WP
+		career.HBP += season.HBP
+		career.BK += season.BK
+	}
+
+	if career.IPOuts > 0 {
+		ip := float64(career.IPOuts) / 3.0
+		career.ERA = (float64(career.ER) * 9.0) / ip
+		career.WHIP = float64(career.BB+career.H) / ip
+		career.KPer9 = (float64(career.SO) * 9.0) / ip
+		career.BBPer9 = (float64(career.BB) * 9.0) / ip
+		career.HRPer9 = (float64(career.HR) * 9.0) / ip
+	}
+
+	writeJSON(w, http.StatusOK, PlayerPitchingStatsResponse{
+		Career:  career,
+		Seasons: seasons,
+	})
 }
 
 type GameRoutes struct {

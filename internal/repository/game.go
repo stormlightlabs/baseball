@@ -90,6 +90,12 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 
 	g.Innings = g.Innings / 3
 
+	gameNumberFromID := 0
+	if len(string(id)) > 8 {
+		gameNumberFromID = int(string(id)[8] - '0')
+	}
+	g.IsPostseason = parsedDate.Month() >= 10 && parsedDate.Month() <= 11 && gameNumberFromID == 0
+
 	if attendance.Valid {
 		a := int(attendance.Int64)
 		g.Attendance = &a
@@ -182,6 +188,14 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 		argNum++
 	}
 
+	if filter.IsPostseason != nil {
+		if *filter.IsPostseason {
+			query += " AND (SUBSTRING(date, 5, 2) IN ('10', '11') AND game_number = 0)"
+		} else {
+			query += " AND NOT (SUBSTRING(date, 5, 2) IN ('10', '11') AND game_number = 0)"
+		}
+	}
+
 	query += fmt.Sprintf(" ORDER BY date DESC, game_number LIMIT $%d OFFSET $%d", argNum, argNum+1)
 	args = append(args, filter.Pagination.PerPage, (filter.Pagination.Page-1)*filter.Pagination.PerPage)
 
@@ -265,6 +279,8 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 			g.UmpThird = &u
 		}
 
+		g.IsPostseason = parsedDate.Month() >= 10 && parsedDate.Month() <= 11 && gameNumber == 0
+
 		games = append(games, g)
 	}
 
@@ -318,6 +334,14 @@ func (r *GameRepository) Count(ctx context.Context, filter core.GameFilter) (int
 		argNum++
 	}
 
+	if filter.IsPostseason != nil {
+		if *filter.IsPostseason {
+			query += " AND (SUBSTRING(date, 5, 2) IN ('10', '11') AND game_number = 0)"
+		} else {
+			query += " AND NOT (SUBSTRING(date, 5, 2) IN ('10', '11') AND game_number = 0)"
+		}
+	}
+
 	var count int
 	err := r.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	if err != nil {
@@ -352,6 +376,7 @@ func (r *GameRepository) ListByTeamSeason(ctx context.Context, teamID core.TeamI
 
 // GetBoxscore retrieves detailed boxscore statistics for a game.
 func (r *GameRepository) GetBoxscore(ctx context.Context, id core.GameID) (*core.Boxscore, error) {
+	// TODO: move to embedded query
 	query := `
 		SELECT
 			date,

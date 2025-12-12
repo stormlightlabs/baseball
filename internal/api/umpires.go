@@ -17,6 +17,7 @@ func NewUmpireRoutes(repo core.UmpireRepository) *UmpireRoutes {
 func (ur *UmpireRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/umpires", ur.handleListUmpires)
 	mux.HandleFunc("GET /v1/umpires/{umpire_id}", ur.handleGetUmpire)
+	mux.HandleFunc("GET /v1/umpires/{umpire_id}/games", ur.handleUmpireGames)
 }
 
 // handleListUmpires godoc
@@ -76,4 +77,47 @@ func (ur *UmpireRoutes) handleGetUmpire(w http.ResponseWriter, r *http.Request) 
 	}
 
 	writeJSON(w, http.StatusOK, umpire)
+}
+
+// handleUmpireGames godoc
+// @Summary Get games officiated by an umpire
+// @Description Get all games where the umpire officiated in any position
+// @Tags umpires, games
+// @Accept json
+// @Produce json
+// @Param umpire_id path string true "Umpire ID"
+// @Param season query integer false "Filter by season year"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /umpires/{umpire_id}/games [get]
+func (ur *UmpireRoutes) handleUmpireGames(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	umpireID := core.UmpireID(r.PathValue("umpire_id"))
+
+	filter := core.GameFilter{
+		Pagination: core.Pagination{
+			Page:    getIntQuery(r, "page", 1),
+			PerPage: getIntQuery(r, "per_page", 50),
+		},
+	}
+
+	if seasonStr := r.URL.Query().Get("season"); seasonStr != "" {
+		season := core.SeasonYear(getIntQuery(r, "season", 0))
+		filter.Season = &season
+	}
+
+	games, err := ur.repo.GamesForUmpire(ctx, umpireID, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    games,
+		Page:    filter.Pagination.Page,
+		PerPage: filter.Pagination.PerPage,
+		Total:   len(games),
+	})
 }

@@ -84,12 +84,12 @@ This living roadmap merges the original guidelines and endpoint specifications i
 
 #### Player Game & Play-by-Play Views - **(R)** ✓
 
-| Status      | Endpoint                                        | Dataset | Description                                                                                |
-| ----------- | ----------------------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
-| Done        | `GET /v1/players/{player_id}/game-logs`         | R       | Game-by-game performance from Retrosheet logs (currently starters only; see TODO).         |
-| Done        | `GET /v1/players/{player_id}/appearances`       | R       | Detailed appearance records (positions, pinch roles) sourced from Retrosheet lineups.      |
-| Done        | `GET /v1/players/{player_id}/plays`             | R       | All plays involving a player as batter or pitcher with Lahman ↔ Retrosheet ID mapping.     |
-| Done        | `GET /v1/players/{player_id}/plate-appearances` | R       | Normalized plate appearance feed with batter-facing filters (season, pitcher, date range).  |
+| Status | Endpoint                                        | Dataset | Description                                                                                |
+| ------ | ----------------------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
+| Done   | `GET /v1/players/{player_id}/game-logs`         | R       | Game-by-game performance from Retrosheet logs (currently starters only; see TODO).         |
+| Done   | `GET /v1/players/{player_id}/appearances`       | R       | Detailed appearance records (positions, pinch roles) sourced from Retrosheet lineups.      |
+| Done   | `GET /v1/players/{player_id}/plays`             | R       | All plays involving a player as batter or pitcher with Lahman ↔ Retrosheet ID mapping.     |
+| Done   | `GET /v1/players/{player_id}/plate-appearances` | R       | Normalized plate appearance feed with batter-facing filters (season, pitcher, date range). |
 
 ### 2. Teams, Franchises & Seasons - **(L)** + **(R)** ✓
 
@@ -143,33 +143,33 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/games/{game_id}/events`                | R       | Planned raw Retrosheet events (alias/extension on top of `/plays`).         |
 | Done   | `GET /v1/games/{game_id}/events/{event_seq}`    | R       | Single event lookup with structured base/out state.                         |
 | Done   | `GET /v1/players/{player_id}/plate-appearances` | R       | Player-level PA list with leverage, count, and vs. pitcher filters.         |
-| To-Do  | `GET /v1/pitches`                               | R       | Optional dataset if we derive per-pitch signals.                            |
+| To-Do  | `GET /v1/pitches`                               | R       | Derive per-pitch signals.                                                   |
 
 ### 5. Parks, Umpires, Managers & Other Entities - **(L+R)**
 
-| Status | Endpoint                                  | Dataset | Description                                              |
-| ------ | ----------------------------------------- | ------- | -------------------------------------------------------- |
-| Done   | `GET /v1/parks`                           | L+R     | Ballpark directory with locations and active years.      |
-| Done   | `GET /v1/parks/{park_id}`                 | L+R     | Single ballpark plus games hosted.                       |
-| Done   | `GET /v1/managers`                        | L       | Manager careers, totals, and teams managed.              |
-| Done   | `GET /v1/managers/{manager_id}`           | L       | Detailed manager record.                                 |
-| Done   | `GET /v1/managers/{manager_id}/seasons`   | L       | Season-by-season records for a manager.                  |
-| Done   | `GET /v1/umpires`                         | L+R     | Umpire list.                                             |
-| Done   | `GET /v1/umpires/{umpire_id}`             | L+R     | Umpire details + officiated games.                       |
-| To-Do  | `GET /v1/ejections`                       | R       | All ejection events with filters (player, umpire, year). |
-| To-Do  | `GET /v1/seasons/{year}/ejections`        | R       | Season-level slice of ejections.                         |
+| Status | Endpoint                                | Dataset | Description                                              |
+| ------ | --------------------------------------- | ------- | -------------------------------------------------------- |
+| Done   | `GET /v1/parks`                         | L+R     | Ballpark directory with locations and active years.      |
+| Done   | `GET /v1/parks/{park_id}`               | L+R     | Single ballpark plus games hosted.                       |
+| Done   | `GET /v1/managers`                      | L       | Manager careers, totals, and teams managed.              |
+| Done   | `GET /v1/managers/{manager_id}`         | L       | Detailed manager record.                                 |
+| Done   | `GET /v1/managers/{manager_id}/seasons` | L       | Season-by-season records for a manager.                  |
+| Done   | `GET /v1/umpires`                       | L+R     | Umpire list.                                             |
+| Done   | `GET /v1/umpires/{umpire_id}`           | L+R     | Umpire details + officiated games.                       |
+| To-Do  | `GET /v1/ejections`                     | R       | All ejection events with filters (player, umpire, year). |
+| To-Do  | `GET /v1/seasons/{year}/ejections`      | R       | Season-level slice of ejections.                         |
 
-### 6. Stats & Leaderboards - **(L)** (with optional **(R)** joins)
+### 6. Stats & Leaderboards - **(L)** (with optional **(R)** joins) ✓
 
-#### Career & Season Stats
+#### Career & Season Stats ✓
 
 | Status | Endpoint                                     | Dataset | Description                                                           |
 | ------ | -------------------------------------------- | ------- | --------------------------------------------------------------------- |
 | Done   | `GET /v1/stats/batting`                      | L       | Flexible batting query (player/team/season filters, min AB, sorting). |
 | Done   | `GET /v1/stats/pitching`                     | L       | Flexible pitching query (season ranges, min IP).                      |
 | Done   | `GET /v1/stats/fielding`                     | L       | Fielding stats (positions, innings).                                  |
-| To-Do  | `GET /v1/players/{player_id}/stats/batting`  | L+R     | Player-specific batting summary (career + optional splits).           |
-| To-Do  | `GET /v1/players/{player_id}/stats/pitching` | L+R     | Player-specific pitching summary.                                     |
+| Done   | `GET /v1/players/{player_id}/stats/batting`  | L+R     | Player-specific batting summary (career + optional splits).           |
+| Done   | `GET /v1/players/{player_id}/stats/pitching` | L+R     | Player-specific pitching summary.                                     |
 
 #### Seasonal Leaders ✓
 
@@ -188,7 +188,7 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/stats/teams/pitching` | L       | Team pitching.                            |
 | Done   | `GET /v1/stats/teams/fielding` | L       | Team fielding.                            |
 
-### 7. Awards, All-Star Games, Postseason - **(L)**
+### 7. Awards, All-Star Games, Postseason - **(L)** ✓
 
 | Status | Endpoint                                   | Dataset | Description                                   |
 | ------ | ------------------------------------------ | ------- | --------------------------------------------- |
@@ -196,32 +196,36 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/awards/{award_id}`                | L       | Detailed view for a specific award.           |
 | Done   | `GET /v1/seasons/{year}/awards`            | L       | Awards issued during a season.                |
 | Done   | `GET /v1/seasons/{year}/postseason/series` | L       | Postseason series list (LCS, WS, etc.).       |
-| To-Do  | `GET /v1/seasons/{year}/postseason/games`  | L+R     | Postseason games joined with Retrosheet data. |
-| To-Do  | `GET /v1/allstar/games`                    | L+R     | All-Star Game history.                        |
-| To-Do  | `GET /v1/allstar/games/{game_id}`          | L+R     | Specific All-Star game box/events.            |
+| Done   | `GET /v1/seasons/{year}/postseason/games`  | L+R     | Postseason games joined with Retrosheet data. |
+| Done   | `GET /v1/allstar/games`                    | L+R     | All-Star Game history.                        |
+| Done   | `GET /v1/allstar/games/{game_id}`          | L+R     | Specific All-Star game box/events.            |
 
 ### 8. Search & Lookup Utilities - **(L+R)**
 
 | Status | Endpoint                 | Dataset | Description                                                         |
 | ------ | ------------------------ | ------- | ------------------------------------------------------------------- |
-| To-Do  | `GET /v1/search/players` | L+R     | Fuzzy player search with optional era/league filters.               |
+| To-Do  | `GET /v1/search/players` | L+R     | Fuzzy player search with era/league filters.                        |
 | To-Do  | `GET /v1/search/teams`   | L+R     | Search by name, city, franchise.                                    |
-| To-Do  | `GET /v1/search/games`   | R       | Natural language queries such as “Yankees vs Red Sox 2003 ALCS G7.” |
 | To-Do  | `GET /v1/search/parks`   | L+R     | Ballpark lookup by name/city.                                       |
+| To-Do  | `GET /v1/search/games`   | R       | Natural language queries such as "Yankees vs Red Sox 2003 ALCS G7." |
 
 ### 9. Derived & Advanced Endpoints
 
-- To-Do `/v1/players/{player_id}/streaks` - Track hitting or scoreless inning streaks.
-- To-Do `/v1/players/{player_id}/splits` - Home/away, handedness, month, batting order splits.
-- To-Do `/v1/teams/{team_id}/run-differential` - Season totals and rolling windows.
-- To-Do `/v1/games/{game_id}/win-probability` - Win probability graphs derived from play-by-play.
+| Status | Endpoint                               | Notes                                               |
+| ------ | -------------------------------------- | --------------------------------------------------- |
+| To-Do  | `/v1/players/{player_id}/streaks`      | Track hitting or scoreless inning streaks.          |
+| To-Do  | `/v1/players/{player_id}/splits`       | Home/away, handedness, month, batting order splits. |
+| To-Do  | `/v1/teams/{team_id}/run-differential` | Season totals and rolling windows.                  |
+| To-Do  | `/v1/games/{game_id}/win-probability`  | Win probability graphs derived from play-by-play.   |
 
 ### 10. Advanced Analytics & Enhancements
 
-- To-Do Derived stats (WAR-like measures, leverage indexes) built atop the Retrosheet plays dataset.
-- To-Do OpenAPI enhancements (schemas per endpoint, examples) plus Markdown docs.
-- To-Do Cache + rate limiting layer for public deployments.
-- To-Do Performance testing and observability hooks before GA release.
+| Status      | Description                                                                                  |
+| ----------- | -------------------------------------------------------------------------------------------- |
+| To-Do       | Derived stats (WAR-like measures, leverage indexes) built atop the Retrosheet plays dataset. |
+| In-Progress | OpenAPI enhancements (schemas per endpoint, examples) plus Markdown docs.                    |
+| In-Progress | Cache + rate limiting layer for public deployments.                                          |
+| To-Do       | Performance testing and observability hooks before GA release.                               |
 
 ## Milestones & Targets
 
