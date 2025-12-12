@@ -8,10 +8,17 @@ import (
 	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
+	"stormlightlabs.org/baseball/internal/search"
 )
 
 //go:embed queries/game_boxscore.sql
 var gameBoxscoreQuery string
+
+//go:embed queries/search_games_advanced.sql
+var _ string
+
+//go:embed queries/search_games_with_series_game.sql
+var searchGamesWithSeriesQuery string
 
 type GameRepository struct {
 	db *sql.DB
@@ -563,4 +570,124 @@ func (r *GameRepository) GetBoxscore(ctx context.Context, id core.GameID) (*core
 	box.AwayLineup = awayLineup
 	box.HomeLineup = homeLineup
 	return &box, nil
+}
+
+// SearchGamesNL performs a natural language search for games.
+// It uses both structured filters (season, teams, game type) and full-text search.
+// The query parameter can be a natural language string like "dodgers giants 2014 nlcs game 5".
+// Limit defaults to 50 if not specified.
+func (r *GameRepository) SearchGamesNL(ctx context.Context, query string, limit int) ([]core.Game, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+
+	parsed := r.parseGameQuery(ctx, query)
+
+	rows, err := r.db.QueryContext(ctx, searchGamesWithSeriesQuery,
+		query,
+		parsed.Season,
+		parsed.HomeTeamID,
+		parsed.AwayTeamID,
+		parsed.GameType,
+		parsed.GameNumber,
+		limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search games: %w", err)
+	}
+	defer rows.Close()
+
+	var games []core.Game
+	for rows.Next() {
+		var g core.Game
+		var date string
+		var homeTeam, awayTeam, parkID string
+		var gameType sql.NullString
+
+		err := rows.Scan(
+			&g.ID,
+			&date,
+			&homeTeam,
+			&awayTeam,
+			&g.HomeScore,
+			&g.AwayScore,
+			&gameType,
+			&parkID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan game: %w", err)
+		}
+
+		g.HomeTeam = core.TeamID(homeTeam)
+		g.AwayTeam = core.TeamID(awayTeam)
+		g.ParkID = core.ParkID(parkID)
+
+		parsedDate, err := time.Parse("20060102", date)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse date: %w", err)
+		}
+		g.Date = parsedDate
+		g.Season = core.SeasonYear(parsedDate.Year())
+
+		if gameType.Valid {
+			g.IsPostseason = gameType.String == "postseason"
+		}
+
+		games = append(games, g)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating games: %w", err)
+	}
+
+	return games, nil
+}
+
+// ResolveTeamAlias looks up a team ID from a team name alias.
+// The season parameter is optional and can be used to resolve historical team names.
+func (r *GameRepository) ResolveTeamAlias(ctx context.Context, alias string, season *int) (core.TeamID, bool) {
+	query := `
+		SELECT team_id
+		FROM team_aliases
+		WHERE LOWER(alias) = LOWER($1)
+		  AND (start_year IS NULL OR start_year <= $2)
+		  AND (end_year IS NULL OR end_year >= $2)
+		LIMIT 1
+	`
+
+	var effectiveSeason int
+	if season != nil {
+		effectiveSeason = *season
+	} else {
+		effectiveSeason = 2024 // Default to current season
+	}
+
+	var teamID string
+	err := r.db.QueryRowContext(ctx, query, alias, effectiveSeason).Scan(&teamID)
+	if err == sql.ErrNoRows {
+		return "", false
+	}
+	if err != nil {
+		return "", false
+	}
+
+	return core.TeamID(teamID), true
+}
+
+// parseGameQuery is a helper that wraps the search package parser
+// and enriches it with team alias resolution.
+func (r *GameRepository) parseGameQuery(ctx context.Context, query string) search.GameQuery {
+	parsed := search.ParseGameQuery(query)
+	parsed.EnrichWithTeamAliases(&teamAliasAdapter{repo: r, ctx: ctx})
+	return parsed
+}
+
+// teamAliasAdapter adapts GameRepository to implement search.TeamAliasResolver
+type teamAliasAdapter struct {
+	repo *GameRepository
+	ctx  context.Context
+}
+
+func (a *teamAliasAdapter) ResolveTeamAlias(alias string, season *int) (core.TeamID, bool) {
+	return a.repo.ResolveTeamAlias(a.ctx, alias, season)
 }

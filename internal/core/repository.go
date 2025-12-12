@@ -61,6 +61,12 @@ type GameRepository interface {
 
 	// Get detailed boxscore for a game
 	GetBoxscore(ctx context.Context, id GameID) (*Boxscore, error)
+
+	// SearchGamesNL performs a natural language search for games
+	SearchGamesNL(ctx context.Context, query string, limit int) ([]Game, error)
+
+	// ResolveTeamAlias looks up a team ID from a team name alias
+	ResolveTeamAlias(ctx context.Context, alias string, season *int) (TeamID, bool)
 }
 
 // PlayRepository manages play-by-play data from Retrosheet.

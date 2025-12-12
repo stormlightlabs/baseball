@@ -200,14 +200,14 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/allstar/games`                    | L+R     | All-Star Game history.                        |
 | Done   | `GET /v1/allstar/games/{game_id}`          | L+R     | Specific All-Star game box/events.            |
 
-### 8. Search & Lookup Utilities - **(L+R)**
+### 8. Search & Lookup Utilities - **(L+R)** ✓
 
 | Status | Endpoint                 | Dataset | Description                                                         |
 | ------ | ------------------------ | ------- | ------------------------------------------------------------------- |
 | Done   | `GET /v1/search/players` | L+R     | Fuzzy player search with era/league filters.                        |
 | Done   | `GET /v1/search/teams`   | L+R     | Search by name, city, franchise.                                    |
 | Done   | `GET /v1/search/parks`   | L+R     | Ballpark lookup by name/city.                                       |
-| To-Do  | `GET /v1/search/games`   | R       | Natural language queries such as "Yankees vs Red Sox 2003 ALCS G7." |
+| Done   | `GET /v1/search/games`   | R       | Natural language queries such as "Yankees vs Red Sox 2003 ALCS G7." |
 
 ### 9. Derived & Advanced Endpoints
 

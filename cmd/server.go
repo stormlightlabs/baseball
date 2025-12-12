@@ -296,7 +296,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 		api.NewUmpireRoutes(umpireRepo),
 		api.NewPostseasonRoutes(postseasonRepo, gameRepo),
 		api.NewAllStarRoutes(awardRepo),
-		api.NewSearchRoutes(playerRepo, teamRepo, parkRepo),
+		api.NewSearchRoutes(playerRepo, teamRepo, parkRepo, gameRepo),
 		api.NewEjectionRoutes(ejectionRepo),
 		api.NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
 		api.NewUIRoutes(apiKeyRepo),

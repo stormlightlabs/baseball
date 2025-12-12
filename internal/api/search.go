@@ -10,13 +10,15 @@ type SearchRoutes struct {
 	playerRepo core.PlayerRepository
 	teamRepo   core.TeamRepository
 	parkRepo   core.ParkRepository
+	gameRepo   core.GameRepository
 }
 
-func NewSearchRoutes(playerRepo core.PlayerRepository, teamRepo core.TeamRepository, parkRepo core.ParkRepository) *SearchRoutes {
+func NewSearchRoutes(playerRepo core.PlayerRepository, teamRepo core.TeamRepository, parkRepo core.ParkRepository, gameRepo core.GameRepository) *SearchRoutes {
 	return &SearchRoutes{
 		playerRepo: playerRepo,
 		teamRepo:   teamRepo,
 		parkRepo:   parkRepo,
+		gameRepo:   gameRepo,
 	}
 }
 
@@ -24,6 +26,7 @@ func (sr *SearchRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/search/players", sr.handleSearchPlayers)
 	mux.HandleFunc("GET /v1/search/teams", sr.handleSearchTeams)
 	mux.HandleFunc("GET /v1/search/parks", sr.handleSearchParks)
+	mux.HandleFunc("GET /v1/search/games", sr.handleSearchGames)
 }
 
 // handleSearchPlayers godoc
@@ -175,4 +178,39 @@ func (sr *SearchRoutes) handleSearchParks(w http.ResponseWriter, r *http.Request
 		PerPage: filter.Pagination.PerPage,
 		Total:   total,
 	})
+}
+
+// handleSearchGames godoc
+// @Summary Search games with natural language
+// @Description Natural language game search supporting queries like "yankees red sox 2004 alcs game 7" or "dodgers giants 2014 nlcs"
+// @Tags search, games
+// @Accept json
+// @Produce json
+// @Param q query string true "Natural language search query"
+// @Param limit query integer false "Maximum number of results" default(50)
+// @Success 200 {array} core.Game
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /search/games [get]
+func (sr *SearchRoutes) handleSearchGames(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		http.Error(w, `{"error": "query parameter 'q' is required"}`, http.StatusBadRequest)
+		return
+	}
+
+	limit := getIntQuery(r, "limit", 50)
+	if limit > 200 {
+		limit = 200
+	}
+
+	games, err := sr.gameRepo.SearchGamesNL(ctx, query, limit)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, games)
 }
