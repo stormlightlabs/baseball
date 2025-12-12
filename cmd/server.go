@@ -16,7 +16,6 @@ import (
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
 	"stormlightlabs.org/baseball/internal/middleware"
-	"stormlightlabs.org/baseball/internal/repository"
 )
 
 // TODO: configurable baseURL
@@ -262,63 +261,33 @@ func startServer(cmd *cobra.Command, args []string) error {
 		echo.Success("✓ Connected to Redis")
 	}
 
-	echo.Info("Initializing repositories...")
+	server := api.NewServer(database.DB)
 
-	playerRepo := repository.NewPlayerRepository(database.DB)
-	teamRepo := repository.NewTeamRepository(database.DB)
-	statsRepo := repository.NewStatsRepository(database.DB)
-	awardRepo := repository.NewAwardRepository(database.DB)
-	gameRepo := repository.NewGameRepository(database.DB)
-	playRepo := repository.NewPlayRepository(database.DB)
-	pitchRepo := repository.NewPitchRepository(database.DB)
-	metaRepo := repository.NewMetaRepository(database.DB)
-	managerRepo := repository.NewManagerRepository(database.DB)
-	parkRepo := repository.NewParkRepository(database.DB)
-	umpireRepo := repository.NewUmpireRepository(database.DB)
-	postseasonRepo := repository.NewPostseasonRepository(database.DB)
-	ejectionRepo := repository.NewEjectionRepository(database.DB)
-
-	userRepo := repository.NewUserRepository(database.DB)
-	apiKeyRepo := repository.NewAPIKeyRepository(database.DB)
-	tokenRepo := repository.NewOAuthTokenRepository(database.DB)
-
-	echo.Info("Registering routes...")
-
-	server := api.NewServer(
-		api.NewPlayerRoutes(playerRepo, awardRepo),
-		api.NewTeamRoutes(teamRepo, gameRepo),
-		api.NewStatsRoutes(statsRepo),
-		api.NewAwardRoutes(awardRepo),
-		api.NewGameRoutes(gameRepo, playRepo),
-		api.NewPlayRoutes(playRepo, playerRepo),
-		api.NewPitchRoutes(pitchRepo),
-		api.NewMetaRoutes(metaRepo),
-		api.NewManagerRoutes(managerRepo),
-		api.NewParkRoutes(parkRepo),
-		api.NewUmpireRoutes(umpireRepo),
-		api.NewPostseasonRoutes(postseasonRepo, gameRepo),
-		api.NewAllStarRoutes(awardRepo),
-		api.NewSearchRoutes(playerRepo, teamRepo, parkRepo, gameRepo),
-		api.NewEjectionRoutes(ejectionRepo),
-		api.NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
-		api.NewUIRoutes(apiKeyRepo),
-		api.NewMLBRoutes(nil),
-	)
+	timeFmt := time.DateTime
+	if cfg.Server.DebugMode {
+		timeFmt = time.Kitchen
+	}
 
 	logger := log.NewWithOptions(cmd.OutOrStdout(), log.Options{
 		ReportTimestamp: true,
-		TimeFormat:      time.DateTime,
+		TimeFormat:      timeFmt,
 		Prefix:          "⚾️",
+		ReportCaller:    cfg.Server.DebugMode,
 	})
 
 	rateLimiter := middleware.NewRateLimiter(redisClient, cfg.Server.DebugMode, 60, time.Minute)
 
 	var handler http.Handler = server
-	handler = middleware.Logger(logger)(handler)
+	bind := middleware.Logger(logger)
+	handler = bind(handler)
 
 	if !cfg.Server.DebugMode && redisClient != nil {
 		handler = rateLimiter.Middleware(handler)
 		echo.Info("✓ Rate limiting enabled (60 req/min per IP)")
+	} else if cfg.Server.DebugMode {
+		echo.Info("⚠ Rate limiting disabled (debug mode)")
+	} else if redisClient == nil {
+		echo.Info("⚠ Rate limiting disabled (Redis unavailable)")
 	} else {
 		echo.Info("⚠ Rate limiting disabled (debug mode or Redis unavailable)")
 	}

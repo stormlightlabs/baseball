@@ -198,9 +198,129 @@ Params
 
 See [pitching](./docs/pitches.md) for implementation details
 
+### Derived & Advanced Analytics
+
+Access advanced baseball analytics computed from play-by-play data. These endpoints provide streaks, run differential analysis, and win probability curves.
+
+#### Player Streaks
+
+Track hitting streaks or scoreless innings streaks for players.
+
+**Endpoint:** `GET /v1/players/{player_id}/streaks`
+
+<details>
+<summary>
+Params
+</summary>
+
+- `kind` (required) - Streak type: `hitting` or `scoreless_innings`
+- `season` (required) - Season year (e.g., `2024`)
+- `min_length` (optional) - Minimum streak length (default: `5`)
+
+</details>
+
+<details>
+<summary>
+Examples
+</summary>
+
+```bash
+# Find hitting streaks of 10+ games for a player in 2024
+curl "/v1/players/reynb001/streaks?kind=hitting&season=2024&min_length=10"
+
+# Find scoreless innings streaks of 15+ innings for a pitcher
+curl "/v1/players/flord002/streaks?kind=scoreless_innings&season=2024&min_length=15"
+```
+
+Response includes streak metadata with start/end dates, game IDs, and length.
+
+</details>
+
+#### Team Run Differential
+
+Analyze season run differential with per-game details and rolling windows.
+
+**Endpoint:** `GET /v1/teams/{team_id}/run-differential`
+
+<details>
+<summary>
+Parameters
+</summary>
+
+- `season` (required) - Season year (e.g., `2024`)
+- `windows` (optional) - Comma-separated rolling window sizes (default: `10,20,30`)
+
+</details>
+
+<details>
+<summary>
+Examples
+</summary>
+
+```bash
+# Get Yankees 2024 run differential with default windows (10, 20, 30 games)
+curl "/v1/teams/NYA/run-differential?season=2024"
+
+# Custom rolling windows
+curl "/v1/teams/LAN/run-differential?season=2024&windows=5,10,15"
+```
+
+Response includes:
+
+- Season totals (games played, runs scored/allowed, differential)
+- Per-game breakdown with cumulative differential
+- Rolling window stats for trend analysis
+
+</details>
+
+#### Game Win Probability
+
+Get play-by-play win probability curves showing how leverage shifted throughout a game.
+
+**Endpoint:** `GET /v1/games/{game_id}/win-probability`
+
+<details>
+<summary>
+Examples
+</summary>
+
+```bash
+# Get win probability curve for a specific game
+curl "/v1/games/BAL202404010/win-probability"
+```
+
+Response includes each event with:
+
+- Event index, inning, and game state (score, outs, bases)
+- Home/away win probabilities (0.0-1.0)
+- Play description
+
+</details>
+
+<details>
+<summary>
+Implementation
+</summary>
+
+Derived analytics are computed on-demand from play-by-play data using:
+
+- **Gaps and islands** technique for streak identification
+- **Window functions** for rolling aggregates
+- **Simplified win probability model** based on score differential and inning
+
+</details>
+
 ### Natural Language Game Search
 
 Search for games using natural language queries. The search understands team names, years, series keywords, and game numbers.
+
+This supports:
+
+- Team names and common aliases (e.g., "yankees", "red sox", "dodgers")
+- Years (any 4-digit year)
+- Postseason keywords ("world series", "playoffs", "postseason", "alcs", "nlcs", etc.)
+- All-Star games ("all-star", "all star", "midsummer classic")
+- Flexible query formats with automatic fuzzy matching
 
 **Endpoint:** `GET /v1/search/games?q={query}&limit={limit}`
 
@@ -225,16 +345,8 @@ curl "/v1/search/games?q=dodgers%202024&limit=10"
 
 </details>
 
-The search supports:
-
-- Team names and common aliases (e.g., "yankees", "red sox", "dodgers")
-- Years (any 4-digit year)
-- Postseason keywords ("world series", "playoffs", "postseason", "alcs", "nlcs", etc.)
-- All-Star games ("all-star", "all star", "midsummer classic")
-- Flexible query formats with automatic fuzzy matching
-
 <details>
-<summary>Implementation Details</summary>
+<summary>Implementation</summary>
 
 The natural language search is powered by a three-layer approach:
 
@@ -268,7 +380,10 @@ The natural language search is powered by a three-layer approach:
 
 This project uses [swaggo/swag](https://github.com/swaggo/swag) for API documentation generation.
 
-#### Generating Swagger Docs
+<details>
+<summary>
+Generating Docs
+</summary>
 
 Use the task command to generate swagger documentation:
 
@@ -280,6 +395,8 @@ This will:
 
 1. Generate swagger docs from your API annotations
 2. Automatically fix known compatibility issues
+
+</details>
 
 <details>
 <summary>

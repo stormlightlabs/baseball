@@ -3,20 +3,27 @@ package core
 // StreakKind identifies what is being tracked.
 type StreakKind string
 
-const (
-	// Hitting streak: consecutive games with at least one hit.
-	StreakKindHitting StreakKind = "hitting"
-
-	// Scoreless innings streak for a pitcher or team staff.
-	StreakKindScorelessInnings StreakKind = "scoreless_innings"
-)
+// SplitDimension describes what the data is split over.
+type SplitDimension string
 
 // StreakEntityType clarifies what owns the streak.
 type StreakEntityType string
 
+// SplitEntityType clarifies what is being split (player vs team).
+type SplitEntityType string
+
 const (
-	StreakEntityPlayer StreakEntityType = "player"
-	StreakEntityTeam   StreakEntityType = "team"
+	SplitEntityPlayer          SplitEntityType  = "player"
+	SplitEntityTeam            SplitEntityType  = "team"
+	StreakKindHitting          StreakKind       = "hitting"           // Hitting streak: consecutive games with at least one hit.
+	StreakKindScorelessInnings StreakKind       = "scoreless_innings" // Scoreless innings streak for a pitcher or team staff.
+	StreakEntityPlayer         StreakEntityType = "player"
+	StreakEntityTeam           StreakEntityType = "team"
+	SplitDimHomeAway           SplitDimension   = "home_away"      // home vs away
+	SplitDimBatterHanded       SplitDimension   = "batter_handed"  // vs RHP/LHP by batter side
+	SplitDimPitcherHanded      SplitDimension   = "pitcher_handed" // pitcher side
+	SplitDimMonth              SplitDimension   = "month"          // calendar or season month
+	SplitDimBattingOrder       SplitDimension   = "batting_order"  // lineup spot 1–9
 )
 
 // Streak represents a contiguous run of games or innings.
@@ -147,4 +154,36 @@ type WinProbabilityPoint struct {
 	AwayWinProb float64 `json:"away_win_prob"`
 
 	Description string `json:"description,omitempty"` // e.g. "Trout homers to LF (fly ball)."
+}
+
+// SplitResult is the top-level result for any split query.
+type SplitResult struct {
+	EntityType SplitEntityType `json:"entity_type"` // player or team
+	EntityID   string          `json:"entity_id"`   // PlayerID or TeamID
+	Season     int             `json:"season"`
+	Dimension  SplitDimension  `json:"dimension"` // home_away, month, etc.
+
+	Groups []SplitGroup `json:"groups"` // one per split bucket
+}
+
+// SplitGroup holds aggregate stats for one bucket (e.g. "home", "away", "vs_LHP").
+type SplitGroup struct {
+	Key   string            `json:"key"`            // e.g. "home", "away", "vs_LHP", "04" (April), "1" (leadoff)
+	Label string            `json:"label"`          // human-readable label
+	Meta  map[string]string `json:"meta,omitempty"` // arbitrary: month_number, handedness, etc.
+
+	// Sample counting stats.
+	Games int `json:"games"`
+	PA    int `json:"pa"`
+	AB    int `json:"ab"`
+	H     int `json:"h"`
+	HR    int `json:"hr"`
+	BB    int `json:"bb"`
+	SO    int `json:"so"`
+
+	// Derived rate stats (as decimals, 3–4 places).
+	AVG float64 `json:"avg"`
+	OBP float64 `json:"obp"`
+	SLG float64 `json:"slg"`
+	OPS float64 `json:"ops"`
 }

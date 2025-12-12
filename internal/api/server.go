@@ -14,18 +14,67 @@
 package api
 
 import (
+	"database/sql"
 	"net/http"
 
 	httpSwagger "github.com/swaggo/http-swagger"
 	docs "stormlightlabs.org/baseball/internal/docs"
+	"stormlightlabs.org/baseball/internal/echo"
+	"stormlightlabs.org/baseball/internal/repository"
 )
 
 type Server struct {
 	mux *http.ServeMux
 }
 
+func NewServer(db *sql.DB) *Server {
+	echo.Info("Initializing repositories...")
+
+	playerRepo := repository.NewPlayerRepository(db)
+	teamRepo := repository.NewTeamRepository(db)
+	statsRepo := repository.NewStatsRepository(db)
+	awardRepo := repository.NewAwardRepository(db)
+	gameRepo := repository.NewGameRepository(db)
+	playRepo := repository.NewPlayRepository(db)
+	pitchRepo := repository.NewPitchRepository(db)
+	metaRepo := repository.NewMetaRepository(db)
+	managerRepo := repository.NewManagerRepository(db)
+	parkRepo := repository.NewParkRepository(db)
+	umpireRepo := repository.NewUmpireRepository(db)
+	postseasonRepo := repository.NewPostseasonRepository(db)
+	ejectionRepo := repository.NewEjectionRepository(db)
+	derivedRepo := repository.NewDerivedStatsRepository(db)
+
+	userRepo := repository.NewUserRepository(db)
+	apiKeyRepo := repository.NewAPIKeyRepository(db)
+	tokenRepo := repository.NewOAuthTokenRepository(db)
+
+	echo.Info("Registering routes...")
+
+	return newServer(NewPlayerRoutes(playerRepo, awardRepo),
+		NewTeamRoutes(teamRepo, gameRepo),
+		NewStatsRoutes(statsRepo),
+		NewAwardRoutes(awardRepo),
+		NewGameRoutes(gameRepo, playRepo),
+		NewPlayRoutes(playRepo, playerRepo),
+		NewPitchRoutes(pitchRepo),
+		NewMetaRoutes(metaRepo),
+		NewManagerRoutes(managerRepo),
+		NewParkRoutes(parkRepo),
+		NewUmpireRoutes(umpireRepo),
+		NewPostseasonRoutes(postseasonRepo, gameRepo),
+		NewAllStarRoutes(awardRepo),
+		NewSearchRoutes(playerRepo, teamRepo, parkRepo, gameRepo),
+		NewEjectionRoutes(ejectionRepo),
+		NewDerivedRoutes(derivedRepo),
+		NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
+		NewUIRoutes(apiKeyRepo),
+		NewMLBRoutes(nil),
+	)
+}
+
 // NewServer wires all registrars into one mux.
-func NewServer(registrars ...Registrar) *Server {
+func newServer(registrars ...Registrar) *Server {
 	docs.SwaggerInfo.BasePath = "/v1"
 
 	mux := http.NewServeMux()

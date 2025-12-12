@@ -443,6 +443,105 @@
                 }
             }
         },
+        "/games/{game_id}/plays/{play_num}/pitches": {
+            "get": {
+                "description": "Get all pitches from a specific plate appearance within a game",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pitches",
+                    "plays",
+                    "games"
+                ],
+                "summary": "Get pitches for a specific plate appearance",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID",
+                        "name": "game_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Play number within the game",
+                        "name": "play_num",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/games/{game_id}/win-probability": {
+            "get": {
+                "description": "Get play-by-play win probability for a game",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "derived",
+                    "games"
+                ],
+                "summary": "Get game win probability curve",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID",
+                        "name": "game_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.WinProbabilityCurve"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/games/{id}": {
             "get": {
                 "description": "Get detailed information for a specific game",
@@ -625,6 +724,59 @@
                         "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/games/{id}/pitches": {
+            "get": {
+                "description": "Get all pitches for a specific game in chronological order",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pitches",
+                    "games"
+                ],
+                "summary": "Get pitches for a game",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID (format: YYYYMMDD + game_number + home_team)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 200,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
                         }
                     },
                     "500": {
@@ -1727,6 +1879,135 @@
                 }
             }
         },
+        "/pitches": {
+            "get": {
+                "description": "Query individual pitches derived from play-by-play pitch sequences",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pitches"
+                ],
+                "summary": "List pitches",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Batter Retrosheet ID",
+                        "name": "batter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pitcher Retrosheet ID",
+                        "name": "pitcher",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Batting team ID",
+                        "name": "bat_team",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pitching team ID",
+                        "name": "pit_team",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Game date (YYYYMMDD)",
+                        "name": "date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYYMMDD)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYYMMDD)",
+                        "name": "date_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by inning",
+                        "name": "inning",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by pitch type (B, C, F, S, X, etc.)",
+                        "name": "pitch_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by ball count (0-3)",
+                        "name": "ball_count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by strike count (0-2)",
+                        "name": "strike_count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter to only pitches in play (X)",
+                        "name": "is_in_play",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter to only strikes",
+                        "name": "is_strike",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter to only balls",
+                        "name": "is_ball",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/players": {
             "get": {
                 "description": "Search and browse players with optional name filter and pagination",
@@ -2363,6 +2644,75 @@
                 }
             }
         },
+        "/players/{player_id}/streaks": {
+            "get": {
+                "description": "Get hitting or scoreless innings streaks for a player",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "derived",
+                    "players"
+                ],
+                "summary": "Get player streaks",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "player_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Streak kind: hitting or scoreless_innings",
+                        "name": "kind",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 5,
+                        "description": "Minimum streak length",
+                        "name": "min_length",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.Streak"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/plays": {
             "get": {
                 "description": "Query plays with various filters",
@@ -2463,6 +2813,61 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/games": {
+            "get": {
+                "description": "Natural language game search supporting queries like \"yankees red sox 2004 alcs game 7\" or \"dodgers giants 2014 nlcs\"",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search",
+                    "games"
+                ],
+                "summary": "Search games with natural language",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Natural language search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Maximum number of results",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.Game"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
@@ -4363,6 +4768,65 @@
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/teams/{team_id}/run-differential": {
+            "get": {
+                "description": "Get season run differential with rolling windows for a team",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "derived",
+                    "teams"
+                ],
+                "summary": "Get team run differential",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"10,20,30\"",
+                        "description": "Comma-separated rolling window sizes (e.g., 10,20,30)",
+                        "name": "windows",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.RunDifferentialSeries"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
                         }
@@ -6467,6 +6931,127 @@
                 }
             }
         },
+        "core.RunDifferentialGamePoint": {
+            "type": "object",
+            "properties": {
+                "cumulative_diff": {
+                    "description": "running season sum",
+                    "type": "integer"
+                },
+                "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                },
+                "differential": {
+                    "description": "single-game RS - RA",
+                    "type": "integer"
+                },
+                "game_id": {
+                    "type": "string"
+                },
+                "home": {
+                    "type": "boolean"
+                },
+                "opponent_id": {
+                    "type": "string"
+                },
+                "runs_allowed": {
+                    "type": "integer"
+                },
+                "runs_scored": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.RunDifferentialSeries": {
+            "type": "object",
+            "properties": {
+                "entity_id": {
+                    "description": "TeamID",
+                    "type": "string"
+                },
+                "entity_type": {
+                    "description": "usually \"team\"",
+                    "type": "string"
+                },
+                "games": {
+                    "description": "Per-game series, ordered chronologically.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.RunDifferentialGamePoint"
+                    }
+                },
+                "games_played": {
+                    "description": "Season totals.",
+                    "type": "integer"
+                },
+                "rolling": {
+                    "description": "Rolling-window aggregations (e.g. last 10, 20, 30 games).",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.RunDifferentialWindow"
+                    }
+                },
+                "run_differential": {
+                    "description": "RS - RA",
+                    "type": "integer"
+                },
+                "runs_allowed": {
+                    "type": "integer"
+                },
+                "runs_scored": {
+                    "type": "integer"
+                },
+                "season": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.RunDifferentialWindow": {
+            "type": "object",
+            "properties": {
+                "label": {
+                    "description": "e.g. \"last_10\", \"last_30\"",
+                    "type": "string"
+                },
+                "points": {
+                    "description": "Ordered by window end game/date",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.RunDifferentialWindowPoint"
+                    }
+                },
+                "window_size": {
+                    "description": "number of games (e.g. 10, 20, 30)",
+                    "type": "integer"
+                }
+            }
+        },
+        "core.RunDifferentialWindowPoint": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                },
+                "end_game_id": {
+                    "type": "string"
+                },
+                "games_in_window": {
+                    "type": "integer"
+                },
+                "run_differential": {
+                    "description": "RS - RA in window",
+                    "type": "integer"
+                },
+                "runs_allowed": {
+                    "type": "integer"
+                },
+                "runs_scored": {
+                    "type": "integer"
+                }
+            }
+        },
         "core.Season": {
             "type": "object",
             "properties": {
@@ -6483,6 +7068,131 @@
                     "type": "integer"
                 },
                 "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.Streak": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "end_game_id": {
+                    "type": "string"
+                },
+                "entity_id": {
+                    "description": "PlayerID or TeamID (as string)",
+                    "type": "string"
+                },
+                "entity_type": {
+                    "description": "player or team",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/core.StreakEntityType"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "internal identifier for the streak",
+                    "type": "string"
+                },
+                "kind": {
+                    "description": "hitting, scoreless_innings",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/core.StreakKind"
+                        }
+                    ]
+                },
+                "label": {
+                    "description": "human-readable label",
+                    "type": "string"
+                },
+                "length": {
+                    "description": "Length of the streak:\n- For hitting: number of consecutive games with ≥1 hit.\n- For scoreless innings: total consecutive innings without allowing a run.",
+                    "type": "integer"
+                },
+                "season": {
+                    "description": "season year (e.g. 2024)",
+                    "type": "integer"
+                },
+                "start_date": {
+                    "description": "ISO-8601 dates (YYYY-MM-DD) to keep JSON lightweight and frontend-friendly.",
+                    "type": "string"
+                },
+                "start_game_id": {
+                    "description": "Game/inning bounds of the streak.",
+                    "type": "string"
+                },
+                "timeline": {
+                    "description": "Timeline for charts or detailed views.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.StreakPoint"
+                    }
+                }
+            }
+        },
+        "core.StreakEntityType": {
+            "type": "string",
+            "enum": [
+                "player",
+                "team"
+            ],
+            "x-enum-varnames": [
+                "StreakEntityPlayer",
+                "StreakEntityTeam"
+            ]
+        },
+        "core.StreakKind": {
+            "type": "string",
+            "enum": [
+                "hitting",
+                "scoreless_innings"
+            ],
+            "x-enum-comments": {
+                "StreakKindHitting": "Hitting streak: consecutive games with at least one hit.",
+                "StreakKindScorelessInnings": "Scoreless innings streak for a pitcher or team staff."
+            },
+            "x-enum-descriptions": [
+                "Hitting streak: consecutive games with at least one hit.",
+                "Scoreless innings streak for a pitcher or team staff."
+            ],
+            "x-enum-varnames": [
+                "StreakKindHitting",
+                "StreakKindScorelessInnings"
+            ]
+        },
+        "core.StreakPoint": {
+            "type": "object",
+            "properties": {
+                "ab": {
+                    "type": "integer"
+                },
+                "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                },
+                "game_id": {
+                    "type": "string"
+                },
+                "h": {
+                    "type": "integer"
+                },
+                "index": {
+                    "description": "Index within the streak (1..Length).",
+                    "type": "integer"
+                },
+                "ip": {
+                    "description": "For scoreless innings streaks.",
+                    "type": "number"
+                },
+                "pa": {
+                    "description": "For hitting streaks.",
+                    "type": "integer"
+                },
+                "runs_allowed": {
                     "type": "integer"
                 }
             }
@@ -6818,6 +7528,72 @@
                 },
                 "last_name": {
                     "type": "string"
+                }
+            }
+        },
+        "core.WinProbabilityCurve": {
+            "type": "object",
+            "properties": {
+                "away_team": {
+                    "type": "string"
+                },
+                "game_id": {
+                    "type": "string"
+                },
+                "home_team": {
+                    "type": "string"
+                },
+                "points": {
+                    "description": "One point per play/event, ordered by EventIndex ascending.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.WinProbabilityPoint"
+                    }
+                },
+                "season": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.WinProbabilityPoint": {
+            "type": "object",
+            "properties": {
+                "away_score": {
+                    "type": "integer"
+                },
+                "away_win_prob": {
+                    "type": "number"
+                },
+                "bases": {
+                    "description": "Simple base-state encoding\nExample: \"100\" = runner on 1st only, \"011\" = runners on 2nd \u0026 3rd.",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "e.g. \"Trout homers to LF (fly ball).\"",
+                    "type": "string"
+                },
+                "event_index": {
+                    "description": "1..N within the game",
+                    "type": "integer"
+                },
+                "home_score": {
+                    "description": "Score state after the event.",
+                    "type": "integer"
+                },
+                "home_win_prob": {
+                    "description": "Win probabilities for each team AFTER the event (0.0–1.0).",
+                    "type": "number"
+                },
+                "inning": {
+                    "description": "1..9, 10+",
+                    "type": "integer"
+                },
+                "outs": {
+                    "description": "0..3",
+                    "type": "integer"
+                },
+                "top_of_inning": {
+                    "type": "boolean"
                 }
             }
         }

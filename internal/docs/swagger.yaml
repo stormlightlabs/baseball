@@ -1281,6 +1281,90 @@ definitions:
       w:
         type: integer
     type: object
+  core.RunDifferentialGamePoint:
+    properties:
+      cumulative_diff:
+        description: running season sum
+        type: integer
+      date:
+        description: YYYY-MM-DD
+        type: string
+      differential:
+        description: single-game RS - RA
+        type: integer
+      game_id:
+        type: string
+      home:
+        type: boolean
+      opponent_id:
+        type: string
+      runs_allowed:
+        type: integer
+      runs_scored:
+        type: integer
+    type: object
+  core.RunDifferentialSeries:
+    properties:
+      entity_id:
+        description: TeamID
+        type: string
+      entity_type:
+        description: usually "team"
+        type: string
+      games:
+        description: Per-game series, ordered chronologically.
+        items:
+          $ref: '#/definitions/core.RunDifferentialGamePoint'
+        type: array
+      games_played:
+        description: Season totals.
+        type: integer
+      rolling:
+        description: Rolling-window aggregations (e.g. last 10, 20, 30 games).
+        items:
+          $ref: '#/definitions/core.RunDifferentialWindow'
+        type: array
+      run_differential:
+        description: RS - RA
+        type: integer
+      runs_allowed:
+        type: integer
+      runs_scored:
+        type: integer
+      season:
+        type: integer
+    type: object
+  core.RunDifferentialWindow:
+    properties:
+      label:
+        description: e.g. "last_10", "last_30"
+        type: string
+      points:
+        description: Ordered by window end game/date
+        items:
+          $ref: '#/definitions/core.RunDifferentialWindowPoint'
+        type: array
+      window_size:
+        description: number of games (e.g. 10, 20, 30)
+        type: integer
+    type: object
+  core.RunDifferentialWindowPoint:
+    properties:
+      end_date:
+        description: YYYY-MM-DD
+        type: string
+      end_game_id:
+        type: string
+      games_in_window:
+        type: integer
+      run_differential:
+        description: RS - RA in window
+        type: integer
+      runs_allowed:
+        type: integer
+      runs_scored:
+        type: integer
+    type: object
   core.Season:
     properties:
       game_count:
@@ -1292,6 +1376,95 @@ definitions:
       team_count:
         type: integer
       year:
+        type: integer
+    type: object
+  core.Streak:
+    properties:
+      end_date:
+        type: string
+      end_game_id:
+        type: string
+      entity_id:
+        description: PlayerID or TeamID (as string)
+        type: string
+      entity_type:
+        allOf:
+        - $ref: '#/definitions/core.StreakEntityType'
+        description: player or team
+      id:
+        description: internal identifier for the streak
+        type: string
+      kind:
+        allOf:
+        - $ref: '#/definitions/core.StreakKind'
+        description: hitting, scoreless_innings
+      label:
+        description: human-readable label
+        type: string
+      length:
+        description: |-
+          Length of the streak:
+          - For hitting: number of consecutive games with ≥1 hit.
+          - For scoreless innings: total consecutive innings without allowing a run.
+        type: integer
+      season:
+        description: season year (e.g. 2024)
+        type: integer
+      start_date:
+        description: ISO-8601 dates (YYYY-MM-DD) to keep JSON lightweight and frontend-friendly.
+        type: string
+      start_game_id:
+        description: Game/inning bounds of the streak.
+        type: string
+      timeline:
+        description: Timeline for charts or detailed views.
+        items:
+          $ref: '#/definitions/core.StreakPoint'
+        type: array
+    type: object
+  core.StreakEntityType:
+    enum:
+    - player
+    - team
+    type: string
+    x-enum-varnames:
+    - StreakEntityPlayer
+    - StreakEntityTeam
+  core.StreakKind:
+    enum:
+    - hitting
+    - scoreless_innings
+    type: string
+    x-enum-comments:
+      StreakKindHitting: 'Hitting streak: consecutive games with at least one hit.'
+      StreakKindScorelessInnings: Scoreless innings streak for a pitcher or team staff.
+    x-enum-descriptions:
+    - 'Hitting streak: consecutive games with at least one hit.'
+    - Scoreless innings streak for a pitcher or team staff.
+    x-enum-varnames:
+    - StreakKindHitting
+    - StreakKindScorelessInnings
+  core.StreakPoint:
+    properties:
+      ab:
+        type: integer
+      date:
+        description: YYYY-MM-DD
+        type: string
+      game_id:
+        type: string
+      h:
+        type: integer
+      index:
+        description: Index within the streak (1..Length).
+        type: integer
+      ip:
+        description: For scoreless innings streaks.
+        type: number
+      pa:
+        description: For hitting streaks.
+        type: integer
+      runs_allowed:
         type: integer
     type: object
   core.TeamBattingStats:
@@ -1514,6 +1687,54 @@ definitions:
         type: string
       last_name:
         type: string
+    type: object
+  core.WinProbabilityCurve:
+    properties:
+      away_team:
+        type: string
+      game_id:
+        type: string
+      home_team:
+        type: string
+      points:
+        description: One point per play/event, ordered by EventIndex ascending.
+        items:
+          $ref: '#/definitions/core.WinProbabilityPoint'
+        type: array
+      season:
+        type: integer
+    type: object
+  core.WinProbabilityPoint:
+    properties:
+      away_score:
+        type: integer
+      away_win_prob:
+        type: number
+      bases:
+        description: |-
+          Simple base-state encoding
+          Example: "100" = runner on 1st only, "011" = runners on 2nd & 3rd.
+        type: string
+      description:
+        description: e.g. "Trout homers to LF (fly ball)."
+        type: string
+      event_index:
+        description: 1..N within the game
+        type: integer
+      home_score:
+        description: Score state after the event.
+        type: integer
+      home_win_prob:
+        description: Win probabilities for each team AFTER the event (0.0–1.0).
+        type: number
+      inning:
+        description: 1..9, 10+
+        type: integer
+      outs:
+        description: 0..3
+        type: integer
+      top_of_inning:
+        type: boolean
     type: object
 info:
   contact:
@@ -1815,6 +2036,73 @@ paths:
       summary: List games
       tags:
       - games
+  /games/{game_id}/plays/{play_num}/pitches:
+    get:
+      consumes:
+      - application/json
+      description: Get all pitches from a specific plate appearance within a game
+      parameters:
+      - description: Game ID
+        in: path
+        name: game_id
+        required: true
+        type: string
+      - description: Play number within the game
+        in: path
+        name: play_num
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get pitches for a specific plate appearance
+      tags:
+      - pitches
+      - plays
+      - games
+  /games/{game_id}/win-probability:
+    get:
+      consumes:
+      - application/json
+      description: Get play-by-play win probability for a game
+      parameters:
+      - description: Game ID
+        in: path
+        name: game_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.WinProbabilityCurve'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get game win probability curve
+      tags:
+      - derived
+      - games
   /games/{id}:
     get:
       consumes:
@@ -1945,6 +2233,42 @@ paths:
       tags:
       - games
       - plays
+  /games/{id}/pitches:
+    get:
+      consumes:
+      - application/json
+      description: Get all pitches for a specific game in chronological order
+      parameters:
+      - description: 'Game ID (format: YYYYMMDD + game_number + home_team)'
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 200
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get pitches for a game
+      tags:
+      - pitches
+      - games
   /games/{id}/plays:
     get:
       consumes:
@@ -2677,6 +3001,92 @@ paths:
       tags:
       - parks
       - games
+  /pitches:
+    get:
+      consumes:
+      - application/json
+      description: Query individual pitches derived from play-by-play pitch sequences
+      parameters:
+      - description: Batter Retrosheet ID
+        in: query
+        name: batter
+        type: string
+      - description: Pitcher Retrosheet ID
+        in: query
+        name: pitcher
+        type: string
+      - description: Batting team ID
+        in: query
+        name: bat_team
+        type: string
+      - description: Pitching team ID
+        in: query
+        name: pit_team
+        type: string
+      - description: Game date (YYYYMMDD)
+        in: query
+        name: date
+        type: string
+      - description: Start date (YYYYMMDD)
+        in: query
+        name: date_from
+        type: string
+      - description: End date (YYYYMMDD)
+        in: query
+        name: date_to
+        type: string
+      - description: Filter by inning
+        in: query
+        name: inning
+        type: integer
+      - description: Filter by pitch type (B, C, F, S, X, etc.)
+        in: query
+        name: pitch_type
+        type: string
+      - description: Filter by ball count (0-3)
+        in: query
+        name: ball_count
+        type: integer
+      - description: Filter by strike count (0-2)
+        in: query
+        name: strike_count
+        type: integer
+      - description: Filter to only pitches in play (X)
+        in: query
+        name: is_in_play
+        type: boolean
+      - description: Filter to only strikes
+        in: query
+        name: is_strike
+        type: boolean
+      - description: Filter to only balls
+        in: query
+        name: is_ball
+        type: boolean
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: List pitches
+      tags:
+      - pitches
   /players:
     get:
       consumes:
@@ -3104,6 +3514,53 @@ paths:
       summary: Get player's team history
       tags:
       - players
+  /players/{player_id}/streaks:
+    get:
+      consumes:
+      - application/json
+      description: Get hitting or scoreless innings streaks for a player
+      parameters:
+      - description: Player ID
+        in: path
+        name: player_id
+        required: true
+        type: string
+      - description: 'Streak kind: hitting or scoreless_innings'
+        in: query
+        name: kind
+        required: true
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        required: true
+        type: integer
+      - default: 5
+        description: Minimum streak length
+        in: query
+        name: min_length
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.Streak'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get player streaks
+      tags:
+      - derived
+      - players
   /plays:
     get:
       consumes:
@@ -3178,6 +3635,44 @@ paths:
       summary: List plays
       tags:
       - plays
+  /search/games:
+    get:
+      consumes:
+      - application/json
+      description: Natural language game search supporting queries like "yankees red
+        sox 2004 alcs game 7" or "dodgers giants 2014 nlcs"
+      parameters:
+      - description: Natural language search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 50
+        description: Maximum number of results
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.Game'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Search games with natural language
+      tags:
+      - search
+      - games
   /search/parks:
     get:
       consumes:
@@ -4464,6 +4959,46 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: Get team season
       tags:
+      - teams
+  /teams/{team_id}/run-differential:
+    get:
+      consumes:
+      - application/json
+      description: Get season run differential with rolling windows for a team
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        required: true
+        type: integer
+      - default: '"10,20,30"'
+        description: Comma-separated rolling window sizes (e.g., 10,20,30)
+        in: query
+        name: windows
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.RunDifferentialSeries'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get team run differential
+      tags:
+      - derived
       - teams
   /umpires:
     get:

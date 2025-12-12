@@ -273,3 +273,17 @@ type PitchRepository interface {
 	// ListByPlay retrieves all pitches from a specific plate appearance
 	ListByPlay(ctx context.Context, gameID GameID, playNum int) ([]Pitch, error)
 }
+
+// DerivedStatsRepository manages advanced computed analytics from play-by-play data.
+// TODO: splits
+type DerivedStatsRepository interface {
+	// PlayerStreaks retrieves hitting or scoreless innings streaks for a player
+	PlayerStreaks(ctx context.Context, playerID PlayerID, kind StreakKind, season SeasonYear, minLength int) ([]Streak, error)
+
+	// TeamRunDifferential calculates season run differential with rolling windows
+	TeamRunDifferential(ctx context.Context, teamID TeamID, season SeasonYear, windows []int) (*RunDifferentialSeries, error)
+
+	// GameWinProbability returns win probability curve for a game
+	// TODO: historical win expectancy tables
+	GameWinProbability(ctx context.Context, gameID GameID) (*WinProbabilityCurve, error)
+}
