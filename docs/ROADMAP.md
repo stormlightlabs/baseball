@@ -134,7 +134,7 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/seasons/{year}/teams/{team_id}/games` | R       | Team-specific schedule (duplicate of table above for clarity). |
 | Done   | `GET /v1/seasons/{year}/parks/{park_id}/games` | R       | Games played in a specific ballpark.                           |
 
-### 4. Play-by-Play Events & Context - **(R)**
+### 4. Play-by-Play Events & Context - **(R)** ✓
 
 | Status | Endpoint                                        | Dataset | Description                                                                 |
 | ------ | ----------------------------------------------- | ------- | --------------------------------------------------------------------------- |
@@ -143,7 +143,7 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Done   | `GET /v1/games/{game_id}/events`                | R       | Planned raw Retrosheet events (alias/extension on top of `/plays`).         |
 | Done   | `GET /v1/games/{game_id}/events/{event_seq}`    | R       | Single event lookup with structured base/out state.                         |
 | Done   | `GET /v1/players/{player_id}/plate-appearances` | R       | Player-level PA list with leverage, count, and vs. pitcher filters.         |
-| To-Do  | `GET /v1/pitches`                               | R       | Derive per-pitch signals.                                                   |
+| Done   | `GET /v1/pitches`                               | R       | Derive per-pitch signals.                                                   |
 
 ### 5. Parks, Umpires, Managers & Other Entities - **(L+R)** ✓
 
