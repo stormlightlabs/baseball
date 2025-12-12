@@ -112,13 +112,13 @@ func (pr *PlayRoutes) handleListPlays(w http.ResponseWriter, r *http.Request) {
 
 	plays, err := pr.repo.List(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := pr.repo.Count(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -153,7 +153,7 @@ func (pr *PlayRoutes) handleGamePlays(w http.ResponseWriter, r *http.Request) {
 
 	plays, err := pr.repo.ListByGame(ctx, gameID, pagination)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -166,7 +166,7 @@ func (pr *PlayRoutes) handleGamePlays(w http.ResponseWriter, r *http.Request) {
 	}
 	total, err := pr.repo.Count(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -199,7 +199,7 @@ func (pr *PlayRoutes) handlePlayerPlays(w http.ResponseWriter, r *http.Request) 
 		if errors.Is(err, errMissingRetroID) {
 			writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		} else {
-			writeError(w, err)
+			writeInternalServerError(w, err)
 		}
 		return
 	}
@@ -211,13 +211,13 @@ func (pr *PlayRoutes) handlePlayerPlays(w http.ResponseWriter, r *http.Request) 
 
 	plays, err := pr.repo.ListByPlayer(ctx, retroID, pagination)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := pr.repo.CountByPlayer(ctx, retroID)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -256,7 +256,7 @@ func (pr *PlayRoutes) handlePlayerPlateAppearances(w http.ResponseWriter, r *htt
 		if errors.Is(err, errMissingRetroID) {
 			writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		} else {
-			writeError(w, err)
+			writeInternalServerError(w, err)
 		}
 		return
 	}
@@ -309,13 +309,13 @@ func (pr *PlayRoutes) handlePlayerPlateAppearances(w http.ResponseWriter, r *htt
 
 	plays, err := pr.repo.List(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := pr.repo.Count(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 

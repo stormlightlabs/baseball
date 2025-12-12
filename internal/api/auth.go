@@ -94,7 +94,7 @@ func generateState() (string, error) {
 func (r *AuthRoutes) handleGitHubLogin(w http.ResponseWriter, req *http.Request) {
 	state, err := generateState()
 	if err != nil {
-		writeError(w, fmt.Errorf("failed to generate state: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to generate state: %w", err))
 		return
 	}
 
@@ -119,7 +119,7 @@ func (r *AuthRoutes) handleGitHubCallback(w http.ResponseWriter, req *http.Reque
 
 	cookie, err := req.Cookie("oauth_state")
 	if err != nil || cookie.Value != state {
-		writeError(w, fmt.Errorf("invalid OAuth state"))
+		writeInternalServerError(w, fmt.Errorf("invalid OAuth state"))
 		return
 	}
 
@@ -132,13 +132,13 @@ func (r *AuthRoutes) handleGitHubCallback(w http.ResponseWriter, req *http.Reque
 
 	token, err := r.githubConfig.Exchange(req.Context(), code)
 	if err != nil {
-		writeError(w, fmt.Errorf("failed to exchange code: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to exchange code: %w", err))
 		return
 	}
 
 	user, err := r.getGitHubUser(req.Context(), token.AccessToken)
 	if err != nil {
-		writeError(w, fmt.Errorf("failed to get user: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to get user: %w", err))
 		return
 	}
 
@@ -146,20 +146,20 @@ func (r *AuthRoutes) handleGitHubCallback(w http.ResponseWriter, req *http.Reque
 	if err != nil {
 		dbUser, err = r.userRepo.Create(req.Context(), user.Email, &user.Name, &user.AvatarURL)
 		if err != nil {
-			writeError(w, fmt.Errorf("failed to create user: %w", err))
+			writeInternalServerError(w, fmt.Errorf("failed to create user: %w", err))
 			return
 		}
 	}
 
 	if err := r.userRepo.UpdateLastLogin(req.Context(), dbUser.ID); err != nil {
-		writeError(w, fmt.Errorf("failed to update last login: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to update last login: %w", err))
 		return
 	}
 
 	expiresAt := time.Now().Add(24 * time.Hour)
 	sessionToken, err := r.tokenRepo.Create(req.Context(), dbUser.ID, token.AccessToken, &token.RefreshToken, expiresAt)
 	if err != nil {
-		writeError(w, fmt.Errorf("failed to create session: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to create session: %w", err))
 		return
 	}
 
@@ -180,7 +180,7 @@ func (r *AuthRoutes) handleGitHubCallback(w http.ResponseWriter, req *http.Reque
 func (r *AuthRoutes) handleCodebergLogin(w http.ResponseWriter, req *http.Request) {
 	state, err := generateState()
 	if err != nil {
-		writeError(w, fmt.Errorf("failed to generate state: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to generate state: %w", err))
 		return
 	}
 
@@ -205,7 +205,7 @@ func (r *AuthRoutes) handleCodebergCallback(w http.ResponseWriter, req *http.Req
 
 	cookie, err := req.Cookie("oauth_state")
 	if err != nil || cookie.Value != state {
-		writeError(w, fmt.Errorf("invalid OAuth state"))
+		writeInternalServerError(w, fmt.Errorf("invalid OAuth state"))
 		return
 	}
 
@@ -218,13 +218,13 @@ func (r *AuthRoutes) handleCodebergCallback(w http.ResponseWriter, req *http.Req
 
 	token, err := r.codebergConfig.Exchange(req.Context(), code)
 	if err != nil {
-		writeError(w, fmt.Errorf("failed to exchange code: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to exchange code: %w", err))
 		return
 	}
 
 	user, err := r.getCodebergUser(req.Context(), token.AccessToken)
 	if err != nil {
-		writeError(w, fmt.Errorf("failed to get user: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to get user: %w", err))
 		return
 	}
 
@@ -232,20 +232,20 @@ func (r *AuthRoutes) handleCodebergCallback(w http.ResponseWriter, req *http.Req
 	if err != nil {
 		dbUser, err = r.userRepo.Create(req.Context(), user.Email, &user.Name, &user.AvatarURL)
 		if err != nil {
-			writeError(w, fmt.Errorf("failed to create user: %w", err))
+			writeInternalServerError(w, fmt.Errorf("failed to create user: %w", err))
 			return
 		}
 	}
 
 	if err := r.userRepo.UpdateLastLogin(req.Context(), dbUser.ID); err != nil {
-		writeError(w, fmt.Errorf("failed to update last login: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to update last login: %w", err))
 		return
 	}
 
 	expiresAt := time.Now().Add(24 * time.Hour)
 	sessionToken, err := r.tokenRepo.Create(req.Context(), dbUser.ID, token.AccessToken, &token.RefreshToken, expiresAt)
 	if err != nil {
-		writeError(w, fmt.Errorf("failed to create session: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to create session: %w", err))
 		return
 	}
 
@@ -286,7 +286,7 @@ func (r *AuthRoutes) handleLogout(w http.ResponseWriter, req *http.Request) {
 func (r *AuthRoutes) handleMe(w http.ResponseWriter, req *http.Request) {
 	user, ok := req.Context().Value("user").(*core.User)
 	if !ok {
-		writeError(w, fmt.Errorf("unauthorized"))
+		writeInternalServerError(w, fmt.Errorf("unauthorized"))
 		return
 	}
 
@@ -297,7 +297,7 @@ func (r *AuthRoutes) handleMe(w http.ResponseWriter, req *http.Request) {
 func (r *AuthRoutes) handleCreateAPIKey(w http.ResponseWriter, req *http.Request) {
 	user, ok := req.Context().Value("user").(*core.User)
 	if !ok {
-		writeError(w, fmt.Errorf("unauthorized"))
+		writeInternalServerError(w, fmt.Errorf("unauthorized"))
 		return
 	}
 
@@ -307,13 +307,13 @@ func (r *AuthRoutes) handleCreateAPIKey(w http.ResponseWriter, req *http.Request
 	}
 
 	if err := json.NewDecoder(req.Body).Decode(&input); err != nil {
-		writeError(w, fmt.Errorf("invalid request body: %w", err))
+		writeInternalServerError(w, fmt.Errorf("invalid request body: %w", err))
 		return
 	}
 
 	apiKey, key, err := r.apiKeyRepo.Create(req.Context(), user.ID, input.Name, input.ExpiresAt)
 	if err != nil {
-		writeError(w, fmt.Errorf("failed to create API key: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to create API key: %w", err))
 		return
 	}
 
@@ -328,13 +328,13 @@ func (r *AuthRoutes) handleCreateAPIKey(w http.ResponseWriter, req *http.Request
 func (r *AuthRoutes) handleListAPIKeys(w http.ResponseWriter, req *http.Request) {
 	user, ok := req.Context().Value("user").(*core.User)
 	if !ok {
-		writeError(w, fmt.Errorf("unauthorized"))
+		writeInternalServerError(w, fmt.Errorf("unauthorized"))
 		return
 	}
 
 	keys, err := r.apiKeyRepo.ListByUser(req.Context(), user.ID)
 	if err != nil {
-		writeError(w, fmt.Errorf("failed to list API keys: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to list API keys: %w", err))
 		return
 	}
 
@@ -345,29 +345,29 @@ func (r *AuthRoutes) handleListAPIKeys(w http.ResponseWriter, req *http.Request)
 func (r *AuthRoutes) handleRevokeAPIKey(w http.ResponseWriter, req *http.Request) {
 	user, ok := req.Context().Value("user").(*core.User)
 	if !ok {
-		writeError(w, fmt.Errorf("unauthorized"))
+		writeInternalServerError(w, fmt.Errorf("unauthorized"))
 		return
 	}
 
 	id := req.PathValue("id")
 	if id == "" {
-		writeError(w, fmt.Errorf("missing key ID"))
+		writeInternalServerError(w, fmt.Errorf("missing key ID"))
 		return
 	}
 
 	apiKey, err := r.apiKeyRepo.GetByID(req.Context(), id)
 	if err != nil {
-		writeError(w, fmt.Errorf("API key not found: %w", err))
+		writeInternalServerError(w, fmt.Errorf("API key not found: %w", err))
 		return
 	}
 
 	if apiKey.UserID != user.ID {
-		writeError(w, fmt.Errorf("unauthorized"))
+		writeInternalServerError(w, fmt.Errorf("unauthorized"))
 		return
 	}
 
 	if err := r.apiKeyRepo.Revoke(req.Context(), id); err != nil {
-		writeError(w, fmt.Errorf("failed to revoke API key: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to revoke API key: %w", err))
 		return
 	}
 
@@ -581,7 +581,7 @@ func AuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepos
 				}
 			}
 
-			writeError(w, fmt.Errorf("unauthorized"))
+			writeInternalServerError(w, fmt.Errorf("unauthorized"))
 		})
 	}
 }

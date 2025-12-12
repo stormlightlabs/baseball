@@ -61,7 +61,7 @@ func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Reque
 
 	leaders, err := sr.repo.SeasonBattingLeaders(ctx, year, stat, limit, offset, league)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -107,7 +107,7 @@ func (sr *StatsRoutes) handlePitchingLeaders(w http.ResponseWriter, r *http.Requ
 
 	leaders, err := sr.repo.SeasonPitchingLeaders(ctx, year, stat, limit, offset, league)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -193,13 +193,13 @@ func (sr *StatsRoutes) handleQueryBattingStats(w http.ResponseWriter, r *http.Re
 
 	stats, err := sr.repo.QueryBattingStats(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := sr.repo.QueryBattingStatsCount(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -291,13 +291,13 @@ func (sr *StatsRoutes) handleQueryPitchingStats(w http.ResponseWriter, r *http.R
 
 	stats, err := sr.repo.QueryPitchingStats(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := sr.repo.QueryPitchingStatsCount(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -388,13 +388,13 @@ func (sr *StatsRoutes) handleQueryFieldingStats(w http.ResponseWriter, r *http.R
 
 	stats, err := sr.repo.QueryFieldingStats(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := sr.repo.QueryFieldingStatsCount(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -431,7 +431,7 @@ func (sr *StatsRoutes) handleCareerBattingLeaders(w http.ResponseWriter, r *http
 
 	leaders, err := sr.repo.CareerBattingLeaders(ctx, stat, limit, offset)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -466,7 +466,7 @@ func (sr *StatsRoutes) handleCareerPitchingLeaders(w http.ResponseWriter, r *htt
 
 	leaders, err := sr.repo.CareerPitchingLeaders(ctx, stat, limit, offset)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -538,13 +538,13 @@ func (sr *StatsRoutes) handleTeamBattingStats(w http.ResponseWriter, r *http.Req
 
 	stats, err := sr.repo.TeamBattingStats(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := sr.repo.TeamBattingStatsCount(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -618,13 +618,13 @@ func (sr *StatsRoutes) handleTeamPitchingStats(w http.ResponseWriter, r *http.Re
 
 	stats, err := sr.repo.TeamPitchingStats(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := sr.repo.TeamPitchingStatsCount(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -698,13 +698,13 @@ func (sr *StatsRoutes) handleTeamFieldingStats(w http.ResponseWriter, r *http.Re
 
 	stats, err := sr.repo.TeamFieldingStats(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := sr.repo.TeamFieldingStatsCount(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 

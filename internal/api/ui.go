@@ -33,7 +33,7 @@ func (r *UIRoutes) handleDashboard(w http.ResponseWriter, req *http.Request) {
 	data := struct{ User *core.User }{User: user}
 
 	if err := tmpl.Execute(w, data); err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 	}
 }
 
@@ -41,6 +41,6 @@ func (r *UIRoutes) handleLoginPage(w http.ResponseWriter, req *http.Request) {
 	tmpl := template.Must(template.New("login").Parse(loginTemplate))
 
 	if err := tmpl.Execute(w, nil); err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 	}
 }

@@ -40,7 +40,7 @@ func (ar *AllStarRoutes) handleListAllStarGames(w http.ResponseWriter, r *http.R
 
 	games, err := ar.awardRepo.ListAllStarGames(ctx, year)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -64,7 +64,7 @@ func (ar *AllStarRoutes) handleGetAllStarGame(w http.ResponseWriter, r *http.Req
 
 	game, err := ar.awardRepo.GetAllStarGame(ctx, id)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 

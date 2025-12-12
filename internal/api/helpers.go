@@ -104,8 +104,12 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 // TODO: map error types to HTTP status codes
-func writeError(w http.ResponseWriter, err error) {
+func writeInternalServerError(w http.ResponseWriter, err error) {
 	writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+}
+
+func writeBadRequest(w http.ResponseWriter, err string) {
+	writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err})
 }
 
 func getIntQuery(r *http.Request, key string, defaultVal int) int {

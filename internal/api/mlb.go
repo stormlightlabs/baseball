@@ -88,19 +88,19 @@ func (mr *MLBRoutes) handleMLBOverview(w http.ResponseWriter, _ *http.Request) {
 func (mr *MLBRoutes) handleMLBPeople(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "people")
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	body, statusCode, err := mr.fetchFromMLB(r, target)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	var result core.MLBPeopleResponse
 	if err := json.Unmarshal(body, &result); err != nil {
-		writeError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
 	}
 
@@ -122,19 +122,19 @@ func (mr *MLBRoutes) handleMLBPeople(w http.ResponseWriter, r *http.Request) {
 func (mr *MLBRoutes) handleMLBPerson(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "people", r.PathValue("id"))
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	body, statusCode, err := mr.fetchFromMLB(r, target)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	var result core.MLBPeopleResponse
 	if err := json.Unmarshal(body, &result); err != nil {
-		writeError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
 	}
 
@@ -156,19 +156,19 @@ func (mr *MLBRoutes) handleMLBPerson(w http.ResponseWriter, r *http.Request) {
 func (mr *MLBRoutes) handleMLBTeams(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "teams")
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	body, statusCode, err := mr.fetchFromMLB(r, target)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	var result core.MLBTeamsResponse
 	if err := json.Unmarshal(body, &result); err != nil {
-		writeError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
 	}
 
@@ -190,19 +190,19 @@ func (mr *MLBRoutes) handleMLBTeams(w http.ResponseWriter, r *http.Request) {
 func (mr *MLBRoutes) handleMLBTeam(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "teams", r.PathValue("id"))
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	body, statusCode, err := mr.fetchFromMLB(r, target)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	var result core.MLBTeamsResponse
 	if err := json.Unmarshal(body, &result); err != nil {
-		writeError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
 	}
 
@@ -226,19 +226,19 @@ func (mr *MLBRoutes) handleMLBTeam(w http.ResponseWriter, r *http.Request) {
 func (mr *MLBRoutes) handleMLBSchedule(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "schedule")
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	body, statusCode, err := mr.fetchFromMLB(r, target)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	var result core.MLBScheduleResponse
 	if err := json.Unmarshal(body, &result); err != nil {
-		writeError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
 	}
 
@@ -260,19 +260,19 @@ func (mr *MLBRoutes) handleMLBSchedule(w http.ResponseWriter, r *http.Request) {
 func (mr *MLBRoutes) handleMLBSeasons(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "seasons")
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	body, statusCode, err := mr.fetchFromMLB(r, target)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	var result core.MLBSeasonsResponse
 	if err := json.Unmarshal(body, &result); err != nil {
-		writeError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
 	}
 
@@ -296,19 +296,19 @@ func (mr *MLBRoutes) handleMLBSeasons(w http.ResponseWriter, r *http.Request) {
 func (mr *MLBRoutes) handleMLBStats(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "stats")
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	body, statusCode, err := mr.fetchFromMLB(r, target)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	var result map[string]any // Stats endpoint has variable structure
 	if err := json.Unmarshal(body, &result); err != nil {
-		writeError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
 	}
 
@@ -331,19 +331,19 @@ func (mr *MLBRoutes) handleMLBStats(w http.ResponseWriter, r *http.Request) {
 func (mr *MLBRoutes) handleMLBStandings(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "standings")
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	body, statusCode, err := mr.fetchFromMLB(r, target)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	var result core.MLBStandingsResponse
 	if err := json.Unmarshal(body, &result); err != nil {
-		writeError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
 	}
 
@@ -365,19 +365,19 @@ func (mr *MLBRoutes) handleMLBStandings(w http.ResponseWriter, r *http.Request) 
 func (mr *MLBRoutes) handleMLBAwards(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "awards")
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	body, statusCode, err := mr.fetchFromMLB(r, target)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	var result core.MLBAwardsResponse
 	if err := json.Unmarshal(body, &result); err != nil {
-		writeError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
 	}
 
@@ -400,19 +400,19 @@ func (mr *MLBRoutes) handleMLBAwards(w http.ResponseWriter, r *http.Request) {
 func (mr *MLBRoutes) handleMLBAward(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "awards", r.PathValue("id"))
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	body, statusCode, err := mr.fetchFromMLB(r, target)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	var result core.MLBAwardsResponse
 	if err := json.Unmarshal(body, &result); err != nil {
-		writeError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
 	}
 
@@ -435,19 +435,19 @@ func (mr *MLBRoutes) handleMLBAward(w http.ResponseWriter, r *http.Request) {
 func (mr *MLBRoutes) handleMLBVenues(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "venues")
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	body, statusCode, err := mr.fetchFromMLB(r, target)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	var result core.MLBVenuesResponse
 	if err := json.Unmarshal(body, &result); err != nil {
-		writeError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
 	}
 

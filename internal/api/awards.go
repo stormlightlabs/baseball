@@ -34,7 +34,7 @@ func (ar *AwardRoutes) handleListAwards(w http.ResponseWriter, r *http.Request) 
 
 	awards, err := ar.repo.ListAwards(ctx)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -88,13 +88,13 @@ func (ar *AwardRoutes) handleGetAward(w http.ResponseWriter, r *http.Request) {
 
 	results, err := ar.repo.ListAwardResults(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := ar.repo.CountAwardResults(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -153,13 +153,13 @@ func (ar *AwardRoutes) handleSeasonAwards(w http.ResponseWriter, r *http.Request
 
 	results, err := ar.repo.ListAwardResults(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := ar.repo.CountAwardResults(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 

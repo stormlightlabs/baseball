@@ -49,19 +49,19 @@ func (mr *MetaRoutes) handleMeta(w http.ResponseWriter, r *http.Request) {
 
 	datasets, err := mr.repo.DatasetStatuses(ctx)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	minLahman, maxLahman, minRetro, maxRetro, err := mr.repo.SeasonCoverage(ctx)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	schemaHashes, err := mr.repo.SchemaHashes(ctx)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (mr *MetaRoutes) handleDatasetStatus(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 	datasets, err := mr.repo.DatasetStatuses(ctx)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, datasets)

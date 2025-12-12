@@ -41,7 +41,7 @@ func (mr *ManagerRoutes) handleListManagers(w http.ResponseWriter, r *http.Reque
 
 	managers, err := mr.repo.List(ctx, pagination)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -74,7 +74,7 @@ func (mr *ManagerRoutes) handleGetManager(w http.ResponseWriter, r *http.Request
 
 	manager, err := mr.repo.GetByID(ctx, managerID)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (mr *ManagerRoutes) handleManagerSeasons(w http.ResponseWriter, r *http.Req
 
 	records, err := mr.repo.SeasonRecords(ctx, managerID)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -110,6 +110,6 @@ func (mr *ManagerRoutes) handleManagerSeasons(w http.ResponseWriter, r *http.Req
 
 // ManagerSeasonsResponse wraps manager season records
 type ManagerSeasonsResponse struct {
-	ManagerID core.ManagerID              `json:"manager_id"`
-	Seasons   []core.ManagerSeasonRecord  `json:"seasons"`
+	ManagerID core.ManagerID             `json:"manager_id"`
+	Seasons   []core.ManagerSeasonRecord `json:"seasons"`
 }

@@ -63,13 +63,13 @@ func (sr *SearchRoutes) handleSearchPlayers(w http.ResponseWriter, r *http.Reque
 
 	players, err := sr.playerRepo.List(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := sr.playerRepo.Count(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -118,13 +118,13 @@ func (sr *SearchRoutes) handleSearchTeams(w http.ResponseWriter, r *http.Request
 
 	teams, err := sr.teamRepo.ListTeamSeasons(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := sr.teamRepo.CountTeamSeasons(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -161,14 +161,13 @@ func (sr *SearchRoutes) handleSearchParks(w http.ResponseWriter, r *http.Request
 
 	parks, err := sr.parkRepo.List(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
-	// Note: We don't have a Count method for parks yet, so we approximate
+	// TODO: count method for parks
 	total := len(parks)
 	if len(parks) == filter.Pagination.PerPage {
-		// If we got a full page, there might be more
 		total = filter.Pagination.PerPage * filter.Pagination.Page
 	}
 
@@ -208,7 +207,7 @@ func (sr *SearchRoutes) handleSearchGames(w http.ResponseWriter, r *http.Request
 
 	games, err := sr.gameRepo.SearchGamesNL(ctx, query, limit)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 

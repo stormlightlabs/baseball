@@ -128,13 +128,13 @@ func (pr *PitchRoutes) handleListPitches(w http.ResponseWriter, r *http.Request)
 
 	pitches, err := pr.repo.List(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
 	total, err := pr.repo.Count(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -169,7 +169,7 @@ func (pr *PitchRoutes) handleGamePitches(w http.ResponseWriter, r *http.Request)
 
 	pitches, err := pr.repo.ListByGame(ctx, gameID, pagination)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -179,7 +179,7 @@ func (pr *PitchRoutes) handleGamePitches(w http.ResponseWriter, r *http.Request)
 	}
 	total, err := pr.repo.Count(ctx, filter)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -216,7 +216,7 @@ func (pr *PitchRoutes) handlePlayPitches(w http.ResponseWriter, r *http.Request)
 
 	pitches, err := pr.repo.ListByPlay(ctx, gameID, playNum)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
