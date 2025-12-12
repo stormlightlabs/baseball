@@ -64,150 +64,39 @@ This living roadmap merges the original guidelines and endpoint specifications i
 
 ### 0. Meta / Utility ✓
 
-| Status | Endpoint                | Dataset | Description                                                         |
-| ------ | ----------------------- | ------- | ------------------------------------------------------------------- |
-| Done   | `GET /v1/health`        | -       | Basic readiness check used by CLI and deploy targets.               |
-| Done   | `GET /v1/meta`          | L+R     | Returns API version, dataset refresh timestamps, and schema hashes. |
-| Done   | `GET /v1/meta/datasets` | L+R     | Advertises which seasons/leagues/tables are currently loaded.       |
+See [Meta & Utility API Overview](./api-meta-utility.md) for summary tables and expanded details.
 
 ### 1. Players (People & Careers) - **(L)** with optional **(R)** joins ✓
 
-| Status | Endpoint                                   | Dataset | Description                                                                  |
-| ------ | ------------------------------------------ | ------- | ---------------------------------------------------------------------------- |
-| Done   | `GET /v1/players`                          | L       | Search/browse players with filters (name, debut year, position, handedness). |
-| Done   | `GET /v1/players/{player_id}`              | L       | Biographical data plus aggregated career stats.                              |
-| Done   | `GET /v1/players/{player_id}/seasons`      | L       | Year-by-year batting and pitching splits.                                    |
-| Done   | `GET /v1/players/{player_id}/teams`        | L       | List every team the player suited up for by season.                          |
-| Done   | `GET /v1/players/{player_id}/awards`       | L       | Awards from Lahman `Awards*` tables with pagination.                         |
-| Done   | `GET /v1/players/{player_id}/hall-of-fame` | L       | Hall of Fame voting/induction history.                                       |
-| Done   | `GET /v1/players/{player_id}/salaries`     | L       | Salary history via Lahman `Salaries`.                                        |
-
-#### Player Game & Play-by-Play Views - **(R)** ✓
-
-| Status | Endpoint                                        | Dataset | Description                                                                                |
-| ------ | ----------------------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
-| Done   | `GET /v1/players/{player_id}/game-logs`         | R       | Game-by-game performance from Retrosheet logs (currently starters only; see TODO).         |
-| Done   | `GET /v1/players/{player_id}/appearances`       | R       | Detailed appearance records (positions, pinch roles) sourced from Retrosheet lineups.      |
-| Done   | `GET /v1/players/{player_id}/plays`             | R       | All plays involving a player as batter or pitcher with Lahman ↔ Retrosheet ID mapping.     |
-| Done   | `GET /v1/players/{player_id}/plate-appearances` | R       | Normalized plate appearance feed with batter-facing filters (season, pitcher, date range). |
+See [Players API Overview](./api-players.md) for the combined Lahman and Retrosheet endpoint tables and call notes.
 
 ### 2. Teams, Franchises & Seasons - **(L)** + **(R)** ✓
 
-#### Team & Franchise Reference ✓
-
-| Status | Endpoint                         | Dataset | Description                                             |
-| ------ | -------------------------------- | ------- | ------------------------------------------------------- |
-| Done   | `GET /v1/teams`                  | L       | List team seasons with filters for year/league.         |
-| Done   | `GET /v1/teams/{team_id}`        | L       | A single team-season record (wins, losses, runs, etc.). |
-| Done   | `GET /v1/franchises`             | L       | Franchise catalog with active flag.                     |
-| Done   | `GET /v1/franchises/{franch_id}` | L       | Franchise details and historical names.                 |
-| Done   | `GET /v1/seasons`                | L       | Summary of available seasons (min/max year, leagues).   |
-
-#### Team Rosters & Splits ✓
-
-| Status | Endpoint                                          | Dataset | Description                                      |
-| ------ | ------------------------------------------------- | ------- | ------------------------------------------------ |
-| Done   | `GET /v1/seasons/{year}/teams`                    | L       | All teams for a season with aggregate stats.     |
-| Done   | `GET /v1/seasons/{year}/teams/{team_id}/roster`   | L       | Player list with positions and high-level stats. |
-| Done   | `GET /v1/seasons/{year}/teams/{team_id}/batting`  | L       | Aggregated batting stats plus per-player splits. |
-| Done   | `GET /v1/seasons/{year}/teams/{team_id}/pitching` | L       | Aggregated pitching stats.                       |
-| Done   | `GET /v1/seasons/{year}/teams/{team_id}/fielding` | L       | Aggregated fielding stats.                       |
-
-#### Retrosheet Team Schedule & Logs - **(R)** ✓
-
-| Status | Endpoint                                            | Dataset | Description                                  |
-| ------ | --------------------------------------------------- | ------- | -------------------------------------------- |
-| Done   | `GET /v1/seasons/{year}/teams/{team_id}/schedule`   | R       | Team calendar from Retrosheet schedules.     |
-| Done   | `GET /v1/seasons/{year}/teams/{team_id}/games`      | R       | All games for a team/season with pagination. |
-| Done   | `GET /v1/seasons/{year}/teams/{team_id}/daily-logs` | R       | Team daily performance rollups.              |
+See [Teams, Franchises & Seasons API Overview](./api-teams.md) for tables covering references, splits, and Retrosheet logs.
 
 ### 3. Games & Schedules - **(R)** ✓
 
-| Status | Endpoint                                       | Dataset | Description                                                    |
-| ------ | ---------------------------------------------- | ------- | -------------------------------------------------------------- |
-| Done   | `GET /v1/games`                                | R       | Search games by season, teams, park, and date range.           |
-| Done   | `GET /v1/games/{game_id}`                      | R       | Game metadata, score, and key events.                          |
-| Done   | `GET /v1/games/{game_id}/boxscore`             | R       | Expanded boxscore with lineups and per-player lines.           |
-| Done   | `GET /v1/games/{game_id}/summary`              | R       | Narrative summary (winning pitcher, save, highlights).         |
-| Done   | `GET /v1/seasons/{year}/schedule`              | R       | Full season schedule with pagination.                          |
-| Done   | `GET /v1/seasons/{year}/dates/{date}/games`    | R       | All games played on a calendar date.                           |
-| Done   | `GET /v1/seasons/{year}/teams/{team_id}/games` | R       | Team-specific schedule (duplicate of table above for clarity). |
-| Done   | `GET /v1/seasons/{year}/parks/{park_id}/games` | R       | Games played in a specific ballpark.                           |
+See [Games & Schedules API Overview](./api-games.md) for the endpoint summary and usage notes.
 
 ### 4. Play-by-Play Events & Context - **(R)** ✓
 
-| Status | Endpoint                                        | Dataset | Description                                                                 |
-| ------ | ----------------------------------------------- | ------- | --------------------------------------------------------------------------- |
-| Done   | `GET /v1/plays`                                 | R       | Query parsed plays with batter/pitcher/team filters.                        |
-| Done   | `GET /v1/games/{game_id}/plays`                 | R       | Chronological plays for a game (currently the canonical play-by-play feed). |
-| Done   | `GET /v1/games/{game_id}/events`                | R       | Planned raw Retrosheet events (alias/extension on top of `/plays`).         |
-| Done   | `GET /v1/games/{game_id}/events/{event_seq}`    | R       | Single event lookup with structured base/out state.                         |
-| Done   | `GET /v1/players/{player_id}/plate-appearances` | R       | Player-level PA list with leverage, count, and vs. pitcher filters.         |
-| Done   | `GET /v1/pitches`                               | R       | Derive per-pitch signals.                                                   |
+See [Play-by-Play Events API Overview](./api-play-by-play.md) for tables and deeper coverage of filters.
 
 ### 5. Parks, Umpires, Managers & Other Entities - **(L+R)** ✓
 
-| Status | Endpoint                                | Dataset | Description                                              |
-| ------ | --------------------------------------- | ------- | -------------------------------------------------------- |
-| Done   | `GET /v1/parks`                         | L+R     | Ballpark directory with locations and active years.      |
-| Done   | `GET /v1/parks/{park_id}`               | L+R     | Single ballpark plus games hosted.                       |
-| Done   | `GET /v1/managers`                      | L       | Manager careers, totals, and teams managed.              |
-| Done   | `GET /v1/managers/{manager_id}`         | L       | Detailed manager record.                                 |
-| Done   | `GET /v1/managers/{manager_id}/seasons` | L       | Season-by-season records for a manager.                  |
-| Done   | `GET /v1/umpires`                       | L+R     | Umpire list.                                             |
-| Done   | `GET /v1/umpires/{umpire_id}`           | L+R     | Umpire details + officiated games.                       |
-| Done   | `GET /v1/ejections`                     | R       | All ejection events with filters (player, umpire, year). |
-| Done   | `GET /v1/seasons/{year}/ejections`      | R       | Season-level slice of ejections.                         |
+See [Parks, Umpires, Managers & Entity API Overview](./api-parks-umpires-managers.md) for reference tables.
 
 ### 6. Stats & Leaderboards - **(L)** (with optional **(R)** joins) ✓
 
-#### Career & Season Stats ✓
-
-| Status | Endpoint                                     | Dataset | Description                                                           |
-| ------ | -------------------------------------------- | ------- | --------------------------------------------------------------------- |
-| Done   | `GET /v1/stats/batting`                      | L       | Flexible batting query (player/team/season filters, min AB, sorting). |
-| Done   | `GET /v1/stats/pitching`                     | L       | Flexible pitching query (season ranges, min IP).                      |
-| Done   | `GET /v1/stats/fielding`                     | L       | Fielding stats (positions, innings).                                  |
-| Done   | `GET /v1/players/{player_id}/stats/batting`  | L+R     | Player-specific batting summary (career + optional splits).           |
-| Done   | `GET /v1/players/{player_id}/stats/pitching` | L+R     | Player-specific pitching summary.                                     |
-
-#### Seasonal Leaders ✓
-
-| Status | Endpoint                                  | Dataset | Description                 |
-| ------ | ----------------------------------------- | ------- | --------------------------- |
-| Done   | `GET /v1/seasons/{year}/leaders/batting`  | L       | Leaders for HR/AVG/RBI/etc. |
-| Done   | `GET /v1/seasons/{year}/leaders/pitching` | L       | Leaders for ERA/SO/W/etc.   |
-| Done   | `GET /v1/leaders/batting/career`          | L       | Career batting leaders.     |
-| Done   | `GET /v1/leaders/pitching/career`         | L       | Career pitching leaders.    |
-
-#### Team-Level Stats ✓
-
-| Status | Endpoint                       | Dataset | Description                               |
-| ------ | ------------------------------ | ------- | ----------------------------------------- |
-| Done   | `GET /v1/stats/teams/batting`  | L       | Team batting in a season (league filter). |
-| Done   | `GET /v1/stats/teams/pitching` | L       | Team pitching.                            |
-| Done   | `GET /v1/stats/teams/fielding` | L       | Team fielding.                            |
+See [Stats & Leaderboards API Overview](./api-stats.md) for the combined stats, leader, and team-level tables.
 
 ### 7. Awards, All-Star Games, Postseason - **(L)** ✓
 
-| Status | Endpoint                                   | Dataset | Description                                   |
-| ------ | ------------------------------------------ | ------- | --------------------------------------------- |
-| Done   | `GET /v1/awards`                           | L       | Browse awards data (MVP, Cy Young, ROY).      |
-| Done   | `GET /v1/awards/{award_id}`                | L       | Detailed view for a specific award.           |
-| Done   | `GET /v1/seasons/{year}/awards`            | L       | Awards issued during a season.                |
-| Done   | `GET /v1/seasons/{year}/postseason/series` | L       | Postseason series list (LCS, WS, etc.).       |
-| Done   | `GET /v1/seasons/{year}/postseason/games`  | L+R     | Postseason games joined with Retrosheet data. |
-| Done   | `GET /v1/allstar/games`                    | L+R     | All-Star Game history.                        |
-| Done   | `GET /v1/allstar/games/{game_id}`          | L+R     | Specific All-Star game box/events.            |
+See [Awards, All-Star & Postseason API Overview](./api-awards-postseason.md) for the completed endpoint matrix.
 
 ### 8. Search & Lookup Utilities - **(L+R)** ✓
 
-| Status | Endpoint                 | Dataset | Description                                                         |
-| ------ | ------------------------ | ------- | ------------------------------------------------------------------- |
-| Done   | `GET /v1/search/players` | L+R     | Fuzzy player search with era/league filters.                        |
-| Done   | `GET /v1/search/teams`   | L+R     | Search by name, city, franchise.                                    |
-| Done   | `GET /v1/search/parks`   | L+R     | Ballpark lookup by name/city.                                       |
-| Done   | `GET /v1/search/games`   | R       | Natural language queries such as "Yankees vs Red Sox 2003 ALCS G7." |
+See [Search & Lookup API Overview](./api-search.md) for the fuzzy lookup endpoint details.
 
 ### 9. Derived & Advanced Endpoints
 
