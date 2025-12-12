@@ -780,7 +780,7 @@ func (gr *GameRoutes) handleParkGames(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} map[string]any
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /games/{id}/summary [get]
@@ -800,7 +800,7 @@ func (gr *GameRoutes) handleGetGameSummary(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	summary := map[string]interface{}{
+	summary := map[string]any{
 		"game_id":     game.ID,
 		"date":        game.Date,
 		"home_team":   game.HomeTeam,

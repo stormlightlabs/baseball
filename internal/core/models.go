@@ -379,32 +379,6 @@ type Play struct {
 	RBI  *int `json:"rbi,omitempty"`
 }
 
-// GameEvent corresponds to a row in Retrosheet plays.csv (simplified).
-// Deprecated: Use Play instead for new code.
-type GameEvent struct {
-	GameID      GameID `json:"game_id"`
-	EventID     int    `json:"event_id"` // sequential within game
-	Inning      int    `json:"inning"`
-	TopOfInning bool   `json:"top_of_inning"`
-
-	BattingTeam  TeamID   `json:"batting_team"`
-	FieldingTeam TeamID   `json:"fielding_team"`
-	Batter       PlayerID `json:"batter"`
-	Pitcher      PlayerID `json:"pitcher"`
-
-	OutsBefore   int `json:"outs_before"`
-	OutsAfter    int `json:"outs_after"`
-	RunsScored   int `json:"runs_scored"`
-	RunsBattedIn int `json:"runs_batted_in"`
-
-	RunnerOnFirst  *PlayerID `json:"runner_on_first,omitempty"`
-	RunnerOnSecond *PlayerID `json:"runner_on_second,omitempty"`
-	RunnerOnThird  *PlayerID `json:"runner_on_third,omitempty"`
-
-	EventText   string  `json:"event_text"`
-	Description *string `json:"description,omitempty"`
-}
-
 // Park / Ballpark from Lahman & Retrosheet park tables.
 type Park struct {
 	ID        ParkID `json:"id"`
@@ -683,4 +657,33 @@ type Ejection struct {
 	UmpireName  *string       `json:"umpire_name,omitempty"`
 	Inning      *int          `json:"inning,omitempty"` // -1 if unknown
 	Reason      *string       `json:"reason,omitempty"`
+}
+
+// Pitch represents a single pitch derived from Retrosheet play-by-play pitch sequences.
+// Each pitch is extracted from the [Play.Pitches] field and annotated with context.
+type Pitch struct {
+	GameID  GameID `json:"game_id" swaggertype:"string"`
+	PlayNum int    `json:"play_num"`
+	Inning  int    `json:"inning"`
+	// TODO: add this as an enum to api docs
+	TopBot  int           `json:"top_bot"` // 0=top, 1=bottom
+	BatTeam TeamID        `json:"bat_team" swaggertype:"string"`
+	PitTeam TeamID        `json:"pit_team" swaggertype:"string"`
+	Date    string        `json:"date"`
+	Batter  RetroPlayerID `json:"batter" swaggertype:"string"`
+	Pitcher RetroPlayerID `json:"pitcher" swaggertype:"string"`
+	BatHand *string       `json:"bat_hand,omitempty"`
+	PitHand *string       `json:"pit_hand,omitempty"`
+	OutsPre int           `json:"outs_pre"`
+
+	// Pitch-specific fields
+	SeqNum      int     `json:"seq_num"`                // Sequence number within the plate appearance (1-indexed)
+	PitchType   string  `json:"pitch_type" example:"C"` // Single character: B, C, F, S, X, etc.
+	BallCount   int     `json:"ball_count"`             // Balls in count before this pitch
+	StrikeCount int     `json:"strike_count"`           // Strikes in count before this pitch
+	IsInPlay    bool    `json:"is_in_play"`             // True if pitch resulted in ball in play (X)
+	IsStrike    bool    `json:"is_strike"`              // True if C, S, F, L, M, O, T, V
+	IsBall      bool    `json:"is_ball"`                // True if B, P, I, H
+	Description string  `json:"description,omitempty"`  // Human-readable pitch type description
+	Event       *string `json:"event,omitempty"`        // Play result if this was the final pitch
 }

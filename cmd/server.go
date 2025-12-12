@@ -270,6 +270,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 	awardRepo := repository.NewAwardRepository(database.DB)
 	gameRepo := repository.NewGameRepository(database.DB)
 	playRepo := repository.NewPlayRepository(database.DB)
+	pitchRepo := repository.NewPitchRepository(database.DB)
 	metaRepo := repository.NewMetaRepository(database.DB)
 	managerRepo := repository.NewManagerRepository(database.DB)
 	parkRepo := repository.NewParkRepository(database.DB)
@@ -290,6 +291,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 		api.NewAwardRoutes(awardRepo),
 		api.NewGameRoutes(gameRepo, playRepo),
 		api.NewPlayRoutes(playRepo, playerRepo),
+		api.NewPitchRoutes(pitchRepo),
 		api.NewMetaRoutes(metaRepo),
 		api.NewManagerRoutes(managerRepo),
 		api.NewParkRoutes(parkRepo),

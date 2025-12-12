@@ -145,13 +145,13 @@ type MLBScheduleResponse struct {
 
 // MLBScheduleDate represents a date in the schedule with games
 type MLBScheduleDate struct {
-	Date                 string        `json:"date"`
-	TotalItems           int           `json:"totalItems"`
-	TotalEvents          int           `json:"totalEvents"`
-	TotalGames           int           `json:"totalGames"`
-	TotalGamesInProgress int           `json:"totalGamesInProgress"`
-	Games                []MLBGame     `json:"games"`
-	Events               []interface{} `json:"events"`
+	Date                 string    `json:"date"`
+	TotalItems           int       `json:"totalItems"`
+	TotalEvents          int       `json:"totalEvents"`
+	TotalGames           int       `json:"totalGames"`
+	TotalGamesInProgress int       `json:"totalGamesInProgress"`
+	Games                []MLBGame `json:"games"`
+	Events               []any     `json:"events"`
 }
 
 // MLBGame represents a game in the schedule

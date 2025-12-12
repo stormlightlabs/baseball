@@ -317,7 +317,7 @@ func (r *AuthRoutes) handleCreateAPIKey(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, map[string]interface{}{
+	writeJSON(w, http.StatusCreated, map[string]any{
 		"api_key": apiKey,
 		"key":     key,
 		"warning": "This key will only be shown once. Please save it securely.",

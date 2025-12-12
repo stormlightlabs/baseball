@@ -159,3 +159,24 @@ type EjectionFilter struct {
 	SortOrder  SortOrder
 	Pagination Pagination
 }
+
+type PitchFilter struct {
+	GameID      *GameID
+	Batter      *RetroPlayerID
+	Pitcher     *RetroPlayerID
+	BatTeam     *TeamID
+	PitTeam     *TeamID
+	Date        *string // YYYYMMDD format
+	DateFrom    *string // YYYYMMDD format
+	DateTo      *string // YYYYMMDD format
+	Inning      *int
+	PitchType   *string // Single character: B, C, F, S, X, etc.
+	BallCount   *int    // Filter by ball count (0-3)
+	StrikeCount *int    // Filter by strike count (0-2)
+	IsInPlay    *bool   // Filter for pitches in play (X)
+	IsStrike    *bool   // Filter for strikes
+	IsBall      *bool   // Filter for balls
+	SortBy      string  // "seq", "date"
+	SortOrder   SortOrder
+	Pagination  Pagination
+}

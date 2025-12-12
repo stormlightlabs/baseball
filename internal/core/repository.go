@@ -85,14 +85,6 @@ type PlayRepository interface {
 	CountByPlayer(ctx context.Context, playerID RetroPlayerID) (int, error)
 }
 
-// EventRepository manages play-by-play events.
-// Deprecated: Use PlayRepository for new code.
-type EventRepository interface {
-	ListByGame(ctx context.Context, gameID GameID, p Pagination) ([]GameEvent, error)
-	List(ctx context.Context, filter EventFilter) ([]GameEvent, error)
-	Count(ctx context.Context, filter EventFilter) (int, error)
-}
-
 // ParkRepository for ballpark metadata and usage.
 type ParkRepository interface {
 	GetByID(ctx context.Context, id ParkID) (*Park, error)
@@ -267,4 +259,17 @@ type EjectionRepository interface {
 	// ListBySeason retrieves all ejections for a specific season
 	ListBySeason(ctx context.Context, year SeasonYear, p Pagination) ([]Ejection, error)
 	CountBySeason(ctx context.Context, year SeasonYear) (int, error)
+}
+
+// PitchRepository manages individual pitch data derived from Retrosheet play-by-play sequences.
+type PitchRepository interface {
+	// List retrieves pitches based on filter criteria, parsing pitch sequences from plays
+	List(ctx context.Context, filter PitchFilter) ([]Pitch, error)
+	Count(ctx context.Context, filter PitchFilter) (int, error)
+
+	// ListByGame retrieves all pitches for a specific game in order
+	ListByGame(ctx context.Context, gameID GameID, p Pagination) ([]Pitch, error)
+
+	// ListByPlay retrieves all pitches from a specific plate appearance
+	ListByPlay(ctx context.Context, gameID GameID, playNum int) ([]Pitch, error)
 }
