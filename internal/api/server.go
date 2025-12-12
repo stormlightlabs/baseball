@@ -3,6 +3,7 @@
 // @title Baseball API
 // @version 1.0
 // @description A comprehensive REST API for baseball statistics serving data from the Lahman Baseball Database and Retrosheet
+// @BasePath /v1
 //
 // @contact.name API Support
 // @contact.url https://github.com/stormlightlabs/baseball
@@ -16,7 +17,7 @@ import (
 	"net/http"
 
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "stormlightlabs.org/baseball/internal/docs"
+	docs "stormlightlabs.org/baseball/internal/docs"
 )
 
 type Server struct {
@@ -25,6 +26,8 @@ type Server struct {
 
 // NewServer wires all registrars into one mux.
 func NewServer(registrars ...Registrar) *Server {
+	docs.SwaggerInfo.BasePath = "/v1"
+
 	mux := http.NewServeMux()
 
 	for _, r := range registrars {

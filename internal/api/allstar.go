@@ -21,7 +21,7 @@ func (ar *AllStarRoutes) RegisterRoutes(mux *http.ServeMux) {
 
 // handleListAllStarGames godoc
 // @Summary List All-Star games
-// @Description Get All-Star Game history from Lahman AllstarFull table
+// @Description Get All-Star Game history by joining Lahman participation data with Retrosheet game logs
 // @Tags allstar, games
 // @Accept json
 // @Produce json
@@ -49,7 +49,7 @@ func (ar *AllStarRoutes) handleListAllStarGames(w http.ResponseWriter, r *http.R
 
 // handleGetAllStarGame godoc
 // @Summary Get All-Star game details
-// @Description Get detailed information and participant list for a specific All-Star game
+// @Description Get detailed information and participant list for a specific All-Star game sourced from Retrosheet game logs
 // @Tags allstar, games
 // @Accept json
 // @Produce json

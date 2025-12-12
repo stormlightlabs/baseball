@@ -485,12 +485,13 @@ type AllStarAppearance struct {
 
 // AllStarGame aggregates all-star game information for a given year.
 type AllStarGame struct {
-	Year         SeasonYear          `json:"year" swaggertype:"integer"`
-	GameNum      int                 `json:"game_num"`
-	GameID       string              `json:"game_id"`
-	Date         *time.Time          `json:"date,omitempty"`
-	Venue        *ParkID             `json:"venue,omitempty" swaggertype:"string"`
-	Participants []AllStarAppearance `json:"participants,omitempty"`
+	Year           SeasonYear          `json:"year" swaggertype:"integer"`
+	GameNum        int                 `json:"game_num"`
+	GameID         string              `json:"game_id"`
+	Date           *time.Time          `json:"date,omitempty"`
+	Venue          *ParkID             `json:"venue,omitempty" swaggertype:"string"`
+	RetrosheetGame *Game               `json:"retrosheet_game,omitempty"`
+	Participants   []AllStarAppearance `json:"participants,omitempty"`
 }
 
 // PostseasonSeries represents a postseason series from Lahman SeriesPost table.

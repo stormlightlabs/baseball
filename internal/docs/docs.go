@@ -23,6 +23,92 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/allstar/games": {
+            "get": {
+                "description": "Get All-Star Game history by joining Lahman participation data with Retrosheet game logs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "allstar",
+                    "games"
+                ],
+                "summary": "List All-Star games",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.AllStarGame"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/allstar/games/{id}": {
+            "get": {
+                "description": "Get detailed information and participant list for a specific All-Star game sourced from Retrosheet game logs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "allstar",
+                    "games"
+                ],
+                "summary": "Get All-Star game details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID (e.g., ALS202407160)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.AllStarGame"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/awards": {
             "get": {
                 "description": "Get a list of all baseball awards",
@@ -962,6 +1048,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/parks/{park_id}/games": {
+            "get": {
+                "description": "Get all games played at a specific ballpark",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "parks",
+                    "games"
+                ],
+                "summary": "Get games played at a ballpark",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Park ID (park key)",
+                        "name": "park_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/players": {
             "get": {
                 "description": "Search and browse players with optional name filter and pagination",
@@ -1479,6 +1624,84 @@ const docTemplate = `{
                 }
             }
         },
+        "/players/{id}/stats/batting": {
+            "get": {
+                "description": "Get comprehensive batting statistics for a player including career totals and season-by-season breakdowns",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players",
+                    "stats"
+                ],
+                "summary": "Get player's batting statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PlayerBattingStatsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/players/{id}/stats/pitching": {
+            "get": {
+                "description": "Get comprehensive pitching statistics for a player including career totals and season-by-season breakdowns",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players",
+                    "stats"
+                ],
+                "summary": "Get player's pitching statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PlayerPitchingStatsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/players/{id}/teams": {
             "get": {
                 "description": "List every season/team combination a player appeared in",
@@ -1598,6 +1821,198 @@ const docTemplate = `{
                         "type": "boolean",
                         "description": "Filter to only strikeouts",
                         "name": "strikeouts",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/parks": {
+            "get": {
+                "description": "Ballpark lookup by name, city, state, or park ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search",
+                    "parks"
+                ],
+                "summary": "Search parks",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query (searches park name, city, state, and park ID)",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/players": {
+            "get": {
+                "description": "Fuzzy player search with filters for name, position, era, and more",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search",
+                    "players"
+                ],
+                "summary": "Search players",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query (searches first and last name)",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by debut year",
+                        "name": "debut_year",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by position",
+                        "name": "position",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by batting hand (R, L, B)",
+                        "name": "bats",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by throwing hand (R, L)",
+                        "name": "throws",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/teams": {
+            "get": {
+                "description": "Search teams by name, city, or franchise",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search",
+                    "teams"
+                ],
+                "summary": "Search teams",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query (searches team name, team ID, and franchise ID)",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "year",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by league (AL, NL)",
+                        "name": "league",
                         "in": "query"
                     },
                     {
@@ -1966,6 +2381,65 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/seasons/{year}/postseason/games": {
+            "get": {
+                "description": "Get all postseason games from Retrosheet data for a specific year",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "postseason",
+                    "games"
+                ],
+                "summary": "Get postseason games for a season",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
@@ -3317,6 +3791,65 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/umpires/{umpire_id}/games": {
+            "get": {
+                "description": "Get all games where the umpire officiated in any position",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "umpires",
+                    "games"
+                ],
+                "summary": "Get games officiated by an umpire",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Umpire ID",
+                        "name": "umpire_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -3461,6 +3994,34 @@ const docTemplate = `{
                 }
             }
         },
+        "api.PlayerBattingStatsResponse": {
+            "type": "object",
+            "properties": {
+                "career": {
+                    "$ref": "#/definitions/core.PlayerBattingSeason"
+                },
+                "seasons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.PlayerBattingSeason"
+                    }
+                }
+            }
+        },
+        "api.PlayerPitchingStatsResponse": {
+            "type": "object",
+            "properties": {
+                "career": {
+                    "$ref": "#/definitions/core.PlayerPitchingSeason"
+                },
+                "seasons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.PlayerPitchingSeason"
+                    }
+                }
+            }
+        },
         "api.PlayerSeasonsResponse": {
             "type": "object",
             "properties": {
@@ -3529,6 +4090,64 @@ const docTemplate = `{
                 },
                 "version": {
                     "type": "string"
+                }
+            }
+        },
+        "core.AllStarAppearance": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "string"
+                },
+                "game_num": {
+                    "type": "integer"
+                },
+                "gp": {
+                    "type": "integer"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "starting_pos": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.AllStarGame": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "game_id": {
+                    "type": "string"
+                },
+                "game_num": {
+                    "type": "integer"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.AllStarAppearance"
+                    }
+                },
+                "retrosheet_game": {
+                    "$ref": "#/definitions/core.Game"
+                },
+                "venue": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
                 }
             }
         },
@@ -4795,7 +5414,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "",
+	BasePath:         "/v1",
 	Schemes:          []string{},
 	Title:            "Baseball API",
 	Description:      "A comprehensive REST API for baseball statistics serving data from the Lahman Baseball Database and Retrosheet",

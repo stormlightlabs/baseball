@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
@@ -263,20 +264,41 @@ func (r *AwardRepository) HallOfFameByPlayer(ctx context.Context, id core.Player
 // ListAllStarGames returns all all-star games, optionally filtered by year.
 func (r *AwardRepository) ListAllStarGames(ctx context.Context, year *core.SeasonYear) ([]core.AllStarGame, error) {
 	query := `
-		SELECT DISTINCT "yearID", "gameNum", "gameID"
-		FROM "AllstarFull"
-		WHERE 1=1
+		WITH allstar_games AS (
+			SELECT DISTINCT "yearID", "gameNum", "gameID"
+			FROM "AllstarFull"
+		)
+		SELECT
+			ag."yearID",
+			ag."gameNum",
+			ag."gameID",
+			g.date,
+			g.park_id,
+			g.visiting_team,
+			g.home_team,
+			g.visiting_team_league,
+			g.home_team_league,
+			g.visiting_score,
+			g.home_score,
+			g.game_length_outs,
+			g.day_of_week,
+			g.attendance,
+			g.game_time_minutes
+		FROM allstar_games ag
+		JOIN games g
+			ON ag."gameID" = g.home_team || g.date || COALESCE(g.game_number::text, '0')
+		WHERE g.game_type = 'allstar'
 	`
 	args := []any{}
 	argNum := 1
 
 	if year != nil {
-		query += fmt.Sprintf(" AND \"yearID\" = $%d", argNum)
+		query += fmt.Sprintf(" AND ag.\"yearID\" = $%d", argNum)
 		args = append(args, int(*year))
 		argNum++
 	}
 
-	query += " ORDER BY \"yearID\" DESC, \"gameNum\""
+	query += " ORDER BY ag.\"yearID\" DESC, ag.\"gameNum\""
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -289,8 +311,32 @@ func (r *AwardRepository) ListAllStarGames(ctx context.Context, year *core.Seaso
 		var game core.AllStarGame
 		var gameID sql.NullString
 		var gameNum sql.NullInt64
+		var date sql.NullString
+		var park sql.NullString
+		var visitingTeam, homeTeam sql.NullString
+		var visitingLeague, homeLeague sql.NullString
+		var visitingScore, homeScore sql.NullInt64
+		var gameLengthOuts sql.NullInt64
+		var dayOfWeek sql.NullString
+		var attendance, duration sql.NullInt64
 
-		err := rows.Scan(&game.Year, &gameNum, &gameID)
+		err := rows.Scan(
+			&game.Year,
+			&gameNum,
+			&gameID,
+			&date,
+			&park,
+			&visitingTeam,
+			&homeTeam,
+			&visitingLeague,
+			&homeLeague,
+			&visitingScore,
+			&homeScore,
+			&gameLengthOuts,
+			&dayOfWeek,
+			&attendance,
+			&duration,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan all-star game: %w", err)
 		}
@@ -303,6 +349,24 @@ func (r *AwardRepository) ListAllStarGames(ctx context.Context, year *core.Seaso
 			game.GameID = gameID.String
 		}
 
+		if err := attachRetrosheetDataToAllStarGame(
+			&game,
+			date,
+			park,
+			visitingTeam,
+			homeTeam,
+			visitingLeague,
+			homeLeague,
+			visitingScore,
+			homeScore,
+			gameLengthOuts,
+			dayOfWeek,
+			attendance,
+			duration,
+		); err != nil {
+			return nil, err
+		}
+
 		games = append(games, game)
 	}
 
@@ -312,18 +376,62 @@ func (r *AwardRepository) ListAllStarGames(ctx context.Context, year *core.Seaso
 // GetAllStarGame returns details for a specific all-star game.
 func (r *AwardRepository) GetAllStarGame(ctx context.Context, gameID string) (*core.AllStarGame, error) {
 	query := `
-		SELECT DISTINCT "yearID", "gameNum", "gameID"
-		FROM "AllstarFull"
-		WHERE "gameID" = $1
+		WITH allstar_games AS (
+			SELECT DISTINCT "yearID", "gameNum", "gameID"
+			FROM "AllstarFull"
+		)
+		SELECT
+			ag."yearID",
+			ag."gameNum",
+			ag."gameID",
+			g.date,
+			g.park_id,
+			g.visiting_team,
+			g.home_team,
+			g.visiting_team_league,
+			g.home_team_league,
+			g.visiting_score,
+			g.home_score,
+			g.game_length_outs,
+			g.day_of_week,
+			g.attendance,
+			g.game_time_minutes
+		FROM allstar_games ag
+		JOIN games g
+			ON ag."gameID" = g.home_team || g.date || COALESCE(g.game_number::text, '0')
+		WHERE ag."gameID" = $1
+			AND g.game_type = 'allstar'
 		LIMIT 1
 	`
 
 	var game core.AllStarGame
 	var dbGameID sql.NullString
 	var gameNum sql.NullInt64
+	var date sql.NullString
+	var park sql.NullString
+	var visitingTeam, homeTeam sql.NullString
+	var visitingLeague, homeLeague sql.NullString
+	var visitingScore, homeScore sql.NullInt64
+	var gameLengthOuts sql.NullInt64
+	var dayOfWeek sql.NullString
+	var attendance, duration sql.NullInt64
 
 	err := r.db.QueryRowContext(ctx, query, gameID).Scan(
-		&game.Year, &gameNum, &dbGameID,
+		&game.Year,
+		&gameNum,
+		&dbGameID,
+		&date,
+		&park,
+		&visitingTeam,
+		&homeTeam,
+		&visitingLeague,
+		&homeLeague,
+		&visitingScore,
+		&homeScore,
+		&gameLengthOuts,
+		&dayOfWeek,
+		&attendance,
+		&duration,
 	)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("all-star game not found")
@@ -338,6 +446,24 @@ func (r *AwardRepository) GetAllStarGame(ctx context.Context, gameID string) (*c
 
 	if dbGameID.Valid {
 		game.GameID = dbGameID.String
+	}
+
+	if err := attachRetrosheetDataToAllStarGame(
+		&game,
+		date,
+		park,
+		visitingTeam,
+		homeTeam,
+		visitingLeague,
+		homeLeague,
+		visitingScore,
+		homeScore,
+		gameLengthOuts,
+		dayOfWeek,
+		attendance,
+		duration,
+	); err != nil {
+		return nil, err
 	}
 
 	participantsQuery := `
@@ -398,4 +524,82 @@ func (r *AwardRepository) GetAllStarGame(ctx context.Context, gameID string) (*c
 
 	game.Participants = participants
 	return &game, nil
+}
+
+func attachRetrosheetDataToAllStarGame(
+	game *core.AllStarGame,
+	date sql.NullString,
+	park sql.NullString,
+	visitingTeam sql.NullString,
+	homeTeam sql.NullString,
+	visitingLeague sql.NullString,
+	homeLeague sql.NullString,
+	visitingScore sql.NullInt64,
+	homeScore sql.NullInt64,
+	gameLengthOuts sql.NullInt64,
+	dayOfWeek sql.NullString,
+	attendance sql.NullInt64,
+	duration sql.NullInt64,
+) error {
+	var retro core.Game
+
+	if game.GameID != "" {
+		retro.ID = core.GameID(game.GameID)
+	}
+
+	if date.Valid {
+		parsed, err := time.Parse("20060102", date.String)
+		if err != nil {
+			return fmt.Errorf("failed to parse all-star game date: %w", err)
+		}
+		game.Date = &parsed
+		retro.Date = parsed
+		retro.Season = core.SeasonYear(parsed.Year())
+	} else if game.Year != 0 {
+		retro.Season = game.Year
+	}
+
+	if park.Valid && park.String != "" {
+		pid := core.ParkID(park.String)
+		game.Venue = &pid
+		retro.ParkID = pid
+	}
+
+	if visitingTeam.Valid {
+		retro.AwayTeam = core.TeamID(visitingTeam.String)
+	}
+	if homeTeam.Valid {
+		retro.HomeTeam = core.TeamID(homeTeam.String)
+	}
+	if visitingLeague.Valid {
+		retro.AwayLeague = core.LeagueID(visitingLeague.String)
+	}
+	if homeLeague.Valid {
+		retro.HomeLeague = core.LeagueID(homeLeague.String)
+	}
+	if visitingScore.Valid {
+		retro.AwayScore = int(visitingScore.Int64)
+	}
+	if homeScore.Valid {
+		retro.HomeScore = int(homeScore.Int64)
+	}
+	if gameLengthOuts.Valid {
+		retro.Innings = int(gameLengthOuts.Int64) / 3
+	}
+	if dayOfWeek.Valid {
+		retro.DayOfWeek = dayOfWeek.String
+	}
+	if attendance.Valid {
+		a := int(attendance.Int64)
+		retro.Attendance = &a
+	}
+	if duration.Valid {
+		d := int(duration.Int64)
+		retro.DurationMin = &d
+	}
+
+	retro.IsPostseason = false
+	game.RetrosheetGame = &retro
+
+	return nil
 }

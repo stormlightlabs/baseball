@@ -1,3 +1,4 @@
+basePath: /v1
 definitions:
   api.AwardsListResponse:
     properties:
@@ -90,6 +91,24 @@ definitions:
       year:
         type: integer
     type: object
+  api.PlayerBattingStatsResponse:
+    properties:
+      career:
+        $ref: '#/definitions/core.PlayerBattingSeason'
+      seasons:
+        items:
+          $ref: '#/definitions/core.PlayerBattingSeason'
+        type: array
+    type: object
+  api.PlayerPitchingStatsResponse:
+    properties:
+      career:
+        $ref: '#/definitions/core.PlayerPitchingSeason'
+      seasons:
+        items:
+          $ref: '#/definitions/core.PlayerPitchingSeason'
+        type: array
+    type: object
   api.PlayerSeasonsResponse:
     properties:
       batting:
@@ -135,6 +154,44 @@ definitions:
         type: object
       version:
         type: string
+    type: object
+  core.AllStarAppearance:
+    properties:
+      game_id:
+        type: string
+      game_num:
+        type: integer
+      gp:
+        type: integer
+      league:
+        type: string
+      player_id:
+        type: string
+      starting_pos:
+        type: integer
+      team_id:
+        type: string
+      year:
+        type: integer
+    type: object
+  core.AllStarGame:
+    properties:
+      date:
+        type: string
+      game_id:
+        type: string
+      game_num:
+        type: integer
+      participants:
+        items:
+          $ref: '#/definitions/core.AllStarAppearance'
+        type: array
+      retrosheet_game:
+        $ref: '#/definitions/core.Game'
+      venue:
+        type: string
+      year:
+        type: integer
     type: object
   core.Award:
     properties:
@@ -987,6 +1044,65 @@ info:
   title: Baseball API
   version: "1.0"
 paths:
+  /allstar/games:
+    get:
+      consumes:
+      - application/json
+      description: Get All-Star Game history by joining Lahman participation data
+        with Retrosheet game logs
+      parameters:
+      - description: Filter by season year
+        in: query
+        name: year
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.AllStarGame'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: List All-Star games
+      tags:
+      - allstar
+      - games
+  /allstar/games/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information and participant list for a specific All-Star
+        game sourced from Retrosheet game logs
+      parameters:
+      - description: Game ID (e.g., ALS202407160)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.AllStarGame'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get All-Star game details
+      tags:
+      - allstar
+      - games
   /awards:
     get:
       consumes:
@@ -1614,6 +1730,46 @@ paths:
       summary: Get ballpark by ID
       tags:
       - parks
+  /parks/{park_id}/games:
+    get:
+      consumes:
+      - application/json
+      description: Get all games played at a specific ballpark
+      parameters:
+      - description: Park ID (park key)
+        in: path
+        name: park_id
+        required: true
+        type: string
+      - description: Filter by season year
+        in: query
+        name: season
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get games played at a ballpark
+      tags:
+      - parks
+      - games
   /players:
     get:
       consumes:
@@ -1960,6 +2116,60 @@ paths:
       summary: Get player season statistics
       tags:
       - players
+  /players/{id}/stats/batting:
+    get:
+      consumes:
+      - application/json
+      description: Get comprehensive batting statistics for a player including career
+        totals and season-by-season breakdowns
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PlayerBattingStatsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get player's batting statistics
+      tags:
+      - players
+      - stats
+  /players/{id}/stats/pitching:
+    get:
+      consumes:
+      - application/json
+      description: Get comprehensive pitching statistics for a player including career
+        totals and season-by-season breakdowns
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PlayerPitchingStatsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get player's pitching statistics
+      tags:
+      - players
+      - stats
   /players/{id}/teams:
     get:
       consumes:
@@ -2061,6 +2271,135 @@ paths:
       summary: List plays
       tags:
       - plays
+  /search/parks:
+    get:
+      consumes:
+      - application/json
+      description: Ballpark lookup by name, city, state, or park ID
+      parameters:
+      - description: Search query (searches park name, city, state, and park ID)
+        in: query
+        name: q
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Search parks
+      tags:
+      - search
+      - parks
+  /search/players:
+    get:
+      consumes:
+      - application/json
+      description: Fuzzy player search with filters for name, position, era, and more
+      parameters:
+      - description: Search query (searches first and last name)
+        in: query
+        name: q
+        type: string
+      - description: Filter by debut year
+        in: query
+        name: debut_year
+        type: integer
+      - description: Filter by position
+        in: query
+        name: position
+        type: string
+      - description: Filter by batting hand (R, L, B)
+        in: query
+        name: bats
+        type: string
+      - description: Filter by throwing hand (R, L)
+        in: query
+        name: throws
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Search players
+      tags:
+      - search
+      - players
+  /search/teams:
+    get:
+      consumes:
+      - application/json
+      description: Search teams by name, city, or franchise
+      parameters:
+      - description: Search query (searches team name, team ID, and franchise ID)
+        in: query
+        name: q
+        type: string
+      - description: Filter by season year
+        in: query
+        name: year
+        type: integer
+      - description: Filter by league (AL, NL)
+        in: query
+        name: league
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Search teams
+      tags:
+      - search
+      - teams
   /seasons:
     get:
       consumes:
@@ -2294,6 +2633,46 @@ paths:
       tags:
       - games
       - parks
+  /seasons/{year}/postseason/games:
+    get:
+      consumes:
+      - application/json
+      description: Get all postseason games from Retrosheet data for a specific year
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 100
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get postseason games for a season
+      tags:
+      - postseason
+      - games
   /seasons/{year}/postseason/series:
     get:
       consumes:
@@ -3202,4 +3581,44 @@ paths:
       summary: Get umpire by ID
       tags:
       - umpires
+  /umpires/{umpire_id}/games:
+    get:
+      consumes:
+      - application/json
+      description: Get all games where the umpire officiated in any position
+      parameters:
+      - description: Umpire ID
+        in: path
+        name: umpire_id
+        required: true
+        type: string
+      - description: Filter by season year
+        in: query
+        name: season
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get games officiated by an umpire
+      tags:
+      - umpires
+      - games
 swagger: "2.0"
