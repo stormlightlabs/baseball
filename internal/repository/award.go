@@ -259,3 +259,143 @@ func (r *AwardRepository) HallOfFameByPlayer(ctx context.Context, id core.Player
 
 	return records, nil
 }
+
+// ListAllStarGames returns all all-star games, optionally filtered by year.
+func (r *AwardRepository) ListAllStarGames(ctx context.Context, year *core.SeasonYear) ([]core.AllStarGame, error) {
+	query := `
+		SELECT DISTINCT "yearID", "gameNum", "gameID"
+		FROM "AllstarFull"
+		WHERE 1=1
+	`
+	args := []any{}
+	argNum := 1
+
+	if year != nil {
+		query += fmt.Sprintf(" AND \"yearID\" = $%d", argNum)
+		args = append(args, int(*year))
+		argNum++
+	}
+
+	query += " ORDER BY \"yearID\" DESC, \"gameNum\""
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list all-star games: %w", err)
+	}
+	defer rows.Close()
+
+	var games []core.AllStarGame
+	for rows.Next() {
+		var game core.AllStarGame
+		var gameID sql.NullString
+		var gameNum sql.NullInt64
+
+		err := rows.Scan(&game.Year, &gameNum, &gameID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan all-star game: %w", err)
+		}
+
+		if gameNum.Valid {
+			game.GameNum = int(gameNum.Int64)
+		}
+
+		if gameID.Valid {
+			game.GameID = gameID.String
+		}
+
+		games = append(games, game)
+	}
+
+	return games, nil
+}
+
+// GetAllStarGame returns details for a specific all-star game.
+func (r *AwardRepository) GetAllStarGame(ctx context.Context, gameID string) (*core.AllStarGame, error) {
+	query := `
+		SELECT DISTINCT "yearID", "gameNum", "gameID"
+		FROM "AllstarFull"
+		WHERE "gameID" = $1
+		LIMIT 1
+	`
+
+	var game core.AllStarGame
+	var dbGameID sql.NullString
+	var gameNum sql.NullInt64
+
+	err := r.db.QueryRowContext(ctx, query, gameID).Scan(
+		&game.Year, &gameNum, &dbGameID,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("all-star game not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all-star game: %w", err)
+	}
+
+	if gameNum.Valid {
+		game.GameNum = int(gameNum.Int64)
+	}
+
+	if dbGameID.Valid {
+		game.GameID = dbGameID.String
+	}
+
+	participantsQuery := `
+		SELECT
+			"playerID", "yearID", "gameNum", "gameID",
+			"teamID", "lgID", "GP", "startingPos"
+		FROM "AllstarFull"
+		WHERE "gameID" = $1
+		ORDER BY "startingPos" NULLS LAST, "playerID"
+	`
+
+	rows, err := r.db.QueryContext(ctx, participantsQuery, gameID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all-star participants: %w", err)
+	}
+	defer rows.Close()
+
+	var participants []core.AllStarAppearance
+	for rows.Next() {
+		var p core.AllStarAppearance
+		var teamID, league sql.NullString
+		var gameNum, gp, startingPos sql.NullInt64
+
+		err := rows.Scan(
+			&p.PlayerID, &p.Year, &gameNum, &p.GameID,
+			&teamID, &league, &gp, &startingPos,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan participant: %w", err)
+		}
+
+		if gameNum.Valid {
+			p.GameNum = int(gameNum.Int64)
+		}
+
+		if teamID.Valid {
+			tid := core.TeamID(teamID.String)
+			p.TeamID = &tid
+		}
+
+		if league.Valid {
+			lg := core.LeagueID(league.String)
+			p.League = &lg
+		}
+
+		if gp.Valid {
+			gpInt := int(gp.Int64)
+			p.GP = &gpInt
+		}
+
+		if startingPos.Valid {
+			spInt := int(startingPos.Int64)
+			p.StartingPos = &spInt
+		}
+
+		participants = append(participants, p)
+	}
+
+	game.Participants = participants
+	return &game, nil
+}

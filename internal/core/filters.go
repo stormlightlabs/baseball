@@ -27,12 +27,18 @@ type PlayerFilter struct {
 }
 
 type TeamFilter struct {
+	NameQuery   string // partial name search
 	Year        *SeasonYear
 	League      *LeagueID
 	FranchiseID *FranchiseID
 	SortBy      string // "wins","run_diff"
 	SortOrder   SortOrder
 	Pagination  Pagination
+}
+
+type ParkFilter struct {
+	NameQuery  string // partial name, city, or state search
+	Pagination Pagination
 }
 
 type GameFilter struct {

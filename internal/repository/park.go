@@ -59,8 +59,8 @@ func (r *ParkRepository) GetByID(ctx context.Context, id core.ParkID) (*core.Par
 	return &park, nil
 }
 
-// List retrieves all parks with pagination.
-func (r *ParkRepository) List(ctx context.Context, p core.Pagination) ([]core.Park, error) {
+// List retrieves parks with optional search and pagination.
+func (r *ParkRepository) List(ctx context.Context, filter core.ParkFilter) ([]core.Park, error) {
 	query := `
 		SELECT DISTINCT
 			"parkkey",
@@ -71,13 +71,27 @@ func (r *ParkRepository) List(ctx context.Context, p core.Pagination) ([]core.Pa
 		FROM "Parks"
 		WHERE "parkkey" IS NOT NULL
 		  AND "parkname" IS NOT NULL
-		ORDER BY "parkname"
 	`
 
 	args := []any{}
-	if p.PerPage > 0 {
-		query += " LIMIT $1 OFFSET $2"
-		args = append(args, p.PerPage, (p.Page-1)*p.PerPage)
+	argNum := 1
+
+	if filter.NameQuery != "" {
+		query += fmt.Sprintf(` AND (
+			"parkname" ILIKE $%d OR
+			"city" ILIKE $%d OR
+			"state" ILIKE $%d OR
+			"parkkey" ILIKE $%d
+		)`, argNum, argNum, argNum, argNum)
+		args = append(args, "%"+filter.NameQuery+"%")
+		argNum++
+	}
+
+	query += " ORDER BY \"parkname\""
+
+	if filter.Pagination.PerPage > 0 {
+		query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argNum, argNum+1)
+		args = append(args, filter.Pagination.PerPage, (filter.Pagination.Page-1)*filter.Pagination.PerPage)
 	}
 
 	rows, err := r.db.QueryContext(ctx, query, args...)

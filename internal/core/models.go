@@ -470,6 +470,29 @@ type HallOfFameRecord struct {
 	Inducted bool       `json:"inducted"`
 }
 
+// AllStarAppearance represents a player's appearance in an all-star game.
+// Based on Lahman AllstarFull table.
+type AllStarAppearance struct {
+	PlayerID    PlayerID   `json:"player_id" swaggertype:"string"`
+	Year        SeasonYear `json:"year" swaggertype:"integer"`
+	GameNum     int        `json:"game_num"`
+	GameID      string     `json:"game_id"`
+	TeamID      *TeamID    `json:"team_id,omitempty" swaggertype:"string"`
+	League      *LeagueID  `json:"league,omitempty" swaggertype:"string"`
+	GP          *int       `json:"gp,omitempty"`
+	StartingPos *int       `json:"starting_pos,omitempty"`
+}
+
+// AllStarGame aggregates all-star game information for a given year.
+type AllStarGame struct {
+	Year         SeasonYear          `json:"year" swaggertype:"integer"`
+	GameNum      int                 `json:"game_num"`
+	GameID       string              `json:"game_id"`
+	Date         *time.Time          `json:"date,omitempty"`
+	Venue        *ParkID             `json:"venue,omitempty" swaggertype:"string"`
+	Participants []AllStarAppearance `json:"participants,omitempty"`
+}
+
 // PostseasonSeries represents a postseason series from Lahman SeriesPost table.
 type PostseasonSeries struct {
 	Year         SeasonYear `json:"year" swaggertype:"integer"`

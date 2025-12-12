@@ -34,12 +34,14 @@ func (pr *ParkRoutes) RegisterRoutes(mux *http.ServeMux) {
 func (pr *ParkRoutes) handleListParks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	pagination := core.Pagination{
-		Page:    getIntQuery(r, "page", 1),
-		PerPage: getIntQuery(r, "per_page", 50),
+	filter := core.ParkFilter{
+		Pagination: core.Pagination{
+			Page:    getIntQuery(r, "page", 1),
+			PerPage: getIntQuery(r, "per_page", 50),
+		},
 	}
 
-	parks, err := pr.repo.List(ctx, pagination)
+	parks, err := pr.repo.List(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -49,8 +51,8 @@ func (pr *ParkRoutes) handleListParks(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, PaginatedResponse{
 		Data:    parks,
-		Page:    pagination.Page,
-		PerPage: pagination.PerPage,
+		Page:    filter.Pagination.Page,
+		PerPage: filter.Pagination.PerPage,
 		Total:   total,
 	})
 }

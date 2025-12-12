@@ -90,7 +90,7 @@ type EventRepository interface {
 // ParkRepository for ballpark metadata and usage.
 type ParkRepository interface {
 	GetByID(ctx context.Context, id ParkID) (*Park, error)
-	List(ctx context.Context, p Pagination) ([]Park, error)
+	List(ctx context.Context, filter ParkFilter) ([]Park, error)
 
 	GamesAtPark(ctx context.Context, id ParkID, filter GameFilter) ([]Game, error)
 }
@@ -116,6 +116,10 @@ type AwardRepository interface {
 	CountAwardResults(ctx context.Context, filter AwardFilter) (int, error)
 
 	HallOfFameByPlayer(ctx context.Context, id PlayerID) ([]HallOfFameRecord, error)
+
+	// All-star game methods
+	ListAllStarGames(ctx context.Context, year *SeasonYear) ([]AllStarGame, error)
+	GetAllStarGame(ctx context.Context, gameID string) (*AllStarGame, error)
 }
 
 // PostseasonRepository for postseason series data.

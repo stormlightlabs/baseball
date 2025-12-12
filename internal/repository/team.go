@@ -91,6 +91,16 @@ func (r *TeamRepository) ListTeamSeasons(ctx context.Context, filter core.TeamFi
 	args := []any{}
 	argNum := 1
 
+	if filter.NameQuery != "" {
+		query += fmt.Sprintf(` AND (
+			"name" ILIKE $%d OR
+			"teamID" ILIKE $%d OR
+			"franchID" ILIKE $%d
+		)`, argNum, argNum, argNum)
+		args = append(args, "%"+filter.NameQuery+"%")
+		argNum++
+	}
+
 	if filter.Year != nil {
 		query += fmt.Sprintf(" AND \"yearID\" = $%d", argNum)
 		args = append(args, int(*filter.Year))
@@ -155,6 +165,16 @@ func (r *TeamRepository) CountTeamSeasons(ctx context.Context, filter core.TeamF
 	query := `SELECT COUNT(*) FROM "Teams" WHERE 1=1`
 	args := []any{}
 	argNum := 1
+
+	if filter.NameQuery != "" {
+		query += fmt.Sprintf(` AND (
+			"name" ILIKE $%d OR
+			"teamID" ILIKE $%d OR
+			"franchID" ILIKE $%d
+		)`, argNum, argNum, argNum)
+		args = append(args, "%"+filter.NameQuery+"%")
+		argNum++
+	}
 
 	if filter.Year != nil {
 		query += fmt.Sprintf(" AND \"yearID\" = $%d", argNum)
