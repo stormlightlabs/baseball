@@ -66,7 +66,7 @@ See [Search & Lookup API Overview](./api-search.md) for the fuzzy lookup endpoin
 | Status | Endpoint                               | Notes                                               |
 | ------ | -------------------------------------- | --------------------------------------------------- |
 | Done   | `/v1/players/{player_id}/streaks`      | Track hitting or scoreless inning streaks.          |
-| To-Do  | `/v1/players/{player_id}/splits`       | Home/away, handedness, month, batting order splits. |
+| Done   | `/v1/players/{player_id}/splits`       | Home/away, handedness, month, batting order splits. |
 | Done   | `/v1/teams/{team_id}/run-differential` | Season totals and rolling windows.                  |
 | Done   | `/v1/games/{game_id}/win-probability`  | Win probability graphs derived from play-by-play.   |
 

@@ -286,4 +286,7 @@ type DerivedStatsRepository interface {
 	// GameWinProbability returns win probability curve for a game
 	// TODO: historical win expectancy tables
 	GameWinProbability(ctx context.Context, gameID GameID) (*WinProbabilityCurve, error)
+
+	// PlayerSplits calculates batting splits for a player by dimension
+	PlayerSplits(ctx context.Context, playerID PlayerID, dimension SplitDimension, season SeasonYear) (*SplitResult, error)
 }

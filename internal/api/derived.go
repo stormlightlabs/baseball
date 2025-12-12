@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -18,6 +19,7 @@ func NewDerivedRoutes(repo core.DerivedStatsRepository) *DerivedRoutes {
 
 func (dr *DerivedRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/players/{player_id}/streaks", dr.handlePlayerStreaks)
+	mux.HandleFunc("GET /v1/players/{player_id}/splits", dr.handlePlayerSplits)
 	mux.HandleFunc("GET /v1/teams/{team_id}/run-differential", dr.handleTeamRunDifferential)
 	mux.HandleFunc("GET /v1/games/{game_id}/win-probability", dr.handleGameWinProbability)
 }
@@ -42,25 +44,19 @@ func (dr *DerivedRoutes) handlePlayerStreaks(w http.ResponseWriter, r *http.Requ
 
 	kindStr := r.URL.Query().Get("kind")
 	if kindStr == "" {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "kind query parameter required (hitting or scoreless_innings)",
-		})
+		writeBadRequest(w, "kind query parameter required (hitting or scoreless_innings)")
 		return
 	}
 
 	kind := core.StreakKind(kindStr)
 	if kind != core.StreakKindHitting && kind != core.StreakKindScorelessInnings {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "invalid kind: must be 'hitting' or 'scoreless_innings'",
-		})
+		writeBadRequest(w, "invalid kind: must be 'hitting' or 'scoreless_innings'")
 		return
 	}
 
 	seasonStr := r.URL.Query().Get("season")
 	if seasonStr == "" {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "season query parameter required",
-		})
+		writeBadRequest(w, "season query parameter required")
 		return
 	}
 
@@ -69,7 +65,7 @@ func (dr *DerivedRoutes) handlePlayerStreaks(w http.ResponseWriter, r *http.Requ
 
 	streaks, err := dr.repo.PlayerStreaks(ctx, playerID, kind, season, minLength)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -95,15 +91,11 @@ func (dr *DerivedRoutes) handleTeamRunDifferential(w http.ResponseWriter, r *htt
 
 	seasonStr := r.URL.Query().Get("season")
 	if seasonStr == "" {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "season query parameter required",
-		})
+		writeBadRequest(w, "season query parameter required")
 		return
 	}
 
 	season := core.SeasonYear(getIntQuery(r, "season", 2024))
-
-	// Parse rolling window sizes
 	windowsStr := r.URL.Query().Get("windows")
 	if windowsStr == "" {
 		windowsStr = "10,20,30"
@@ -113,9 +105,7 @@ func (dr *DerivedRoutes) handleTeamRunDifferential(w http.ResponseWriter, r *htt
 	for _, wStr := range strings.Split(windowsStr, ",") {
 		windowSize, err := strconv.Atoi(strings.TrimSpace(wStr))
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, ErrorResponse{
-				Error: "invalid windows parameter: must be comma-separated integers",
-			})
+			writeBadRequest(w, "invalid windows parameter: must be comma-separated integers")
 			return
 		}
 		windows = append(windows, windowSize)
@@ -123,7 +113,7 @@ func (dr *DerivedRoutes) handleTeamRunDifferential(w http.ResponseWriter, r *htt
 
 	series, err := dr.repo.TeamRunDifferential(ctx, teamID, season, windows)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -147,7 +137,7 @@ func (dr *DerivedRoutes) handleGameWinProbability(w http.ResponseWriter, r *http
 
 	curve, err := dr.repo.GameWinProbability(ctx, gameID)
 	if err != nil {
-		writeError(w, err)
+		writeInternalServerError(w, err)
 		return
 	}
 
@@ -159,4 +149,54 @@ func (dr *DerivedRoutes) handleGameWinProbability(w http.ResponseWriter, r *http
 	}
 
 	writeJSON(w, http.StatusOK, curve)
+}
+
+// handlePlayerSplits godoc
+// @Summary Get player batting splits
+// @Description Get batting statistics split by dimension (home/away, vs handedness, month, etc.)
+// @Tags derived, players
+// @Accept json
+// @Produce json
+// @Param player_id path string true "Player ID"
+// @Param dimension query string true "Split dimension: home_away, pitcher_handed, or month"
+// @Param season query integer true "Season year"
+// @Success 200 {object} core.SplitResult
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{player_id}/splits [get]
+func (dr *DerivedRoutes) handlePlayerSplits(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	playerID := core.PlayerID(r.PathValue("player_id"))
+
+	dimensionStr := r.URL.Query().Get("dimension")
+	if dimensionStr == "" {
+		writeBadRequest(w, "dimension query parameter required (home_away, pitcher_handed, or month)")
+		return
+	}
+
+	dimension := core.SplitDimension(dimensionStr)
+	validDimensions := []core.SplitDimension{core.SplitDimHomeAway, core.SplitDimPitcherHanded, core.SplitDimMonth}
+
+	valid := slices.Contains(validDimensions, dimension)
+
+	if !valid {
+		writeBadRequest(w, "invalid dimension: must be 'home_away', 'pitcher_handed', or 'month'")
+		return
+	}
+
+	seasonStr := r.URL.Query().Get("season")
+	if seasonStr == "" {
+		writeBadRequest(w, "season query parameter required")
+		return
+	}
+
+	season := core.SeasonYear(getIntQuery(r, "season", 2024))
+
+	splits, err := dr.repo.PlayerSplits(ctx, playerID, dimension, season)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, splits)
 }

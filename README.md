@@ -244,7 +244,7 @@ Analyze season run differential with per-game details and rolling windows.
 
 <details>
 <summary>
-Parameters
+Params
 </summary>
 
 - `season` (required) - Season year (e.g., `2024`)
@@ -307,6 +307,57 @@ Derived analytics are computed on-demand from play-by-play data using:
 - **Gaps and islands** technique for streak identification
 - **Window functions** for rolling aggregates
 - **Simplified win probability model** based on score differential and inning
+
+</details>
+
+#### Splits
+
+Access batting statistics split by various dimensions like home/away, pitcher handedness, and calendar month.
+
+**Endpoint:** `GET /v1/players/{player_id}/splits`
+
+<details>
+<summary>
+Parameters
+</summary>
+
+- `dimension` (required) - Split dimension: `home_away`, `pitcher_handed`, or `month`
+- `season` (required) - Season year (e.g., `2024`)
+
+</details>
+
+<details>
+<summary>
+Examples
+</summary>
+
+```bash
+# Get home/away splits for a player in 2024
+curl "/v1/players/judga001/splits?dimension=home_away&season=2024"
+
+# Get splits vs left/right handed pitchers
+curl "/v1/players/sotoj001/splits?dimension=pitcher_handed&season=2024"
+
+# Get monthly performance breakdown
+curl "/v1/players/ohtas001/splits?dimension=month&season=2024"
+```
+
+Response includes split groups with:
+
+- Basic counting stats (Games, PA, AB, H, HR, BB, SO)
+- Slash line (AVG, OBP, SLG, OPS)
+- Dimension-specific metadata
+
+</details>
+
+<details>
+<summary>
+Available Dimensions
+</summary>
+
+- **home_away**: Home vs Away games
+- **pitcher_handed**: vs LHP (left-handed pitchers) vs RHP (right-handed pitchers)
+- **month**: Performance by calendar month (March through November)
 
 </details>
 

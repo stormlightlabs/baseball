@@ -23,6 +23,15 @@ var teamRunDifferentialQuery string
 //go:embed queries/game_win_probability.sql
 var gameWinProbabilityQuery string
 
+//go:embed queries/player_splits_home_away.sql
+var playerSplitsHomeAwayQuery string
+
+//go:embed queries/player_splits_pitcher_handed.sql
+var playerSplitsPitcherHandedQuery string
+
+//go:embed queries/player_splits_month.sql
+var playerSplitsMonthQuery string
+
 type DerivedStatsRepository struct {
 	db *sql.DB
 }
@@ -308,4 +317,96 @@ func formatDate(dateStr string) string {
 		return dateStr
 	}
 	return t.Format(time.DateOnly)
+}
+
+// PlayerSplits calculates batting splits for a player by dimension.
+func (r *DerivedStatsRepository) PlayerSplits(
+	ctx context.Context,
+	playerID core.PlayerID,
+	dimension core.SplitDimension,
+	season core.SeasonYear,
+) (*core.SplitResult, error) {
+	var query string
+
+	switch dimension {
+	case core.SplitDimHomeAway:
+		query = playerSplitsHomeAwayQuery
+	case core.SplitDimPitcherHanded:
+		query = playerSplitsPitcherHandedQuery
+	case core.SplitDimMonth:
+		query = playerSplitsMonthQuery
+	default:
+		return nil, fmt.Errorf("unsupported split dimension: %s", dimension)
+	}
+
+	seasonStr := fmt.Sprintf("%d", season)
+	rows, err := r.db.QueryContext(ctx, query, string(playerID), seasonStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query %s splits: %w", dimension, err)
+	}
+	defer rows.Close()
+
+	result := &core.SplitResult{
+		EntityType: core.SplitEntityPlayer,
+		EntityID:   string(playerID),
+		Season:     int(season),
+		Dimension:  dimension,
+		Groups:     []core.SplitGroup{},
+	}
+
+	for rows.Next() {
+		var group core.SplitGroup
+		var avg, obp, slg float64
+		var metaValue sql.NullString
+
+		err = rows.Scan(
+			&group.Key,
+			&group.Label,
+			&metaValue,
+			&group.Games,
+			&group.PA,
+			&group.AB,
+			&group.H,
+			&group.HR,
+			&group.BB,
+			&group.SO,
+			&avg,
+			&obp,
+			&slg,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan split group: %w", err)
+		}
+
+		// Round the stats to 3 decimal places
+		group.AVG = roundFloat(avg, 3)
+		group.OBP = roundFloat(obp, 3)
+		group.SLG = roundFloat(slg, 3)
+		group.OPS = roundFloat(obp+slg, 3)
+
+		// Add metadata if present
+		if metaValue.Valid {
+			group.Meta = map[string]string{}
+			switch dimension {
+			case core.SplitDimPitcherHanded:
+				group.Meta["handedness"] = metaValue.String
+			case core.SplitDimMonth:
+				group.Meta["month_number"] = metaValue.String
+			}
+		}
+
+		result.Groups = append(result.Groups, group)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating split groups: %w", err)
+	}
+
+	return result, nil
+}
+
+// roundFloat rounds a float to n decimal places.
+func roundFloat(val float64, precision int) float64 {
+	ratio := math.Pow(10, float64(precision))
+	return math.Round(val*ratio) / ratio
 }
