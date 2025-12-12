@@ -21,4 +21,5 @@ func init() {
 	RootCmd.AddCommand(cmd.ETLCmd())
 	RootCmd.AddCommand(cmd.DbCmd())
 	RootCmd.AddCommand(cmd.ServerCmd())
+	RootCmd.AddCommand(cmd.CacheCmd())
 }

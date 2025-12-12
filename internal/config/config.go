@@ -12,6 +12,7 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	Redis    RedisConfig
+	Cache    CacheConfig
 	OAuth    OAuthConfig
 }
 
@@ -30,6 +31,22 @@ type DatabaseConfig struct {
 // RedisConfig contains Redis connection settings
 type RedisConfig struct {
 	URL string
+}
+
+// CacheConfig contains caching behavior settings
+type CacheConfig struct {
+	Enabled bool
+	Version string
+	TTLs    CacheTTLConfig
+}
+
+// CacheTTLConfig defines TTL durations for different cache types (in seconds)
+type CacheTTLConfig struct {
+	Entity   int // Single resource lookups (e.g., GET /players/:id)
+	List     int // Collection queries (e.g., GET /teams?league=AL)
+	Search   int // Search results
+	Upstream int // Third-party API proxying (MLB Stats API)
+	Negative int // "Not found" responses
 }
 
 // OAuthConfig contains OAuth provider settings
@@ -69,11 +86,22 @@ func Load(configPath string) (*Config, error) {
 	v.SetDefault("database.url", "postgres://postgres:postgres@localhost:5432/baseball_dev?sslmode=disable")
 	v.SetDefault("redis.url", "redis://localhost:6379/0")
 
+	// Cache defaults (TTLs in seconds, following caching.md recommendations)
+	v.SetDefault("cache.enabled", true)
+	v.SetDefault("cache.version", "v1")
+	v.SetDefault("cache.ttls.entity", 1800)   // 30 minutes
+	v.SetDefault("cache.ttls.list", 60)       // 60 seconds
+	v.SetDefault("cache.ttls.search", 45)     // 45 seconds
+	v.SetDefault("cache.ttls.upstream", 120)  // 2 minutes
+	v.SetDefault("cache.ttls.negative", 30)   // 30 seconds
+
 	v.AutomaticEnv()
 	v.BindEnv("database.url", "DATABASE_URL")
 	v.BindEnv("redis.url", "REDIS_URL")
 	v.BindEnv("server.port", "PORT")
 	v.BindEnv("server.debug_mode", "DEBUG_MODE")
+	v.BindEnv("cache.enabled", "CACHE_ENABLED")
+	v.BindEnv("cache.version", "CACHE_VERSION")
 	v.BindEnv("oauth.github.client_id", "GITHUB_CLIENT_ID")
 	v.BindEnv("oauth.github.client_secret", "GITHUB_CLIENT_SECRET")
 	v.BindEnv("oauth.codeberg.client_id", "CODEBERG_CLIENT_ID")
@@ -98,6 +126,17 @@ func Load(configPath string) (*Config, error) {
 		},
 		Redis: RedisConfig{
 			URL: v.GetString("redis.url"),
+		},
+		Cache: CacheConfig{
+			Enabled: v.GetBool("cache.enabled"),
+			Version: v.GetString("cache.version"),
+			TTLs: CacheTTLConfig{
+				Entity:   v.GetInt("cache.ttls.entity"),
+				List:     v.GetInt("cache.ttls.list"),
+				Search:   v.GetInt("cache.ttls.search"),
+				Upstream: v.GetInt("cache.ttls.upstream"),
+				Negative: v.GetInt("cache.ttls.negative"),
+			},
 		},
 		OAuth: OAuthConfig{
 			GitHub: OAuthProvider{

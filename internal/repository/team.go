@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"stormlightlabs.org/baseball/internal/cache"
 	"stormlightlabs.org/baseball/internal/core"
 )
 
@@ -35,14 +36,24 @@ var teamFieldingAggQuery string
 var teamFieldingPlayersQuery string
 
 type TeamRepository struct {
-	db *sql.DB
+	db    *sql.DB
+	cache *cache.CachedRepository
 }
 
-func NewTeamRepository(db *sql.DB) *TeamRepository {
-	return &TeamRepository{db: db}
+func NewTeamRepository(db *sql.DB, cacheClient *cache.Client) *TeamRepository {
+	return &TeamRepository{
+		db:    db,
+		cache: cache.NewCachedRepository(cacheClient, "team"),
+	}
 }
 
 func (r *TeamRepository) GetTeamSeason(ctx context.Context, teamID core.TeamID, year core.SeasonYear) (*core.TeamSeason, error) {
+	cacheID := fmt.Sprintf("%s:%d", teamID, year)
+	var teamSeason core.TeamSeason
+	if r.cache.Entity.Get(ctx, cacheID, &teamSeason) {
+		return &teamSeason, nil
+	}
+
 	query := `
 		SELECT
 			"teamID", "yearID", "franchID", "lgID", "name", "park",
@@ -76,6 +87,7 @@ func (r *TeamRepository) GetTeamSeason(ctx context.Context, teamID core.TeamID, 
 		ts.Division = &division.String
 	}
 
+	_ = r.cache.Entity.Set(ctx, cacheID, &ts)
 	return &ts, nil
 }
 

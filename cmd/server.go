@@ -12,6 +12,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/api"
+	"stormlightlabs.org/baseball/internal/cache"
 	"stormlightlabs.org/baseball/internal/config"
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
@@ -253,15 +254,42 @@ func startServer(cmd *cobra.Command, args []string) error {
 	redisClient := redis.NewClient(redisOpts)
 	defer redisClient.Close()
 
+	var cacheClient *cache.Client
 	if _, err := redisClient.Ping(cmd.Context()).Result(); err != nil {
 		echo.Infof("⚠ Redis connection failed: %v", err)
-		echo.Info("  Rate limiting will be disabled")
+		echo.Info("  Rate limiting and caching will be disabled")
 		redisClient = nil
 	} else {
 		echo.Success("✓ Connected to Redis")
+
+		env := "dev"
+		if !cfg.Server.DebugMode {
+			env = "prod"
+		}
+
+		cacheConfig := cache.Config{
+			App:     "baseball",
+			Env:     env,
+			Version: cfg.Cache.Version,
+			Enabled: cfg.Cache.Enabled,
+			TTLs: cache.TTLConfig{
+				Entity:   time.Duration(cfg.Cache.TTLs.Entity) * time.Second,
+				List:     time.Duration(cfg.Cache.TTLs.List) * time.Second,
+				Search:   time.Duration(cfg.Cache.TTLs.Search) * time.Second,
+				Upstream: time.Duration(cfg.Cache.TTLs.Upstream) * time.Second,
+				Negative: time.Duration(cfg.Cache.TTLs.Negative) * time.Second,
+			},
+		}
+
+		cacheClient = cache.NewClient(redisClient, cacheConfig)
+		if cfg.Cache.Enabled {
+			echo.Success("✓ Cache enabled")
+		} else {
+			echo.Info("⚠ Cache disabled (set CACHE_ENABLED=true to enable)")
+		}
 	}
 
-	server := api.NewServer(database.DB)
+	server := api.NewServer(database.DB, cacheClient)
 
 	timeFmt := time.DateTime
 	if cfg.Server.DebugMode {

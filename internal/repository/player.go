@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"stormlightlabs.org/baseball/internal/cache"
 	"stormlightlabs.org/baseball/internal/core"
 )
 
@@ -17,14 +18,23 @@ var playerGameLogsQuery string
 var playerAppearancesQuery string
 
 type PlayerRepository struct {
-	db *sql.DB
+	db    *sql.DB
+	cache *cache.CachedRepository
 }
 
-func NewPlayerRepository(db *sql.DB) *PlayerRepository {
-	return &PlayerRepository{db: db}
+func NewPlayerRepository(db *sql.DB, cacheClient *cache.Client) *PlayerRepository {
+	return &PlayerRepository{
+		db:    db,
+		cache: cache.NewCachedRepository(cacheClient, "player"),
+	}
 }
 
 func (r *PlayerRepository) GetByID(ctx context.Context, id core.PlayerID) (*core.Player, error) {
+	var player core.Player
+	if r.cache.Entity.Get(ctx, string(id), &player) {
+		return &player, nil
+	}
+
 	query := `
 		SELECT
 			"playerID", "nameFirst", "nameLast", "nameGiven",
@@ -59,6 +69,8 @@ func (r *PlayerRepository) GetByID(ctx context.Context, id core.PlayerID) (*core
 		rid := core.RetroPlayerID(retroID.String)
 		p.RetroID = &rid
 	}
+
+	_ = r.cache.Entity.Set(ctx, string(id), &p)
 
 	return &p, nil
 }
@@ -277,7 +289,6 @@ func (r *PlayerRepository) GameLogs(ctx context.Context, id core.PlayerID, filte
 		return nil, fmt.Errorf("failed to get player retroID: %w", err)
 	}
 
-	// If the player doesn't have a Retrosheet ID, they won't have game logs
 	if !retroID.Valid || retroID.String == "" {
 		return []core.Game{}, nil
 	}

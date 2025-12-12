@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"stormlightlabs.org/baseball/internal/cache"
 	"stormlightlabs.org/baseball/internal/core"
 )
 
@@ -27,18 +28,17 @@ var mlbProxyCatalog = []core.MLBProxyCatalogItem{
 	{Route: "/v1/mlb/venues", Target: "/v1/venues", Description: "Ballpark directory"},
 }
 
-// MLBRoutes proxies select statsapi.mlb.com endpoints through /v1/mlb
+// MLBRoutes proxies select statsapi.mlb.com endpoints through /v1/mlb with HTTP caching
 type MLBRoutes struct {
 	client  *http.Client
+	cache   *cache.Client
 	baseURL string
 }
 
-func NewMLBRoutes(client *http.Client) *MLBRoutes {
-	if client == nil {
-		client = &http.Client{Timeout: 10 * time.Second}
-	}
+func NewMLBRoutes(cacheClient *cache.Client) *MLBRoutes {
 	return &MLBRoutes{
-		client:  client,
+		client:  &http.Client{Timeout: 10 * time.Second},
+		cache:   cacheClient,
 		baseURL: mlbStatsAPIBase,
 	}
 }
@@ -458,6 +458,67 @@ func (mr *MLBRoutes) handleMLBVenues(w http.ResponseWriter, r *http.Request) {
 // fetchFromMLB handles the common HTTP request logic for all MLB proxy endpoints.
 // It adds sportId=1 as default if not provided, sets User-Agent, and returns the response body and status code.
 func (mr *MLBRoutes) fetchFromMLB(r *http.Request, target string) ([]byte, int, error) {
+	if mr.cache == nil {
+		return mr.fetchFromMLBUncached(r, target)
+	}
+
+	query := r.URL.Query()
+	if query.Get("sportId") == "" {
+		query.Set("sportId", "1")
+	}
+	pathAndQuery := fmt.Sprintf("%s?%s", target, query.Encode())
+	cacheKey := mr.cache.UpstreamKey(http.MethodGet, "statsapi.mlb.com", pathAndQuery)
+
+	if cachedEntry, ok := mr.cache.GetHTTPCache(r.Context(), cacheKey); ok {
+		return cachedEntry.Body, cachedEntry.Status, nil
+	}
+
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, target, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	req.URL.RawQuery = query.Encode()
+	req.Header.Set("User-Agent", "Stormlight-Baseball-MLBProxy/1.0")
+
+	mr.cache.AddConditionalHeaders(r.Context(), cacheKey, req)
+
+	resp, err := mr.client.Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotModified {
+		upstreamConfig := cache.DefaultUpstreamConfig()
+		ttl := upstreamConfig.DetermineTTL(resp)
+		_ = mr.cache.RefreshHTTPCache(r.Context(), cacheKey, ttl)
+
+		if cachedEntry, ok := mr.cache.GetHTTPCache(r.Context(), cacheKey); ok {
+			return cachedEntry.Body, cachedEntry.Status, nil
+		}
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, resp.StatusCode, err
+	}
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		upstreamConfig := cache.DefaultUpstreamConfig()
+		ttl := upstreamConfig.DetermineTTL(resp)
+		_ = mr.cache.CacheHTTPResponse(r.Context(), cacheKey, resp, body, ttl)
+	}
+
+	if resp.StatusCode >= 400 {
+		retryAfter := resp.Header.Get("Retry-After")
+		_ = mr.cache.CacheNegativeResponse(r.Context(), cacheKey, resp.StatusCode, string(body), retryAfter)
+	}
+
+	return body, resp.StatusCode, nil
+}
+
+// fetchFromMLBUncached makes an uncached request to MLB Stats API (fallback when cache unavailable)
+func (mr *MLBRoutes) fetchFromMLBUncached(r *http.Request, target string) ([]byte, int, error) {
 	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, target, nil)
 	if err != nil {
 		return nil, 0, err

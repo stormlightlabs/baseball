@@ -36,3 +36,4 @@ data/retrosheet/
 data/**/*.zip
 .task/
 sandbox/
+conf.toml

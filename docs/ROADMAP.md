@@ -61,7 +61,7 @@ See [Awards, All-Star & Postseason API Overview](./api-awards-postseason.md) for
 
 See [Search & Lookup API Overview](./api-search.md) for the fuzzy lookup endpoint details.
 
-### 9. Derived & Advanced Endpoints
+### 9. Derived & Advanced Endpoints ✓
 
 | Status | Endpoint                               | Notes                                               |
 | ------ | -------------------------------------- | --------------------------------------------------- |
@@ -76,7 +76,7 @@ See [Search & Lookup API Overview](./api-search.md) for the fuzzy lookup endpoin
 | ----------- | -------------------------------------------------------------------------------------------- |
 | To-Do       | Derived stats (WAR-like measures, leverage indexes) built atop the Retrosheet plays dataset. |
 | In-Progress | Markdown docs                                                                                |
-| In-Progress | Cache + rate limiting layer for public deployments.                                          |
+| Done        | Cache + rate limiting layer for public deployments.                                          |
 | To-Do       | Performance testing and observability hooks before GA release.                               |
 
 ## Milestones & Targets

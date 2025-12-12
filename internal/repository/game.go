@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"stormlightlabs.org/baseball/internal/cache"
 	"stormlightlabs.org/baseball/internal/core"
 	"stormlightlabs.org/baseball/internal/search"
 )
@@ -21,16 +22,25 @@ var _ string
 var searchGamesWithSeriesQuery string
 
 type GameRepository struct {
-	db *sql.DB
+	db    *sql.DB
+	cache *cache.CachedRepository
 }
 
-func NewGameRepository(db *sql.DB) *GameRepository {
-	return &GameRepository{db: db}
+func NewGameRepository(db *sql.DB, cacheClient *cache.Client) *GameRepository {
+	return &GameRepository{
+		db:    db,
+		cache: cache.NewCachedRepository(cacheClient, "game"),
+	}
 }
 
 // GetByID retrieves a single game by its Retrosheet game ID.
 // The game ID format is constructed from date + game number + home team.
 func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Game, error) {
+	var game core.Game
+	if r.cache.Entity.Get(ctx, string(id), &game) {
+		return &game, nil
+	}
+
 	query := `
 		SELECT
 			date,
@@ -131,6 +141,8 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 		u := core.UmpireID(umpThird.String)
 		g.UmpThird = &u
 	}
+
+	_ = r.cache.Entity.Set(ctx, string(id), &g)
 
 	return &g, nil
 }
@@ -659,7 +671,7 @@ func (r *GameRepository) ResolveTeamAlias(ctx context.Context, alias string, sea
 	if season != nil {
 		effectiveSeason = *season
 	} else {
-		effectiveSeason = 2024 // Default to current season
+		effectiveSeason = 2024
 	}
 
 	var teamID string

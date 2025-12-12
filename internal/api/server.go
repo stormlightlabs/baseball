@@ -18,6 +18,7 @@ import (
 	"net/http"
 
 	httpSwagger "github.com/swaggo/http-swagger"
+	"stormlightlabs.org/baseball/internal/cache"
 	docs "stormlightlabs.org/baseball/internal/docs"
 	"stormlightlabs.org/baseball/internal/echo"
 	"stormlightlabs.org/baseball/internal/repository"
@@ -27,14 +28,14 @@ type Server struct {
 	mux *http.ServeMux
 }
 
-func NewServer(db *sql.DB) *Server {
+func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 	echo.Info("Initializing repositories...")
 
-	playerRepo := repository.NewPlayerRepository(db)
-	teamRepo := repository.NewTeamRepository(db)
+	playerRepo := repository.NewPlayerRepository(db, cacheClient)
+	teamRepo := repository.NewTeamRepository(db, cacheClient)
 	statsRepo := repository.NewStatsRepository(db)
 	awardRepo := repository.NewAwardRepository(db)
-	gameRepo := repository.NewGameRepository(db)
+	gameRepo := repository.NewGameRepository(db, cacheClient)
 	playRepo := repository.NewPlayRepository(db)
 	pitchRepo := repository.NewPitchRepository(db)
 	metaRepo := repository.NewMetaRepository(db)
@@ -69,7 +70,7 @@ func NewServer(db *sql.DB) *Server {
 		NewDerivedRoutes(derivedRepo),
 		NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
 		NewUIRoutes(apiKeyRepo),
-		NewMLBRoutes(nil),
+		NewMLBRoutes(cacheClient),
 	)
 }
 
