@@ -3,11 +3,18 @@ package repository
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
+
+//go:embed queries/player_game_logs.sql
+var playerGameLogsQuery string
+
+//go:embed queries/player_appearances.sql
+var playerAppearancesQuery string
 
 type PlayerRepository struct {
 	db *sql.DB
@@ -275,35 +282,7 @@ func (r *PlayerRepository) GameLogs(ctx context.Context, id core.PlayerID, filte
 		return []core.Game{}, nil
 	}
 
-	query := `
-		SELECT
-			date,
-			game_number,
-			visiting_team,
-			home_team,
-			visiting_team_league,
-			home_team_league,
-			visiting_score,
-			home_score,
-			game_length_outs,
-			day_of_week,
-			attendance,
-			game_time_minutes,
-			park_id,
-			hp_ump_id,
-			b1_ump_id,
-			b2_ump_id,
-			b3_ump_id
-		FROM games
-		WHERE (
-			v_player_1_id = $1 OR v_player_2_id = $1 OR v_player_3_id = $1 OR
-			v_player_4_id = $1 OR v_player_5_id = $1 OR v_player_6_id = $1 OR
-			v_player_7_id = $1 OR v_player_8_id = $1 OR v_player_9_id = $1 OR
-			h_player_1_id = $1 OR h_player_2_id = $1 OR h_player_3_id = $1 OR
-			h_player_4_id = $1 OR h_player_5_id = $1 OR h_player_6_id = $1 OR
-			h_player_7_id = $1 OR h_player_8_id = $1 OR h_player_9_id = $1
-		)
-	`
+	query := playerGameLogsQuery
 
 	args := []any{retroID.String}
 	argNum := 2
@@ -421,14 +400,7 @@ func (r *PlayerRepository) GameLogs(ctx context.Context, id core.PlayerID, filte
 
 // Appearances retrieves appearance records by position for a player across all seasons.
 func (r *PlayerRepository) Appearances(ctx context.Context, id core.PlayerID) ([]core.PlayerAppearance, error) {
-	query := `
-		SELECT
-			"yearID", "teamID", "lgID", "G_all", "GS", "G_batting", "G_defense",
-			"G_p", "G_c", "G_1b", "G_2b", "G_3b", "G_ss", "G_lf", "G_cf", "G_rf", "G_of", "G_dh", "G_ph", "G_pr"
-		FROM "Appearances"
-		WHERE "playerID" = $1
-		ORDER BY "yearID" DESC
-	`
+	query := playerAppearancesQuery
 
 	rows, err := r.db.QueryContext(ctx, query, string(id))
 	if err != nil {

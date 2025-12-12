@@ -3,11 +3,15 @@ package repository
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
+
+//go:embed queries/game_boxscore.sql
+var gameBoxscoreQuery string
 
 type GameRepository struct {
 	db *sql.DB
@@ -376,49 +380,7 @@ func (r *GameRepository) ListByTeamSeason(ctx context.Context, teamID core.TeamI
 
 // GetBoxscore retrieves detailed boxscore statistics for a game.
 func (r *GameRepository) GetBoxscore(ctx context.Context, id core.GameID) (*core.Boxscore, error) {
-	// TODO: move to embedded query
-	query := `
-		SELECT
-			date,
-			visiting_team,
-			home_team,
-			visiting_score,
-			home_score,
-			visiting_at_bats, visiting_hits, visiting_doubles, visiting_triples, visiting_homeruns,
-			visiting_rbi, visiting_sac_hits, visiting_sac_flies, visiting_hit_by_pitch,
-			visiting_walks, visiting_int_walks, visiting_strikeouts, visiting_stolen_bases,
-			visiting_caught_stealing, visiting_gdp, visiting_lob, visiting_pitchers_used,
-			visiting_team_er, visiting_wild_pitches, visiting_balks, visiting_putouts,
-			visiting_assists, visiting_errors, visiting_passed_balls, visiting_double_plays,
-			visiting_triple_plays,
-			home_at_bats, home_hits, home_doubles, home_triples, home_homeruns,
-			home_rbi, home_sac_hits, home_sac_flies, home_hit_by_pitch,
-			home_walks, home_int_walks, home_strikeouts, home_stolen_bases,
-			home_caught_stealing, home_gdp, home_lob, home_pitchers_used,
-			home_team_er, home_wild_pitches, home_balks, home_putouts,
-			home_assists, home_errors, home_passed_balls, home_double_plays,
-			home_triple_plays,
-			v_player_1_id, v_player_1_name, v_player_1_pos,
-			v_player_2_id, v_player_2_name, v_player_2_pos,
-			v_player_3_id, v_player_3_name, v_player_3_pos,
-			v_player_4_id, v_player_4_name, v_player_4_pos,
-			v_player_5_id, v_player_5_name, v_player_5_pos,
-			v_player_6_id, v_player_6_name, v_player_6_pos,
-			v_player_7_id, v_player_7_name, v_player_7_pos,
-			v_player_8_id, v_player_8_name, v_player_8_pos,
-			v_player_9_id, v_player_9_name, v_player_9_pos,
-			h_player_1_id, h_player_1_name, h_player_1_pos,
-			h_player_2_id, h_player_2_name, h_player_2_pos,
-			h_player_3_id, h_player_3_name, h_player_3_pos,
-			h_player_4_id, h_player_4_name, h_player_4_pos,
-			h_player_5_id, h_player_5_name, h_player_5_pos,
-			h_player_6_id, h_player_6_name, h_player_6_pos,
-			h_player_7_id, h_player_7_name, h_player_7_pos,
-			h_player_8_id, h_player_8_name, h_player_8_pos,
-			h_player_9_id, h_player_9_name, h_player_9_pos
-		FROM games
-		WHERE date || game_number || home_team = $1
-	`
+	query := gameBoxscoreQuery
 
 	var date string
 	var visitingTeam, homeTeam string

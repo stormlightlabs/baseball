@@ -204,9 +204,9 @@ This living roadmap merges the original guidelines and endpoint specifications i
 
 | Status | Endpoint                 | Dataset | Description                                                         |
 | ------ | ------------------------ | ------- | ------------------------------------------------------------------- |
-| To-Do  | `GET /v1/search/players` | L+R     | Fuzzy player search with era/league filters.                        |
-| To-Do  | `GET /v1/search/teams`   | L+R     | Search by name, city, franchise.                                    |
-| To-Do  | `GET /v1/search/parks`   | L+R     | Ballpark lookup by name/city.                                       |
+| Done   | `GET /v1/search/players` | L+R     | Fuzzy player search with era/league filters.                        |
+| Done   | `GET /v1/search/teams`   | L+R     | Search by name, city, franchise.                                    |
+| Done   | `GET /v1/search/parks`   | L+R     | Ballpark lookup by name/city.                                       |
 | To-Do  | `GET /v1/search/games`   | R       | Natural language queries such as "Yankees vs Red Sox 2003 ALCS G7." |
 
 ### 9. Derived & Advanced Endpoints
@@ -223,7 +223,8 @@ This living roadmap merges the original guidelines and endpoint specifications i
 | Status      | Description                                                                                  |
 | ----------- | -------------------------------------------------------------------------------------------- |
 | To-Do       | Derived stats (WAR-like measures, leverage indexes) built atop the Retrosheet plays dataset. |
-| In-Progress | OpenAPI enhancements (schemas per endpoint, examples) plus Markdown docs.                    |
+| Done        | OpenAPI docs                                                                                 |
+| In-Progress | Markdown docs                                                                                |
 | In-Progress | Cache + rate limiting layer for public deployments.                                          |
 | To-Do       | Performance testing and observability hooks before GA release.                               |
 

@@ -17,7 +17,6 @@ func NewManagerRepository(db *sql.DB) *ManagerRepository {
 }
 
 // GetByID retrieves a manager by their manager ID (playerID).
-// Returns manager bio data from People table.
 func (r *ManagerRepository) GetByID(ctx context.Context, id core.ManagerID) (*core.Manager, error) {
 	query := `
 		SELECT
@@ -93,7 +92,6 @@ func (r *ManagerRepository) List(ctx context.Context, p core.Pagination) ([]core
 			return nil, fmt.Errorf("failed to scan manager: %w", err)
 		}
 
-		// Set PlayerID (all managers have a playerID in this table)
 		pid := core.PlayerID(mgr.ID)
 		mgr.PlayerID = &pid
 

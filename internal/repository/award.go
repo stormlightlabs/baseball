@@ -3,11 +3,21 @@ package repository
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
+
+//go:embed queries/award_results_list.sql
+var awardResultsListQuery string
+
+//go:embed queries/allstar_games_list.sql
+var allstarGamesListQuery string
+
+//go:embed queries/allstar_game_get.sql
+var allstarGameGetQuery string
 
 type AwardRepository struct {
 	db *sql.DB
@@ -86,18 +96,7 @@ func (r *AwardRepository) ListAwards(ctx context.Context) ([]core.Award, error) 
 }
 
 func (r *AwardRepository) ListAwardResults(ctx context.Context, filter core.AwardFilter) ([]core.AwardResult, error) {
-	query := `
-		SELECT
-			ap."awardID", ap."playerID", ap."yearID", ap."lgID",
-			asp."votesFirst", asp."pointsWon"
-		FROM "AwardsPlayers" ap
-		LEFT JOIN "AwardsSharePlayers" asp
-			ON ap."awardID" = asp."awardID"
-			AND ap."playerID" = asp."playerID"
-			AND ap."yearID" = asp."yearID"
-			AND (ap."lgID" = asp."lgID" OR (ap."lgID" IS NULL AND asp."lgID" IS NULL))
-		WHERE 1=1
-	`
+	query := awardResultsListQuery
 
 	args := []any{}
 	argNum := 1
@@ -263,32 +262,7 @@ func (r *AwardRepository) HallOfFameByPlayer(ctx context.Context, id core.Player
 
 // ListAllStarGames returns all all-star games, optionally filtered by year.
 func (r *AwardRepository) ListAllStarGames(ctx context.Context, year *core.SeasonYear) ([]core.AllStarGame, error) {
-	query := `
-		WITH allstar_games AS (
-			SELECT DISTINCT "yearID", "gameNum", "gameID"
-			FROM "AllstarFull"
-		)
-		SELECT
-			ag."yearID",
-			ag."gameNum",
-			ag."gameID",
-			g.date,
-			g.park_id,
-			g.visiting_team,
-			g.home_team,
-			g.visiting_team_league,
-			g.home_team_league,
-			g.visiting_score,
-			g.home_score,
-			g.game_length_outs,
-			g.day_of_week,
-			g.attendance,
-			g.game_time_minutes
-		FROM allstar_games ag
-		JOIN games g
-			ON ag."gameID" = g.home_team || g.date || COALESCE(g.game_number::text, '0')
-		WHERE g.game_type = 'allstar'
-	`
+	query := allstarGamesListQuery
 	args := []any{}
 	argNum := 1
 
@@ -375,34 +349,7 @@ func (r *AwardRepository) ListAllStarGames(ctx context.Context, year *core.Seaso
 
 // GetAllStarGame returns details for a specific all-star game.
 func (r *AwardRepository) GetAllStarGame(ctx context.Context, gameID string) (*core.AllStarGame, error) {
-	query := `
-		WITH allstar_games AS (
-			SELECT DISTINCT "yearID", "gameNum", "gameID"
-			FROM "AllstarFull"
-		)
-		SELECT
-			ag."yearID",
-			ag."gameNum",
-			ag."gameID",
-			g.date,
-			g.park_id,
-			g.visiting_team,
-			g.home_team,
-			g.visiting_team_league,
-			g.home_team_league,
-			g.visiting_score,
-			g.home_score,
-			g.game_length_outs,
-			g.day_of_week,
-			g.attendance,
-			g.game_time_minutes
-		FROM allstar_games ag
-		JOIN games g
-			ON ag."gameID" = g.home_team || g.date || COALESCE(g.game_number::text, '0')
-		WHERE ag."gameID" = $1
-			AND g.game_type = 'allstar'
-		LIMIT 1
-	`
+	query := allstarGameGetQuery
 
 	var game core.AllStarGame
 	var dbGameID sql.NullString

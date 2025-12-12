@@ -3,10 +3,14 @@ package repository
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
+
+//go:embed queries/postseason_list_series.sql
+var postseasonListSeriesQuery string
 
 type PostseasonRepository struct {
 	db *sql.DB
@@ -18,36 +22,7 @@ func NewPostseasonRepository(db *sql.DB) *PostseasonRepository {
 
 // ListSeries retrieves all postseason series for a given year.
 func (r *PostseasonRepository) ListSeries(ctx context.Context, year core.SeasonYear) ([]core.PostseasonSeries, error) {
-	// TODO: move to embedded query
-	query := `
-		SELECT
-			"yearID",
-			"round",
-			"teamIDwinner",
-			"lgIDwinner",
-			"teamIDloser",
-			"lgIDloser",
-			"wins",
-			"losses",
-			"ties"
-		FROM "SeriesPost"
-		WHERE "yearID" = $1
-		ORDER BY
-			CASE "round"
-				WHEN 'WS' THEN 1
-				WHEN 'ALCS' THEN 2
-				WHEN 'NLCS' THEN 2
-				WHEN 'ALDS1' THEN 3
-				WHEN 'ALDS2' THEN 3
-				WHEN 'NLDS1' THEN 3
-				WHEN 'NLDS2' THEN 3
-				WHEN 'AEDIV' THEN 3
-				WHEN 'NEDIV' THEN 3
-				WHEN 'ALEWC' THEN 4
-				WHEN 'NLWC' THEN 4
-				ELSE 5
-			END
-	`
+	query := postseasonListSeriesQuery
 
 	rows, err := r.db.QueryContext(ctx, query, int(year))
 	if err != nil {

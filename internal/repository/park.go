@@ -3,11 +3,15 @@ package repository
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
+
+//go:embed queries/park_games.sql
+var parkGamesQuery string
 
 type ParkRepository struct {
 	db *sql.DB
@@ -136,29 +140,7 @@ func (r *ParkRepository) List(ctx context.Context, filter core.ParkFilter) ([]co
 
 // GamesAtPark retrieves games played at a specific park.
 func (r *ParkRepository) GamesAtPark(ctx context.Context, id core.ParkID, filter core.GameFilter) ([]core.Game, error) {
-	// TODO: move to embedded query
-	query := `
-		SELECT
-			date,
-			game_number,
-			visiting_team,
-			home_team,
-			visiting_team_league,
-			home_team_league,
-			visiting_score,
-			home_score,
-			game_length_outs,
-			day_of_week,
-			attendance,
-			game_time_minutes,
-			park_id,
-			hp_ump_id,
-			b1_ump_id,
-			b2_ump_id,
-			b3_ump_id
-		FROM games
-		WHERE park_id = $1
-	`
+	query := parkGamesQuery
 
 	args := []any{string(id)}
 	argNum := 2

@@ -3,10 +3,17 @@ package repository
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
+
+//go:embed queries/play_list.sql
+var playListQuery string
+
+//go:embed queries/play_list_by_player.sql
+var playListByPlayerQuery string
 
 type PlayRepository struct {
 	db *sql.DB
@@ -18,19 +25,7 @@ func NewPlayRepository(db *sql.DB) *PlayRepository {
 
 // List retrieves plays based on filter criteria
 func (r *PlayRepository) List(ctx context.Context, filter core.PlayFilter) ([]core.Play, error) {
-	query := `
-		SELECT
-			gid, pn, inning, top_bot, batteam, pitteam, date, gametype,
-			batter, pitcher, bathand, pithand,
-			score_v, score_h, outs_pre, outs_post,
-			balls, strikes, pitches,
-			event,
-			pa, ab, single, double, triple, hr, walk, k, hbp,
-			br1_pre, br2_pre, br3_pre,
-			runs, rbi
-		FROM plays
-		WHERE 1=1
-	`
+	query := playListQuery
 
 	args := []any{}
 	argNum := 1
@@ -320,21 +315,7 @@ func (r *PlayRepository) ListByGame(ctx context.Context, gameID core.GameID, p c
 
 // ListByPlayer retrieves plays involving a specific player (as batter or pitcher)
 func (r *PlayRepository) ListByPlayer(ctx context.Context, playerID core.RetroPlayerID, p core.Pagination) ([]core.Play, error) {
-	query := `
-		SELECT
-			gid, pn, inning, top_bot, batteam, pitteam, date, gametype,
-			batter, pitcher, bathand, pithand,
-			score_v, score_h, outs_pre, outs_post,
-			balls, strikes, pitches,
-			event,
-			pa, ab, single, double, triple, hr, walk, k, hbp,
-			br1_pre, br2_pre, br3_pre,
-			runs, rbi
-		FROM plays
-		WHERE batter = $1 OR pitcher = $1
-		ORDER BY date DESC, pn ASC
-		LIMIT $2 OFFSET $3
-	`
+	query := playListByPlayerQuery
 
 	rows, err := r.db.QueryContext(ctx, query, string(playerID), p.PerPage, (p.Page-1)*p.PerPage)
 	if err != nil {

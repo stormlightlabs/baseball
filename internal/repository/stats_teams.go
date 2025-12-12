@@ -3,10 +3,20 @@ package repository
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
+
+//go:embed queries/stats_team_batting.sql
+var statsTeamBattingQuery string
+
+//go:embed queries/stats_team_pitching.sql
+var statsTeamPitchingQuery string
+
+//go:embed queries/stats_team_fielding.sql
+var statsTeamFieldingQuery string
 
 // TeamSeasonStats retrieves team season records based on filter criteria
 func (r *StatsRepository) TeamSeasonStats(ctx context.Context, filter core.TeamFilter) ([]core.TeamSeason, error) {
@@ -104,26 +114,7 @@ func (r *StatsRepository) TeamSeasonStats(ctx context.Context, filter core.TeamF
 
 // TeamBattingStats retrieves aggregated batting statistics for teams based on filter criteria
 func (r *StatsRepository) TeamBattingStats(ctx context.Context, filter core.TeamStatsFilter) ([]core.TeamBattingStats, error) {
-	query := `
-		SELECT
-			"teamID", "yearID", "lgID",
-			COUNT(DISTINCT "playerID") as g,
-			SUM("AB") as ab,
-			SUM("R") as r,
-			SUM("H") as h,
-			SUM("2B") as doubles,
-			SUM("3B") as triples,
-			SUM("HR") as hr,
-			SUM("RBI") as rbi,
-			SUM("SB") as sb,
-			SUM("CS") as cs,
-			SUM("BB") as bb,
-			SUM("SO") as so,
-			SUM("HBP") as hbp,
-			SUM("SF") as sf
-		FROM "Batting"
-		WHERE 1=1
-	`
+	query := statsTeamBattingQuery
 
 	args := []any{}
 	argNum := 1
@@ -298,17 +289,7 @@ func (r *StatsRepository) TeamBattingStatsCount(ctx context.Context, filter core
 
 // TeamPitchingStats retrieves aggregated pitching statistics for teams based on filter criteria
 func (r *StatsRepository) TeamPitchingStats(ctx context.Context, filter core.TeamStatsFilter) ([]core.TeamPitchingStats, error) {
-	query := `
-		SELECT
-			"teamID", "yearID", "lgID",
-			SUM("W") as w, SUM("L") as l,
-			SUM("G") as g, SUM("GS") as gs, SUM("CG") as cg, SUM("SHO") as sho, SUM("SV") as sv,
-			SUM("IPouts") as ip_outs,
-			SUM("H") as h, SUM("ER") as er, SUM("HR") as hr,
-			SUM("BB") as bb, SUM("SO") as so
-		FROM "Pitching"
-		WHERE 1=1
-	`
+	query := statsTeamPitchingQuery
 
 	args := []any{}
 	argNum := 1
@@ -467,18 +448,7 @@ func (r *StatsRepository) TeamPitchingStatsCount(ctx context.Context, filter cor
 
 // TeamFieldingStats retrieves aggregated fielding statistics for teams based on filter criteria
 func (r *StatsRepository) TeamFieldingStats(ctx context.Context, filter core.TeamStatsFilter) ([]core.TeamFieldingStats, error) {
-	query := `
-		SELECT
-			"teamID", "yearID", "lgID",
-			SUM("G") as g,
-			SUM("PO") as po, SUM("A") as a, SUM("E") as e, SUM("DP") as dp,
-			SUM(CASE WHEN "POS" = 'C' THEN "PB" ELSE 0 END) as pb,
-			SUM(CASE WHEN "POS" = 'C' THEN "WP" ELSE 0 END) as wp,
-			SUM(CASE WHEN "POS" = 'C' THEN "SB" ELSE 0 END) as sb,
-			SUM(CASE WHEN "POS" = 'C' THEN "CS" ELSE 0 END) as cs
-		FROM "Fielding"
-		WHERE 1=1
-	`
+	query := statsTeamFieldingQuery
 
 	args := []any{}
 	argNum := 1
