@@ -5,23 +5,10 @@
 - In-Progress:
     - Views and crosswalk tables should normalize Lahman ↔ Retrosheet IDs (`player_id_map`, `team_franchise_map`).
     - Pre-aggregate leaderboards for fast reads.
-- To-Do:
-    - Materialized views for heavy aggregates (win probability, streaks, etc.).
-
-## ETL & CLI Tooling
-
-- To-Do
-    - Resumable download & play-by-play ingestion with checksum validation
-    - Automated cron-style Taskfile targets
 
 ### API Platform, Docs & Ops
 
-- To-Do: Add caching, and deployment scripts after the analytics milestone.
-
-### Exposing Joined Data
-
-- To-Do: Dedicated SQL views (e.g., `stats_career_batting`, `player_game_logs`) and ID-mapping helpers will simplify SQLC/hand-rolled queries.
-- To-Do: Future endpoints that combine season stats with play-by-play data will rely on these views/materialized views.
+- To-Do: Add deployment scripts
 
 ## API Roadmap
 
@@ -72,20 +59,9 @@ See [Derived & Advanced Endpoints Overview](./api-derived-advanced.md) for the a
 | In-Progress | Derived stats (WAR-like measures, leverage indexes) built atop the Retrosheet plays dataset. |
 | In-Progress | Markdown docs                                                                                |
 | Done        | Cache + rate limiting layer for public deployments.                                          |
-| To-Do       | Performance testing and observability hooks before GA release.                               |
+| Done        | Performance testing and observability hooks before GA release.                               |
 
 #### Notes
 
-- wOBA requires year-specific FanGraphs constants
-- wRC+ requires league constants
-- Leverage index uses simplified heuristic and could be enhanced with historical win expectancy tables
-- WAR and leaderboards marked as TODO in code
-
-## Milestones & Targets
-
-| Status | Milestone                              | Scope                                                                                                                 |
-| ------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Done   | **M1 - Lahman ETL + Basic API**        | CLI + migrations + Lahman ingestion + players/teams/stats endpoints (implemented, needs monitoring/status reporting). |
-| Done   | **M2 - Retrosheet Game Logs**          | Retrosheet game-log ingestion + game/schedule endpoints (loaders and endpoints exist; substitute handling still TBD). |
-| Done   | **M3 - Play-by-Play**                  | Plays ingestion + `/plays` endpoints are live; need richer event context + player game-log parity.                    |
-| To-Do  | **M4 - Joined & Advanced Experiences** | Lahman + Retrosheet joins, derived analytics, caching, and deployment hardening.                                      |
+- Leverage index should be enhanced with historical win expectancy tables
+- Leaderboards marked as TODO in code

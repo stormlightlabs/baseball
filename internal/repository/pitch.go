@@ -3,10 +3,14 @@ package repository
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
+
+//go:embed queries/pitch_by_play.sql
+var pitchByPlayQuery string
 
 type PitchRepository struct {
 	db *sql.DB
@@ -347,30 +351,12 @@ func (r *PitchRepository) ListByGame(ctx context.Context, gameID core.GameID, p 
 
 // ListByPlay retrieves all pitches from a specific plate appearance
 func (r *PitchRepository) ListByPlay(ctx context.Context, gameID core.GameID, playNum int) ([]core.Pitch, error) {
-	// TODO: embedded query
-	query := `
-		SELECT
-			gid, pn, inning, top_bot, batteam, pitteam,
-			SUBSTRING(gid, 4, 8) as date,
-			CASE
-				WHEN SUBSTRING(gid, 12, 1) = '0' THEN 'regular'
-				WHEN SUBSTRING(gid, 12, 1) = '1' THEN 'postseason'
-				ELSE 'other'
-			END as game_type,
-			batter, pitcher, bathand, pithand,
-			score_v, score_h, outs_pre, outs_post,
-			balls, strikes, pitches,
-			event
-		FROM plays
-		WHERE gid = $1 AND pn = $2 AND pitches IS NOT NULL
-	`
-
 	var play core.Play
 	var batHand, pitHand sql.NullString
 	var balls, strikes sql.NullInt64
 	var pitches sql.NullString
 
-	err := r.db.QueryRowContext(ctx, query, string(gameID), playNum).Scan(
+	err := r.db.QueryRowContext(ctx, pitchByPlayQuery, string(gameID), playNum).Scan(
 		&play.GameID, &play.PlayNum, &play.Inning, &play.TopBot, &play.BatTeam, &play.PitTeam,
 		&play.Date, &play.GameType,
 		&play.Batter, &play.Pitcher, &batHand, &pitHand,

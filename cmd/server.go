@@ -17,6 +17,7 @@ import (
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
 	"stormlightlabs.org/baseball/internal/middleware"
+	"stormlightlabs.org/baseball/internal/repository"
 )
 
 // TODO: configurable baseURL
@@ -303,12 +304,22 @@ func startServer(cmd *cobra.Command, args []string) error {
 		ReportCaller:    cfg.Server.DebugMode,
 	})
 
+	userRepo := repository.NewUserRepository(database.DB)
+	tokenRepo := repository.NewOAuthTokenRepository(database.DB)
+	apiKeyRepo := repository.NewAPIKeyRepository(database.DB)
+
 	rateLimiter := middleware.NewRateLimiter(redisClient, cfg.Server.DebugMode, 60, time.Minute)
 
 	var handler http.Handler = server
 	handler = middleware.Logger(logger)(handler)
 	handler = middleware.MetricsMiddleware(nil)(handler)
 	handler = middleware.TraceMiddleware(handler)
+
+	if cfg.Server.DebugMode {
+		handler = api.AuthMiddleware(userRepo, tokenRepo, apiKeyRepo, true)(handler)
+	} else {
+		handler = api.OptionalAuthMiddleware(userRepo, tokenRepo, apiKeyRepo)(handler)
+	}
 
 	if !cfg.Server.DebugMode && redisClient != nil {
 		handler = rateLimiter.Middleware(handler)

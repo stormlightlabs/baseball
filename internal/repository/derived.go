@@ -378,13 +378,11 @@ func (r *DerivedStatsRepository) PlayerSplits(
 			return nil, fmt.Errorf("failed to scan split group: %w", err)
 		}
 
-		// Round the stats to 3 decimal places
 		group.AVG = roundFloat(avg, 3)
 		group.OBP = roundFloat(obp, 3)
 		group.SLG = roundFloat(slg, 3)
 		group.OPS = roundFloat(obp+slg, 3)
 
-		// Add metadata if present
 		if metaValue.Valid {
 			group.Meta = map[string]string{}
 			switch dimension {

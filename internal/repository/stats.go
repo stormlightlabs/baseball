@@ -1,4 +1,3 @@
-// TODO: construct param structs
 package repository
 
 import (

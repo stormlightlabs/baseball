@@ -45,8 +45,6 @@ func (mr *ManagerRoutes) handleListManagers(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Get total count for pagination
-	// TODO: Add Count method to ManagerRepository if needed for accurate totals
 	total := len(managers)
 
 	writeJSON(w, http.StatusOK, PaginatedResponse{

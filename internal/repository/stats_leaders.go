@@ -8,7 +8,6 @@ import (
 	"stormlightlabs.org/baseball/internal/core"
 )
 
-// TODO: param struct
 func (r *StatsRepository) SeasonBattingLeaders(ctx context.Context, year core.SeasonYear, stat string, limit, offset int, league *core.LeagueID) ([]core.PlayerBattingSeason, error) {
 	orderColumn := "\"HR\""
 

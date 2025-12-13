@@ -41,7 +41,6 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// TODO: improve for prod
 		ip := r.RemoteAddr
 		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 			ip = xff

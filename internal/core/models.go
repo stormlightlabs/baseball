@@ -145,7 +145,7 @@ type PlayerPitchingSeason struct {
 	KPer9  float64  `json:"k_per_9"`
 	BBPer9 float64  `json:"bb_per_9"`
 	HRPer9 float64  `json:"hr_per_9"`
-	FIP    *float64 `json:"fip,omitempty"` // TODO: compute it
+	FIP    *float64 `json:"fip,omitempty"`
 }
 
 // PlayerFieldingSeason from Lahman Fielding.
@@ -167,7 +167,7 @@ type PlayerFieldingSeason struct {
 	PB  int     `json:"pb"` // catchers
 	SB  int     `json:"sb"`
 	CS  int     `json:"cs"`
-	RF9 float64 `json:"rf9"` // TODO: compute range factor per 9
+	RF9 float64 `json:"rf9"`
 }
 
 // TeamSeason corresponds to a row in Lahman Teams.

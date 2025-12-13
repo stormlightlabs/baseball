@@ -540,8 +540,28 @@ func AuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepos
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if debugMode {
-				next.ServeHTTP(w, r)
+				debugName := "Debug User"
+				debugUser := &core.User{
+					ID:       "fun-differential-90",
+					Email:    "info@stormlightlabs.org",
+					Name:     &debugName,
+					IsActive: true,
+				}
+				ctx := context.WithValue(r.Context(), "user", debugUser)
+				next.ServeHTTP(w, r.WithContext(ctx))
 				return
+			}
+
+			if apiKeyHeader := r.Header.Get("X-API-Key"); apiKeyHeader != "" {
+				if apiKey, err := apiKeyRepo.GetByKey(r.Context(), apiKeyHeader); err == nil && apiKey.IsActive {
+					if user, err := userRepo.GetByID(r.Context(), apiKey.UserID); err == nil && user.IsActive {
+						apiKeyRepo.UpdateLastUsed(r.Context(), apiKey.ID)
+						ctx := context.WithValue(r.Context(), "user", user)
+						ctx = context.WithValue(ctx, "api_key", apiKey)
+						next.ServeHTTP(w, r.WithContext(ctx))
+						return
+					}
+				}
 			}
 
 			if authHeader := r.Header.Get("Authorization"); authHeader != "" {
@@ -552,17 +572,6 @@ func AuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepos
 						if token, err := tokenRepo.GetByAccessToken(r.Context(), credentials); err == nil {
 							if user, err := userRepo.GetByID(r.Context(), token.UserID); err == nil && user.IsActive {
 								ctx := context.WithValue(r.Context(), "user", user)
-								next.ServeHTTP(w, r.WithContext(ctx))
-								return
-							}
-						}
-
-						// TODO: pass API key as X-API-KEY header
-						if apiKey, err := apiKeyRepo.GetByKey(r.Context(), credentials); err == nil && apiKey.IsActive {
-							if user, err := userRepo.GetByID(r.Context(), apiKey.UserID); err == nil && user.IsActive {
-								apiKeyRepo.UpdateLastUsed(r.Context(), apiKey.ID)
-								ctx := context.WithValue(r.Context(), "user", user)
-								ctx = context.WithValue(ctx, "api_key", apiKey)
 								next.ServeHTTP(w, r.WithContext(ctx))
 								return
 							}
@@ -590,6 +599,18 @@ func AuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepos
 func OptionalAuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepository, apiKeyRepo core.APIKeyRepository) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if apiKeyHeader := r.Header.Get("X-API-Key"); apiKeyHeader != "" {
+				if apiKey, err := apiKeyRepo.GetByKey(r.Context(), apiKeyHeader); err == nil && apiKey.IsActive {
+					if user, err := userRepo.GetByID(r.Context(), apiKey.UserID); err == nil && user.IsActive {
+						apiKeyRepo.UpdateLastUsed(r.Context(), apiKey.ID)
+						ctx := context.WithValue(r.Context(), "user", user)
+						ctx = context.WithValue(ctx, "api_key", apiKey)
+						next.ServeHTTP(w, r.WithContext(ctx))
+						return
+					}
+				}
+			}
+
 			if authHeader := r.Header.Get("Authorization"); authHeader != "" {
 				if parts := strings.SplitN(authHeader, " ", 2); len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
 					credentials := parts[1]
@@ -597,16 +618,6 @@ func OptionalAuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTo
 					if token, err := tokenRepo.GetByAccessToken(r.Context(), credentials); err == nil {
 						if user, err := userRepo.GetByID(r.Context(), token.UserID); err == nil && user.IsActive {
 							ctx := context.WithValue(r.Context(), "user", user)
-							next.ServeHTTP(w, r.WithContext(ctx))
-							return
-						}
-					}
-
-					if apiKey, err := apiKeyRepo.GetByKey(r.Context(), credentials); err == nil && apiKey.IsActive {
-						if user, err := userRepo.GetByID(r.Context(), apiKey.UserID); err == nil && user.IsActive {
-							apiKeyRepo.UpdateLastUsed(r.Context(), apiKey.ID)
-							ctx := context.WithValue(r.Context(), "user", user)
-							ctx = context.WithValue(ctx, "api_key", apiKey)
 							next.ServeHTTP(w, r.WithContext(ctx))
 							return
 						}

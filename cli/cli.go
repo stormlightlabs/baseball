@@ -1,25 +1,34 @@
-// TODO: refactor [RootCmd] to be a func
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/cmd"
 	"stormlightlabs.org/baseball/internal/echo"
 )
 
-// RootCmd is the root command for the baseball CLI
-var RootCmd = &cobra.Command{
-	Use:   "baseball",
-	Short: "Baseball API ETL and Server toolkit",
-	Long: echo.HeaderStyle().Render("Baseball API") + "\n\n" +
-		"A comprehensive toolkit for baseball data ETL and API serving.\n" +
-		"Supports Lahman and Retrosheet data sources.",
+func rootCmd() *cobra.Command {
+	root := &cobra.Command{
+		Use:   "baseball",
+		Short: "Baseball API ETL and Server toolkit",
+		Long: fmt.Sprintf(`%v
+
+A comprehensive toolkit for baseball data ETL and API serving.
+
+Supports Lahman and Retrosheet data sources.
+`, echo.HeaderStyle().Render("Baseball API")),
+	}
+
+	root.PersistentFlags().String("config", "conf.toml", "Path to config file")
+	root.AddCommand(cmd.ETLCmd())
+	root.AddCommand(cmd.DbCmd())
+	root.AddCommand(cmd.ServerCmd())
+	root.AddCommand(cmd.CacheCmd())
+	return root
 }
 
-func init() {
-	RootCmd.PersistentFlags().String("config", "conf.toml", "Path to config file")
-	RootCmd.AddCommand(cmd.ETLCmd())
-	RootCmd.AddCommand(cmd.DbCmd())
-	RootCmd.AddCommand(cmd.ServerCmd())
-	RootCmd.AddCommand(cmd.CacheCmd())
-}
+// RootCmd is the root command for the baseball CLI
+var RootCmd *cobra.Command
+
+func init() { RootCmd = rootCmd() }

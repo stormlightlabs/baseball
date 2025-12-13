@@ -92,7 +92,6 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 
-	// Use Marshal for compact output with no extra spacing
 	data, err := json.Marshal(v)
 	if err != nil {
 		log.Printf("writeJSON marshal error: %v", err)
@@ -104,7 +103,6 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	}
 }
 
-// TODO: map error types to HTTP status codes
 func writeInternalServerError(w http.ResponseWriter, err error) {
 	writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 }

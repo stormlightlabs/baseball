@@ -284,7 +284,6 @@ type PitchRepository interface {
 }
 
 // DerivedStatsRepository manages advanced computed analytics from play-by-play data.
-// TODO: splits
 type DerivedStatsRepository interface {
 	// PlayerStreaks retrieves hitting or scoreless innings streaks for a player
 	PlayerStreaks(ctx context.Context, playerID PlayerID, kind StreakKind, season SeasonYear, minLength int) ([]Streak, error)
