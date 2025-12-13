@@ -34,7 +34,7 @@ tasks:
   swagger:generate:
     desc: Generate Swagger/OpenAPI documentation
     cmds:
-      - swag init --dir ./internal/api --generalInfo server.go --output ./internal/docs --parseDependency --parseInternal
+      - swag init --dir ./internal/api --generalInfo server.go --output ./internal/docs --parseDependency --parseInternal --md ./internal/api
       - task: swagger:fix
     sources:
       - "internal/**/*.go"

@@ -1,8 +1,10 @@
 // Package api provides HTTP handlers for the Baseball API
 //
+// TODO: finish tag docs
+//
 // @title Baseball API
+// @description.markdown
 // @version 1.0
-// @description A comprehensive REST API for baseball statistics serving data from the Lahman Baseball Database and Retrosheet
 // @BasePath /v1
 //
 // @contact.name API Support
@@ -11,6 +13,12 @@
 //
 // @license.name MPL-2.0
 // @license.url https://opensource.org/license/mpl-2-0
+//
+// @tag.name allstar
+// @tag.description MLB All-Star game data
+//
+// @tag.name games
+// @tag.description Game data
 package api
 
 import (
@@ -56,7 +64,8 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 
 	echo.Info("Registering routes...")
 
-	return newServer(NewPlayerRoutes(playerRepo, awardRepo),
+	return newServer(
+		NewPlayerRoutes(playerRepo, awardRepo),
 		NewTeamRoutes(teamRepo, gameRepo),
 		NewStatsRoutes(statsRepo),
 		NewAwardRoutes(awardRepo),

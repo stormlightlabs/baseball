@@ -11,9 +11,11 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/swaggo/http-swagger v1.3.4
-	github.com/swaggo/swag v1.8.1
+	github.com/swaggo/swag v1.16.6
 	golang.org/x/oauth2 v0.34.0
 )
+
+require golang.org/x/mod v0.26.0 // indirect
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect

@@ -142,9 +142,7 @@ func (dr *DerivedRoutes) handleGameWinProbability(w http.ResponseWriter, r *http
 	}
 
 	if len(curve.Points) == 0 {
-		writeJSON(w, http.StatusNotFound, ErrorResponse{
-			Error: "game not found or no play-by-play data available",
-		})
+		writeNotFound(w, "game/play-by-play data")
 		return
 	}
 

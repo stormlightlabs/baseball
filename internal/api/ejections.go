@@ -106,7 +106,7 @@ func (er *EjectionRoutes) handleSeasonEjections(w http.ResponseWriter, r *http.R
 
 	year := getIntPathValue(r, "year")
 	if year == 0 {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: "invalid year"})
+		writeBadRequest(w, "invalid year")
 		return
 	}
 

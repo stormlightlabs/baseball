@@ -196,7 +196,7 @@ func (sr *SearchRoutes) handleSearchGames(w http.ResponseWriter, r *http.Request
 
 	query := r.URL.Query().Get("q")
 	if query == "" {
-		http.Error(w, `{"error": "query parameter 'q' is required"}`, http.StatusBadRequest)
+		writeBadRequest(w, "query parameter 'q' is required")
 		return
 	}
 

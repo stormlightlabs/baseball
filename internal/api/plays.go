@@ -197,7 +197,7 @@ func (pr *PlayRoutes) handlePlayerPlays(w http.ResponseWriter, r *http.Request) 
 	retroID, err := pr.lookupRetroID(ctx, playerID)
 	if err != nil {
 		if errors.Is(err, errMissingRetroID) {
-			writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+			writeBadRequest(w, err.Error())
 		} else {
 			writeInternalServerError(w, err)
 		}
@@ -254,7 +254,7 @@ func (pr *PlayRoutes) handlePlayerPlateAppearances(w http.ResponseWriter, r *htt
 	retroID, err := pr.lookupRetroID(ctx, playerID)
 	if err != nil {
 		if errors.Is(err, errMissingRetroID) {
-			writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+			writeBadRequest(w, err.Error())
 		} else {
 			writeInternalServerError(w, err)
 		}

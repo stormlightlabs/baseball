@@ -653,16 +653,12 @@ func (gr *GameRoutes) handleGamesByDate(w http.ResponseWriter, r *http.Request) 
 
 	targetDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Invalid date format. Use YYYY-MM-DD",
-		})
+		writeBadRequest(w, "Invalid date format. Use YYYY-MM-DD")
 		return
 	}
 
 	if targetDate.Year() != year {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Date year must match season year",
-		})
+		writeBadRequest(w, "Date year must match season year")
 		return
 	}
 
@@ -896,9 +892,7 @@ func (gr *GameRoutes) handleSingleEvent(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	writeJSON(w, http.StatusNotFound, ErrorResponse{
-		Error: "Event not found",
-	})
+	writeNotFound(w, "Event")
 }
 
 func determineWinner(game *core.Game) core.TeamID {

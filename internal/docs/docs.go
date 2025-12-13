@@ -450,6 +450,62 @@ const docTemplate = `{
                 }
             }
         },
+        "/games/{game_id}/plate-appearances/leverage": {
+            "get": {
+                "description": "Get leverage index for each plate appearance in a game",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "computed",
+                    "games",
+                    "leverage"
+                ],
+                "summary": "Get plate appearance leverages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID",
+                        "name": "game_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "default": 0,
+                        "description": "Minimum leverage index",
+                        "name": "min_li",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.PlateAppearanceLeverage"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/games/{game_id}/plays/{play_num}/pitches": {
             "get": {
                 "description": "Get all pitches from a specific plate appearance within a game",
@@ -1827,6 +1883,126 @@ const docTemplate = `{
                 }
             }
         },
+        "/parks/{park_id}/factors": {
+            "get": {
+                "description": "Get park factor for a specific park and season",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "computed",
+                    "parks"
+                ],
+                "summary": "Get park factor",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Park ID",
+                        "name": "park_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.ParkFactor"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/parks/{park_id}/factors/series": {
+            "get": {
+                "description": "Get park factors over a range of seasons",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "computed",
+                    "parks"
+                ],
+                "summary": "Get park factor series",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Park ID",
+                        "name": "park_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Starting season",
+                        "name": "from_season",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Ending season",
+                        "name": "to_season",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.ParkFactor"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/parks/{park_id}/games": {
             "get": {
                 "description": "Get all games played at a specific ballpark",
@@ -2651,6 +2827,195 @@ const docTemplate = `{
                 }
             }
         },
+        "/players/{player_id}/splits": {
+            "get": {
+                "description": "Get batting statistics split by dimension (home/away, vs handedness, month, etc.)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "derived",
+                    "players"
+                ],
+                "summary": "Get player batting splits",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "player_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Split dimension: home_away, pitcher_handed, or month",
+                        "name": "dimension",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.SplitResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/players/{player_id}/stats/batting/advanced": {
+            "get": {
+                "description": "Get wOBA, wRC+, ISO, BABIP, and other advanced batting stats for a player",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "computed",
+                    "players",
+                    "batting"
+                ],
+                "summary": "Get advanced batting stats",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "player_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 2024,
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.AdvancedBattingStats"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/players/{player_id}/stats/pitching/advanced": {
+            "get": {
+                "description": "Get FIP, xFIP, ERA+, and other advanced pitching stats for a player",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "computed",
+                    "players",
+                    "pitching"
+                ],
+                "summary": "Get advanced pitching stats",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "player_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 2024,
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.AdvancedPitchingStats"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/players/{player_id}/streaks": {
             "get": {
                 "description": "Get hitting or scoreless innings streaks for a player",
@@ -3099,6 +3464,60 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/core.Season"
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/seasons/{season}/park-factors": {
+            "get": {
+                "description": "Get park factors for all parks in a given season",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "computed",
+                    "parks"
+                ],
+                "summary": "Get all park factors for a season",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Factor type (runs, hr)",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.ParkFactor"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
@@ -5237,6 +5656,225 @@ const docTemplate = `{
                 }
             }
         },
+        "core.AdvancedBattingStats": {
+            "type": "object",
+            "properties": {
+                "ab": {
+                    "type": "integer"
+                },
+                "avg": {
+                    "description": "BA",
+                    "type": "number"
+                },
+                "babip": {
+                    "type": "number"
+                },
+                "bb": {
+                    "type": "integer"
+                },
+                "bb_rate": {
+                    "description": "BB%",
+                    "type": "number"
+                },
+                "context": {
+                    "$ref": "#/definitions/core.StatContext"
+                },
+                "doubles": {
+                    "type": "integer"
+                },
+                "fb": {
+                    "description": "fly balls",
+                    "type": "integer"
+                },
+                "gb": {
+                    "description": "ground balls",
+                    "type": "integer"
+                },
+                "h": {
+                    "type": "integer"
+                },
+                "hbp": {
+                    "type": "integer"
+                },
+                "hr": {
+                    "type": "integer"
+                },
+                "hr_fb": {
+                    "description": "HR/FB, if FB known",
+                    "type": "number"
+                },
+                "ibb": {
+                    "type": "integer"
+                },
+                "iso": {
+                    "description": "ISO = SLG - AVG",
+                    "type": "number"
+                },
+                "k_rate": {
+                    "description": "K%",
+                    "type": "number"
+                },
+                "ld": {
+                    "description": "line drives",
+                    "type": "integer"
+                },
+                "obp": {
+                    "type": "number"
+                },
+                "off_war": {
+                    "description": "WAR ascribed to offense (offensive component only; not full WAR).",
+                    "type": "number"
+                },
+                "ops": {
+                    "type": "number"
+                },
+                "ops_plus": {
+                    "description": "OPS+ if you choose to compute it (BBRef-style).",
+                    "type": "integer"
+                },
+                "pa": {
+                    "description": "Underlying counting stats for transparency.",
+                    "type": "integer"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "pu": {
+                    "description": "pop-ups",
+                    "type": "integer"
+                },
+                "sf": {
+                    "type": "integer"
+                },
+                "sh": {
+                    "type": "integer"
+                },
+                "slg": {
+                    "type": "number"
+                },
+                "so": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "description": "nil for multi-team lines",
+                    "type": "string"
+                },
+                "triples": {
+                    "type": "integer"
+                },
+                "woba": {
+                    "type": "number"
+                },
+                "wraa": {
+                    "description": "weighted runs above average",
+                    "type": "number"
+                },
+                "wrc": {
+                    "description": "weighted runs created",
+                    "type": "number"
+                },
+                "wrc_plus": {
+                    "description": "wRC+ (100 = league avg), park/league adjusted",
+                    "type": "integer"
+                }
+            }
+        },
+        "core.AdvancedPitchingStats": {
+            "type": "object",
+            "properties": {
+                "bb": {
+                    "type": "integer"
+                },
+                "bb_per_9": {
+                    "type": "number"
+                },
+                "bf": {
+                    "description": "batters faced",
+                    "type": "integer"
+                },
+                "context": {
+                    "$ref": "#/definitions/core.StatContext"
+                },
+                "er": {
+                    "type": "integer"
+                },
+                "era": {
+                    "description": "Basic rate stats.",
+                    "type": "number"
+                },
+                "era_plus": {
+                    "description": "Context-normalized rate stats.",
+                    "type": "integer"
+                },
+                "fip": {
+                    "description": "Fielding-independent metrics.",
+                    "type": "number"
+                },
+                "fip_minus": {
+                    "description": "FIP- / xFIP- (FanGraphs style: lower is better, 100 = league avg), if you want.",
+                    "type": "integer"
+                },
+                "fip_war": {
+                    "description": "FG-style",
+                    "type": "number"
+                },
+                "h": {
+                    "type": "integer"
+                },
+                "hbp": {
+                    "type": "integer"
+                },
+                "hr": {
+                    "type": "integer"
+                },
+                "hr_per_9": {
+                    "type": "number"
+                },
+                "ibb": {
+                    "type": "integer"
+                },
+                "ip_outs": {
+                    "description": "Underlying counting stats.",
+                    "type": "integer"
+                },
+                "k_per_9": {
+                    "type": "number"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "r": {
+                    "type": "integer"
+                },
+                "ra9_war": {
+                    "description": "Optional breakdowns if you compute them.",
+                    "type": "number"
+                },
+                "replacement_runs": {
+                    "type": "number"
+                },
+                "so": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "war": {
+                    "description": "WAR components for pitchers.\nTotal WAR from chosen provider (FG, BR, etc.).",
+                    "type": "number"
+                },
+                "whip": {
+                    "description": "(BB+H)/IP",
+                    "type": "number"
+                },
+                "xfip": {
+                    "type": "number"
+                },
+                "xfip_minus": {
+                    "type": "integer"
+                }
+            }
+        },
         "core.AllStarAppearance": {
             "type": "object",
             "properties": {
@@ -6321,6 +6959,110 @@ const docTemplate = `{
                 }
             }
         },
+        "core.ParkFactor": {
+            "type": "object",
+            "properties": {
+                "bb_factor": {
+                    "description": "walks factor (optional)",
+                    "type": "number"
+                },
+                "games_sampled": {
+                    "description": "# of games used",
+                    "type": "integer"
+                },
+                "h_factor": {
+                    "description": "hits factor (optional)",
+                    "type": "number"
+                },
+                "hr_factor": {
+                    "description": "home run factor",
+                    "type": "number"
+                },
+                "multi_year": {
+                    "description": "if you averaged multiple seasons",
+                    "type": "boolean"
+                },
+                "park_id": {
+                    "description": "ParkID",
+                    "type": "string"
+                },
+                "provider": {
+                    "description": "\"internal\", \"fangraphs-like\", etc.",
+                    "type": "string"
+                },
+                "runs_factor": {
+                    "description": "overall runs (100 = neutral)",
+                    "type": "number"
+                },
+                "runs_factor_lhb": {
+                    "type": "number"
+                },
+                "runs_factor_rhb": {
+                    "type": "number"
+                },
+                "season": {
+                    "description": "season year",
+                    "type": "integer"
+                }
+            }
+        },
+        "core.PlateAppearanceLeverage": {
+            "type": "object",
+            "properties": {
+                "away_score_before": {
+                    "type": "integer"
+                },
+                "bases_before": {
+                    "description": "\"100\", \"011\", etc.",
+                    "type": "string"
+                },
+                "batter_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Result summary.",
+                    "type": "string"
+                },
+                "event_id": {
+                    "description": "index within game",
+                    "type": "integer"
+                },
+                "game_id": {
+                    "type": "string"
+                },
+                "home_score_before": {
+                    "description": "State before the PA.",
+                    "type": "integer"
+                },
+                "inning": {
+                    "type": "integer"
+                },
+                "li": {
+                    "description": "LI at start of PA",
+                    "type": "number"
+                },
+                "outs_before": {
+                    "type": "integer"
+                },
+                "pitcher_id": {
+                    "type": "string"
+                },
+                "top_of_inning": {
+                    "type": "boolean"
+                },
+                "we_after": {
+                    "type": "number"
+                },
+                "we_before": {
+                    "description": "Win expectancy and leverage index before/after the PA.",
+                    "type": "number"
+                },
+                "we_change": {
+                    "description": "signed WEAfter - WEBefore",
+                    "type": "number"
+                }
+            }
+        },
         "core.Play": {
             "type": "object",
             "properties": {
@@ -7079,6 +7821,207 @@ const docTemplate = `{
                 }
             }
         },
+        "core.SplitDimension": {
+            "type": "string",
+            "enum": [
+                "home_away",
+                "batter_handed",
+                "pitcher_handed",
+                "month",
+                "batting_order",
+                "inning",
+                "day_night",
+                "before_after_asg",
+                "ground_balls_flys"
+            ],
+            "x-enum-comments": {
+                "SplitDimBatterHanded": "vs RHP/LHP by batter side",
+                "SplitDimBattingOrder": "lineup spot 1–9",
+                "SplitDimBeforeAfterASG": "before/after all-star break",
+                "SplitDimDayNight": "day vs night games",
+                "SplitDimGroundBallsFlys": "batted ball type",
+                "SplitDimHomeAway": "home vs away",
+                "SplitDimInning": "inning number",
+                "SplitDimMonth": "calendar or season month",
+                "SplitDimPitcherHanded": "pitcher side"
+            },
+            "x-enum-descriptions": [
+                "home vs away",
+                "vs RHP/LHP by batter side",
+                "pitcher side",
+                "calendar or season month",
+                "lineup spot 1–9",
+                "inning number",
+                "day vs night games",
+                "before/after all-star break",
+                "batted ball type"
+            ],
+            "x-enum-varnames": [
+                "SplitDimHomeAway",
+                "SplitDimBatterHanded",
+                "SplitDimPitcherHanded",
+                "SplitDimMonth",
+                "SplitDimBattingOrder",
+                "SplitDimInning",
+                "SplitDimDayNight",
+                "SplitDimBeforeAfterASG",
+                "SplitDimGroundBallsFlys"
+            ]
+        },
+        "core.SplitEntityType": {
+            "type": "string",
+            "enum": [
+                "player",
+                "team"
+            ],
+            "x-enum-varnames": [
+                "SplitEntityPlayer",
+                "SplitEntityTeam"
+            ]
+        },
+        "core.SplitGroup": {
+            "type": "object",
+            "properties": {
+                "ab": {
+                    "type": "integer"
+                },
+                "avg": {
+                    "description": "Derived rate stats (as decimals, 3–4 places).",
+                    "type": "number"
+                },
+                "bb": {
+                    "type": "integer"
+                },
+                "games": {
+                    "description": "Sample counting stats.",
+                    "type": "integer"
+                },
+                "h": {
+                    "type": "integer"
+                },
+                "hr": {
+                    "type": "integer"
+                },
+                "key": {
+                    "description": "e.g. \"home\", \"away\", \"vs_LHP\", \"04\" (April), \"1\" (leadoff)",
+                    "type": "string"
+                },
+                "label": {
+                    "description": "human-readable label",
+                    "type": "string"
+                },
+                "meta": {
+                    "description": "arbitrary: month_number, handedness, etc.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "obp": {
+                    "type": "number"
+                },
+                "ops": {
+                    "type": "number"
+                },
+                "pa": {
+                    "type": "integer"
+                },
+                "slg": {
+                    "type": "number"
+                },
+                "so": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.SplitResult": {
+            "type": "object",
+            "properties": {
+                "dimension": {
+                    "description": "home_away, month, etc.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/core.SplitDimension"
+                        }
+                    ]
+                },
+                "entity_id": {
+                    "description": "PlayerID or TeamID",
+                    "type": "string"
+                },
+                "entity_type": {
+                    "description": "player or team",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/core.SplitEntityType"
+                        }
+                    ]
+                },
+                "groups": {
+                    "description": "one per split bucket",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.SplitGroup"
+                    }
+                },
+                "season": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.StatContext": {
+            "type": "object",
+            "properties": {
+                "league": {
+                    "description": "\"AL\",\"NL\", etc.",
+                    "type": "string"
+                },
+                "park_neutral": {
+                    "description": "already park-adjusted?",
+                    "type": "boolean"
+                },
+                "provider": {
+                    "description": "fangraphs, bbref, internal",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/core.StatProvider"
+                        }
+                    ]
+                },
+                "regular_season": {
+                    "description": "true = reg season, false = postseason/mix",
+                    "type": "boolean"
+                },
+                "season": {
+                    "description": "0 if multi-year or career",
+                    "type": "integer"
+                }
+            }
+        },
+        "core.StatProvider": {
+            "type": "string",
+            "enum": [
+                "unknown",
+                "fangraphs",
+                "baseball_reference",
+                "internal"
+            ],
+            "x-enum-comments": {
+                "StatProviderInternal": "your own"
+            },
+            "x-enum-descriptions": [
+                "",
+                "",
+                "",
+                "your own"
+            ],
+            "x-enum-varnames": [
+                "StatProviderUnknown",
+                "StatProviderFanGraphs",
+                "StatProviderBBRef",
+                "StatProviderInternal"
+            ]
+        },
         "core.Streak": {
             "type": "object",
             "properties": {
@@ -7604,7 +8547,13 @@ const docTemplate = `{
                 }
             }
         }
-    }
+    },
+    "tags": [
+        {
+            "description": "data related to MLB all-star games",
+            "name": "allstar"
+        }
+    ]
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
@@ -7614,7 +8563,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/v1",
 	Schemes:          []string{},
 	Title:            "Baseball API",
-	Description:      "A comprehensive REST API for baseball statistics serving data from the Lahman Baseball Database and Retrosheet",
+	Description:      "<!-- markdownlint-disable -->\n\nA comprehensive REST API for baseball statistics serving data from the Lahman Baseball Database and Retrosheet\n\n## Attributions\n\n**[SABR Lahman Database](https://sabr.org/lahman-database/)**: The information used here was obtained free of charge from and is copyrighted by Sean Lahman.\n\n**[Retrosheet.org](https://www.retrosheet.org/)**: The information used here was obtained free of charge from and is copyrighted by Retrosheet.\n\nwOBA weights and seasonal constants from **[FanGraphs Guts!](https://www.fangraphs.com/tools/guts)**, used under FanGraphs’ published terms.\n",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

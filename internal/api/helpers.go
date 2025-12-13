@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -110,6 +111,10 @@ func writeInternalServerError(w http.ResponseWriter, err error) {
 
 func writeBadRequest(w http.ResponseWriter, err string) {
 	writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err})
+}
+
+func writeNotFound(w http.ResponseWriter, r string) {
+	writeJSON(w, http.StatusNotFound, ErrorResponse{Error: fmt.Sprintf("%v not found", r)})
 }
 
 func getIntQuery(r *http.Request, key string, defaultVal int) int {
