@@ -21,6 +21,9 @@ import (
 //go:embed sql/*.sql
 var migrationFiles embed.FS
 
+//go:embed sql/build_win_expectancy.sql
+var buildWinExpectancyQuery string
+
 // Migration represents a single database migration.
 type Migration struct {
 	Name    string
@@ -745,4 +748,21 @@ func csvReader(r io.Reader) *csv.Reader {
 	reader := csv.NewReader(r)
 	reader.TrimLeadingSpace = true
 	return reader
+}
+
+// BuildWinExpectancy computes win expectancy data from historical play-by-play data and populates the win_expectancy_historical table.
+// This analyzes all plays in the plays table, joins with game outcomes, and calculates win probabilities for each unique game state.
+// The minSampleSize parameter filters out states with insufficient data (recommended: 50-100).
+// Returns the number of game states inserted/updated.
+func (db *DB) BuildWinExpectancy(ctx context.Context, minSampleSize int) (int64, error) {
+	if minSampleSize < 1 {
+		minSampleSize = 50
+	}
+
+	result, err := db.ExecContext(ctx, buildWinExpectancyQuery, minSampleSize)
+	if err != nil {
+		return 0, fmt.Errorf("failed to build win expectancy: %w", err)
+	}
+
+	return result.RowsAffected()
 }

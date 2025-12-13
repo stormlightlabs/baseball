@@ -171,6 +171,7 @@ func DbPopulateCmd() *cobra.Command {
 	cmd.AddCommand(DbPopulateLahmanCmd())
 	cmd.AddCommand(DbPopulateRetrosheetCmd())
 	cmd.AddCommand(DbPopulateAllCmd())
+	cmd.AddCommand(DbPopulateWinExpectancyCmd())
 
 	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
 	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
@@ -798,6 +799,52 @@ func loadFanGraphs(cmd *cobra.Command, args []string) error {
 	echo.Success("✓ All FanGraphs data loaded successfully")
 	echo.Infof("  wOBA constants: %d rows", wobaRows)
 	echo.Infof("  Park factors: %d rows", totalParkRows)
+
+	return nil
+}
+
+// DbPopulateWinExpectancyCmd creates the populate win-expectancy command
+func DbPopulateWinExpectancyCmd() *cobra.Command {
+	var minSampleSize int
+
+	cmd := &cobra.Command{
+		Use:   "win-expectancy",
+		Short: "Build win expectancy table from historical play-by-play data",
+		Long:  "Analyzes all plays in the database and computes win probabilities for each unique game state.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return populateWinExpectancy(cmd, minSampleSize)
+		},
+	}
+
+	cmd.Flags().IntVar(&minSampleSize, "min-sample-size", 50, "Minimum sample size for a game state to be included")
+	return cmd
+}
+
+func populateWinExpectancy(cmd *cobra.Command, minSampleSize int) error {
+	echo.Header("Building Win Expectancy Data")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	ctx := cmd.Context()
+
+	echo.Info("Analyzing play-by-play data and computing win probabilities...")
+	echo.Infof("  Minimum sample size: %d", minSampleSize)
+	echo.Info("  This may take a few minutes for large datasets...")
+
+	rows, err := database.BuildWinExpectancy(ctx, minSampleSize)
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	echo.Success("✓ Win expectancy data built successfully")
+	echo.Infof("  Game states populated: %d", rows)
 
 	return nil
 }

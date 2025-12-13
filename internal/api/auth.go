@@ -105,7 +105,7 @@ func (r *AuthRoutes) handleGitHubLogin(w http.ResponseWriter, req *http.Request)
 		HttpOnly: true,
 		Secure:   req.TLS != nil,
 		SameSite: http.SameSiteLaxMode,
-		MaxAge:   600, // 10 minutes
+		MaxAge:   600,
 	})
 
 	url := r.githubConfig.AuthCodeURL(state)

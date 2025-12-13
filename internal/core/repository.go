@@ -367,3 +367,30 @@ type ParkFactorRepository interface {
 	// Used for more stable estimates
 	MultiYearParkFactor(ctx context.Context, parkID ParkID, fromSeason, toSeason SeasonYear) (*ParkFactor, error)
 }
+
+// WinExpectancyRepository manages historical win expectancy data used for leverage index calculations.
+// Win expectancy represents the probability that the home team wins from a given game state,
+// based on historical outcomes from similar situations.
+type WinExpectancyRepository interface {
+	// GetWinExpectancy returns the win probability for a specific game state
+	// Uses the most appropriate historical era if era parameters are not specified
+	GetWinExpectancy(ctx context.Context, state GameState) (*WinExpectancy, error)
+
+	// GetWinExpectancyForEra returns win probability for a specific game state within a time period
+	GetWinExpectancyForEra(ctx context.Context, state GameState, startYear, endYear *int) (*WinExpectancy, error)
+
+	// BatchGetWinExpectancy efficiently retrieves win expectancies for multiple game states
+	// Useful for computing leverage index across a full game
+	BatchGetWinExpectancy(ctx context.Context, states []GameState) ([]WinExpectancy, error)
+
+	// ListAvailableEras returns all available historical eras in the win expectancy table
+	ListAvailableEras(ctx context.Context) ([]WinExpectancyEra, error)
+
+	// UpsertWinExpectancy inserts or updates win expectancy data
+	// Used for populating the table from historical analysis
+	UpsertWinExpectancy(ctx context.Context, we *WinExpectancy) error
+
+	// BuildFromHistoricalData computes win expectancies from play-by-play data for a given era
+	// This is a heavy operation that analyzes all games in the specified year range
+	BuildFromHistoricalData(ctx context.Context, startYear, endYear int, minSampleSize int) (int64, error)
+}

@@ -687,3 +687,40 @@ type Pitch struct {
 	Description string  `json:"description,omitempty"`  // Human-readable pitch type description
 	Event       *string `json:"event,omitempty"`        // Play result if this was the final pitch
 }
+
+// GameState represents a specific game situation used for win expectancy lookups.
+// Encodes inning, outs, runners on base, and score differential.
+type GameState struct {
+	Inning      int    `json:"inning"`                     // Inning number (1-9, extras treated as 9)
+	IsBottom    bool   `json:"is_bottom"`                  // true=bottom of inning, false=top
+	Outs        int    `json:"outs"`                       // Number of outs (0-2)
+	RunnersCode string `json:"runners_code" example:"1_3"` // Base state: ___ = empty, 1__ = runner on first, etc.
+	ScoreDiff   int    `json:"score_diff"`                 // Score differential from batting team perspective (capped at ±11)
+	Year        *int   `json:"year,omitempty"`             // Optional year for era-specific lookups
+}
+
+// WinExpectancy represents the historical win probability for a specific game state.
+// This is the probability that the home team wins from the given situation.
+type WinExpectancy struct {
+	ID             int       `json:"id"`
+	Inning         int       `json:"inning"`
+	IsBottom       bool      `json:"is_bottom"`
+	Outs           int       `json:"outs"`
+	RunnersState   string    `json:"runners_state"`
+	ScoreDiff      int       `json:"score_diff"`
+	WinProbability float64   `json:"win_probability"` // 0.0 to 1.0
+	SampleSize     int       `json:"sample_size"`     // Number of historical games used
+	StartYear      *int      `json:"start_year,omitempty"`
+	EndYear        *int      `json:"end_year,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+// WinExpectancyEra represents a historical period for which win expectancy data is available.
+type WinExpectancyEra struct {
+	StartYear   int    `json:"start_year"`
+	EndYear     int    `json:"end_year"`
+	Label       string `json:"label"`        // e.g., "Modern Era", "Steroid Era"
+	StateCount  int    `json:"state_count"`  // Number of unique game states in this era
+	TotalSample int64  `json:"total_sample"` // Total sample size across all states
+}
