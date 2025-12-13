@@ -313,6 +313,12 @@ type AdvancedStatsRepository interface {
 	// PlayerAdvancedPitching computes FIP, xFIP, ERA+, etc. for a pitcher
 	PlayerAdvancedPitching(ctx context.Context, playerID PlayerID, filter AdvancedPitchingFilter) (*AdvancedPitchingStats, error)
 
+	// PlayerBaserunning calculates base running runs (wSB) for a player
+	PlayerBaserunning(ctx context.Context, playerID PlayerID, season SeasonYear, teamID *TeamID) (*BaserunningStats, error)
+
+	// PlayerFielding calculates fielding runs for a player using range factor
+	PlayerFielding(ctx context.Context, playerID PlayerID, season SeasonYear, teamID *TeamID) (*FieldingStats, error)
+
 	// PlayerWAR computes WAR components and total WAR for a player
 	// Provider indicates which formula to use (fangraphs, bbref, internal)
 	PlayerWAR(ctx context.Context, playerID PlayerID, filter WARFilter) (*PlayerWARSummary, error)

@@ -16,6 +16,15 @@ var playerAdvancedBattingQuery string
 //go:embed queries/player_advanced_pitching.sql
 var playerAdvancedPitchingQuery string
 
+//go:embed queries/player_baserunning.sql
+var playerBaserunningQuery string
+
+//go:embed queries/player_fielding.sql
+var playerFieldingQuery string
+
+//go:embed queries/player_war.sql
+var playerWARQuery string
+
 //go:embed queries/park_factor.sql
 var parkFactorQuery string
 
@@ -119,6 +128,93 @@ func (r *AdvancedStatsRepository) PlayerAdvancedBattingSplits(ctx context.Contex
 	return nil, fmt.Errorf("not yet implemented")
 }
 
+// PlayerBaserunning calculates base running runs (wSB) for a player.
+func (r *AdvancedStatsRepository) PlayerBaserunning(ctx context.Context, playerID core.PlayerID, season core.SeasonYear, teamID *core.TeamID) (*core.BaserunningStats, error) {
+	var teamIDParam sql.NullString
+	if teamID != nil {
+		teamIDParam = sql.NullString{String: string(*teamID), Valid: true}
+	}
+
+	row := r.db.QueryRowContext(ctx, playerBaserunningQuery, string(playerID), int(season), teamIDParam)
+
+	var stats core.BaserunningStats
+	var playerIDStr, teamIDStr, leagueStr string
+
+	err := row.Scan(
+		&playerIDStr,
+		&stats.Season,
+		&teamIDStr,
+		&leagueStr,
+		&stats.SB,
+		&stats.CS,
+		&stats.BaserunningRuns,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("no baserunning stats found for player %s in season %d", playerID, season)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to query baserunning stats: %w", err)
+	}
+
+	stats.PlayerID = core.PlayerID(playerIDStr)
+	if teamIDStr != "" {
+		tid := core.TeamID(teamIDStr)
+		stats.TeamID = &tid
+	}
+	if leagueStr != "" {
+		lid := core.LeagueID(leagueStr)
+		stats.League = &lid
+	}
+
+	return &stats, nil
+}
+
+// PlayerFielding calculates fielding runs for a player using range factor.
+func (r *AdvancedStatsRepository) PlayerFielding(ctx context.Context, playerID core.PlayerID, season core.SeasonYear, teamID *core.TeamID) (*core.FieldingStats, error) {
+	var teamIDParam sql.NullString
+	if teamID != nil {
+		teamIDParam = sql.NullString{String: string(*teamID), Valid: true}
+	}
+
+	row := r.db.QueryRowContext(ctx, playerFieldingQuery, string(playerID), int(season), teamIDParam)
+
+	var stats core.FieldingStats
+	var playerIDStr, teamIDStr, leagueStr string
+
+	err := row.Scan(
+		&playerIDStr,
+		&stats.Season,
+		&teamIDStr,
+		&leagueStr,
+		&stats.Position,
+		&stats.Games,
+		&stats.Putouts,
+		&stats.Assists,
+		&stats.Errors,
+		&stats.RangeFactor,
+		&stats.LeagueAvgRF,
+		&stats.FieldingRuns,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("no fielding stats found for player %s in season %d", playerID, season)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to query fielding stats: %w", err)
+	}
+
+	stats.PlayerID = core.PlayerID(playerIDStr)
+	if teamIDStr != "" {
+		tid := core.TeamID(teamIDStr)
+		stats.TeamID = &tid
+	}
+	if leagueStr != "" {
+		lid := core.LeagueID(leagueStr)
+		stats.League = &lid
+	}
+
+	return &stats, nil
+}
+
 // PlayerAdvancedPitching computes FIP, xFIP, ERA+, etc. for a pitcher.
 func (r *AdvancedStatsRepository) PlayerAdvancedPitching(
 	ctx context.Context,
@@ -183,13 +279,73 @@ func (r *AdvancedStatsRepository) PlayerAdvancedPitching(
 }
 
 // PlayerWAR computes WAR components and total WAR for a player.
-// TODO: implement WAR calculation
-func (r *AdvancedStatsRepository) PlayerWAR(
-	ctx context.Context,
-	playerID core.PlayerID,
-	filter core.WARFilter,
-) (*core.PlayerWARSummary, error) {
-	return nil, fmt.Errorf("not yet implemented")
+func (r *AdvancedStatsRepository) PlayerWAR(ctx context.Context, playerID core.PlayerID, filter core.WARFilter) (*core.PlayerWARSummary, error) {
+	season := 2024
+	if filter.Season != nil {
+		season = int(*filter.Season)
+	}
+
+	var teamID sql.NullString
+	if filter.TeamID != nil {
+		teamID = sql.NullString{String: string(*filter.TeamID), Valid: true}
+	}
+
+	row := r.db.QueryRowContext(ctx, playerWARQuery, string(playerID), season, teamID)
+
+	var war core.PlayerWARSummary
+	var playerIDStr, teamIDStr, leagueStr, position string
+	var pa int
+	var battingRuns, baserunningRuns, fieldingRuns, positionalAdj, replacementRuns, runsAboveReplacement, warValue float64
+
+	err := row.Scan(
+		&playerIDStr,
+		&season,
+		&teamIDStr,
+		&leagueStr,
+		&pa,
+		&battingRuns,
+		&baserunningRuns,
+		&fieldingRuns,
+		&positionalAdj,
+		&replacementRuns,
+		&runsAboveReplacement,
+		&warValue,
+		&position,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("no WAR data found for player %s in season %d", playerID, season)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to query WAR: %w", err)
+	}
+
+	war.PlayerID = core.PlayerID(playerIDStr)
+	if teamIDStr != "" {
+		tid := core.TeamID(teamIDStr)
+		war.TeamID = &tid
+	}
+
+	var leagueID *core.LeagueID
+	if leagueStr != "" {
+		lid := core.LeagueID(leagueStr)
+		leagueID = &lid
+	}
+
+	war.Context = core.StatContext{
+		Season:      core.SeasonYear(season),
+		League:      leagueID,
+		Provider:    core.StatProviderInternal,
+		ParkNeutral: false,
+		RegSeason:   true,
+	}
+
+	war.WAR = warValue
+	war.BattingRuns = &battingRuns
+	war.BaseRunningRuns = &baserunningRuns
+	war.FieldingRuns = &fieldingRuns
+	war.PositionalRuns = &positionalAdj
+	war.ReplacementRuns = &replacementRuns
+	return &war, nil
 }
 
 // SeasonBattingLeaders returns top N players by advanced batting stat.
@@ -259,8 +415,6 @@ func (r *LeverageRepository) GamePlateLeverages(ctx context.Context, gameID core
 		l.TopOfInning = topBot == 0
 		l.BatterID = core.PlayerID(batterID)
 		l.PitcherID = core.PlayerID(pitcherID)
-
-		// Calculate leverage index (simplified)
 		l.LeverageIndex = calculateLeverageIndex(l.Inning, l.OutsBefore, l.HomeScoreBefore-l.AwayScoreBefore, l.BasesBefore)
 		l.WinExpectancyBefore = 0.5
 		l.WinExpectancyAfter = 0.5

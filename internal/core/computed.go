@@ -280,3 +280,35 @@ type ParkFactorRow struct {
 	FactorIFFB *int `json:"factor_iffb,omitempty"` // infield fly balls
 	FactorFIP  *int `json:"factor_fip,omitempty"`  // FIP
 }
+
+// BaserunningStats represents base running value for a player.
+type BaserunningStats struct {
+	PlayerID PlayerID  `json:"player_id"`
+	TeamID   *TeamID   `json:"team_id,omitempty"`
+	Season   int       `json:"season"`
+	League   *LeagueID `json:"league,omitempty"`
+
+	SB int `json:"sb"` // stolen bases
+	CS int `json:"cs"` // caught stealing
+
+	BaserunningRuns float64 `json:"baserunning_runs"` // wSB (weighted stolen bases)
+}
+
+// FieldingStats represents defensive value for a player.
+type FieldingStats struct {
+	PlayerID PlayerID  `json:"player_id"`
+	TeamID   *TeamID   `json:"team_id,omitempty"`
+	Season   int       `json:"season"`
+	League   *LeagueID `json:"league,omitempty"`
+
+	Position string `json:"position"` // primary position
+	Games    int    `json:"games"`    // games at this position
+
+	Putouts int `json:"putouts"`
+	Assists int `json:"assists"`
+	Errors  int `json:"errors"`
+
+	RangeFactor  float64 `json:"range_factor"`  // player's RF
+	LeagueAvgRF  float64 `json:"league_avg_rf"` // league average RF for position
+	FieldingRuns float64 `json:"fielding_runs"` // runs above/below average
+}

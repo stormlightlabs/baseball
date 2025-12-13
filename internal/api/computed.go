@@ -24,6 +24,9 @@ func NewComputedRoutes(advancedRepo core.AdvancedStatsRepository, leverageRepo c
 func (cr *ComputedRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/players/{player_id}/stats/batting/advanced", cr.handlePlayerAdvancedBatting)
 	mux.HandleFunc("GET /v1/players/{player_id}/stats/pitching/advanced", cr.handlePlayerAdvancedPitching)
+	mux.HandleFunc("GET /v1/players/{player_id}/stats/baserunning", cr.handlePlayerBaserunning)
+	mux.HandleFunc("GET /v1/players/{player_id}/stats/fielding", cr.handlePlayerFielding)
+	mux.HandleFunc("GET /v1/players/{player_id}/stats/war", cr.handlePlayerWAR)
 	mux.HandleFunc("GET /v1/games/{game_id}/plate-appearances/leverage", cr.handleGamePlateLeverages)
 	mux.HandleFunc("GET /v1/parks/{park_id}/factors", cr.handleParkFactor)
 	mux.HandleFunc("GET /v1/parks/{park_id}/factors/series", cr.handleParkFactorSeries)
@@ -246,4 +249,109 @@ func (cr *ComputedRoutes) handleSeasonParkFactors(w http.ResponseWriter, r *http
 	}
 
 	writeJSON(w, http.StatusOK, factors)
+}
+
+// handlePlayerBaserunning godoc
+// @Summary Get baserunning stats
+// @Description Get baserunning value (wSB) for a player
+// @Tags computed, players
+// @Accept json
+// @Produce json
+// @Param player_id path string true "Player ID"
+// @Param season query integer false "Season year" default(2024)
+// @Param team_id query string false "Team ID"
+// @Success 200 {object} core.BaserunningStats
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{player_id}/stats/baserunning [get]
+func (cr *ComputedRoutes) handlePlayerBaserunning(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	playerID := core.PlayerID(r.PathValue("player_id"))
+	season := core.SeasonYear(getIntQuery(r, "season", 2024))
+
+	var teamID *core.TeamID
+	if teamIDStr := r.URL.Query().Get("team_id"); teamIDStr != "" {
+		tid := core.TeamID(teamIDStr)
+		teamID = &tid
+	}
+
+	stats, err := cr.advancedRepo.PlayerBaserunning(ctx, playerID, season, teamID)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, stats)
+}
+
+// handlePlayerFielding godoc
+// @Summary Get fielding stats
+// @Description Get fielding runs above average for a player
+// @Tags computed, players
+// @Accept json
+// @Produce json
+// @Param player_id path string true "Player ID"
+// @Param season query integer false "Season year" default(2024)
+// @Param team_id query string false "Team ID"
+// @Success 200 {object} core.FieldingStats
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{player_id}/stats/fielding [get]
+func (cr *ComputedRoutes) handlePlayerFielding(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	playerID := core.PlayerID(r.PathValue("player_id"))
+	season := core.SeasonYear(getIntQuery(r, "season", 2024))
+
+	var teamID *core.TeamID
+	if teamIDStr := r.URL.Query().Get("team_id"); teamIDStr != "" {
+		tid := core.TeamID(teamIDStr)
+		teamID = &tid
+	}
+
+	stats, err := cr.advancedRepo.PlayerFielding(ctx, playerID, season, teamID)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, stats)
+}
+
+// handlePlayerWAR godoc
+// @Summary Get WAR
+// @Description Get Wins Above Replacement and component breakdown for a player
+// @Tags computed, players
+// @Accept json
+// @Produce json
+// @Param player_id path string true "Player ID"
+// @Param season query integer false "Season year" default(2024)
+// @Param team_id query string false "Team ID"
+// @Success 200 {object} core.PlayerWARSummary
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{player_id}/stats/war [get]
+func (cr *ComputedRoutes) handlePlayerWAR(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	playerID := core.PlayerID(r.PathValue("player_id"))
+	filter := core.WARFilter{}
+	if seasonStr := r.URL.Query().Get("season"); seasonStr != "" {
+		season := core.SeasonYear(getIntQuery(r, "season", 2024))
+		filter.Season = &season
+	}
+
+	if teamIDStr := r.URL.Query().Get("team_id"); teamIDStr != "" {
+		teamID := core.TeamID(teamIDStr)
+		filter.TeamID = &teamID
+	}
+
+	war, err := cr.advancedRepo.PlayerWAR(ctx, playerID, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, war)
 }

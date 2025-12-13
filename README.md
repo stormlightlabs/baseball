@@ -481,5 +481,5 @@ This project uses data from:
 [Retrosheet.org](https://www.retrosheet.org/)
 - **MLB**: This project and its author are not affiliated with MLB or any MLB team. This REST API interfaces with MLB's Stats API.
 Use of MLB data is subject to the notice posted at <http://gdx.mlb.com/components/copyright.txt> (is also available in every request)
-- wOBA weights, league wOBA, wOBA scale, FIP constants, and park factors are taken from [FanGraphs’ Guts! tool](https://www.fangraphs.com/tools/guts).
-wOBA definitions follow Tom Tango’s formulation as documented in the FanGraphs Library.
+- wOBA weights, league wOBA, wOBA scale, FIP constants, and park factors are taken from [FanGraphs' Guts! tool](https://www.fangraphs.com/tools/guts).
+wOBA definitions follow Tom Tango's formulation as documented in the FanGraphs Library.
