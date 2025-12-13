@@ -13,12 +13,8 @@ type ComputedRoutes struct {
 	parkFactorRepo core.ParkFactorRepository
 }
 
-func NewComputedRoutes(advancedRepo core.AdvancedStatsRepository, leverageRepo core.LeverageRepository, parkFactorRepo core.ParkFactorRepository) *ComputedRoutes {
-	return &ComputedRoutes{
-		advancedRepo:   advancedRepo,
-		leverageRepo:   leverageRepo,
-		parkFactorRepo: parkFactorRepo,
-	}
+func NewComputedRoutes(a core.AdvancedStatsRepository, l core.LeverageRepository, p core.ParkFactorRepository) *ComputedRoutes {
+	return &ComputedRoutes{advancedRepo: a, leverageRepo: l, parkFactorRepo: p}
 }
 
 func (cr *ComputedRoutes) RegisterRoutes(mux *http.ServeMux) {

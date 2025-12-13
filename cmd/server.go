@@ -306,8 +306,9 @@ func startServer(cmd *cobra.Command, args []string) error {
 	rateLimiter := middleware.NewRateLimiter(redisClient, cfg.Server.DebugMode, 60, time.Minute)
 
 	var handler http.Handler = server
-	bind := middleware.Logger(logger)
-	handler = bind(handler)
+	handler = middleware.Logger(logger)(handler)
+	handler = middleware.MetricsMiddleware(nil)(handler)
+	handler = middleware.TraceMiddleware(handler)
 
 	if !cfg.Server.DebugMode && redisClient != nil {
 		handler = rateLimiter.Middleware(handler)
@@ -321,6 +322,8 @@ func startServer(cmd *cobra.Command, args []string) error {
 	}
 
 	echo.Info("✓ Request logging enabled")
+	echo.Info("✓ Metrics tracking enabled (/debug/vars)")
+	echo.Info("✓ Request tracing enabled (X-Trace-ID)")
 
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	echo.Success(fmt.Sprintf("✓ Server starting on %s", addr))

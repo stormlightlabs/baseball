@@ -23,6 +23,7 @@ package api
 
 import (
 	"database/sql"
+	_ "expvar"
 	"net/http"
 
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -115,6 +116,7 @@ func newServer(registrars ...Registrar) *Server {
 		http.Redirect(w, r, "/docs/", http.StatusMovedPermanently)
 	})
 
+	mux.Handle("GET /debug/vars", http.DefaultServeMux)
 	return &Server{mux: mux}
 }
 
