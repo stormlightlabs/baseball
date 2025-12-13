@@ -214,3 +214,69 @@ type ParkFactor struct {
 	Provider     string `json:"provider"`      // "internal", "fangraphs-like", etc.
 	MultiYear    bool   `json:"multi_year"`    // if you averaged multiple seasons
 }
+
+// WOBAConstant represents season-specific weights and constants for wOBA calculation.
+type WOBAConstant struct {
+	Season int `json:"season"`
+
+	// wOBA weights for each event type
+	WBB  float64 `json:"w_bb"`  // unintentional walk
+	WHBP float64 `json:"w_hbp"` // hit by pitch
+	W1B  float64 `json:"w_1b"`  // single
+	W2B  float64 `json:"w_2b"`  // double
+	W3B  float64 `json:"w_3b"`  // triple
+	WHR  float64 `json:"w_hr"`  // home run
+
+	// wOBA scale and league average
+	WOBAScale float64 `json:"woba_scale"` // scaling factor
+	WOBA      float64 `json:"woba"`       // league average wOBA
+
+	// Base running run values
+	RunSB float64 `json:"run_sb"` // stolen base runs
+	RunCS float64 `json:"run_cs"` // caught stealing runs
+
+	// League context
+	RPA float64 `json:"r_pa"` // runs per plate appearance
+	RW  float64 `json:"r_w"`  // runs per win
+
+	CFIP float64 `json:"c_fip"` // FIP constant
+}
+
+// LeagueConstant represents league-specific constants for park/league adjustments.
+type LeagueConstant struct {
+	Season int      `json:"season"`
+	League LeagueID `json:"league"` // AL or NL
+
+	WOBAAvg       *float64 `json:"woba_avg,omitempty"`       // league average wOBA
+	WRCPerPA      *float64 `json:"wrc_per_pa,omitempty"`     // wRC per PA (excluding pitchers)
+	RunsPerWin    *float64 `json:"runs_per_win,omitempty"`   // league-specific runs per win
+	ReplacementPA *float64 `json:"replacement_pa,omitempty"` // replacement level runs per PA
+
+	TotalPA   *int64 `json:"total_pa,omitempty"`   // total plate appearances
+	TotalRuns *int64 `json:"total_runs,omitempty"` // total runs scored
+}
+
+// ParkFactorRow represents detailed park factors from FanGraphs for a specific park/season.
+type ParkFactorRow struct {
+	ParkID string  `json:"park_id"`
+	Season int     `json:"season"`
+	TeamID *TeamID `json:"team_id,omitempty"` // team playing at this park
+
+	// Overall park factors (100 = neutral, >100 = hitter-friendly)
+	Basic5yr *int `json:"basic_5yr,omitempty"` // 5-year regressed (most stable)
+	Basic3yr *int `json:"basic_3yr,omitempty"` // 3-year regressed
+	Basic1yr *int `json:"basic_1yr,omitempty"` // single year (most volatile)
+
+	// Component park factors
+	Factor1B   *int `json:"factor_1b,omitempty"`   // singles
+	Factor2B   *int `json:"factor_2b,omitempty"`   // doubles
+	Factor3B   *int `json:"factor_3b,omitempty"`   // triples
+	FactorHR   *int `json:"factor_hr,omitempty"`   // home runs
+	FactorSO   *int `json:"factor_so,omitempty"`   // strikeouts
+	FactorBB   *int `json:"factor_bb,omitempty"`   // walks
+	FactorGB   *int `json:"factor_gb,omitempty"`   // ground balls
+	FactorFB   *int `json:"factor_fb,omitempty"`   // fly balls
+	FactorLD   *int `json:"factor_ld,omitempty"`   // line drives
+	FactorIFFB *int `json:"factor_iffb,omitempty"` // infield fly balls
+	FactorFIP  *int `json:"factor_fip,omitempty"`  // FIP
+}

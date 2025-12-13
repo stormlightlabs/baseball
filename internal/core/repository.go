@@ -168,6 +168,15 @@ type MetaRepository interface {
 
 	// SchemaHashes returns hashes grouped by migration family/dataset.
 	SchemaHashes(ctx context.Context) (map[string]string, error)
+
+	// WOBAConstants returns wOBA calculation constants for a specific season.
+	WOBAConstants(ctx context.Context, season *SeasonYear) ([]WOBAConstant, error)
+
+	// LeagueConstants returns league-specific constants for wRC+ calculations.
+	LeagueConstants(ctx context.Context, season *SeasonYear, league *LeagueID) ([]LeagueConstant, error)
+
+	// ParkFactors returns park factors for all parks in a season.
+	ParkFactors(ctx context.Context, season *SeasonYear, teamID *TeamID) ([]ParkFactorRow, error)
 }
 
 // SearchRepository lets you do fuzzy lookups across entities.
