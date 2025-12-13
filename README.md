@@ -58,6 +58,9 @@ task build
 # Reseed everything (accepts Lahman/Retrosheet-specific subcommands and year ranges)
 ./tmp/baseball db reset --years 2023-2025
 ./tmp/baseball db populate --csv-dir ./data/lahman/csv --years 2023
+
+# Build win expectancy data from play-by-play
+./tmp/baseball db populate win-expectancy --min-sample-size 50
 ```
 
 #### Server
@@ -275,7 +278,7 @@ Response includes:
 
 #### Game Win Probability
 
-Get play-by-play win probability curves showing how leverage shifted throughout a game.
+Get play-by-play win probability curves showing how leverage shifted throughout a game. Win probabilities are calculated using **historical game state data** from 2023-2025, providing statistically accurate probabilities based on actual outcomes.
 
 **Endpoint:** `GET /v1/games/{game_id}/win-probability`
 
@@ -292,8 +295,79 @@ curl "/v1/games/BAL202404010/win-probability"
 Response includes each event with:
 
 - Event index, inning, and game state (score, outs, bases)
-- Home/away win probabilities (0.0-1.0)
+- Home/away win probabilities (0.0-1.0) based on historical data
 - Play description
+
+Try the demo script:
+
+```bash
+./sandbox/test_win_probability.sh
+```
+
+</details>
+
+<details>
+<summary>
+Implementation
+</summary>
+
+Win probabilities are calculated from the `win_expectancy_historical` table, which contains win rates for 2,143 unique game states (inning, outs, runners, score differential) computed from actual game outcomes.
+
+The system falls back to a simplified linear model only when historical data is unavailable for a specific game state.
+
+</details>
+
+#### Win Expectancy
+
+Query historical win expectancy data for any game situation. Win expectancy represents the probability that the home team wins from a specific game state, based on analysis of actual game outcomes.
+
+**Endpoints:**
+
+- `GET /v1/win-expectancy` - Look up win probability for a game state
+- `GET /v1/win-expectancy/eras` - List available historical eras
+
+<details>
+<summary>
+Parameters
+</summary>
+
+**Required:**
+
+- `inning` - Inning number (1-9)
+- `is_bottom` - Bottom of inning (`true`/`false`)
+- `outs` - Number of outs (0-2)
+- `runners` - Base state (e.g., `___`, `1__`, `12_`, `123`)
+- `score_diff` - Score differential from home team perspective (-11 to +11)
+
+**Optional:**
+
+- `start_year` - Filter by historical era start year
+- `end_year` - Filter by historical era end year
+
+</details>
+
+<details>
+<summary>
+Examples
+</summary>
+
+```bash
+# Bottom 9th, 2 outs, bases empty, tied game
+curl "/v1/win-expectancy?inning=9&is_bottom=true&outs=2&runners=___&score_diff=0"
+# → 52.4% home win probability (437 samples)
+
+# Bottom 9th, bases loaded, no outs, tied game
+curl "/v1/win-expectancy?inning=9&is_bottom=true&outs=0&runners=123&score_diff=0"
+# → 93.0% home win probability (57 samples)
+
+# Bottom 1st, 1 out, bases empty, tied
+curl "/v1/win-expectancy?inning=1&is_bottom=true&outs=1&runners=___&score_diff=0"
+# → 55.0% home win probability (3,618 samples)
+
+# List available historical eras
+curl "/v1/win-expectancy/eras"
+# → [{"label":"2023-2025 Era","state_count":2143,"total_sample":501834}]
+```
 
 </details>
 
@@ -304,9 +378,10 @@ Implementation
 
 Derived analytics are computed on-demand from play-by-play data using:
 
+- **Historical win expectancy** lookups for accurate probability calculations
 - **Gaps and islands** technique for streak identification
 - **Window functions** for rolling aggregates
-- **Simplified win probability model** based on score differential and inning
+- **Fallback models** when historical data is unavailable
 
 </details>
 

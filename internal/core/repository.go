@@ -292,7 +292,6 @@ type DerivedStatsRepository interface {
 	TeamRunDifferential(ctx context.Context, teamID TeamID, season SeasonYear, windows []int) (*RunDifferentialSeries, error)
 
 	// GameWinProbability returns win probability curve for a game
-	// TODO: historical win expectancy tables
 	GameWinProbability(ctx context.Context, gameID GameID) (*WinProbabilityCurve, error)
 
 	// PlayerSplits calculates batting splits for a player by dimension

@@ -33,11 +33,15 @@ var playerSplitsPitcherHandedQuery string
 var playerSplitsMonthQuery string
 
 type DerivedStatsRepository struct {
-	db *sql.DB
+	db     *sql.DB
+	weRepo *WinExpectancyRepository
 }
 
 func NewDerivedStatsRepository(db *sql.DB) *DerivedStatsRepository {
-	return &DerivedStatsRepository{db: db}
+	return &DerivedStatsRepository{
+		db:     db,
+		weRepo: NewWinExpectancyRepository(db),
+	}
 }
 
 // PlayerStreaks retrieves hitting or scoreless innings streaks for a player.
@@ -236,14 +240,9 @@ func (r *DerivedStatsRepository) GameWinProbability(ctx context.Context, gameID 
 		var topOfInning bool
 
 		err = rows.Scan(
-			&p.EventIndex,
-			&p.Inning,
-			&topOfInning,
-			&p.HomeScore,
-			&p.AwayScore,
-			&p.Outs,
-			&p.Bases,
-			&p.Description,
+			&p.EventIndex, &p.Inning, &topOfInning,
+			&p.HomeScore, &p.AwayScore,
+			&p.Outs, &p.Bases, &p.Description,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan play: %w", err)
@@ -270,22 +269,31 @@ func (r *DerivedStatsRepository) GameWinProbability(ctx context.Context, gameID 
 	return curve, nil
 }
 
-// calculateWinProbability is a simplified win probability model.
-// Algorithm
-//   - we use a simplified model based on score differential and inning
-//   - Base probability from comes from score differential, starting at 0.5, where each run is worth about 15% win probability
-//   - If it's late in the game, score differential matters more
-//
-// TODO: historical win expectancy tables based on game state.
-func (r *DerivedStatsRepository) calculateWinProbability(inning int, topOfInning bool, homeScore, awayScore, outs int, _ string) (float64, float64) {
-	scoreDiff := homeScore - awayScore
+// calculateWinProbability uses historical win expectancy data to determine win probability.
+// Falls back to a simplified model if no historical data is available for the game state.
+func (r *DerivedStatsRepository) calculateWinProbability(inning int, isTop bool, hScore, aScore, outs int, bases string) (float64, float64) {
+	runnersCode := convertBasesToRunnersCode(bases)
+	state := core.GameState{
+		Inning:      inning,
+		IsBottom:    !isTop,
+		Outs:        outs,
+		RunnersCode: runnersCode,
+		ScoreDiff:   hScore - aScore,
+	}
+
+	we, err := r.weRepo.GetWinExpectancy(context.Background(), state)
+	if err == nil && we != nil {
+		return we.WinProbability, 1.0 - we.WinProbability
+	}
+
+	scoreDiff := hScore - aScore
 	baseProb := 0.5
 	if scoreDiff != 0 {
 		baseProb = 0.5 + (float64(scoreDiff) * 0.15)
 	}
 
 	inningsRemaining := 9.0 - float64(inning)
-	if topOfInning {
+	if isTop {
 		inningsRemaining += 0.5
 	}
 
@@ -297,9 +305,9 @@ func (r *DerivedStatsRepository) calculateWinProbability(inning int, topOfInning
 		}
 	}
 
-	if inning >= 9 && !topOfInning && homeScore > awayScore {
+	if inning >= 9 && !isTop && hScore > aScore {
 		baseProb = 1.0
-	} else if inning >= 9 && topOfInning && outs == 3 && homeScore < awayScore {
+	} else if inning >= 9 && isTop && outs == 3 && hScore < aScore {
 		baseProb = 0.0
 	}
 
@@ -360,19 +368,12 @@ func (r *DerivedStatsRepository) PlayerSplits(
 		var metaValue sql.NullString
 
 		err = rows.Scan(
-			&group.Key,
-			&group.Label,
+			&group.Key, &group.Label,
 			&metaValue,
 			&group.Games,
-			&group.PA,
-			&group.AB,
-			&group.H,
-			&group.HR,
-			&group.BB,
-			&group.SO,
-			&avg,
-			&obp,
-			&slg,
+			&group.PA, &group.AB, &group.H,
+			&group.HR, &group.BB, &group.SO,
+			&avg, &obp, &slg,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan split group: %w", err)
@@ -407,4 +408,22 @@ func (r *DerivedStatsRepository) PlayerSplits(
 func roundFloat(val float64, precision int) float64 {
 	ratio := math.Pow(10, float64(precision))
 	return math.Round(val*ratio) / ratio
+}
+
+// convertBasesToRunnersCode converts bases format from "000"/"100"/"111" to "___"/"1__"/"123".
+func convertBasesToRunnersCode(bases string) string {
+	if len(bases) != 3 {
+		return "___"
+	}
+
+	result := ""
+	for i, ch := range bases {
+		if ch == '1' {
+			result += fmt.Sprintf("%d", i+1)
+		} else {
+			result += "_"
+		}
+	}
+
+	return result
 }

@@ -54,6 +54,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 	postseasonRepo := repository.NewPostseasonRepository(db)
 	ejectionRepo := repository.NewEjectionRepository(db)
 	derivedRepo := repository.NewDerivedStatsRepository(db)
+	weRepo := repository.NewWinExpectancyRepository(db)
 
 	advancedStatsRepo := repository.NewAdvancedStatsRepository(db)
 	leverageRepo := repository.NewLeverageRepository(db)
@@ -81,7 +82,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewAllStarRoutes(awardRepo),
 		NewSearchRoutes(playerRepo, teamRepo, parkRepo, gameRepo),
 		NewEjectionRoutes(ejectionRepo),
-		NewDerivedRoutes(derivedRepo),
+		NewDerivedRoutes(derivedRepo, weRepo),
 		NewComputedRoutes(advancedStatsRepo, leverageRepo, parkFactorRepo),
 		NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
 		NewUIRoutes(apiKeyRepo),

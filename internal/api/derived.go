@@ -10,11 +10,15 @@ import (
 )
 
 type DerivedRoutes struct {
-	repo core.DerivedStatsRepository
+	repo   core.DerivedStatsRepository
+	weRepo core.WinExpectancyRepository
 }
 
-func NewDerivedRoutes(repo core.DerivedStatsRepository) *DerivedRoutes {
-	return &DerivedRoutes{repo: repo}
+func NewDerivedRoutes(repo core.DerivedStatsRepository, weRepo core.WinExpectancyRepository) *DerivedRoutes {
+	return &DerivedRoutes{
+		repo:   repo,
+		weRepo: weRepo,
+	}
 }
 
 func (dr *DerivedRoutes) RegisterRoutes(mux *http.ServeMux) {
@@ -22,6 +26,8 @@ func (dr *DerivedRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/players/{player_id}/splits", dr.handlePlayerSplits)
 	mux.HandleFunc("GET /v1/teams/{team_id}/run-differential", dr.handleTeamRunDifferential)
 	mux.HandleFunc("GET /v1/games/{game_id}/win-probability", dr.handleGameWinProbability)
+	mux.HandleFunc("GET /v1/win-expectancy", dr.handleGetWinExpectancy)
+	mux.HandleFunc("GET /v1/win-expectancy/eras", dr.handleListWinExpectancyEras)
 }
 
 // handlePlayerStreaks godoc
@@ -197,4 +203,111 @@ func (dr *DerivedRoutes) handlePlayerSplits(w http.ResponseWriter, r *http.Reque
 	}
 
 	writeJSON(w, http.StatusOK, splits)
+}
+
+// handleGetWinExpectancy godoc
+// @Summary Get win expectancy for a game state
+// @Description Get the historical win probability for a specific game situation
+// @Tags derived, win-expectancy
+// @Accept json
+// @Produce json
+// @Param inning query integer true "Inning (1-9)"
+// @Param is_bottom query boolean true "Bottom of inning (true/false)"
+// @Param outs query integer true "Outs (0-2)"
+// @Param runners query string true "Runners state (e.g., ___, 1__, 12_, 123)"
+// @Param score_diff query integer true "Score differential from home team perspective (-11 to +11)"
+// @Param start_year query integer false "Start year for historical era filter"
+// @Param end_year query integer false "End year for historical era filter"
+// @Success 200 {object} core.WinExpectancy
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /win-expectancy [get]
+func (dr *DerivedRoutes) handleGetWinExpectancy(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Parse required parameters
+	inning := getIntQuery(r, "inning", 0)
+	if inning < 1 || inning > 9 {
+		writeBadRequest(w, "inning must be between 1 and 9")
+		return
+	}
+
+	isBottomStr := r.URL.Query().Get("is_bottom")
+	if isBottomStr == "" {
+		writeBadRequest(w, "is_bottom query parameter required (true or false)")
+		return
+	}
+	isBottom := isBottomStr == "true"
+
+	outs := getIntQuery(r, "outs", -1)
+	if outs < 0 || outs > 2 {
+		writeBadRequest(w, "outs must be between 0 and 2")
+		return
+	}
+
+	runners := r.URL.Query().Get("runners")
+	if runners == "" {
+		writeBadRequest(w, "runners query parameter required (e.g., ___, 1__, 123)")
+		return
+	}
+
+	scoreDiff := getIntQuery(r, "score_diff", 0)
+
+	state := core.GameState{
+		Inning:      inning,
+		IsBottom:    isBottom,
+		Outs:        outs,
+		RunnersCode: runners,
+		ScoreDiff:   scoreDiff,
+	}
+
+	startYearStr := r.URL.Query().Get("start_year")
+	endYearStr := r.URL.Query().Get("end_year")
+
+	var we *core.WinExpectancy
+	var err error
+
+	if startYearStr != "" || endYearStr != "" {
+		var startYear, endYear *int
+		if startYearStr != "" {
+			y := getIntQuery(r, "start_year", 0)
+			startYear = &y
+		}
+		if endYearStr != "" {
+			y := getIntQuery(r, "end_year", 0)
+			endYear = &y
+		}
+		we, err = dr.weRepo.GetWinExpectancyForEra(ctx, state, startYear, endYear)
+	} else {
+		we, err = dr.weRepo.GetWinExpectancy(ctx, state)
+	}
+
+	if err != nil {
+		writeNotFound(w, "win expectancy data for this game state")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, we)
+}
+
+// handleListWinExpectancyEras godoc
+// @Summary List available win expectancy eras
+// @Description Get all available historical eras in the win expectancy database
+// @Tags derived, win-expectancy
+// @Accept json
+// @Produce json
+// @Success 200 {array} core.WinExpectancyEra
+// @Failure 500 {object} ErrorResponse
+// @Router /win-expectancy/eras [get]
+func (dr *DerivedRoutes) handleListWinExpectancyEras(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	eras, err := dr.weRepo.ListAvailableEras(ctx)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, eras)
 }
