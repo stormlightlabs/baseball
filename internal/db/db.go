@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"encoding/csv"
 	"fmt"
 	"io"
 	"os"
@@ -587,4 +588,161 @@ func (db *DB) DatasetRefreshes(ctx context.Context) (map[string]DatasetRefresh, 
 	}
 
 	return result, nil
+}
+
+// LoadFanGraphsWOBA loads wOBA constants from FanGraphs CSV into the database.
+// CSV format: Season,wOBA,wOBAScale,wBB,wHBP,w1B,w2B,w3B,wHR,runSB,runCS,R/PA,R/W,cFIP
+func (db *DB) LoadFanGraphsWOBA(ctx context.Context, csvPath string) (int64, error) {
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open wOBA CSV: %w", err)
+	}
+	defer file.Close()
+
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for wOBA load: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	if _, err := conn.Exec(ctx, "TRUNCATE TABLE woba_constants"); err != nil {
+		return 0, fmt.Errorf("failed to truncate woba_constants: %w", err)
+	}
+
+	copyQuery := `
+		COPY woba_constants (season, woba, woba_scale, w_bb, w_hbp, w_1b, w_2b, w_3b, w_hr, run_sb, run_cs, r_pa, r_w, c_fip)
+		FROM STDIN WITH (FORMAT CSV, HEADER true)
+	`
+
+	tag, err := conn.PgConn().CopyFrom(ctx, file, copyQuery)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy wOBA data: %w", err)
+	}
+
+	return tag.RowsAffected(), nil
+}
+
+// LoadFanGraphsParks loads park factors from FanGraphs CSV into the database.
+// CSV format: Season,Team,Basic (5yr),3yr,1yr,1B,2B,3B,HR,SO,BB,GB,FB,LD,IFFB,FIP
+func (db *DB) LoadFanGraphsParks(ctx context.Context, csvPath string) (int64, error) {
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open park factors CSV: %w", err)
+	}
+	defer file.Close()
+
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for park factors load: %w", err)
+	}
+	defer conn.Close(ctx)
+	return db.loadParkFactorsWithTransform(ctx, conn, csvPath)
+}
+
+// loadParkFactorsWithTransform reads CSV and transforms data before inserting
+func (db *DB) loadParkFactorsWithTransform(ctx context.Context, conn *pgx.Conn, csvPath string) (int64, error) {
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	reader := csvReader(file)
+	header, err := reader.Read()
+	if err != nil {
+		return 0, fmt.Errorf("failed to read header: %w", err)
+	}
+
+	colIdx := make(map[string]int)
+	for i, name := range header {
+		colIdx[name] = i
+	}
+
+	query := `
+		INSERT INTO park_factors (
+			park_id, season, team_id,
+			basic_5yr, basic_3yr, basic_1yr,
+			factor_1b, factor_2b, factor_3b, factor_hr,
+			factor_so, factor_bb, factor_gb, factor_fb,
+			factor_ld, factor_iffb, factor_fip
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+		ON CONFLICT (park_id, season) DO UPDATE SET
+			team_id = EXCLUDED.team_id,
+			basic_5yr = EXCLUDED.basic_5yr,
+			basic_3yr = EXCLUDED.basic_3yr,
+			basic_1yr = EXCLUDED.basic_1yr,
+			factor_1b = EXCLUDED.factor_1b,
+			factor_2b = EXCLUDED.factor_2b,
+			factor_3b = EXCLUDED.factor_3b,
+			factor_hr = EXCLUDED.factor_hr,
+			factor_so = EXCLUDED.factor_so,
+			factor_bb = EXCLUDED.factor_bb,
+			factor_gb = EXCLUDED.factor_gb,
+			factor_fb = EXCLUDED.factor_fb,
+			factor_ld = EXCLUDED.factor_ld,
+			factor_iffb = EXCLUDED.factor_iffb,
+			factor_fip = EXCLUDED.factor_fip
+	`
+
+	var rowCount int64
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return rowCount, fmt.Errorf("failed to read row: %w", err)
+		}
+
+		season := record[colIdx["Season"]]
+		fangraphsTeam := record[colIdx["Team"]]
+
+		var parkID, teamID string
+		lookupQuery := `
+			SELECT primary_park_id, retrosheet_team_id
+			FROM fangraphs_team_park_map
+			WHERE fangraphs_team = $1
+			  AND (start_year IS NULL OR start_year <= $2::int)
+			  AND (end_year IS NULL OR end_year >= $2::int)
+		`
+		err = conn.QueryRow(ctx, lookupQuery, fangraphsTeam, season).Scan(&parkID, &teamID)
+		if err != nil {
+			return rowCount, fmt.Errorf("failed to map team %s: %w (check fangraphs_team_park_map table)", fangraphsTeam, err)
+		}
+
+		_, err = conn.Exec(ctx, query,
+			parkID,                        // $1 park_id
+			season,                        // $2 season
+			teamID,                        // $3 team_id
+			record[colIdx["Basic (5yr)"]], // $4 basic_5yr
+			record[colIdx["3yr"]],         // $5 basic_3yr
+			record[colIdx["1yr"]],         // $6 basic_1yr
+			record[colIdx["1B"]],          // $7 factor_1b
+			record[colIdx["2B"]],          // $8 factor_2b
+			record[colIdx["3B"]],          // $9 factor_3b
+			record[colIdx["HR"]],          // $10 factor_hr
+			record[colIdx["SO"]],          // $11 factor_so
+			record[colIdx["BB"]],          // $12 factor_bb
+			record[colIdx["GB"]],          // $13 factor_gb
+			record[colIdx["FB"]],          // $14 factor_fb
+			record[colIdx["LD"]],          // $15 factor_ld
+			record[colIdx["IFFB"]],        // $16 factor_iffb
+			record[colIdx["FIP"]],         // $17 factor_fip
+		)
+
+		if err != nil {
+			return rowCount, fmt.Errorf("failed to insert park factor for %s/%s: %w", teamID, season, err)
+		}
+
+		rowCount++
+	}
+
+	return rowCount, nil
+}
+
+// csvReader creates a CSV reader with common settings
+func csvReader(r io.Reader) *csv.Reader {
+	reader := csv.NewReader(r)
+	reader.TrimLeadingSpace = true
+	return reader
 }

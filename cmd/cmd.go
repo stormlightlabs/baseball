@@ -67,6 +67,7 @@ func EtlLoadCmd() *cobra.Command {
 
 	cmd.AddCommand(LahmanLoadCmd())
 	cmd.AddCommand(RetrosheetLoadCmd())
+	cmd.AddCommand(FanGraphsLoadCmd())
 	return cmd
 }
 
@@ -107,6 +108,16 @@ func RetrosheetLoadCmd() *cobra.Command {
 		Short: "Load Retrosheet data into database",
 		Long:  "Load Retrosheet CSV files into PostgreSQL database.",
 		RunE:  loadRetrosheet,
+	}
+}
+
+// FanGraphsLoadCmd creates the load fangraphs command
+func FanGraphsLoadCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "fangraphs",
+		Short: "Load FanGraphs constants into database",
+		Long:  "Load FanGraphs wOBA constants and park factors from CSV files.",
+		RunE:  loadFanGraphs,
 	}
 }
 
@@ -724,4 +735,69 @@ func runPopulateAll(cmd *cobra.Command, csvDir, dataDir, yearsFlag string) error
 	}
 
 	return populateRetrosheet(cmd, dataDir, yearsFlag)
+}
+
+func loadFanGraphs(cmd *cobra.Command, args []string) error {
+	echo.Header("Loading FanGraphs Data")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	ctx := cmd.Context()
+
+	// Load wOBA constants
+	wobaFile := "data/fangraphs/woba.csv"
+	echo.Info("Loading wOBA constants...")
+
+	if _, err := os.Stat(wobaFile); os.IsNotExist(err) {
+		return fmt.Errorf("error: wOBA constants file not found: %s", wobaFile)
+	}
+
+	wobaRows, err := database.LoadFanGraphsWOBA(ctx, wobaFile)
+	if err != nil {
+		return fmt.Errorf("error: failed to load wOBA constants: %w", err)
+	}
+
+	echo.Successf("✓ Loaded wOBA constants (%d rows)", wobaRows)
+
+	// Load park factors
+	parkFactorDir := "data/fangraphs/pf"
+	echo.Info("Loading park factors...")
+
+	files, err := filepath.Glob(filepath.Join(parkFactorDir, "*.csv"))
+	if err != nil {
+		return fmt.Errorf("error: failed to list park factor files: %w", err)
+	}
+
+	if len(files) == 0 {
+		echo.Info("  No park factor files found")
+		return nil
+	}
+
+	totalParkRows := int64(0)
+	for _, file := range files {
+		basename := filepath.Base(file)
+		echo.Infof("  Loading %s...", basename)
+
+		rows, err := database.LoadFanGraphsParks(ctx, file)
+		if err != nil {
+			return fmt.Errorf("error: failed to load %s: %w", basename, err)
+		}
+
+		totalParkRows += rows
+		echo.Successf("  ✓ Loaded %s (%d rows)", basename, rows)
+	}
+
+	echo.Info("")
+	echo.Success("✓ All FanGraphs data loaded successfully")
+	echo.Infof("  wOBA constants: %d rows", wobaRows)
+	echo.Infof("  Park factors: %d rows", totalParkRows)
+
+	return nil
 }

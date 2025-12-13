@@ -53,7 +53,7 @@ func (r *AdvancedStatsRepository) PlayerAdvancedBatting(ctx context.Context, pla
 	row := r.db.QueryRowContext(ctx, playerAdvancedBattingQuery, string(playerID), season, teamID)
 
 	var stats core.AdvancedBattingStats
-	var teamIDResult sql.NullString
+	var teamIDResult, leagueIDResult sql.NullString
 
 	err := row.Scan(
 		&stats.PA,
@@ -76,7 +76,11 @@ func (r *AdvancedStatsRepository) PlayerAdvancedBatting(ctx context.Context, pla
 		&stats.KRate,
 		&stats.BBRate,
 		&stats.WOBA,
+		&stats.WRAA,
+		&stats.WRC,
+		&stats.WRCPlus,
 		&teamIDResult,
+		&leagueIDResult,
 	)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("no batting stats found for player %s in season %d", playerID, season)
@@ -91,15 +95,21 @@ func (r *AdvancedStatsRepository) PlayerAdvancedBatting(ctx context.Context, pla
 		stats.TeamID = &tid
 	}
 
+	var leagueID *core.LeagueID
+	if leagueIDResult.Valid {
+		lid := core.LeagueID(leagueIDResult.String)
+		leagueID = &lid
+	}
+
 	stats.Context = core.StatContext{
 		Season:      core.SeasonYear(season),
+		League:      leagueID,
 		Provider:    core.StatProviderInternal,
 		ParkNeutral: false,
 		RegSeason:   true,
 	}
 
 	stats.OPS = stats.OBP + stats.SLG
-	stats.WRCPlus = 100
 	return &stats, nil
 }
 
