@@ -15,8 +15,14 @@ definitions:
         type: array
       league:
         type: string
+      page:
+        type: integer
+      per_page:
+        type: integer
       stat:
         type: string
+      total:
+        type: integer
       year:
         type: integer
     type: object
@@ -26,8 +32,14 @@ definitions:
         items:
           $ref: '#/definitions/core.PlayerBattingSeason'
         type: array
+      page:
+        type: integer
+      per_page:
+        type: integer
       stat:
         type: string
+      total:
+        type: integer
     type: object
   api.CareerPitchingLeadersResponse:
     properties:
@@ -35,8 +47,14 @@ definitions:
         items:
           $ref: '#/definitions/core.PlayerPitchingSeason'
         type: array
+      page:
+        type: integer
+      per_page:
+        type: integer
       stat:
         type: string
+      total:
+        type: integer
     type: object
   api.ErrorResponse:
     properties:
@@ -86,8 +104,14 @@ definitions:
         type: array
       league:
         type: string
+      page:
+        type: integer
+      per_page:
+        type: integer
       stat:
         type: string
+      total:
+        type: integer
       year:
         type: integer
     type: object
@@ -359,6 +383,26 @@ definitions:
       name:
         type: string
     type: object
+  core.BaserunningStats:
+    properties:
+      baserunning_runs:
+        description: wSB (weighted stolen bases)
+        type: number
+      cs:
+        description: caught stealing
+        type: integer
+      league:
+        type: string
+      player_id:
+        type: string
+      sb:
+        description: stolen bases
+        type: integer
+      season:
+        type: integer
+      team_id:
+        type: string
+    type: object
   core.Boxscore:
     properties:
       away_lineup:
@@ -407,6 +451,38 @@ definitions:
           format: int64
           type: integer
         type: object
+    type: object
+  core.FieldingStats:
+    properties:
+      assists:
+        type: integer
+      errors:
+        type: integer
+      fielding_runs:
+        description: runs above/below average
+        type: number
+      games:
+        description: games at this position
+        type: integer
+      league:
+        type: string
+      league_avg_rf:
+        description: league average RF for position
+        type: number
+      player_id:
+        type: string
+      position:
+        description: primary position
+        type: string
+      putouts:
+        type: integer
+      range_factor:
+        description: player's RF
+        type: number
+      season:
+        type: integer
+      team_id:
+        type: string
     type: object
   core.Franchise:
     properties:
@@ -466,6 +542,25 @@ definitions:
       ump_third:
         type: string
     type: object
+  core.GameWinProbabilitySummary:
+    properties:
+      away_team:
+        type: string
+      biggest_negative_swing:
+        $ref: '#/definitions/core.PlateAppearanceLeverage'
+      biggest_positive_swing:
+        $ref: '#/definitions/core.PlateAppearanceLeverage'
+      game_id:
+        type: string
+      home_team:
+        type: string
+      home_win_prob_end:
+        type: number
+      home_win_prob_start:
+        type: number
+      season:
+        type: integer
+    type: object
   core.HallOfFameRecord:
     properties:
       ballots:
@@ -482,6 +577,32 @@ definitions:
         type: integer
       year:
         type: integer
+    type: object
+  core.LeagueConstant:
+    properties:
+      league:
+        description: AL or NL
+        type: string
+      replacement_pa:
+        description: replacement level runs per PA
+        type: number
+      runs_per_win:
+        description: league-specific runs per win
+        type: number
+      season:
+        type: integer
+      total_pa:
+        description: total plate appearances
+        type: integer
+      total_runs:
+        description: total runs scored
+        type: integer
+      woba_avg:
+        description: league average wOBA
+        type: number
+      wrc_per_pa:
+        description: wRC per PA (excluding pitchers)
+        type: number
     type: object
   core.LineupPlayer:
     properties:
@@ -1055,6 +1176,58 @@ definitions:
         description: season year
         type: integer
     type: object
+  core.ParkFactorRow:
+    properties:
+      basic_1yr:
+        description: single year (most volatile)
+        type: integer
+      basic_3yr:
+        description: 3-year regressed
+        type: integer
+      basic_5yr:
+        description: Overall park factors (100 = neutral, >100 = hitter-friendly)
+        type: integer
+      factor_1b:
+        description: Component park factors
+        type: integer
+      factor_2b:
+        description: doubles
+        type: integer
+      factor_3b:
+        description: triples
+        type: integer
+      factor_bb:
+        description: walks
+        type: integer
+      factor_fb:
+        description: fly balls
+        type: integer
+      factor_fip:
+        description: FIP
+        type: integer
+      factor_gb:
+        description: ground balls
+        type: integer
+      factor_hr:
+        description: home runs
+        type: integer
+      factor_iffb:
+        description: infield fly balls
+        type: integer
+      factor_ld:
+        description: line drives
+        type: integer
+      factor_so:
+        description: strikeouts
+        type: integer
+      park_id:
+        type: string
+      season:
+        type: integer
+      team_id:
+        description: team playing at this park
+        type: string
+    type: object
   core.PlateAppearanceLeverage:
     properties:
       away_score_before:
@@ -1362,7 +1535,6 @@ definitions:
       position:
         type: string
       rf9:
-        description: 'TODO: compute range factor per 9'
         type: number
       sb:
         type: integer
@@ -1370,6 +1542,39 @@ definitions:
         type: string
       year:
         type: integer
+    type: object
+  core.PlayerLeverageSummary:
+    properties:
+      avg_li:
+        description: Average LI of all plate appearances faced (aLI).
+        type: number
+      context:
+        $ref: '#/definitions/core.StatContext'
+      gm_li:
+        description: Average LI at the moment the player entered games (gmLI).
+        type: number
+      high_leverage_ip_outs:
+        type: integer
+      high_leverage_pa:
+        description: LI > 2.0
+        type: integer
+      low_leverage_ip_outs:
+        type: integer
+      low_leverage_pa:
+        description: LI < 0.85
+        type: integer
+      medium_leverage_ip_outs:
+        type: integer
+      medium_leverage_pa:
+        description: 0.85 <= LI <= 2.0
+        type: integer
+      player_id:
+        type: string
+      team_id:
+        type: string
+      wpa:
+        description: Aggregate WPA (win probability added) if you calculate it.
+        type: number
     type: object
   core.PlayerPitchingSeason:
     properties:
@@ -1386,7 +1591,6 @@ definitions:
       era:
         type: number
       fip:
-        description: 'TODO: compute it'
         type: number
       g:
         type: integer
@@ -1457,6 +1661,34 @@ definitions:
         type: string
       year:
         type: integer
+    type: object
+  core.PlayerWARSummary:
+    properties:
+      baserunning_runs:
+        type: number
+      batting_runs:
+        description: Components for position players.
+        type: number
+      context:
+        $ref: '#/definitions/core.StatContext'
+      fielding_runs:
+        type: number
+      league_adjustment:
+        type: number
+      pitching_rar:
+        description: Alternate view for pitchers.
+        type: number
+      player_id:
+        type: string
+      positional_runs:
+        type: number
+      replacement_runs:
+        type: number
+      team_id:
+        type: string
+      war:
+        description: Total WAR (position-player + pitcher if two-way).
+        type: number
     type: object
   core.PostseasonSeries:
     properties:
@@ -2066,6 +2298,95 @@ definitions:
       last_name:
         type: string
     type: object
+  core.WOBAConstant:
+    properties:
+      c_fip:
+        description: FIP constant
+        type: number
+      r_pa:
+        description: League context
+        type: number
+      r_w:
+        description: runs per win
+        type: number
+      run_cs:
+        description: caught stealing runs
+        type: number
+      run_sb:
+        description: Base running run values
+        type: number
+      season:
+        type: integer
+      w_1b:
+        description: single
+        type: number
+      w_2b:
+        description: double
+        type: number
+      w_3b:
+        description: triple
+        type: number
+      w_bb:
+        description: wOBA weights for each event type
+        type: number
+      w_hbp:
+        description: hit by pitch
+        type: number
+      w_hr:
+        description: home run
+        type: number
+      woba:
+        description: league average wOBA
+        type: number
+      woba_scale:
+        description: wOBA scale and league average
+        type: number
+    type: object
+  core.WinExpectancy:
+    properties:
+      created_at:
+        type: string
+      end_year:
+        type: integer
+      id:
+        type: integer
+      inning:
+        type: integer
+      is_bottom:
+        type: boolean
+      outs:
+        type: integer
+      runners_state:
+        type: string
+      sample_size:
+        description: Number of historical games used
+        type: integer
+      score_diff:
+        type: integer
+      start_year:
+        type: integer
+      updated_at:
+        type: string
+      win_probability:
+        description: 0.0 to 1.0
+        type: number
+    type: object
+  core.WinExpectancyEra:
+    properties:
+      end_year:
+        type: integer
+      label:
+        description: e.g., "Modern Era", "Steroid Era"
+        type: string
+      start_year:
+        type: integer
+      state_count:
+        description: Number of unique game states in this era
+        type: integer
+      total_sample:
+        description: Total sample size across all states
+        type: integer
+    type: object
   core.WinProbabilityCurve:
     properties:
       away_team:
@@ -2529,6 +2850,42 @@ paths:
       tags:
       - derived
       - games
+  /games/{game_id}/win-probability/summary:
+    get:
+      consumes:
+      - application/json
+      description: Get summary statistics for a game's win probability including biggest
+        swings
+      parameters:
+      - description: Game ID
+        in: path
+        name: game_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.GameWinProbabilitySummary'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get game win probability summary
+      tags:
+      - computed
+      - games
+      - leverage
   /games/{id}:
     get:
       consumes:
@@ -2773,15 +3130,15 @@ paths:
         in: query
         name: stat
         type: string
-      - default: 10
-        description: Number of results
+      - default: 1
+        description: Page number
         in: query
-        name: limit
+        name: page
         type: integer
-      - default: 0
-        description: Offset for pagination
+      - default: 10
+        description: Results per page
         in: query
-        name: offset
+        name: per_page
         type: integer
       produces:
       - application/json
@@ -2808,15 +3165,15 @@ paths:
         in: query
         name: stat
         type: string
-      - default: 10
-        description: Number of results
+      - default: 1
+        description: Page number
         in: query
-        name: limit
+        name: page
         type: integer
-      - default: 0
-        description: Offset for pagination
+      - default: 10
+        description: Results per page
         in: query
-        name: offset
+        name: per_page
         type: integer
       produces:
       - application/json
@@ -2937,6 +3294,92 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
       summary: API metadata
+      tags:
+      - meta
+  /meta/constants/league:
+    get:
+      consumes:
+      - application/json
+      description: Returns league-specific constants for wRC+ and WAR calculations
+      parameters:
+      - description: Season year (returns all if omitted)
+        in: query
+        name: season
+        type: integer
+      - description: League (AL or NL)
+        in: query
+        name: league
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.LeagueConstant'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: League constants
+      tags:
+      - meta
+  /meta/constants/park-factors:
+    get:
+      consumes:
+      - application/json
+      description: Returns FanGraphs park factors for seasons
+      parameters:
+      - description: Season year (returns all if omitted)
+        in: query
+        name: season
+        type: integer
+      - description: Team ID filter
+        in: query
+        name: team
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.ParkFactorRow'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Park factors
+      tags:
+      - meta
+  /meta/constants/woba:
+    get:
+      consumes:
+      - application/json
+      description: Returns season-specific wOBA calculation constants from FanGraphs
+      parameters:
+      - description: Season year (returns all if omitted)
+        in: query
+        name: season
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.WOBAConstant'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: wOBA constants
       tags:
       - meta
   /meta/datasets:
@@ -3546,6 +3989,13 @@ paths:
         in: query
         name: inning
         type: integer
+      - description: Filter by top (0) or bottom (1) of inning
+        enum:
+        - 0
+        - 1
+        in: query
+        name: top_bot
+        type: integer
       - description: Filter by pitch type (B, C, F, S, X, etc.)
         in: query
         name: pitch_type
@@ -4021,6 +4471,94 @@ paths:
       summary: Get player's team history
       tags:
       - players
+  /players/{player_id}/leverage/high:
+    get:
+      consumes:
+      - application/json
+      description: Get high-leverage plate appearances for a player in a season
+      parameters:
+      - description: Player ID
+        in: path
+        name: player_id
+        required: true
+        type: string
+      - default: 2024
+        description: Season year
+        in: query
+        name: season
+        type: integer
+      - default: 1.5
+        description: Minimum leverage index
+        in: query
+        name: min_li
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.PlateAppearanceLeverage'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get high leverage plate appearances
+      tags:
+      - computed
+      - players
+      - leverage
+  /players/{player_id}/leverage/summary:
+    get:
+      consumes:
+      - application/json
+      description: Get aggregated leverage metrics for a player in a season
+      parameters:
+      - description: Player ID
+        in: path
+        name: player_id
+        required: true
+        type: string
+      - default: 2024
+        description: Season year
+        in: query
+        name: season
+        type: integer
+      - default: '""'
+        description: Role filter (batter, pitcher)
+        in: query
+        name: role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.PlayerLeverageSummary'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get player leverage summary
+      tags:
+      - computed
+      - players
+      - leverage
   /players/{player_id}/splits:
     get:
       consumes:
@@ -4061,6 +4599,49 @@ paths:
       summary: Get player batting splits
       tags:
       - derived
+      - players
+  /players/{player_id}/stats/baserunning:
+    get:
+      consumes:
+      - application/json
+      description: Get baserunning value (wSB) for a player
+      parameters:
+      - description: Player ID
+        in: path
+        name: player_id
+        required: true
+        type: string
+      - default: 2024
+        description: Season year
+        in: query
+        name: season
+        type: integer
+      - description: Team ID
+        in: query
+        name: team_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.BaserunningStats'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get baserunning stats
+      tags:
+      - computed
       - players
   /players/{player_id}/stats/batting/advanced:
     get:
@@ -4107,6 +4688,49 @@ paths:
       - computed
       - players
       - batting
+  /players/{player_id}/stats/fielding:
+    get:
+      consumes:
+      - application/json
+      description: Get fielding runs above average for a player
+      parameters:
+      - description: Player ID
+        in: path
+        name: player_id
+        required: true
+        type: string
+      - default: 2024
+        description: Season year
+        in: query
+        name: season
+        type: integer
+      - description: Team ID
+        in: query
+        name: team_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.FieldingStats'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get fielding stats
+      tags:
+      - computed
+      - players
   /players/{player_id}/stats/pitching/advanced:
     get:
       consumes:
@@ -4151,6 +4775,49 @@ paths:
       - computed
       - players
       - pitching
+  /players/{player_id}/stats/war:
+    get:
+      consumes:
+      - application/json
+      description: Get Wins Above Replacement and component breakdown for a player
+      parameters:
+      - description: Player ID
+        in: path
+        name: player_id
+        required: true
+        type: string
+      - default: 2024
+        description: Season year
+        in: query
+        name: season
+        type: integer
+      - description: Team ID
+        in: query
+        name: team_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.PlayerWARSummary'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get WAR
+      tags:
+      - computed
+      - players
   /players/{player_id}/streaks:
     get:
       consumes:
@@ -4284,10 +4951,15 @@ paths:
         name: q
         required: true
         type: string
-      - default: 50
-        description: Maximum number of results
+      - default: 1
+        description: Page number
         in: query
-        name: limit
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
         type: integer
       produces:
       - application/json
@@ -4295,9 +4967,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/core.Game'
-            type: array
+            $ref: '#/definitions/api.PaginatedResponse'
         "400":
           description: Bad Request
           schema:
@@ -4460,6 +5130,173 @@ paths:
       summary: List all seasons
       tags:
       - seasons
+  /seasons/{season}/leaders/batting/advanced:
+    get:
+      consumes:
+      - application/json
+      description: Get top players by advanced batting stats (wOBA, wRC+, ISO, BABIP,
+        etc.)
+      parameters:
+      - description: Season year
+        in: path
+        name: season
+        required: true
+        type: integer
+      - default: '"WRC_PLUS"'
+        description: Statistic (WOBA, WRC_PLUS, ISO, BABIP, AVG, OBP, SLG, HR, BB,
+          K_RATE, BB_RATE)
+        in: query
+        name: stat
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      - default: 502
+        description: Minimum plate appearances
+        in: query
+        name: min_pa
+        type: integer
+      - description: Filter by team ID
+        in: query
+        name: team_id
+        type: string
+      - description: Filter by league (AL, NL)
+        in: query
+        name: league
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get advanced batting leaders
+      tags:
+      - computed
+      - leaders
+      - batting
+  /seasons/{season}/leaders/pitching/advanced:
+    get:
+      consumes:
+      - application/json
+      description: Get top pitchers by advanced pitching stats (FIP, ERA, WHIP, K/9,
+        etc.)
+      parameters:
+      - description: Season year
+        in: path
+        name: season
+        required: true
+        type: integer
+      - default: '"FIP"'
+        description: Statistic (FIP, ERA, WHIP, K_PER_9, BB_PER_9, HR_PER_9, SO)
+        in: query
+        name: stat
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      - default: 162
+        description: Minimum innings pitched
+        in: query
+        name: min_ip
+        type: number
+      - description: Filter by team ID
+        in: query
+        name: team_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get advanced pitching leaders
+      tags:
+      - computed
+      - leaders
+      - pitching
+  /seasons/{season}/leaders/war:
+    get:
+      consumes:
+      - application/json
+      description: Get top players by Wins Above Replacement
+      parameters:
+      - description: Season year
+        in: path
+        name: season
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      - default: 502
+        description: Minimum plate appearances
+        in: query
+        name: min_pa
+        type: integer
+      - description: Filter by team ID
+        in: query
+        name: team_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get WAR leaders
+      tags:
+      - computed
+      - leaders
+      - war
   /seasons/{season}/park-factors:
     get:
       consumes:
@@ -4635,15 +5472,15 @@ paths:
         in: query
         name: league
         type: string
-      - default: 10
-        description: Number of results
+      - default: 1
+        description: Page number
         in: query
-        name: limit
+        name: page
         type: integer
-      - default: 0
-        description: Offset for pagination
+      - default: 10
+        description: Results per page
         in: query
-        name: offset
+        name: per_page
         type: integer
       produces:
       - application/json
@@ -4679,15 +5516,15 @@ paths:
         in: query
         name: league
         type: string
-      - default: 10
-        description: Number of results
+      - default: 1
+        description: Page number
         in: query
-        name: limit
+        name: page
         type: integer
-      - default: 0
-        description: Offset for pagination
+      - default: 10
+        description: Results per page
         in: query
-        name: offset
+        name: per_page
         type: integer
       produces:
       - application/json
@@ -5772,7 +6609,93 @@ paths:
       tags:
       - umpires
       - games
+  /win-expectancy:
+    get:
+      consumes:
+      - application/json
+      description: Get the historical win probability for a specific game situation
+      parameters:
+      - description: Inning (1-9)
+        in: query
+        name: inning
+        required: true
+        type: integer
+      - description: Bottom of inning (true/false)
+        in: query
+        name: is_bottom
+        required: true
+        type: boolean
+      - description: Outs (0-2)
+        in: query
+        name: outs
+        required: true
+        type: integer
+      - description: Runners state (e.g., ___, 1__, 12_, 123)
+        in: query
+        name: runners
+        required: true
+        type: string
+      - description: Score differential from home team perspective (-11 to +11)
+        in: query
+        name: score_diff
+        required: true
+        type: integer
+      - description: Start year for historical era filter
+        in: query
+        name: start_year
+        type: integer
+      - description: End year for historical era filter
+        in: query
+        name: end_year
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.WinExpectancy'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get win expectancy for a game state
+      tags:
+      - derived
+      - win-expectancy
+  /win-expectancy/eras:
+    get:
+      consumes:
+      - application/json
+      description: Get all available historical eras in the win expectancy database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.WinExpectancyEra'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: List available win expectancy eras
+      tags:
+      - derived
+      - win-expectancy
 swagger: "2.0"
 tags:
-- description: data related to MLB all-star games
+- description: MLB All-Star game data
   name: allstar
+- description: Game data
+  name: games

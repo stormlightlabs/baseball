@@ -18,6 +18,9 @@ var winExpectancyGetEraQuery string
 //go:embed queries/win_expectancy_list_eras.sql
 var winExpectancyListErasQuery string
 
+//go:embed queries/win_expectancy_batch_get.sql
+var winExpectancyBatchGetQuery string
+
 type WinExpectancyRepository struct {
 	db *sql.DB
 }
@@ -50,18 +53,11 @@ func (r *WinExpectancyRepository) GetWinExpectancy(ctx context.Context, state co
 		state.RunnersCode,
 		scoreDiff,
 	).Scan(
-		&we.ID,
-		&we.Inning,
-		&we.IsBottom,
-		&we.Outs,
-		&we.RunnersState,
-		&we.ScoreDiff,
-		&we.WinProbability,
-		&we.SampleSize,
-		&startYear,
-		&endYear,
-		&we.CreatedAt,
-		&we.UpdatedAt,
+		&we.ID, &we.Inning, &we.IsBottom,
+		&we.Outs, &we.RunnersState,
+		&we.ScoreDiff, &we.WinProbability, &we.SampleSize,
+		&startYear, &endYear,
+		&we.CreatedAt, &we.UpdatedAt,
 	)
 
 	if err == sql.ErrNoRows {
@@ -137,18 +133,103 @@ func (r *WinExpectancyRepository) GetWinExpectancyForEra(ctx context.Context, st
 
 // BatchGetWinExpectancy efficiently retrieves win expectancies for multiple game states.
 // Useful for computing leverage index across a full game.
+// Uses a single database query with UNNEST for optimal performance.
 func (r *WinExpectancyRepository) BatchGetWinExpectancy(ctx context.Context, states []core.GameState) ([]core.WinExpectancy, error) {
 	if len(states) == 0 {
 		return []core.WinExpectancy{}, nil
 	}
 
-	// TODO: Optimize with a single query using UNNEST or temp table
-	results := make([]core.WinExpectancy, 0, len(states))
+	innings := make([]int, len(states))
+	isBottoms := make([]bool, len(states))
+	outs := make([]int, len(states))
+	runnersStates := make([]string, len(states))
+	scoreDiffs := make([]int, len(states))
 
-	for _, state := range states {
-		we, err := r.GetWinExpectancy(ctx, state)
+	for i, state := range states {
+		innings[i] = min(state.Inning, 9)
+		isBottoms[i] = state.IsBottom
+		outs[i] = state.Outs
+		runnersStates[i] = state.RunnersCode
+
+		scoreDiff := state.ScoreDiff
+		if scoreDiff > 11 {
+			scoreDiff = 11
+		} else if scoreDiff < -11 {
+			scoreDiff = -11
+		}
+		scoreDiffs[i] = scoreDiff
+	}
+
+	rows, err := r.db.QueryContext(
+		ctx, winExpectancyBatchGetQuery, innings,
+		isBottoms, outs, runnersStates, scoreDiffs,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to batch get win expectancy: %w", err)
+	}
+	defer rows.Close()
+
+	resultsMap := make(map[int]*core.WinExpectancy)
+
+	for rows.Next() {
+		var rowNum int
+		var we core.WinExpectancy
+		var id sql.NullInt64
+		var startYear, endYear sql.NullInt64
+		var createdAt, updatedAt sql.NullTime
+
+		err = rows.Scan(
+			&rowNum,
+			&id,
+			&we.Inning,
+			&we.IsBottom,
+			&we.Outs,
+			&we.RunnersState,
+			&we.ScoreDiff,
+			&we.WinProbability,
+			&we.SampleSize,
+			&startYear,
+			&endYear,
+			&createdAt,
+			&updatedAt,
+		)
 		if err != nil {
-			results = append(results, core.WinExpectancy{
+			return nil, fmt.Errorf("failed to scan batch win expectancy: %w", err)
+		}
+
+		if id.Valid {
+			we.ID = int(id.Int64)
+			if startYear.Valid {
+				year := int(startYear.Int64)
+				we.StartYear = &year
+			}
+			if endYear.Valid {
+				year := int(endYear.Int64)
+				we.EndYear = &year
+			}
+			if createdAt.Valid {
+				we.CreatedAt = createdAt.Time
+			}
+			if updatedAt.Valid {
+				we.UpdatedAt = updatedAt.Time
+			}
+		}
+
+		resultsMap[rowNum] = &we
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating batch win expectancy: %w", err)
+	}
+
+	results := make([]core.WinExpectancy, len(states))
+	for i, state := range states {
+		// NOTE: SQL ROW_NUMBER() starts at 1
+		rowNum := i + 1
+		if we, found := resultsMap[rowNum]; found && we.ID != 0 {
+			results[i] = *we
+		} else {
+			results[i] = core.WinExpectancy{
 				Inning:         state.Inning,
 				IsBottom:       state.IsBottom,
 				Outs:           state.Outs,
@@ -156,10 +237,8 @@ func (r *WinExpectancyRepository) BatchGetWinExpectancy(ctx context.Context, sta
 				ScoreDiff:      state.ScoreDiff,
 				WinProbability: 0.5,
 				SampleSize:     0,
-			})
-			continue
+			}
 		}
-		results = append(results, *we)
 	}
 
 	return results, nil
@@ -226,21 +305,12 @@ func (r *WinExpectancyRepository) UpsertWinExpectancy(ctx context.Context, we *c
 		RETURNING id
 	`
 
-	err := r.db.QueryRowContext(
-		ctx,
-		query,
-		we.Inning,
-		we.IsBottom,
-		we.Outs,
-		we.RunnersState,
-		we.ScoreDiff,
-		we.WinProbability,
-		we.SampleSize,
-		we.StartYear,
-		we.EndYear,
-	).Scan(&we.ID)
-
-	if err != nil {
+	if err := r.db.QueryRowContext(
+		ctx, query,
+		we.Inning, we.IsBottom, we.Outs,
+		we.RunnersState, we.ScoreDiff, we.WinProbability,
+		we.SampleSize, we.StartYear, we.EndYear,
+	).Scan(&we.ID); err != nil {
 		return fmt.Errorf("failed to upsert win expectancy: %w", err)
 	}
 
