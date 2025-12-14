@@ -56,12 +56,59 @@ See [Derived & Advanced Endpoints Overview](./api-derived-advanced.md) for the a
 
 | Status      | Description                                                                                  |
 | ----------- | -------------------------------------------------------------------------------------------- |
-| In-Progress | Derived stats (WAR-like measures, leverage indexes) built atop the Retrosheet plays dataset. |
+| Done        | Derived stats (WAR-like measures, leverage indexes) built atop the Retrosheet plays dataset. |
 | In-Progress | Markdown docs                                                                                |
 | Done        | Cache + rate limiting layer for public deployments.                                          |
 | Done        | Performance testing and observability hooks before GA release.                               |
 
+### 11. Data Coverage Expansion - **(R)**
+
+| Status | Source       | Endpoint(s)                             | Description                                                                                                                 |
+| ------ | ------------ | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| To-Do  | plays (view) | `/v1/players/{id}/game-logs` (enh)      | Per-game batting stats via SQL views aggregating plays table. Enables "game finder" queries. Coverage: 1910-2025.           |
+|        |              | `/v1/players/{id}/stats/*` (enh)        |                                                                                                                             |
+|        |              | `/v1/games/{id}/batting`                |                                                                                                                             |
+| To-Do  | plays (view) | `/v1/players/{id}/stats/*` (enh)        | Per-game pitching stats via views. Enhances advanced stats, WAR calculations, player splits. Coverage: 1910-2025.           |
+|        |              | `/v1/games/{id}/pitching`               |                                                                                                                             |
+| To-Do  | plays (view) | `/v1/players/{id}/stats/fielding` (enh) | Per-game fielding stats via views. Position-specific defensive metrics. Coverage: 1910-2025.                                |
+|        |              | `/v1/games/{id}/fielding`               |                                                                                                                             |
+| To-Do  | plays (view) | `/v1/teams/{id}/daily-stats`            | Per-game team stats via views. Daily performance tracking and rolling aggregates. Coverage: 1910-2025.                      |
+| To-Do  | games (enh)  | `/v1/games/{id}` (enh)                  | Enhanced game metadata already in games table: park, attendance, game time, umpires.                                        |
+| To-Do  | League views | `/v1/negroleagues/*`                    | Filtered views for Negro Leagues (1920-1962) and Federal League (1914-1915). Same plays data, league-specific endpoints.    |
+|        |              | `/v1/federalleague/*`                   |                                                                                                                             |
+| To-Do  | Achievements | `/v1/achievements/*`                    | Computed from plays/games: no-hitters, triple plays, cycles, 3+ HR games, 20+ inning games.                                 |
+
+For each dataset expansion:
+
+1. Create SQL views (aggregating from plays table)
+2. Design and implement repository interfaces
+3. Create and register handlers for new routes
+4. Add Swagger annotations
+5. Indexes
+6. Materialized views
+
 #### Notes
 
-- Leverage index should be enhanced with historical win expectancy tables
-- Leaderboards marked as TODO in code
+**Implementation Approach:**
+
+- **Views-based**: Per-game stats derived from existing `plays` table via SQL views (no new tables needed)
+- **No CSV loading**: Retrosheet CSVs are pre-aggregated summaries of plays data - we aggregate on-demand instead
+- **Coverage**: Our plays table covers 1910-2025 (missing 1898-1909 from Retrosheet CSVs, acceptable trade-off)
+- **Performance**: Can use materialized views if aggregation queries become slow
+
+**Data Integration:**
+
+- Games/plays already contain MLB, Negro Leagues, and Federal League data (or will when loaded)
+- Filter by team codes, league identifiers, or date ranges to isolate specific leagues
+- **Negro Leagues coverage**: 1920-1962 (limited by plays table availability)
+- **Federal League coverage**: 1914-1915
+
+**Query Capabilities:**
+
+- **Per-game stats**: Enable "game finder" queries (e.g., "all games where player X hit 2+ home runs")
+- **Game metadata**: Park, attendance, game time, umpires already in games table
+- **Achievements**: Computed dynamically from plays/games (no-hitters, cycles, etc.)
+
+**Data Refresh:**
+
+- Automated weekly refresh during season recommended for current plays data
