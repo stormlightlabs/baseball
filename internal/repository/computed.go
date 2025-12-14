@@ -37,6 +37,15 @@ var seasonParkFactorsQuery string
 //go:embed queries/game_plate_leverages.sql
 var gamePlateLeveragesQuery string
 
+//go:embed queries/player_high_leverage_pas.sql
+var playerHighLeveragePAsQuery string
+
+//go:embed queries/player_leverage_summary.sql
+var playerLeverageSummaryQuery string
+
+//go:embed queries/game_win_probability_summary.sql
+var gameWinProbabilitySummaryQuery string
+
 //go:embed queries/season_batting_leaders.sql
 var seasonBattingLeadersQuery string
 
@@ -356,8 +365,7 @@ func (r *AdvancedStatsRepository) PlayerWAR(ctx context.Context, playerID core.P
 
 // SeasonBattingLeaders returns top N players by advanced batting stat.
 func (r *AdvancedStatsRepository) SeasonBattingLeaders(ctx context.Context, season core.SeasonYear, stat string, limit int, filter core.AdvancedBattingFilter) ([]core.AdvancedBattingStats, error) {
-	// Default minimum PA threshold for leaderboards (3.1 PA per team game)
-	minPA := 502 // ~3.1 PA * 162 games
+	minPA := 502
 	if filter.MinPA != nil {
 		minPA = *filter.MinPA
 	}
@@ -676,24 +684,208 @@ func (r *LeverageRepository) GamePlateLeverages(ctx context.Context, gameID core
 }
 
 // PlayerLeverageSummary aggregates leverage metrics for a player.
-// TODO: implement player leverage summary
+// The role parameter filters PAs to "batter", "pitcher", or "" (both).
+// This computes average leverage index and categorizes PAs by leverage tier using SQL aggregation.
 func (r *LeverageRepository) PlayerLeverageSummary(ctx context.Context, playerID core.PlayerID, season core.SeasonYear, role string) (*core.PlayerLeverageSummary, error) {
-	return nil, fmt.Errorf("not yet implemented")
+	if role != "batter" && role != "pitcher" {
+		role = ""
+	}
+
+	row := r.db.QueryRowContext(ctx, playerLeverageSummaryQuery, string(playerID), int(season), role)
+
+	var teamIDStr, leagueStr sql.NullString
+	var avgLI, totalWPA float64
+	var lowPA, mediumPA, highPA int
+	var lowIPOuts, mediumIPOuts, highIPOuts int
+
+	err := row.Scan(
+		&teamIDStr,
+		&leagueStr,
+		&avgLI,
+		&lowPA,
+		&mediumPA,
+		&highPA,
+		&totalWPA,
+		&lowIPOuts,
+		&mediumIPOuts,
+		&highIPOuts,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("no plate appearances found for player %s in season %d", playerID, season)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to query player leverage summary: %w", err)
+	}
+
+	summary := &core.PlayerLeverageSummary{
+		PlayerID:             playerID,
+		AvgLeverageIndex:     avgLI,
+		LowLeveragePA:        lowPA,
+		MediumLeveragePA:     mediumPA,
+		HighLeveragePA:       highPA,
+		LowLeverageIPOuts:    lowIPOuts,
+		MediumLeverageIPOuts: mediumIPOuts,
+		HighLeverageIPOuts:   highIPOuts,
+		Context: core.StatContext{
+			Season:      season,
+			Provider:    core.StatProviderInternal,
+			ParkNeutral: false,
+			RegSeason:   true,
+		},
+	}
+
+	if teamIDStr.Valid {
+		tid := core.TeamID(teamIDStr.String)
+		summary.TeamID = &tid
+	}
+
+	if leagueStr.Valid {
+		lid := core.LeagueID(leagueStr.String)
+		summary.Context.League = &lid
+	}
+
+	summary.WinProbabilityAdded = &totalWPA
+
+	return summary, nil
 }
 
 // PlayerHighLeveragePAs returns high-leverage plate appearances for a player.
-// TODO: implement high leverage PAs
+// This queries all plate appearances for a player (as batter or pitcher) and filters
+// by leverage index threshold. The LI calculation is done in SQL.
 func (r *LeverageRepository) PlayerHighLeveragePAs(ctx context.Context, playerID core.PlayerID, season core.SeasonYear, minLI float64) ([]core.PlateAppearanceLeverage, error) {
-	return nil, fmt.Errorf("not yet implemented")
+	rows, err := r.db.QueryContext(ctx, playerHighLeveragePAsQuery, string(playerID), int(season), minLI)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query high leverage PAs: %w", err)
+	}
+	defer rows.Close()
+
+	var leverages []core.PlateAppearanceLeverage
+	for rows.Next() {
+		var l core.PlateAppearanceLeverage
+		var gameIDStr, batterID, pitcherID string
+		var topBot int
+
+		err = rows.Scan(
+			&gameIDStr,
+			&l.EventID,
+			&l.Inning,
+			&topBot,
+			&l.HomeScoreBefore,
+			&l.AwayScoreBefore,
+			&l.OutsBefore,
+			&l.BasesBefore,
+			&batterID,
+			&pitcherID,
+			&l.Description,
+			&l.LeverageIndex,
+			&l.WinExpectancyBefore,
+			&l.WinExpectancyAfter,
+			&l.WEChange,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan high leverage PA: %w", err)
+		}
+
+		l.GameID = core.GameID(gameIDStr)
+		l.TopOfInning = topBot == 0
+		l.BatterID = core.PlayerID(batterID)
+		l.PitcherID = core.PlayerID(pitcherID)
+
+		leverages = append(leverages, l)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating high leverage PAs: %w", err)
+	}
+
+	return leverages, nil
 }
 
 // GameWinProbabilitySummary returns summary stats for a game's win probability.
-// TODO: implement win probability summary
+// This queries game information from SQL and returns a summary including biggest WE swings.
 func (r *LeverageRepository) GameWinProbabilitySummary(
 	ctx context.Context,
 	gameID core.GameID,
 ) (*core.GameWinProbabilitySummary, error) {
-	return nil, fmt.Errorf("not yet implemented")
+	row := r.db.QueryRowContext(ctx, gameWinProbabilitySummaryQuery, string(gameID))
+
+	var summary core.GameWinProbabilitySummary
+	var gameIDStr, homeTeamStr, awayTeamStr string
+
+	var posEventID sql.NullInt64
+	var posInning, posTopBot sql.NullInt64
+	var posHomeScore, posAwayScore, posOuts sql.NullInt64
+	var posBases, posBatterID, posPitcherID, posDesc sql.NullString
+	var posWEBefore, posWEAfter, posWEChange sql.NullFloat64
+
+	var negEventID sql.NullInt64
+	var negInning, negTopBot sql.NullInt64
+	var negHomeScore, negAwayScore, negOuts sql.NullInt64
+	var negBases, negBatterID, negPitcherID, negDesc sql.NullString
+	var negWEBefore, negWEAfter, negWEChange sql.NullFloat64
+
+	err := row.Scan(
+		&gameIDStr, &summary.Season, &homeTeamStr, &awayTeamStr,
+		&summary.HomeWinProbStart, &summary.HomeWinProbEnd,
+
+		&posEventID, &posInning, &posTopBot, &posHomeScore, &posAwayScore,
+		&posOuts, &posBases, &posBatterID, &posPitcherID,
+		&posDesc, &posWEBefore, &posWEAfter, &posWEChange,
+
+		&negEventID, &negInning, &negTopBot,
+		&negHomeScore, &negAwayScore, &negOuts, &negBases, &negBatterID,
+		&negPitcherID, &negDesc, &negWEBefore, &negWEAfter, &negWEChange,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("game %s not found", gameID)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to query game win probability summary: %w", err)
+	}
+
+	summary.GameID = core.GameID(gameIDStr)
+	summary.HomeTeam = core.TeamID(homeTeamStr)
+	summary.AwayTeam = core.TeamID(awayTeamStr)
+
+	if posEventID.Valid {
+		summary.BiggestPositiveSwing = &core.PlateAppearanceLeverage{
+			GameID:              gameID,
+			EventID:             int(posEventID.Int64),
+			Inning:              int(posInning.Int64),
+			TopOfInning:         posTopBot.Int64 == 0,
+			HomeScoreBefore:     int(posHomeScore.Int64),
+			AwayScoreBefore:     int(posAwayScore.Int64),
+			OutsBefore:          int(posOuts.Int64),
+			BasesBefore:         posBases.String,
+			BatterID:            core.PlayerID(posBatterID.String),
+			PitcherID:           core.PlayerID(posPitcherID.String),
+			Description:         posDesc.String,
+			WinExpectancyBefore: posWEBefore.Float64,
+			WinExpectancyAfter:  posWEAfter.Float64,
+			WEChange:            posWEChange.Float64,
+		}
+	}
+
+	if negEventID.Valid {
+		summary.BiggestNegativeSwing = &core.PlateAppearanceLeverage{
+			GameID:              gameID,
+			EventID:             int(negEventID.Int64),
+			Inning:              int(negInning.Int64),
+			TopOfInning:         negTopBot.Int64 == 0,
+			HomeScoreBefore:     int(negHomeScore.Int64),
+			AwayScoreBefore:     int(negAwayScore.Int64),
+			OutsBefore:          int(negOuts.Int64),
+			BasesBefore:         negBases.String,
+			BatterID:            core.PlayerID(negBatterID.String),
+			PitcherID:           core.PlayerID(negPitcherID.String),
+			Description:         negDesc.String,
+			WinExpectancyBefore: negWEBefore.Float64,
+			WinExpectancyAfter:  negWEAfter.Float64,
+			WEChange:            negWEChange.Float64,
+		}
+	}
+
+	return &summary, nil
 }
 
 // calculateLeverageIndex is a simplified leverage index calculation.
@@ -766,7 +958,6 @@ func (r *ParkFactorRepository) ParkFactor(ctx context.Context, parkID core.ParkI
 
 	pf.Provider = "internal"
 	pf.MultiYear = false
-
 	return &pf, nil
 }
 

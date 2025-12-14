@@ -23,7 +23,10 @@ func (cr *ComputedRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/players/{player_id}/stats/baserunning", cr.handlePlayerBaserunning)
 	mux.HandleFunc("GET /v1/players/{player_id}/stats/fielding", cr.handlePlayerFielding)
 	mux.HandleFunc("GET /v1/players/{player_id}/stats/war", cr.handlePlayerWAR)
+	mux.HandleFunc("GET /v1/players/{player_id}/leverage/summary", cr.handlePlayerLeverageSummary)
+	mux.HandleFunc("GET /v1/players/{player_id}/leverage/high", cr.handlePlayerHighLeveragePAs)
 	mux.HandleFunc("GET /v1/games/{game_id}/plate-appearances/leverage", cr.handleGamePlateLeverages)
+	mux.HandleFunc("GET /v1/games/{game_id}/win-probability/summary", cr.handleGameWinProbabilitySummary)
 	mux.HandleFunc("GET /v1/parks/{park_id}/factors", cr.handleParkFactor)
 	mux.HandleFunc("GET /v1/parks/{park_id}/factors/series", cr.handleParkFactorSeries)
 	mux.HandleFunc("GET /v1/seasons/{season}/park-factors", cr.handleSeasonParkFactors)
@@ -161,21 +164,17 @@ func (cr *ComputedRoutes) handleGamePlateLeverages(w http.ResponseWriter, r *htt
 func (cr *ComputedRoutes) handleParkFactor(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	parkID := core.ParkID(r.PathValue("park_id"))
-
 	seasonStr := r.URL.Query().Get("season")
 	if seasonStr == "" {
 		writeBadRequest(w, "season query parameter required")
 		return
 	}
-
 	season := core.SeasonYear(getIntQuery(r, "season", 2024))
-
 	factor, err := cr.parkFactorRepo.ParkFactor(ctx, parkID, season)
 	if err != nil {
 		writeInternalServerError(w, err)
 		return
 	}
-
 	writeJSON(w, http.StatusOK, factor)
 }
 
@@ -494,4 +493,92 @@ func (cr *ComputedRoutes) handleSeasonWARLeaders(w http.ResponseWriter, r *http.
 	}
 
 	writeJSON(w, http.StatusOK, leaders)
+}
+
+// handleGameWinProbabilitySummary godoc
+// @Summary Get game win probability summary
+// @Description Get summary statistics for a game's win probability including biggest swings
+// @Tags computed, games, leverage
+// @Accept json
+// @Produce json
+// @Param game_id path string true "Game ID"
+// @Success 200 {object} core.GameWinProbabilitySummary
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /games/{game_id}/win-probability/summary [get]
+func (cr *ComputedRoutes) handleGameWinProbabilitySummary(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	gameID := core.GameID(r.PathValue("game_id"))
+	summary, err := cr.leverageRepo.GameWinProbabilitySummary(ctx, gameID)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, summary)
+}
+
+// handlePlayerHighLeveragePAs godoc
+// @Summary Get high leverage plate appearances
+// @Description Get high-leverage plate appearances for a player in a season
+// @Tags computed, players, leverage
+// @Accept json
+// @Produce json
+// @Param player_id path string true "Player ID"
+// @Param season query integer false "Season year" default(2024)
+// @Param min_li query number false "Minimum leverage index" default(1.5)
+// @Success 200 {array} core.PlateAppearanceLeverage
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{player_id}/leverage/high [get]
+func (cr *ComputedRoutes) handlePlayerHighLeveragePAs(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	playerID := core.PlayerID(r.PathValue("player_id"))
+	season := core.SeasonYear(getIntQuery(r, "season", 2024))
+	minLI := 1.5
+	if minLIStr := r.URL.Query().Get("min_li"); minLIStr != "" {
+		minLIFloat, err := strconv.ParseFloat(minLIStr, 64)
+		if err != nil {
+			writeBadRequest(w, "invalid min_li: must be a number")
+			return
+		}
+		minLI = minLIFloat
+	}
+
+	leverages, err := cr.leverageRepo.PlayerHighLeveragePAs(ctx, playerID, season, minLI)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, leverages)
+}
+
+// handlePlayerLeverageSummary godoc
+// @Summary Get player leverage summary
+// @Description Get aggregated leverage metrics for a player in a season
+// @Tags computed, players, leverage
+// @Accept json
+// @Produce json
+// @Param player_id path string true "Player ID"
+// @Param season query integer false "Season year" default(2024)
+// @Param role query string false "Role filter (batter, pitcher)" default("")
+// @Success 200 {object} core.PlayerLeverageSummary
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{player_id}/leverage/summary [get]
+func (cr *ComputedRoutes) handlePlayerLeverageSummary(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	playerID := core.PlayerID(r.PathValue("player_id"))
+	season := core.SeasonYear(getIntQuery(r, "season", 2024))
+	role := r.URL.Query().Get("role")
+	summary, err := cr.leverageRepo.PlayerLeverageSummary(ctx, playerID, season, role)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, summary)
 }
