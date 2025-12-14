@@ -1,6 +1,7 @@
 package seed
 
 import (
+	"archive/zip"
 	"context"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
@@ -23,6 +25,7 @@ type LahmanOptions struct {
 type RetrosheetOptions struct {
 	DataDir string
 	Years   []int
+	Force   bool
 }
 
 // RetrosheetResult contains counters for Retrosheet loads.
@@ -110,28 +113,85 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 		return result, fmt.Errorf("error: failed to read dataset refreshes: %w", err)
 	}
 
-	echo.Info("Loading game logs...")
+	if opts.Force {
+		echo.Info("Force mode enabled - clearing data and metadata for specified years...")
+		for _, year := range years {
+			gamesKey := fmt.Sprintf("retrosheet_games_%d", year)
+			playsKey := fmt.Sprintf("retrosheet_plays_%d", year)
+
+			yearStr := fmt.Sprintf("%d", year)
+			_, err := database.ExecContext(ctx, `DELETE FROM games WHERE date LIKE $1 || '%'`, yearStr)
+			if err != nil {
+				return result, fmt.Errorf("error: failed to delete games for %d: %w", year, err)
+			}
+
+			if _, err = database.ExecContext(ctx, `DELETE FROM plays WHERE SUBSTRING(gid, 4, 4) = $1`, yearStr); err != nil {
+				return result, fmt.Errorf("error: failed to delete plays for %d: %w", year, err)
+			}
+
+			if err := clearDatasetRefresh(ctx, database, gamesKey); err != nil {
+				return result, fmt.Errorf("error: failed to clear %s: %w", gamesKey, err)
+			}
+			if err := clearDatasetRefresh(ctx, database, playsKey); err != nil {
+				return result, fmt.Errorf("error: failed to clear %s: %w", playsKey, err)
+			}
+			delete(refreshes, gamesKey)
+			delete(refreshes, playsKey)
+		}
+	}
+
+	var yearsNeedingGameLogs []int
 	for _, year := range years {
+		gamesKey := fmt.Sprintf("retrosheet_games_%d", year)
+		if _, ok := refreshes[gamesKey]; !ok {
+			yearsNeedingGameLogs = append(yearsNeedingGameLogs, year)
+		}
+	}
+
+	batchFile := filepath.Join(gameLogsDir, "gl1871_2025.zip")
+	if len(yearsNeedingGameLogs) > 0 {
+		if _, err := os.Stat(batchFile); errors.Is(err, os.ErrNotExist) {
+			echo.Info("Downloading game logs batch file (gl1871_2025.zip - 33MB)...")
+			if err := downloadGameLogBatch(batchFile); err != nil {
+				echo.Infof("  ⚠ Failed to download batch, falling back to individual downloads: %v", err)
+				batchFile = ""
+			} else {
+				echo.Success("  ✓ Game logs batch downloaded")
+			}
+		} else if err == nil {
+			echo.Info("  ✓ Using cached game logs batch")
+		}
+	}
+
+	echo.Info("Loading game logs...")
+	totalYears := len(years)
+	loadedCount := 0
+	skippedCount := 0
+
+	for i, year := range years {
 		zipFile := filepath.Join(gameLogsDir, fmt.Sprintf("GL%d.zip", year))
 		gamesKey := fmt.Sprintf("retrosheet_games_%d", year)
 
 		if _, ok := refreshes[gamesKey]; ok {
-			echo.Infof("  Skipping %d game logs (already loaded)", year)
+			skippedCount++
 			continue
 		}
 
 		if _, err := os.Stat(zipFile); errors.Is(err, os.ErrNotExist) {
-			echo.Infof("  Downloading %d game logs...", year)
-			if err := downloadRetrosheetGameLog(year, zipFile); err != nil {
-				return result, fmt.Errorf("error: failed to download %d game logs: %w", year, err)
+			if batchFile != "" {
+				if err := ExtractGameLogFromBatch(batchFile, year, zipFile); err != nil {
+					if err := downloadRetrosheetGameLog(year, zipFile); err != nil {
+						return result, fmt.Errorf("error: failed to download %d game logs: %w", year, err)
+					}
+				}
+			} else {
+				if err := downloadRetrosheetGameLog(year, zipFile); err != nil {
+					return result, fmt.Errorf("error: failed to download %d game logs: %w", year, err)
+				}
 			}
 		} else if err != nil {
 			return result, fmt.Errorf("error: unable to stat %s: %w", zipFile, err)
-		} else {
-			echo.Infof("  ✓ Using cached %d game logs", year)
 		}
-
-		echo.Infof("  Loading %d game logs...", year)
 
 		rows, err := database.LoadRetrosheetGameLog(ctx, zipFile, "regular")
 		if err != nil {
@@ -139,7 +199,8 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 		}
 
 		result.GameRows += rows
-		echo.Successf("  ✓ Loaded %d (%d rows)", year, rows)
+		loadedCount++
+		echo.Infof("  [%d/%d] %d: %s rows", i+1, totalYears, year, formatNumber(rows))
 
 		if err := database.RecordDatasetRefresh(ctx, gamesKey, rows); err != nil {
 			return result, fmt.Errorf("error: failed to record %s refresh: %w", gamesKey, err)
@@ -147,29 +208,48 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 		refreshes[gamesKey] = db.DatasetRefresh{}
 	}
 
+	if skippedCount > 0 {
+		echo.Infof("  Skipped %d already-loaded years", skippedCount)
+	}
+
 	echo.Info("")
 	echo.Info("Loading play-by-play data...")
+
+	var yearsNeedingPlays []int
 	for _, year := range years {
+		playsKey := fmt.Sprintf("retrosheet_plays_%d", year)
+		if _, ok := refreshes[playsKey]; !ok {
+			zipFile := filepath.Join(playsDir, fmt.Sprintf("%dplays.zip", year))
+			if _, err := os.Stat(zipFile); errors.Is(err, os.ErrNotExist) {
+				yearsNeedingPlays = append(yearsNeedingPlays, year)
+			}
+		}
+	}
+
+	if len(yearsNeedingPlays) > 0 {
+		echo.Infof("  Downloading %d years (parallel)...", len(yearsNeedingPlays))
+		if err := downloadPlaysParallel(playsDir, yearsNeedingPlays); err != nil {
+			echo.Infof("  ⚠ Some downloads failed, retrying individually")
+		}
+	}
+
+	playsLoadedCount := 0
+	playsSkippedCount := 0
+
+	for i, year := range years {
 		zipFile := filepath.Join(playsDir, fmt.Sprintf("%dplays.zip", year))
 		playsKey := fmt.Sprintf("retrosheet_plays_%d", year)
 
 		if _, ok := refreshes[playsKey]; ok {
-			echo.Infof("  Skipping %d plays (already loaded)", year)
+			playsSkippedCount++
 			continue
 		}
 
 		if _, err := os.Stat(zipFile); errors.Is(err, os.ErrNotExist) {
-			echo.Infof("  Downloading %d plays...", year)
 			if err := downloadRetrosheetPlays(year, zipFile); err != nil {
 				return result, fmt.Errorf("error: failed to download %d plays: %w", year, err)
 			}
-		} else if err != nil {
-			return result, fmt.Errorf("error: unable to stat %s: %w", zipFile, err)
-		} else {
-			echo.Infof("  ✓ Using cached %d plays", year)
 		}
-
-		echo.Infof("  Loading %d plays...", year)
 
 		rows, err := database.LoadRetrosheetPlays(ctx, zipFile)
 		if err != nil {
@@ -177,12 +257,17 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 		}
 
 		result.PlayRows += rows
-		echo.Successf("  ✓ Loaded %d (%d rows)", year, rows)
+		playsLoadedCount++
+		echo.Infof("  [%d/%d] %d: %s rows", i+1, totalYears, year, formatNumber(rows))
 
 		if err := database.RecordDatasetRefresh(ctx, playsKey, rows); err != nil {
 			return result, fmt.Errorf("error: failed to record %s refresh: %w", playsKey, err)
 		}
 		refreshes[playsKey] = db.DatasetRefresh{}
+	}
+
+	if playsSkippedCount > 0 {
+		echo.Infof("  Skipped %d already-loaded years", playsSkippedCount)
 	}
 
 	specialGameTypes := []struct {
@@ -201,31 +286,31 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 
 	echo.Info("")
 	echo.Info("Loading special game types...")
+	specialLoadedCount := 0
+	specialSkippedCount := 0
+
 	for _, gameType := range specialGameTypes {
 		if _, ok := refreshes[gameType.refreshKey]; ok {
-			echo.Infof("  Skipping %s (already loaded)", gameType.name)
+			specialSkippedCount++
 			continue
 		}
 
 		if _, err := os.Stat(gameType.file); errors.Is(err, os.ErrNotExist) {
-			echo.Infof("  Downloading %s...", gameType.name)
 			if err := gameType.downloadFunc(gameType.file); err != nil {
 				return result, fmt.Errorf("error: failed to download %s: %w", gameType.name, err)
 			}
 		} else if err != nil {
 			return result, fmt.Errorf("error: unable to stat %s: %w", gameType.file, err)
-		} else {
-			echo.Infof("  ✓ Using cached %s", gameType.name)
 		}
 
-		echo.Infof("  Loading %s...", gameType.name)
 		rows, err := database.LoadRetrosheetGameLog(ctx, gameType.file, gameType.gameType)
 		if err != nil {
 			return result, fmt.Errorf("error: failed to load %s: %w", gameType.name, err)
 		}
 
 		result.GameRows += rows
-		echo.Successf("  ✓ Loaded %s (%d rows)", gameType.name, rows)
+		specialLoadedCount++
+		echo.Infof("  %s: %s rows", gameType.name, formatNumber(rows))
 
 		if err := database.RecordDatasetRefresh(ctx, gameType.refreshKey, rows); err != nil {
 			return result, fmt.Errorf("error: failed to record %s refresh: %w", gameType.name, err)
@@ -233,13 +318,18 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 		refreshes[gameType.refreshKey] = db.DatasetRefresh{}
 	}
 
+	if specialSkippedCount > 0 {
+		echo.Infof("  Skipped %d already-loaded types", specialSkippedCount)
+	}
+
 	totalRows := result.GameRows + result.PlayRows
 
 	echo.Info("")
-	echo.Success("✓ All Retrosheet data loaded successfully")
-	echo.Infof("  Total rows: %d", totalRows)
-	echo.Infof("  Game log rows: %d", result.GameRows)
-	echo.Infof("  Play-by-play rows: %d", result.PlayRows)
+	echo.Success("✓ Retrosheet data loaded successfully")
+	echo.Infof("  %s total rows (%s games, %s plays)",
+		formatNumber(totalRows),
+		formatNumber(result.GameRows),
+		formatNumber(result.PlayRows))
 
 	if result.GameRows > 0 {
 		if err := database.RecordDatasetRefresh(ctx, "retrosheet_games", result.GameRows); err != nil {
@@ -303,7 +393,6 @@ func ResetLahman(ctx context.Context, database *db.DB, tables []string) error {
 	if err := clearDatasetRefresh(ctx, database, "lahman"); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -406,6 +495,108 @@ func downloadFile(url, dest string) error {
 	if _, err := io.Copy(out, resp.Body); err != nil {
 		return err
 	}
+	return nil
+}
 
+func downloadGameLogBatch(dest string) error {
+	url := "https://www.retrosheet.org/gamelogs/gl1871_2025.zip"
+	return downloadFile(url, dest)
+}
+
+// downloadPlaysParallel downloads multiple years of plays in parallel with rate limiting.
+func downloadPlaysParallel(playsDir string, years []int) error {
+	const maxConcurrent = 3
+	semaphore := make(chan struct{}, maxConcurrent)
+	errChan := make(chan error, len(years))
+
+	for _, year := range years {
+		semaphore <- struct{}{}
+		go func(y int) {
+			defer func() { <-semaphore }()
+
+			zipFile := filepath.Join(playsDir, fmt.Sprintf("%dplays.zip", y))
+			if err := downloadRetrosheetPlays(y, zipFile); err != nil {
+				errChan <- fmt.Errorf("year %d: %w", y, err)
+			} else {
+				errChan <- nil
+			}
+		}(year)
+	}
+
+	var errors []error
+	for range len(years) {
+		if err := <-errChan; err != nil {
+			errors = append(errors, err)
+		}
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("failed to download %d years", len(errors))
+	}
+	return nil
+}
+
+// formatNumber adds thousand separators to numbers for better readability.
+func formatNumber(n int64) string {
+	s := fmt.Sprintf("%d", n)
+	if len(s) <= 3 {
+		return s
+	}
+
+	var result []byte
+	for i, c := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			result = append(result, ',')
+		}
+		result = append(result, byte(c))
+	}
+	return string(result)
+}
+
+// ExtractGameLogFromBatch extracts a specific year's game log from the batch zip.
+// batchZip is the path to gl1871_2025.zip, year is the year to extract, destZip is where to save the extracted file.
+func ExtractGameLogFromBatch(batchZip string, year int, destZip string) error {
+	r, err := zip.OpenReader(batchZip)
+	if err != nil {
+		return fmt.Errorf("failed to open batch zip: %w", err)
+	}
+	defer r.Close()
+
+	targetFile := fmt.Sprintf("gl%d.txt", year)
+
+	for _, f := range r.File {
+		if strings.EqualFold(f.Name, targetFile) {
+			return extractAndZipFile(f, destZip)
+		}
+	}
+
+	return fmt.Errorf("year %d not found in batch", year)
+}
+
+// extractAndZipFile extracts a file from a zip and creates a new zip with just that file.
+func extractAndZipFile(zipFile *zip.File, destZip string) error {
+	rc, err := zipFile.Open()
+	if err != nil {
+		return fmt.Errorf("failed to open file in zip: %w", err)
+	}
+	defer rc.Close()
+
+	outFile, err := os.Create(destZip)
+	if err != nil {
+		return fmt.Errorf("failed to create output zip: %w", err)
+	}
+	defer outFile.Close()
+
+	zipWriter := zip.NewWriter(outFile)
+	defer zipWriter.Close()
+
+	writer, err := zipWriter.Create(zipFile.Name)
+	if err != nil {
+		return fmt.Errorf("failed to create file in output zip: %w", err)
+	}
+
+	if _, err := io.Copy(writer, rc); err != nil {
+		return fmt.Errorf("failed to copy file content: %w", err)
+	}
 	return nil
 }

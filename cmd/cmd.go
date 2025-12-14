@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/db"
@@ -23,7 +24,6 @@ func ETLCmd() *cobra.Command {
 		Short: "ETL operations for baseball data",
 		Long:  "Extract, Transform, and Load operations for Lahman and Retrosheet data sources.",
 	}
-
 	cmd.AddCommand(EtlFetchCmd())
 	cmd.AddCommand(EtlLoadCmd())
 	cmd.AddCommand(EtlStatusCmd())
@@ -37,7 +37,6 @@ func DbCmd() *cobra.Command {
 		Short: "Database operations",
 		Long:  "Database migration and management operations.",
 	}
-
 	cmd.AddCommand(DbMigrateCmd())
 	cmd.AddCommand(DbResetCmd())
 	cmd.AddCommand(DbPopulateCmd())
@@ -51,7 +50,6 @@ func EtlFetchCmd() *cobra.Command {
 		Short: "Download baseball data sources",
 		Long:  "Download data from Lahman and Retrosheet sources.",
 	}
-
 	cmd.AddCommand(LahmanFetchCmd())
 	cmd.AddCommand(RetrosheetFetchCmd())
 	return cmd
@@ -64,7 +62,6 @@ func EtlLoadCmd() *cobra.Command {
 		Short: "Load data into database",
 		Long:  "Load downloaded data into PostgreSQL database.",
 	}
-
 	cmd.AddCommand(LahmanLoadCmd())
 	cmd.AddCommand(RetrosheetLoadCmd())
 	cmd.AddCommand(FanGraphsLoadCmd())
@@ -83,12 +80,19 @@ func LahmanFetchCmd() *cobra.Command {
 
 // RetrosheetFetchCmd creates the fetch retrosheet command
 func RetrosheetFetchCmd() *cobra.Command {
-	return &cobra.Command{
+	var yearsFlag string
+	var force bool
+	cmd := &cobra.Command{
 		Use:   "retrosheet",
 		Short: "Download Retrosheet data",
 		Long:  "Download Retrosheet game logs and event files.",
-		RunE:  fetchRetrosheet,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return fetchRetrosheet(cmd, yearsFlag, force)
+		},
 	}
+	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all")
+	cmd.Flags().BoolVar(&force, "force", false, "Force redownload even if files exist")
+	return cmd
 }
 
 // LahmanLoadCmd creates the load lahman command
@@ -136,7 +140,6 @@ func DbResetCmd() *cobra.Command {
 	var csvDir string
 	var yearsFlag string
 	var dataDir string
-
 	cmd := &cobra.Command{
 		Use:   "reset",
 		Short: "Clear Lahman and Retrosheet data before reseeding",
@@ -145,11 +148,9 @@ func DbResetCmd() *cobra.Command {
 			return resetDatabase(cmd, csvDir, dataDir, yearsFlag)
 		},
 	}
-
 	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
 	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
-
 	return cmd
 }
 
@@ -158,7 +159,6 @@ func DbPopulateCmd() *cobra.Command {
 	var csvDir string
 	var yearsFlag string
 	var dataDir string
-
 	cmd := &cobra.Command{
 		Use:   "populate",
 		Short: "Seed the database with Lahman and Retrosheet data",
@@ -167,12 +167,10 @@ func DbPopulateCmd() *cobra.Command {
 			return runPopulateAll(cmd, csvDir, dataDir, yearsFlag)
 		},
 	}
-
 	cmd.AddCommand(DbPopulateLahmanCmd())
 	cmd.AddCommand(DbPopulateRetrosheetCmd())
 	cmd.AddCommand(DbPopulateAllCmd())
 	cmd.AddCommand(DbPopulateWinExpectancyCmd())
-
 	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
 	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
@@ -181,7 +179,6 @@ func DbPopulateCmd() *cobra.Command {
 
 func fetchLahman(cmd *cobra.Command, args []string) error {
 	echo.Header("Lahman Database Download Instructions")
-
 	dataDir := "data/lahman"
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return fmt.Errorf("error: failed to create data directory: %w", err)
@@ -203,13 +200,21 @@ func fetchLahman(cmd *cobra.Command, args []string) error {
 	echo.Infof("  Directory: %s", dataDir)
 	echo.Info("")
 	echo.Info("After downloading, use: baseball etl load lahman")
-
 	return nil
 }
 
-func fetchRetrosheet(cmd *cobra.Command, args []string) error {
+func fetchRetrosheet(_ *cobra.Command, yearsFlag string, force bool) error {
 	echo.Header("Fetching Retrosheet Data")
-	echo.Info("Downloading Retrosheet game logs and play-by-play data...")
+	years, err := parseYearFlag(yearsFlag)
+	if err != nil {
+		return err
+	}
+
+	if len(years) == 0 {
+		years = []int{2023, 2024, 2025}
+	}
+
+	echo.Infof("Downloading Retrosheet data for %d years...", len(years))
 
 	dataDir := "data/retrosheet"
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
@@ -226,16 +231,12 @@ func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error: failed to create plays directory: %w", err)
 	}
 
-	gameLogFiles := map[string]string{
-		"GL2025.zip": "https://www.retrosheet.org/gamelogs/gl2025.zip",
-		"GL2024.zip": "https://www.retrosheet.org/gamelogs/gl2024.zip",
-		"GL2023.zip": "https://www.retrosheet.org/gamelogs/gl2023.zip",
-	}
+	gameLogFiles := make(map[string]string)
+	playFiles := make(map[string]string)
 
-	playFiles := map[string]string{
-		"2025plays.zip": "https://www.retrosheet.org/downloads/plays/2025plays.zip",
-		"2024plays.zip": "https://www.retrosheet.org/downloads/plays/2024plays.zip",
-		"2023plays.zip": "https://www.retrosheet.org/downloads/plays/2023plays.zip",
+	for _, year := range years {
+		gameLogFiles[fmt.Sprintf("GL%d.zip", year)] = fmt.Sprintf("https://www.retrosheet.org/gamelogs/gl%d.zip", year)
+		playFiles[fmt.Sprintf("%dplays.zip", year)] = fmt.Sprintf("https://www.retrosheet.org/downloads/plays/%dplays.zip", year)
 	}
 
 	ejectionsDir := filepath.Join(dataDir, "ejections")
@@ -245,6 +246,15 @@ func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 
 	echo.Info("Downloading game logs...")
 	for filename, url := range gameLogFiles {
+		outputPath := filepath.Join(gameLogsDir, filename)
+
+		if !force {
+			if _, err := os.Stat(outputPath); err == nil {
+				echo.Infof("  ✓ Using cached %s", filename)
+				continue
+			}
+		}
+
 		echo.Infof("  Downloading %s...", filename)
 
 		resp, err := http.Get(url)
@@ -259,15 +269,13 @@ func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 			continue
 		}
 
-		outputPath := filepath.Join(gameLogsDir, filename)
 		out, err := os.Create(outputPath)
 		if err != nil {
 			return fmt.Errorf("error: failed to create %s: %w", filename, err)
 		}
 		defer out.Close()
 
-		_, err = io.Copy(out, resp.Body)
-		if err != nil {
+		if _, err = io.Copy(out, resp.Body); err != nil {
 			return fmt.Errorf("error: failed to save %s: %w", filename, err)
 		}
 
@@ -277,6 +285,15 @@ func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 	echo.Info("")
 	echo.Info("Downloading play-by-play data...")
 	for filename, url := range playFiles {
+		outputPath := filepath.Join(playsDir, filename)
+
+		if !force {
+			if _, err := os.Stat(outputPath); err == nil {
+				echo.Infof("  ✓ Using cached %s", filename)
+				continue
+			}
+		}
+
 		echo.Infof("  Downloading %s...", filename)
 
 		resp, err := http.Get(url)
@@ -291,15 +308,13 @@ func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 			continue
 		}
 
-		outputPath := filepath.Join(playsDir, filename)
 		out, err := os.Create(outputPath)
 		if err != nil {
 			return fmt.Errorf("error: failed to create %s: %w", filename, err)
 		}
 		defer out.Close()
 
-		_, err = io.Copy(out, resp.Body)
-		if err != nil {
+		if _, err = io.Copy(out, resp.Body); err != nil {
 			return fmt.Errorf("error: failed to save %s: %w", filename, err)
 		}
 
@@ -327,8 +342,7 @@ func fetchRetrosheet(cmd *cobra.Command, args []string) error {
 			}
 			defer out.Close()
 
-			_, err = io.Copy(out, resp.Body)
-			if err != nil {
+			if _, err = io.Copy(out, resp.Body); err != nil {
 				return fmt.Errorf("error: failed to save ejections.zip: %w", err)
 			}
 
@@ -360,21 +374,13 @@ func loadLahman(cmd *cobra.Command, args []string) error {
 	csvDir := filepath.Join(dataDir, "csv")
 
 	tables := []string{
-		"AllstarFull",
-		"Appearances",
+		"AllstarFull", "Appearances",
 		"AwardsManagers", "AwardsPlayers", "AwardsShareManagers", "AwardsSharePlayers",
-		"Batting", "BattingPost",
-		"CollegePlaying",
+		"Batting", "BattingPost", "CollegePlaying",
 		"Fielding", "FieldingOF", "FieldingOFsplit", "FieldingPost",
-		"HomeGames",
-		"HallOfFame",
-		"Managers", "ManagersHalf",
-		"Parks",
-		"People",
-		"Pitching", "PitchingPost",
-		"Salaries",
-		"Schools",
-		"SeriesPost",
+		"HomeGames", "HallOfFame", "Managers", "ManagersHalf",
+		"Parks", "People", "Pitching", "PitchingPost",
+		"Salaries", "Schools", "SeriesPost",
 		"Teams", "TeamsFranchises", "TeamsHalf",
 	}
 
@@ -538,7 +544,6 @@ func loadRetrosheet(cmd *cobra.Command, args []string) error {
 
 func DbPopulateLahmanCmd() *cobra.Command {
 	var csvDir string
-
 	cmd := &cobra.Command{
 		Use:   "lahman",
 		Short: "Seed Lahman data only",
@@ -546,7 +551,6 @@ func DbPopulateLahmanCmd() *cobra.Command {
 			return populateLahman(cmd, csvDir)
 		},
 	}
-
 	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
 	return cmd
 }
@@ -554,17 +558,17 @@ func DbPopulateLahmanCmd() *cobra.Command {
 func DbPopulateRetrosheetCmd() *cobra.Command {
 	var yearsFlag string
 	var dataDir string
-
+	var force bool
 	cmd := &cobra.Command{
 		Use:   "retrosheet",
 		Short: "Seed Retrosheet data only",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return populateRetrosheet(cmd, dataDir, yearsFlag)
+			return populateRetrosheet(cmd, dataDir, yearsFlag, force)
 		},
 	}
-
-	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
+	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
+	cmd.Flags().BoolVar(&force, "force", false, "Force reload even if data already exists")
 	return cmd
 }
 
@@ -572,7 +576,6 @@ func DbPopulateAllCmd() *cobra.Command {
 	var csvDir string
 	var yearsFlag string
 	var dataDir string
-
 	cmd := &cobra.Command{
 		Use:   "all",
 		Short: "Seed both Lahman and Retrosheet data",
@@ -580,11 +583,9 @@ func DbPopulateAllCmd() *cobra.Command {
 			return runPopulateAll(cmd, csvDir, dataDir, yearsFlag)
 		},
 	}
-
 	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
 	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
-
 	return cmd
 }
 
@@ -605,7 +606,7 @@ func populateLahman(cmd *cobra.Command, csvDir string) error {
 	return err
 }
 
-func populateRetrosheet(cmd *cobra.Command, dataDir, yearsFlag string) error {
+func populateRetrosheet(cmd *cobra.Command, dataDir, yearsFlag string, force bool) error {
 	echo.Header("Seeding Retrosheet Data")
 	echo.Info("Connecting to database...")
 
@@ -623,7 +624,11 @@ func populateRetrosheet(cmd *cobra.Command, dataDir, yearsFlag string) error {
 	}
 
 	ctx := cmd.Context()
-	_, err = seed.LoadRetrosheet(ctx, database, seed.RetrosheetOptions{DataDir: dataDir, Years: years})
+	_, err = seed.LoadRetrosheet(ctx, database, seed.RetrosheetOptions{
+		DataDir: dataDir,
+		Years:   years,
+		Force:   force,
+	})
 	return err
 }
 
@@ -637,6 +642,14 @@ func parseYearFlag(flagValue string) ([]int, error) {
 	for token := range tokens {
 		token = strings.TrimSpace(token)
 		if token == "" {
+			continue
+		}
+
+		if token == "all" {
+			currentYear := time.Now().Year()
+			for year := 1910; year <= currentYear; year++ {
+				years = append(years, year)
+			}
 			continue
 		}
 
@@ -735,7 +748,7 @@ func runPopulateAll(cmd *cobra.Command, csvDir, dataDir, yearsFlag string) error
 		return err
 	}
 
-	return populateRetrosheet(cmd, dataDir, yearsFlag)
+	return populateRetrosheet(cmd, dataDir, yearsFlag, false)
 }
 
 func loadFanGraphs(cmd *cobra.Command, args []string) error {
@@ -752,7 +765,6 @@ func loadFanGraphs(cmd *cobra.Command, args []string) error {
 
 	ctx := cmd.Context()
 
-	// Load wOBA constants
 	wobaFile := "data/fangraphs/woba.csv"
 	echo.Info("Loading wOBA constants...")
 
@@ -767,7 +779,6 @@ func loadFanGraphs(cmd *cobra.Command, args []string) error {
 
 	echo.Successf("✓ Loaded wOBA constants (%d rows)", wobaRows)
 
-	// Load park factors
 	parkFactorDir := "data/fangraphs/pf"
 	echo.Info("Loading park factors...")
 
@@ -799,14 +810,12 @@ func loadFanGraphs(cmd *cobra.Command, args []string) error {
 	echo.Success("✓ All FanGraphs data loaded successfully")
 	echo.Infof("  wOBA constants: %d rows", wobaRows)
 	echo.Infof("  Park factors: %d rows", totalParkRows)
-
 	return nil
 }
 
 // DbPopulateWinExpectancyCmd creates the populate win-expectancy command
 func DbPopulateWinExpectancyCmd() *cobra.Command {
 	var minSampleSize int
-
 	cmd := &cobra.Command{
 		Use:   "win-expectancy",
 		Short: "Build win expectancy table from historical play-by-play data",
@@ -815,7 +824,6 @@ func DbPopulateWinExpectancyCmd() *cobra.Command {
 			return populateWinExpectancy(cmd, minSampleSize)
 		},
 	}
-
 	cmd.Flags().IntVar(&minSampleSize, "min-sample-size", 50, "Minimum sample size for a game state to be included")
 	return cmd
 }
@@ -833,11 +841,9 @@ func populateWinExpectancy(cmd *cobra.Command, minSampleSize int) error {
 	echo.Success("✓ Connected to database")
 
 	ctx := cmd.Context()
-
 	echo.Info("Analyzing play-by-play data and computing win probabilities...")
 	echo.Infof("  Minimum sample size: %d", minSampleSize)
 	echo.Info("  This may take a few minutes for large datasets...")
-
 	rows, err := database.BuildWinExpectancy(ctx, minSampleSize)
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
@@ -845,6 +851,5 @@ func populateWinExpectancy(cmd *cobra.Command, minSampleSize int) error {
 
 	echo.Success("✓ Win expectancy data built successfully")
 	echo.Infof("  Game states populated: %d", rows)
-
 	return nil
 }

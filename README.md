@@ -39,14 +39,27 @@ task build
 
 #### ETL
 
-```bash
-# Prepare folders or downloads
-./tmp/baseball etl fetch lahman
-./tmp/baseball etl fetch retrosheet
+**Fetch (download only):**
 
-# Load datasets once the CSV/zip files exist
+```bash
+# Download Lahman data
+./tmp/baseball etl fetch lahman
+
+# Download Retrosheet data with flexible year specification
+./tmp/baseball etl fetch retrosheet --years=all           # All available (1910-2025)
+./tmp/baseball etl fetch retrosheet --years=1950-2000     # Year ranges
+./tmp/baseball etl fetch retrosheet --years=2023,2024     # Specific years
+./tmp/baseball etl fetch retrosheet --years=all --force   # Force redownload
+```
+
+**Load:**
+
+```bash
+# Load Lahman data
 ./tmp/baseball etl load lahman
-./tmp/baseball etl load retrosheet
+
+# Load Retrosheet data (same year options as fetch)
+./tmp/baseball etl load retrosheet --years=all
 ```
 
 #### Database
@@ -55,9 +68,17 @@ task build
 # Apply migrations
 ./tmp/baseball db migrate
 
-# Reseed everything (accepts Lahman/Retrosheet-specific subcommands and year ranges)
-./tmp/baseball db reset --years 2023-2025
-./tmp/baseball db populate --csv-dir ./data/lahman/csv --years 2023
+# Populate with year flexibility
+./tmp/baseball db populate retrosheet --years=all              # All historical data
+./tmp/baseball db populate retrosheet --years=2020-2024        # Recent years
+./tmp/baseball db populate retrosheet --years=1950,1975,2000   # Specific years
+./tmp/baseball db populate retrosheet --years=2024 --force     # Force reload (deletes + reloads)
+
+# Populate Lahman data
+./tmp/baseball db populate lahman --csv-dir ./data/lahman/csv
+
+# Reset everything (migrate + populate)
+./tmp/baseball db reset --years=2023-2025
 
 # Build win expectancy data from play-by-play
 ./tmp/baseball db populate win-expectancy --min-sample-size 50

@@ -21,7 +21,7 @@ import (
 //go:embed sql/*.sql
 var migrationFiles embed.FS
 
-//go:embed sql/build_win_expectancy.sql
+//go:embed queries/build_win_expectancy.sql
 var buildWinExpectancyQuery string
 
 // Migration represents a single database migration.
@@ -341,7 +341,47 @@ func (db *DB) LoadRetrosheetGameLog(ctx context.Context, zipPath string, gameTyp
 		return 0, fmt.Errorf("failed to create temp table: %w", err)
 	}
 
-	copySQL := `COPY games_temp FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`
+	copySQL := `COPY games_temp (
+		date, game_number, day_of_week, visiting_team, visiting_team_league,
+		visiting_team_game_number, home_team, home_team_league, home_team_game_number,
+		visiting_score, home_score, game_length_outs, day_night, completion_info,
+		forfeit_info, protest_info, park_id, attendance, game_time_minutes,
+		visiting_line_score, home_line_score, visiting_at_bats, visiting_hits,
+		visiting_doubles, visiting_triples, visiting_homeruns, visiting_rbi,
+		visiting_sac_hits, visiting_sac_flies, visiting_hit_by_pitch, visiting_walks,
+		visiting_int_walks, visiting_strikeouts, visiting_stolen_bases,
+		visiting_caught_stealing, visiting_gdp, visiting_interference, visiting_lob,
+		visiting_pitchers_used, visiting_ind_er, visiting_team_er, visiting_wild_pitches,
+		visiting_balks, visiting_putouts, visiting_assists, visiting_errors,
+		visiting_passed_balls, visiting_double_plays, visiting_triple_plays,
+		home_at_bats, home_hits, home_doubles, home_triples, home_homeruns,
+		home_rbi, home_sac_hits, home_sac_flies, home_hit_by_pitch, home_walks,
+		home_int_walks, home_strikeouts, home_stolen_bases, home_caught_stealing,
+		home_gdp, home_interference, home_lob, home_pitchers_used, home_ind_er,
+		home_team_er, home_wild_pitches, home_balks, home_putouts, home_assists,
+		home_errors, home_passed_balls, home_double_plays, home_triple_plays,
+		hp_ump_id, hp_ump_name, b1_ump_id, b1_ump_name, b2_ump_id, b2_ump_name,
+		b3_ump_id, b3_ump_name, lf_ump_id, lf_ump_name, rf_ump_id, rf_ump_name,
+		v_manager_id, v_manager_name, h_manager_id, h_manager_name,
+		winning_pitcher_id, winning_pitcher_name, losing_pitcher_id, losing_pitcher_name,
+		saving_pitcher_id, saving_pitcher_name, goahead_rbi_id, goahead_rbi_name,
+		v_starting_pitcher_id, v_starting_pitcher_name, h_starting_pitcher_id,
+		h_starting_pitcher_name, v_player_1_id, v_player_1_name, v_player_1_pos,
+		v_player_2_id, v_player_2_name, v_player_2_pos, v_player_3_id,
+		v_player_3_name, v_player_3_pos, v_player_4_id, v_player_4_name,
+		v_player_4_pos, v_player_5_id, v_player_5_name, v_player_5_pos,
+		v_player_6_id, v_player_6_name, v_player_6_pos, v_player_7_id,
+		v_player_7_name, v_player_7_pos, v_player_8_id, v_player_8_name,
+		v_player_8_pos, v_player_9_id, v_player_9_name, v_player_9_pos,
+		h_player_1_id, h_player_1_name, h_player_1_pos, h_player_2_id,
+		h_player_2_name, h_player_2_pos, h_player_3_id, h_player_3_name,
+		h_player_3_pos, h_player_4_id, h_player_4_name, h_player_4_pos,
+		h_player_5_id, h_player_5_name, h_player_5_pos, h_player_6_id,
+		h_player_6_name, h_player_6_pos, h_player_7_id, h_player_7_name,
+		h_player_7_pos, h_player_8_id, h_player_8_name, h_player_8_pos,
+		h_player_9_id, h_player_9_name, h_player_9_pos, additional_info,
+		acquisition_info, game_type
+	) FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`
 	_, err = conn.PgConn().CopyFrom(ctx, file, copySQL)
 	if err != nil {
 		return 0, fmt.Errorf("failed to copy data: %w", err)
@@ -366,6 +406,12 @@ func (db *DB) LoadRetrosheetGameLog(ctx context.Context, zipPath string, gameTyp
 // LoadRetrosheetPlays extracts a retrosheet plays zip file and loads it into the plays table.
 // The CSV files already have headers, so this is simpler than game logs.
 func (db *DB) LoadRetrosheetPlays(ctx context.Context, zipPath string) (int64, error) {
+	tmpDir, err := os.MkdirTemp("", "plays-*")
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
 	r, err := zip.OpenReader(zipPath)
 	if err != nil {
 		return 0, fmt.Errorf("failed to open zip file: %w", err)
@@ -390,6 +436,52 @@ func (db *DB) LoadRetrosheetPlays(ctx context.Context, zipPath string) (int64, e
 	}
 	defer rc.Close()
 
+	reader := csv.NewReader(rc)
+	reader.LazyQuotes = true
+	reader.TrimLeadingSpace = true
+
+	tmpCSV := filepath.Join(tmpDir, "plays.csv")
+	outFile, err := os.Create(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp CSV: %w", err)
+	}
+	defer outFile.Close()
+
+	writer := csv.NewWriter(outFile)
+	defer writer.Flush()
+
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return 0, fmt.Errorf("failed to read CSV record: %w", err)
+		}
+
+		for i := range record {
+			if record[i] == "?" {
+				record[i] = ""
+			}
+		}
+
+		if err := writer.Write(record); err != nil {
+			return 0, fmt.Errorf("failed to write cleaned record: %w", err)
+		}
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return 0, fmt.Errorf("failed to flush CSV writer: %w", err)
+	}
+	outFile.Close()
+
+	file, err := os.Open(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open cleaned CSV: %w", err)
+	}
+	defer file.Close()
+
 	conn, err := pgx.Connect(ctx, db.connStr)
 	if err != nil {
 		return 0, fmt.Errorf("failed to connect for COPY: %w", err)
@@ -411,7 +503,7 @@ func (db *DB) LoadRetrosheetPlays(ctx context.Context, zipPath string) (int64, e
 	}
 
 	copySQL := `COPY plays_temp FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`
-	_, err = conn.PgConn().CopyFrom(ctx, rc, copySQL)
+	_, err = conn.PgConn().CopyFrom(ctx, file, copySQL)
 	if err != nil {
 		return 0, fmt.Errorf("failed to copy data: %w", err)
 	}
@@ -470,7 +562,9 @@ func (db *DB) LoadRetrosheetEjections(ctx context.Context, zipPath string) (int6
 		return 0, fmt.Errorf("failed to create temp CSV: %w", err)
 	}
 
-	if _, err := outFile.WriteString("game_id,date,game_number,ejectee_id,ejectee_name,team,role,umpire_id,umpire_name,inning,reason\n"); err != nil {
+	if _, err := outFile.WriteString(
+		"game_id,date,game_number,ejectee_id,ejectee_name,team,role,umpire_id,umpire_name,inning,reason\n",
+	); err != nil {
 		outFile.Close()
 		return 0, fmt.Errorf("failed to write headers: %w", err)
 	}
@@ -741,8 +835,6 @@ func csvReader(r io.Reader) *csv.Reader {
 
 // BuildWinExpectancy computes win expectancy data from historical play-by-play data and populates the win_expectancy_historical table.
 // This analyzes all plays in the plays table, joins with game outcomes, and calculates win probabilities for each unique game state.
-// The minSampleSize parameter filters out states with insufficient data (recommended: 50-100).
-// Returns the number of game states inserted/updated.
 func (db *DB) BuildWinExpectancy(ctx context.Context, minSampleSize int) (int64, error) {
 	if minSampleSize < 1 {
 		minSampleSize = 50
