@@ -1,7 +1,5 @@
 // Package api provides HTTP handlers for the Baseball API
 //
-// TODO: finish tag docs
-//
 // @title Baseball API
 // @description.markdown
 // @version 1.0
@@ -19,6 +17,75 @@
 //
 // @tag.name games
 // @tag.description Game data
+//
+// @tag.name meta
+// @tag.description Metadata about the API
+//
+// @tag.name computed
+// @tag.description Computed statistics
+//
+// @tag.name derived
+// @tag.description Derived statistics
+//
+// @tag.name leverage
+// @tag.description Leverage index data
+//
+// @tag.name win-expectancy
+// @tag.description Win expectancy data
+//
+// @tag.name leaders
+// @tag.description Leaderboard data
+//
+// @tag.name war
+// @tag.description Computed WAR
+//
+// @tag.name mlb
+// @tag.description MLB Stats API endpoint proxies
+//
+// @tag.name pitching
+// @tag.description MLB pitching statistics
+//
+// @tag.name search
+// @tag.description Searchable data
+//
+// @tag.name awards
+// @tag.description MLB awards data
+//
+// @tag.name players
+// @tag.description Player career data
+//
+// @tag.name teams
+// @tag.description Team/franchise data
+//
+// @tag.name stats
+// @tag.description MLB game statistics
+//
+// @tag.name pitching
+// @tag.description MLB pitching statistics
+//
+// @tag.name batting
+// @tag.description MLB batting statistics
+//
+// @tag.name parks
+// @tag.description MLB park data
+//
+// @tag.name managers
+// @tag.description MLB manager data
+//
+// @tag.name umpires
+// @tag.description MLB umpire data
+//
+// @tag.name seasons
+// @tag.description MLB season data
+//
+// @tag.name postseason
+// @tag.description MLB postseason data
+//
+// @tag.name ejections
+// @tag.description MLB ejection data
+//
+// @tag.name win-expectancy
+// @tag.description Computed win expectancy data
 package api
 
 import (

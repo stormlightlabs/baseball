@@ -9897,6 +9897,98 @@ const docTemplate = `{
         {
             "description": "Game data",
             "name": "games"
+        },
+        {
+            "description": "Metadata about the API",
+            "name": "meta"
+        },
+        {
+            "description": "Computed statistics",
+            "name": "computed"
+        },
+        {
+            "description": "Derived statistics",
+            "name": "derived"
+        },
+        {
+            "description": "Leverage index data",
+            "name": "leverage"
+        },
+        {
+            "description": "Win expectancy data",
+            "name": "win-expectancy"
+        },
+        {
+            "description": "Leaderboard data",
+            "name": "leaders"
+        },
+        {
+            "description": "Computed WAR",
+            "name": "war"
+        },
+        {
+            "description": "MLB Stats API endpoint proxies",
+            "name": "mlb"
+        },
+        {
+            "description": "MLB pitching statistics",
+            "name": "pitching"
+        },
+        {
+            "description": "Searchable data",
+            "name": "search"
+        },
+        {
+            "description": "MLB awards data",
+            "name": "awards"
+        },
+        {
+            "description": "Player career data",
+            "name": "players"
+        },
+        {
+            "description": "Team/franchise data",
+            "name": "teams"
+        },
+        {
+            "description": "MLB game statistics",
+            "name": "stats"
+        },
+        {
+            "description": "MLB pitching statistics",
+            "name": "pitching"
+        },
+        {
+            "description": "MLB batting statistics",
+            "name": "batting"
+        },
+        {
+            "description": "MLB park data",
+            "name": "parks"
+        },
+        {
+            "description": "MLB manager data",
+            "name": "managers"
+        },
+        {
+            "description": "MLB umpire data",
+            "name": "umpires"
+        },
+        {
+            "description": "MLB season data",
+            "name": "seasons"
+        },
+        {
+            "description": "MLB postseason data",
+            "name": "postseason"
+        },
+        {
+            "description": "MLB ejection data",
+            "name": "ejections"
+        },
+        {
+            "description": "Computed win expectancy data",
+            "name": "win-expectancy"
         }
     ]
 }`
