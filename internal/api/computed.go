@@ -362,11 +362,12 @@ func (cr *ComputedRoutes) handlePlayerWAR(w http.ResponseWriter, r *http.Request
 // @Produce json
 // @Param season path integer true "Season year"
 // @Param stat query string false "Statistic (WOBA, WRC_PLUS, ISO, BABIP, AVG, OBP, SLG, HR, BB, K_RATE, BB_RATE)" default("WRC_PLUS")
-// @Param limit query integer false "Number of results" default(10)
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(10)
 // @Param min_pa query integer false "Minimum plate appearances" default(502)
 // @Param team_id query string false "Filter by team ID"
 // @Param league query string false "Filter by league (AL, NL)"
-// @Success 200 {array} core.AdvancedBattingStats
+// @Success 200 {object} PaginatedResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /seasons/{season}/leaders/batting/advanced [get]
@@ -379,7 +380,8 @@ func (cr *ComputedRoutes) handleSeasonBattingLeaders(w http.ResponseWriter, r *h
 		stat = "WRC_PLUS"
 	}
 
-	limit := getIntQuery(r, "limit", 10)
+	page := getIntQuery(r, "page", 1)
+	perPage := getIntQuery(r, "per_page", 10)
 
 	filter := core.AdvancedBattingFilter{}
 
@@ -398,13 +400,32 @@ func (cr *ComputedRoutes) handleSeasonBattingLeaders(w http.ResponseWriter, r *h
 		filter.League = &league
 	}
 
-	leaders, err := cr.advancedRepo.SeasonBattingLeaders(ctx, season, stat, limit, filter)
+	allLeaders, err := cr.advancedRepo.SeasonBattingLeaders(ctx, season, stat, 10000, filter)
 	if err != nil {
 		writeInternalServerError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, leaders)
+	total := len(allLeaders)
+	start := (page - 1) * perPage
+	end := start + perPage
+
+	var leaders []core.AdvancedBattingStats
+	if start >= total {
+		leaders = []core.AdvancedBattingStats{}
+	} else {
+		if end > total {
+			end = total
+		}
+		leaders = allLeaders[start:end]
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    leaders,
+		Page:    page,
+		PerPage: perPage,
+		Total:   total,
+	})
 }
 
 // handleSeasonPitchingLeaders godoc
@@ -415,10 +436,11 @@ func (cr *ComputedRoutes) handleSeasonBattingLeaders(w http.ResponseWriter, r *h
 // @Produce json
 // @Param season path integer true "Season year"
 // @Param stat query string false "Statistic (FIP, ERA, WHIP, K_PER_9, BB_PER_9, HR_PER_9, SO)" default("FIP")
-// @Param limit query integer false "Number of results" default(10)
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(10)
 // @Param min_ip query number false "Minimum innings pitched" default(162)
 // @Param team_id query string false "Filter by team ID"
-// @Success 200 {array} core.AdvancedPitchingStats
+// @Success 200 {object} PaginatedResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /seasons/{season}/leaders/pitching/advanced [get]
@@ -430,7 +452,8 @@ func (cr *ComputedRoutes) handleSeasonPitchingLeaders(w http.ResponseWriter, r *
 		stat = "FIP"
 	}
 
-	limit := getIntQuery(r, "limit", 10)
+	page := getIntQuery(r, "page", 1)
+	perPage := getIntQuery(r, "per_page", 10)
 	filter := core.AdvancedPitchingFilter{}
 
 	if minIPStr := r.URL.Query().Get("min_ip"); minIPStr != "" {
@@ -447,13 +470,32 @@ func (cr *ComputedRoutes) handleSeasonPitchingLeaders(w http.ResponseWriter, r *
 		filter.TeamID = &teamID
 	}
 
-	leaders, err := cr.advancedRepo.SeasonPitchingLeaders(ctx, season, stat, limit, filter)
+	allLeaders, err := cr.advancedRepo.SeasonPitchingLeaders(ctx, season, stat, 10000, filter)
 	if err != nil {
 		writeInternalServerError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, leaders)
+	total := len(allLeaders)
+	start := (page - 1) * perPage
+	end := start + perPage
+
+	var leaders []core.AdvancedPitchingStats
+	if start >= total {
+		leaders = []core.AdvancedPitchingStats{}
+	} else {
+		if end > total {
+			end = total
+		}
+		leaders = allLeaders[start:end]
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    leaders,
+		Page:    page,
+		PerPage: perPage,
+		Total:   total,
+	})
 }
 
 // handleSeasonWARLeaders godoc
@@ -463,17 +505,19 @@ func (cr *ComputedRoutes) handleSeasonPitchingLeaders(w http.ResponseWriter, r *
 // @Accept json
 // @Produce json
 // @Param season path integer true "Season year"
-// @Param limit query integer false "Number of results" default(10)
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(10)
 // @Param min_pa query integer false "Minimum plate appearances" default(502)
 // @Param team_id query string false "Filter by team ID"
-// @Success 200 {array} core.PlayerWARSummary
+// @Success 200 {object} PaginatedResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /seasons/{season}/leaders/war [get]
 func (cr *ComputedRoutes) handleSeasonWARLeaders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	season := core.SeasonYear(getIntPathValue(r, "season"))
-	limit := getIntQuery(r, "limit", 10)
+	page := getIntQuery(r, "page", 1)
+	perPage := getIntQuery(r, "per_page", 10)
 	filter := core.WARFilter{}
 
 	if minPAStr := r.URL.Query().Get("min_pa"); minPAStr != "" {
@@ -486,13 +530,32 @@ func (cr *ComputedRoutes) handleSeasonWARLeaders(w http.ResponseWriter, r *http.
 		filter.TeamID = &teamID
 	}
 
-	leaders, err := cr.advancedRepo.SeasonWARLeaders(ctx, season, limit, filter)
+	allLeaders, err := cr.advancedRepo.SeasonWARLeaders(ctx, season, 10000, filter)
 	if err != nil {
 		writeInternalServerError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, leaders)
+	total := len(allLeaders)
+	start := (page - 1) * perPage
+	end := start + perPage
+
+	var leaders []core.PlayerWARSummary
+	if start >= total {
+		leaders = []core.PlayerWARSummary{}
+	} else {
+		if end > total {
+			end = total
+		}
+		leaders = allLeaders[start:end]
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    leaders,
+		Page:    page,
+		PerPage: perPage,
+		Total:   total,
+	})
 }
 
 // handleGameWinProbabilitySummary godoc

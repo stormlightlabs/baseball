@@ -35,6 +35,7 @@ func (pr *PitchRoutes) RegisterRoutes(mux *http.ServeMux) {
 // @Param date_from query string false "Start date (YYYYMMDD)"
 // @Param date_to query string false "End date (YYYYMMDD)"
 // @Param inning query integer false "Filter by inning"
+// @Param top_bot query integer false "Filter by top (0) or bottom (1) of inning" Enums(0, 1)
 // @Param pitch_type query string false "Filter by pitch type (B, C, F, S, X, etc.)"
 // @Param ball_count query integer false "Filter by ball count (0-3)"
 // @Param strike_count query integer false "Filter by strike count (0-2)"
@@ -91,6 +92,13 @@ func (pr *PitchRoutes) handleListPitches(w http.ResponseWriter, r *http.Request)
 	if inning := r.URL.Query().Get("inning"); inning != "" {
 		i := getIntQuery(r, "inning", 0)
 		filter.Inning = &i
+	}
+
+	if topBot := r.URL.Query().Get("top_bot"); topBot != "" {
+		tb := getIntQuery(r, "top_bot", -1)
+		if tb == 0 || tb == 1 {
+			filter.TopBot = &tb
+		}
 	}
 
 	if pitchType := r.URL.Query().Get("pitch_type"); pitchType != "" {

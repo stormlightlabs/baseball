@@ -165,10 +165,10 @@ func (sr *SearchRoutes) handleSearchParks(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// TODO: count method for parks
-	total := len(parks)
-	if len(parks) == filter.Pagination.PerPage {
-		total = filter.Pagination.PerPage * filter.Pagination.Page
+	total, err := sr.parkRepo.Count(ctx, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
 	}
 
 	writeJSON(w, http.StatusOK, PaginatedResponse{
@@ -186,8 +186,9 @@ func (sr *SearchRoutes) handleSearchParks(w http.ResponseWriter, r *http.Request
 // @Accept json
 // @Produce json
 // @Param q query string true "Natural language search query"
-// @Param limit query integer false "Maximum number of results" default(50)
-// @Success 200 {array} core.Game
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /search/games [get]
@@ -200,16 +201,39 @@ func (sr *SearchRoutes) handleSearchGames(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	limit := getIntQuery(r, "limit", 50)
-	if limit > 200 {
-		limit = 200
+	pagination := core.Pagination{
+		Page:    getIntQuery(r, "page", 1),
+		PerPage: getIntQuery(r, "per_page", 50),
 	}
 
-	games, err := sr.gameRepo.SearchGamesNL(ctx, query, limit)
+	if pagination.PerPage > 200 {
+		pagination.PerPage = 200
+	}
+
+	// Get all matching games
+	allGames, err := sr.gameRepo.SearchGamesNL(ctx, query, 1000)
 	if err != nil {
 		writeInternalServerError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, games)
+	total := len(allGames)
+	start := (pagination.Page - 1) * pagination.PerPage
+	end := start + pagination.PerPage
+
+	if start >= total {
+		allGames = []core.Game{}
+	} else {
+		if end > total {
+			end = total
+		}
+		allGames = allGames[start:end]
+	}
+
+	writeJSON(w, http.StatusOK, PaginatedResponse{
+		Data:    allGames,
+		Page:    pagination.Page,
+		PerPage: pagination.PerPage,
+		Total:   total,
+	})
 }

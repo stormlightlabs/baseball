@@ -170,6 +170,7 @@ type PitchFilter struct {
 	DateFrom    *string // YYYYMMDD format
 	DateTo      *string // YYYYMMDD format
 	Inning      *int
+	TopBot      *int    // Filter by top (0) or bottom (1) of inning
 	PitchType   *string // Single character: B, C, F, S, X, etc.
 	BallCount   *int    // Filter by ball count (0-3)
 	StrikeCount *int    // Filter by strike count (0-2)

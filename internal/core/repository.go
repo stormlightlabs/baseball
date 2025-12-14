@@ -89,6 +89,7 @@ type PlayRepository interface {
 type ParkRepository interface {
 	GetByID(ctx context.Context, id ParkID) (*Park, error)
 	List(ctx context.Context, filter ParkFilter) ([]Park, error)
+	Count(ctx context.Context, filter ParkFilter) (int, error)
 
 	GamesAtPark(ctx context.Context, id ParkID, filter GameFilter) ([]Game, error)
 }

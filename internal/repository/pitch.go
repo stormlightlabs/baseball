@@ -230,6 +230,12 @@ func (r *PitchRepository) List(ctx context.Context, filter core.PitchFilter) ([]
 		argNum++
 	}
 
+	if filter.TopBot != nil {
+		query += fmt.Sprintf(" AND top_bot = $%d", argNum)
+		args = append(args, *filter.TopBot)
+		argNum++
+	}
+
 	if filter.PitchType != nil {
 		query += fmt.Sprintf(" AND pitches LIKE $%d", argNum)
 		args = append(args, "%"+*filter.PitchType+"%")
@@ -310,6 +316,9 @@ func (r *PitchRepository) List(ctx context.Context, filter core.PitchFilter) ([]
 
 // matchesPitchFilter checks if a pitch matches the filter criteria
 func (r *PitchRepository) matchesPitchFilter(pitch core.Pitch, filter core.PitchFilter) bool {
+	if filter.TopBot != nil && pitch.TopBot != *filter.TopBot {
+		return false
+	}
 	if filter.PitchType != nil && pitch.PitchType != *filter.PitchType {
 		return false
 	}

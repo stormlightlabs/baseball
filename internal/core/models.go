@@ -665,8 +665,7 @@ type Pitch struct {
 	GameID  GameID `json:"game_id" swaggertype:"string"`
 	PlayNum int    `json:"play_num"`
 	Inning  int    `json:"inning"`
-	// TODO: add this as an enum to api docs
-	TopBot  int           `json:"top_bot"` // 0=top, 1=bottom
+	TopBot  int           `json:"top_bot" enums:"0,1" example:"0"` // 0=top, 1=bottom
 	BatTeam TeamID        `json:"bat_team" swaggertype:"string"`
 	PitTeam TeamID        `json:"pit_team" swaggertype:"string"`
 	Date    string        `json:"date"`

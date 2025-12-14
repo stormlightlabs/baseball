@@ -36,8 +36,8 @@ func (sr *StatsRoutes) RegisterRoutes(mux *http.ServeMux) {
 // @Param year path integer true "Season year"
 // @Param stat query string false "Statistic (hr, avg, rbi, sb, h, r)" default("hr")
 // @Param league query string false "Filter by league (AL, NL)"
-// @Param limit query integer false "Number of results" default(10)
-// @Param offset query integer false "Offset for pagination" default(0)
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(10)
 // @Success 200 {object} BattingLeadersResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /seasons/{year}/leaders/batting [get]
@@ -50,8 +50,10 @@ func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Reque
 		stat = "hr"
 	}
 
-	limit := getIntQuery(r, "limit", 10)
-	offset := getIntQuery(r, "offset", 0)
+	page := getIntQuery(r, "page", 1)
+	perPage := getIntQuery(r, "per_page", 10)
+	limit := perPage
+	offset := (page - 1) * perPage
 
 	var league *core.LeagueID
 	if lg := r.URL.Query().Get("league"); lg != "" {
@@ -65,11 +67,21 @@ func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	allLeaders, err := sr.repo.SeasonBattingLeaders(ctx, year, stat, 10000, 0, league)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+	total := len(allLeaders)
+
 	writeJSON(w, http.StatusOK, BattingLeadersResponse{
 		Year:    year,
 		Stat:    stat,
 		League:  league,
 		Leaders: leaders,
+		Page:    page,
+		PerPage: perPage,
+		Total:   total,
 	})
 }
 
@@ -82,8 +94,8 @@ func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Reque
 // @Param year path integer true "Season year"
 // @Param stat query string false "Statistic (era, so, w, sv, ip)" default("era")
 // @Param league query string false "Filter by league (AL, NL)"
-// @Param limit query integer false "Number of results" default(10)
-// @Param offset query integer false "Offset for pagination" default(0)
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(10)
 // @Success 200 {object} PitchingLeadersResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /seasons/{year}/leaders/pitching [get]
@@ -96,8 +108,10 @@ func (sr *StatsRoutes) handlePitchingLeaders(w http.ResponseWriter, r *http.Requ
 		stat = "era"
 	}
 
-	limit := getIntQuery(r, "limit", 10)
-	offset := getIntQuery(r, "offset", 0)
+	page := getIntQuery(r, "page", 1)
+	perPage := getIntQuery(r, "per_page", 10)
+	limit := perPage
+	offset := (page - 1) * perPage
 
 	var league *core.LeagueID
 	if lg := r.URL.Query().Get("league"); lg != "" {
@@ -111,11 +125,21 @@ func (sr *StatsRoutes) handlePitchingLeaders(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	allLeaders, err := sr.repo.SeasonPitchingLeaders(ctx, year, stat, 10000, 0, league)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+	total := len(allLeaders)
+
 	writeJSON(w, http.StatusOK, PitchingLeadersResponse{
 		Year:    year,
 		Stat:    stat,
 		League:  league,
 		Leaders: leaders,
+		Page:    page,
+		PerPage: perPage,
+		Total:   total,
 	})
 }
 
@@ -413,8 +437,8 @@ func (sr *StatsRoutes) handleQueryFieldingStats(w http.ResponseWriter, r *http.R
 // @Accept json
 // @Produce json
 // @Param stat query string false "Statistic (hr, avg, rbi, sb, h, r, ops)" default("hr")
-// @Param limit query integer false "Number of results" default(10)
-// @Param offset query integer false "Offset for pagination" default(0)
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(10)
 // @Success 200 {object} CareerBattingLeadersResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /leaders/batting/career [get]
@@ -426,8 +450,10 @@ func (sr *StatsRoutes) handleCareerBattingLeaders(w http.ResponseWriter, r *http
 		stat = "hr"
 	}
 
-	limit := getIntQuery(r, "limit", 10)
-	offset := getIntQuery(r, "offset", 0)
+	page := getIntQuery(r, "page", 1)
+	perPage := getIntQuery(r, "per_page", 10)
+	limit := perPage
+	offset := (page - 1) * perPage
 
 	leaders, err := sr.repo.CareerBattingLeaders(ctx, stat, limit, offset)
 	if err != nil {
@@ -435,9 +461,19 @@ func (sr *StatsRoutes) handleCareerBattingLeaders(w http.ResponseWriter, r *http
 		return
 	}
 
+	allLeaders, err := sr.repo.CareerBattingLeaders(ctx, stat, 10000, 0)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+	total := len(allLeaders)
+
 	writeJSON(w, http.StatusOK, CareerBattingLeadersResponse{
 		Stat:    stat,
 		Leaders: leaders,
+		Page:    page,
+		PerPage: perPage,
+		Total:   total,
 	})
 }
 
@@ -448,8 +484,8 @@ func (sr *StatsRoutes) handleCareerBattingLeaders(w http.ResponseWriter, r *http
 // @Accept json
 // @Produce json
 // @Param stat query string false "Statistic (era, so, w, sv, ip)" default("w")
-// @Param limit query integer false "Number of results" default(10)
-// @Param offset query integer false "Offset for pagination" default(0)
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(10)
 // @Success 200 {object} CareerPitchingLeadersResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /leaders/pitching/career [get]
@@ -461,8 +497,10 @@ func (sr *StatsRoutes) handleCareerPitchingLeaders(w http.ResponseWriter, r *htt
 		stat = "w"
 	}
 
-	limit := getIntQuery(r, "limit", 10)
-	offset := getIntQuery(r, "offset", 0)
+	page := getIntQuery(r, "page", 1)
+	perPage := getIntQuery(r, "per_page", 10)
+	limit := perPage
+	offset := (page - 1) * perPage
 
 	leaders, err := sr.repo.CareerPitchingLeaders(ctx, stat, limit, offset)
 	if err != nil {
@@ -470,9 +508,19 @@ func (sr *StatsRoutes) handleCareerPitchingLeaders(w http.ResponseWriter, r *htt
 		return
 	}
 
+	allLeaders, err := sr.repo.CareerPitchingLeaders(ctx, stat, 10000, 0)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+	total := len(allLeaders)
+
 	writeJSON(w, http.StatusOK, CareerPitchingLeadersResponse{
 		Stat:    stat,
 		Leaders: leaders,
+		Page:    page,
+		PerPage: perPage,
+		Total:   total,
 	})
 }
 

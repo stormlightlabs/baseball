@@ -138,6 +138,38 @@ func (r *ParkRepository) List(ctx context.Context, filter core.ParkFilter) ([]co
 	return parks, nil
 }
 
+// Count returns the total number of parks matching the filter criteria.
+func (r *ParkRepository) Count(ctx context.Context, filter core.ParkFilter) (int, error) {
+	query := `
+		SELECT COUNT(DISTINCT "parkkey")
+		FROM "Parks"
+		WHERE "parkkey" IS NOT NULL
+		  AND "parkname" IS NOT NULL
+	`
+
+	args := []any{}
+	argNum := 1
+
+	if filter.NameQuery != "" {
+		query += fmt.Sprintf(` AND (
+			"parkname" ILIKE $%d OR
+			"city" ILIKE $%d OR
+			"state" ILIKE $%d OR
+			"parkkey" ILIKE $%d
+		)`, argNum, argNum, argNum, argNum)
+		args = append(args, "%"+filter.NameQuery+"%")
+		argNum++
+	}
+
+	var count int
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count parks: %w", err)
+	}
+
+	return count, nil
+}
+
 // GamesAtPark retrieves games played at a specific park.
 func (r *ParkRepository) GamesAtPark(ctx context.Context, id core.ParkID, filter core.GameFilter) ([]core.Game, error) {
 	query := parkGamesQuery

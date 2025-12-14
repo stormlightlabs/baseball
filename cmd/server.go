@@ -20,9 +20,6 @@ import (
 	"stormlightlabs.org/baseball/internal/repository"
 )
 
-// TODO: configurable baseURL
-const baseURL string = "http://localhost:8080/v1/"
-
 // ServerCmd creates the server command group
 func ServerCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -97,7 +94,13 @@ func fetchEndpoint(cmd *cobra.Command, args []string) error {
 	token, _ := cmd.Flags().GetString("token")
 	apiKey, _ := cmd.Flags().GetString("api-key")
 
-	url := baseURL + path
+	configPath, _ := cmd.Flags().GetString("config")
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		return fmt.Errorf("error: failed to load config: %w", err)
+	}
+
+	url := cfg.Server.BaseURL + path
 
 	if !raw {
 		echo.Header("API Test")

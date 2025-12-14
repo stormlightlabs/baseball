@@ -20,6 +20,7 @@ type Config struct {
 type ServerConfig struct {
 	Host      string
 	Port      int
+	BaseURL   string
 	DebugMode bool
 }
 
@@ -82,6 +83,7 @@ func Load(configPath string) (*Config, error) {
 
 	v.SetDefault("server.host", "localhost")
 	v.SetDefault("server.port", 8080)
+	v.SetDefault("server.base_url", "http://localhost:8080/v1/")
 	v.SetDefault("server.debug_mode", false)
 	v.SetDefault("database.url", "postgres://postgres:postgres@localhost:5432/baseball_dev?sslmode=disable")
 	v.SetDefault("redis.url", "redis://localhost:6379/0")
@@ -119,6 +121,7 @@ func Load(configPath string) (*Config, error) {
 		Server: ServerConfig{
 			Host:      v.GetString("server.host"),
 			Port:      v.GetInt("server.port"),
+			BaseURL:   v.GetString("server.base_url"),
 			DebugMode: v.GetBool("server.debug_mode"),
 		},
 		Database: DatabaseConfig{

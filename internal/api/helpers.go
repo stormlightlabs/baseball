@@ -38,6 +38,9 @@ type BattingLeadersResponse struct {
 	Stat    string                     `json:"stat"`
 	League  *core.LeagueID             `json:"league,omitempty" swaggertype:"string"`
 	Leaders []core.PlayerBattingSeason `json:"leaders"`
+	Page    int                        `json:"page"`
+	PerPage int                        `json:"per_page"`
+	Total   int                        `json:"total"`
 }
 
 // PitchingLeadersResponse wraps season pitching leaders with metadata
@@ -46,18 +49,27 @@ type PitchingLeadersResponse struct {
 	Stat    string                      `json:"stat"`
 	League  *core.LeagueID              `json:"league,omitempty" swaggertype:"string"`
 	Leaders []core.PlayerPitchingSeason `json:"leaders"`
+	Page    int                         `json:"page"`
+	PerPage int                         `json:"per_page"`
+	Total   int                         `json:"total"`
 }
 
 // CareerBattingLeadersResponse wraps career batting leaders with metadata
 type CareerBattingLeadersResponse struct {
 	Stat    string                     `json:"stat"`
 	Leaders []core.PlayerBattingSeason `json:"leaders"`
+	Page    int                        `json:"page"`
+	PerPage int                        `json:"per_page"`
+	Total   int                        `json:"total"`
 }
 
 // CareerPitchingLeadersResponse wraps career pitching leaders with metadata
 type CareerPitchingLeadersResponse struct {
 	Stat    string                      `json:"stat"`
 	Leaders []core.PlayerPitchingSeason `json:"leaders"`
+	Page    int                         `json:"page"`
+	PerPage int                         `json:"per_page"`
+	Total   int                         `json:"total"`
 }
 
 // FranchisesResponse wraps franchise list with total count
