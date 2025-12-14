@@ -27,6 +27,9 @@ func (cr *ComputedRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/parks/{park_id}/factors", cr.handleParkFactor)
 	mux.HandleFunc("GET /v1/parks/{park_id}/factors/series", cr.handleParkFactorSeries)
 	mux.HandleFunc("GET /v1/seasons/{season}/park-factors", cr.handleSeasonParkFactors)
+	mux.HandleFunc("GET /v1/seasons/{season}/leaders/batting/advanced", cr.handleSeasonBattingLeaders)
+	mux.HandleFunc("GET /v1/seasons/{season}/leaders/pitching/advanced", cr.handleSeasonPitchingLeaders)
+	mux.HandleFunc("GET /v1/seasons/{season}/leaders/war", cr.handleSeasonWARLeaders)
 }
 
 // handlePlayerAdvancedBatting godoc
@@ -350,4 +353,145 @@ func (cr *ComputedRoutes) handlePlayerWAR(w http.ResponseWriter, r *http.Request
 	}
 
 	writeJSON(w, http.StatusOK, war)
+}
+
+// handleSeasonBattingLeaders godoc
+// @Summary Get advanced batting leaders
+// @Description Get top players by advanced batting stats (wOBA, wRC+, ISO, BABIP, etc.)
+// @Tags computed, leaders, batting
+// @Accept json
+// @Produce json
+// @Param season path integer true "Season year"
+// @Param stat query string false "Statistic (WOBA, WRC_PLUS, ISO, BABIP, AVG, OBP, SLG, HR, BB, K_RATE, BB_RATE)" default("WRC_PLUS")
+// @Param limit query integer false "Number of results" default(10)
+// @Param min_pa query integer false "Minimum plate appearances" default(502)
+// @Param team_id query string false "Filter by team ID"
+// @Param league query string false "Filter by league (AL, NL)"
+// @Success 200 {array} core.AdvancedBattingStats
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{season}/leaders/batting/advanced [get]
+func (cr *ComputedRoutes) handleSeasonBattingLeaders(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	season := core.SeasonYear(getIntPathValue(r, "season"))
+
+	stat := r.URL.Query().Get("stat")
+	if stat == "" {
+		stat = "WRC_PLUS"
+	}
+
+	limit := getIntQuery(r, "limit", 10)
+
+	filter := core.AdvancedBattingFilter{}
+
+	if minPAStr := r.URL.Query().Get("min_pa"); minPAStr != "" {
+		minPA := getIntQuery(r, "min_pa", 502)
+		filter.MinPA = &minPA
+	}
+
+	if teamIDStr := r.URL.Query().Get("team_id"); teamIDStr != "" {
+		teamID := core.TeamID(teamIDStr)
+		filter.TeamID = &teamID
+	}
+
+	if leagueStr := r.URL.Query().Get("league"); leagueStr != "" {
+		league := core.LeagueID(leagueStr)
+		filter.League = &league
+	}
+
+	leaders, err := cr.advancedRepo.SeasonBattingLeaders(ctx, season, stat, limit, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, leaders)
+}
+
+// handleSeasonPitchingLeaders godoc
+// @Summary Get advanced pitching leaders
+// @Description Get top pitchers by advanced pitching stats (FIP, ERA, WHIP, K/9, etc.)
+// @Tags computed, leaders, pitching
+// @Accept json
+// @Produce json
+// @Param season path integer true "Season year"
+// @Param stat query string false "Statistic (FIP, ERA, WHIP, K_PER_9, BB_PER_9, HR_PER_9, SO)" default("FIP")
+// @Param limit query integer false "Number of results" default(10)
+// @Param min_ip query number false "Minimum innings pitched" default(162)
+// @Param team_id query string false "Filter by team ID"
+// @Success 200 {array} core.AdvancedPitchingStats
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{season}/leaders/pitching/advanced [get]
+func (cr *ComputedRoutes) handleSeasonPitchingLeaders(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	season := core.SeasonYear(getIntPathValue(r, "season"))
+	stat := r.URL.Query().Get("stat")
+	if stat == "" {
+		stat = "FIP"
+	}
+
+	limit := getIntQuery(r, "limit", 10)
+	filter := core.AdvancedPitchingFilter{}
+
+	if minIPStr := r.URL.Query().Get("min_ip"); minIPStr != "" {
+		minIPFloat, err := strconv.ParseFloat(minIPStr, 64)
+		if err != nil {
+			writeBadRequest(w, "invalid min_ip: must be a number")
+			return
+		}
+		filter.MinIP = &minIPFloat
+	}
+
+	if teamIDStr := r.URL.Query().Get("team_id"); teamIDStr != "" {
+		teamID := core.TeamID(teamIDStr)
+		filter.TeamID = &teamID
+	}
+
+	leaders, err := cr.advancedRepo.SeasonPitchingLeaders(ctx, season, stat, limit, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, leaders)
+}
+
+// handleSeasonWARLeaders godoc
+// @Summary Get WAR leaders
+// @Description Get top players by Wins Above Replacement
+// @Tags computed, leaders, war
+// @Accept json
+// @Produce json
+// @Param season path integer true "Season year"
+// @Param limit query integer false "Number of results" default(10)
+// @Param min_pa query integer false "Minimum plate appearances" default(502)
+// @Param team_id query string false "Filter by team ID"
+// @Success 200 {array} core.PlayerWARSummary
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /seasons/{season}/leaders/war [get]
+func (cr *ComputedRoutes) handleSeasonWARLeaders(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	season := core.SeasonYear(getIntPathValue(r, "season"))
+	limit := getIntQuery(r, "limit", 10)
+	filter := core.WARFilter{}
+
+	if minPAStr := r.URL.Query().Get("min_pa"); minPAStr != "" {
+		minPA := getIntQuery(r, "min_pa", 502)
+		filter.MinPA = &minPA
+	}
+
+	if teamIDStr := r.URL.Query().Get("team_id"); teamIDStr != "" {
+		teamID := core.TeamID(teamIDStr)
+		filter.TeamID = &teamID
+	}
+
+	leaders, err := cr.advancedRepo.SeasonWARLeaders(ctx, season, limit, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, leaders)
 }

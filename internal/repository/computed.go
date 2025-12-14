@@ -37,6 +37,15 @@ var seasonParkFactorsQuery string
 //go:embed queries/game_plate_leverages.sql
 var gamePlateLeveragesQuery string
 
+//go:embed queries/season_batting_leaders.sql
+var seasonBattingLeadersQuery string
+
+//go:embed queries/season_pitching_leaders.sql
+var seasonPitchingLeadersQuery string
+
+//go:embed queries/season_war_leaders.sql
+var seasonWARLeadersQuery string
+
 // AdvancedStatsRepository computes sabermetric stats.
 type AdvancedStatsRepository struct {
 	db *sql.DB
@@ -165,7 +174,6 @@ func (r *AdvancedStatsRepository) PlayerBaserunning(ctx context.Context, playerI
 		lid := core.LeagueID(leagueStr)
 		stats.League = &lid
 	}
-
 	return &stats, nil
 }
 
@@ -211,7 +219,6 @@ func (r *AdvancedStatsRepository) PlayerFielding(ctx context.Context, playerID c
 		lid := core.LeagueID(leagueStr)
 		stats.League = &lid
 	}
-
 	return &stats, nil
 }
 
@@ -274,7 +281,6 @@ func (r *AdvancedStatsRepository) PlayerAdvancedPitching(
 		ParkNeutral: false,
 		RegSeason:   true,
 	}
-
 	return &stats, nil
 }
 
@@ -349,21 +355,258 @@ func (r *AdvancedStatsRepository) PlayerWAR(ctx context.Context, playerID core.P
 }
 
 // SeasonBattingLeaders returns top N players by advanced batting stat.
-// TODO: implement leaderboards
 func (r *AdvancedStatsRepository) SeasonBattingLeaders(ctx context.Context, season core.SeasonYear, stat string, limit int, filter core.AdvancedBattingFilter) ([]core.AdvancedBattingStats, error) {
-	return nil, fmt.Errorf("not yet implemented")
+	// Default minimum PA threshold for leaderboards (3.1 PA per team game)
+	minPA := 502 // ~3.1 PA * 162 games
+	if filter.MinPA != nil {
+		minPA = *filter.MinPA
+	}
+
+	var teamID, leagueID sql.NullString
+	if filter.TeamID != nil {
+		teamID = sql.NullString{String: string(*filter.TeamID), Valid: true}
+	}
+	if filter.League != nil {
+		leagueID = sql.NullString{String: string(*filter.League), Valid: true}
+	}
+
+	statUpper := stat
+	if stat == "" {
+		statUpper = "WRC_PLUS"
+	}
+
+	rows, err := r.db.QueryContext(ctx, seasonBattingLeadersQuery, int(season), teamID, leagueID, minPA, statUpper, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query batting leaders: %w", err)
+	}
+	defer rows.Close()
+
+	var leaders []core.AdvancedBattingStats
+	for rows.Next() {
+		var stats core.AdvancedBattingStats
+		var playerIDStr string
+		var teamIDResult, leagueIDResult sql.NullString
+
+		err = rows.Scan(
+			&playerIDStr,
+			&stats.PA,
+			&stats.AB,
+			&stats.H,
+			&stats.Doubles,
+			&stats.Triples,
+			&stats.HR,
+			&stats.BB,
+			&stats.IBB,
+			&stats.HBP,
+			&stats.SF,
+			&stats.SH,
+			&stats.SO,
+			&stats.AVG,
+			&stats.OBP,
+			&stats.SLG,
+			&stats.ISO,
+			&stats.BABIP,
+			&stats.KRate,
+			&stats.BBRate,
+			&stats.WOBA,
+			&stats.WRAA,
+			&stats.WRC,
+			&stats.WRCPlus,
+			&teamIDResult,
+			&leagueIDResult,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan batting leader: %w", err)
+		}
+
+		stats.PlayerID = core.PlayerID(playerIDStr)
+		if teamIDResult.Valid {
+			tid := core.TeamID(teamIDResult.String)
+			stats.TeamID = &tid
+		}
+
+		var league *core.LeagueID
+		if leagueIDResult.Valid {
+			lid := core.LeagueID(leagueIDResult.String)
+			league = &lid
+		}
+
+		stats.Context = core.StatContext{
+			Season:      season,
+			League:      league,
+			Provider:    core.StatProviderInternal,
+			ParkNeutral: false,
+			RegSeason:   true,
+		}
+
+		stats.OPS = stats.OBP + stats.SLG
+		leaders = append(leaders, stats)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating batting leaders: %w", err)
+	}
+
+	return leaders, nil
 }
 
 // SeasonPitchingLeaders returns top N pitchers by advanced pitching stat.
-// TODO: implement leaderboards
 func (r *AdvancedStatsRepository) SeasonPitchingLeaders(ctx context.Context, season core.SeasonYear, stat string, limit int, filter core.AdvancedPitchingFilter) ([]core.AdvancedPitchingStats, error) {
-	return nil, fmt.Errorf("not yet implemented")
+	minIPOuts := 162 * 3
+	if filter.MinIP != nil {
+		minIPOuts = int(*filter.MinIP * 3)
+	}
+
+	var teamID sql.NullString
+	if filter.TeamID != nil {
+		teamID = sql.NullString{String: string(*filter.TeamID), Valid: true}
+	}
+
+	statUpper := stat
+	if stat == "" {
+		statUpper = "ERA"
+	}
+
+	rows, err := r.db.QueryContext(ctx, seasonPitchingLeadersQuery, int(season), teamID, minIPOuts, statUpper, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query pitching leaders: %w", err)
+	}
+	defer rows.Close()
+
+	var leaders []core.AdvancedPitchingStats
+	for rows.Next() {
+		var stats core.AdvancedPitchingStats
+		var playerIDStr string
+		var teamIDResult sql.NullString
+
+		err = rows.Scan(
+			&playerIDStr,
+			&stats.IPOuts,
+			&stats.BF,
+			&stats.H,
+			&stats.R,
+			&stats.ER,
+			&stats.HR,
+			&stats.BB,
+			&stats.IBB,
+			&stats.HBP,
+			&stats.SO,
+			&stats.ERA,
+			&stats.WHIP,
+			&stats.KPer9,
+			&stats.BBPer9,
+			&stats.HRPer9,
+			&stats.FIP,
+			&teamIDResult,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan pitching leader: %w", err)
+		}
+
+		stats.PlayerID = core.PlayerID(playerIDStr)
+		if teamIDResult.Valid {
+			tid := core.TeamID(teamIDResult.String)
+			stats.TeamID = &tid
+		}
+
+		stats.Context = core.StatContext{
+			Season:      season,
+			Provider:    core.StatProviderInternal,
+			ParkNeutral: false,
+			RegSeason:   true,
+		}
+
+		leaders = append(leaders, stats)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating pitching leaders: %w", err)
+	}
+
+	return leaders, nil
 }
 
 // SeasonWARLeaders returns top N players by WAR.
-// TODO: implement WAR leaderboards
 func (r *AdvancedStatsRepository) SeasonWARLeaders(ctx context.Context, season core.SeasonYear, limit int, filter core.WARFilter) ([]core.PlayerWARSummary, error) {
-	return nil, fmt.Errorf("not yet implemented")
+	minPA := 502
+	if filter.MinPA != nil {
+		minPA = *filter.MinPA
+	}
+
+	var teamID sql.NullString
+	if filter.TeamID != nil {
+		teamID = sql.NullString{String: string(*filter.TeamID), Valid: true}
+	}
+
+	rows, err := r.db.QueryContext(ctx, seasonWARLeadersQuery, int(season), teamID, minPA, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query WAR leaders: %w", err)
+	}
+	defer rows.Close()
+
+	var leaders []core.PlayerWARSummary
+	for rows.Next() {
+		var war core.PlayerWARSummary
+		var playerIDStr, teamIDStr, leagueStr string
+		var positionNull sql.NullString
+		var seasonYear int
+		var pa int
+		var battingRuns, baserunningRuns, fieldingRuns, positionalAdj, replacementRuns, runsAboveReplacement, warValue float64
+
+		err = rows.Scan(
+			&playerIDStr,
+			&seasonYear,
+			&teamIDStr,
+			&leagueStr,
+			&pa,
+			&battingRuns,
+			&baserunningRuns,
+			&fieldingRuns,
+			&positionalAdj,
+			&replacementRuns,
+			&runsAboveReplacement,
+			&warValue,
+			&positionNull,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan WAR leader: %w", err)
+		}
+
+		war.PlayerID = core.PlayerID(playerIDStr)
+		if teamIDStr != "" {
+			tid := core.TeamID(teamIDStr)
+			war.TeamID = &tid
+		}
+
+		var leagueID *core.LeagueID
+		if leagueStr != "" {
+			lid := core.LeagueID(leagueStr)
+			leagueID = &lid
+		}
+
+		war.Context = core.StatContext{
+			Season:      season,
+			League:      leagueID,
+			Provider:    core.StatProviderInternal,
+			ParkNeutral: false,
+			RegSeason:   true,
+		}
+
+		war.WAR = warValue
+		war.BattingRuns = &battingRuns
+		war.BaseRunningRuns = &baserunningRuns
+		war.FieldingRuns = &fieldingRuns
+		war.PositionalRuns = &positionalAdj
+		war.ReplacementRuns = &replacementRuns
+
+		leaders = append(leaders, war)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating WAR leaders: %w", err)
+	}
+
+	return leaders, nil
 }
 
 // LeverageRepository computes leverage index and win probability metrics.
@@ -625,7 +868,7 @@ func (r *ParkFactorRepository) MultiYearParkFactor(ctx context.Context, parkID c
 
 	avgPF := &core.ParkFactor{
 		ParkID:       string(parkID),
-		Season:       int(toSeason), // Use most recent season
+		Season:       int(toSeason),
 		RunsFactor:   totalRunsFactor / float64(totalGames),
 		HRFactor:     totalHRFactor / float64(totalGames),
 		GamesSampled: totalGames,

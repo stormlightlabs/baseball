@@ -714,23 +714,12 @@ func (db *DB) loadParkFactorsWithTransform(ctx context.Context, conn *pgx.Conn, 
 		}
 
 		_, err = conn.Exec(ctx, query,
-			parkID,                        // $1 park_id
-			season,                        // $2 season
-			teamID,                        // $3 team_id
-			record[colIdx["Basic (5yr)"]], // $4 basic_5yr
-			record[colIdx["3yr"]],         // $5 basic_3yr
-			record[colIdx["1yr"]],         // $6 basic_1yr
-			record[colIdx["1B"]],          // $7 factor_1b
-			record[colIdx["2B"]],          // $8 factor_2b
-			record[colIdx["3B"]],          // $9 factor_3b
-			record[colIdx["HR"]],          // $10 factor_hr
-			record[colIdx["SO"]],          // $11 factor_so
-			record[colIdx["BB"]],          // $12 factor_bb
-			record[colIdx["GB"]],          // $13 factor_gb
-			record[colIdx["FB"]],          // $14 factor_fb
-			record[colIdx["LD"]],          // $15 factor_ld
-			record[colIdx["IFFB"]],        // $16 factor_iffb
-			record[colIdx["FIP"]],         // $17 factor_fip
+			parkID, season, teamID,
+			record[colIdx["Basic (5yr)"]], record[colIdx["3yr"]], record[colIdx["1yr"]],
+			record[colIdx["1B"]], record[colIdx["2B"]], record[colIdx["3B"]],
+			record[colIdx["HR"]], record[colIdx["SO"]], record[colIdx["BB"]],
+			record[colIdx["GB"]], record[colIdx["FB"]], record[colIdx["LD"]],
+			record[colIdx["IFFB"]], record[colIdx["FIP"]],
 		)
 
 		if err != nil {
