@@ -30,6 +30,7 @@ type TeamFilter struct {
 	NameQuery   string // partial name search
 	Year        *SeasonYear
 	League      *LeagueID
+	Leagues     []LeagueID // multiple leagues filter
 	FranchiseID *FranchiseID
 	SortBy      string // "wins","run_diff"
 	SortOrder   SortOrder
@@ -49,6 +50,7 @@ type GameFilter struct {
 	AwayTeam     *TeamID
 	ParkID       *ParkID
 	League       *LeagueID
+	Leagues      []LeagueID // multiple leagues filter
 	GameType     *string
 	IsPostseason *bool
 	SortBy       string // "date"

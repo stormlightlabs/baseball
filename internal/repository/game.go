@@ -68,7 +68,8 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 	var date string
 	var attendance, durationMin sql.NullInt64
 	var umpHome, umpFirst, umpSecond, umpThird, dayOfWeek sql.NullString
-	var homeTeam, awayTeam, homeLeague, awayLeague, parkID string
+	var homeTeam, awayTeam, parkID string
+	var homeLeague, awayLeague sql.NullString
 	var gameType sql.NullString
 
 	err := r.db.QueryRowContext(ctx, query, string(id)).Scan(
@@ -101,8 +102,12 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 	g.ID = id
 	g.HomeTeam = core.TeamID(homeTeam)
 	g.AwayTeam = core.TeamID(awayTeam)
-	g.HomeLeague = core.LeagueID(homeLeague)
-	g.AwayLeague = core.LeagueID(awayLeague)
+	if homeLeague.Valid {
+		g.HomeLeague = core.LeagueID(homeLeague.String)
+	}
+	if awayLeague.Valid {
+		g.AwayLeague = core.LeagueID(awayLeague.String)
+	}
 	g.ParkID = core.ParkID(parkID)
 
 	parsedDate, err := time.Parse("20060102", date)
@@ -218,7 +223,15 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 		argNum++
 	}
 
-	if filter.League != nil {
+	if len(filter.Leagues) > 0 {
+		query += fmt.Sprintf(" AND (home_team_league = ANY($%d) OR visiting_team_league = ANY($%d))", argNum, argNum+1)
+		leagues := make([]string, len(filter.Leagues))
+		for i, league := range filter.Leagues {
+			leagues[i] = string(league)
+		}
+		args = append(args, leagues, leagues)
+		argNum += 2
+	} else if filter.League != nil {
 		query += fmt.Sprintf(" AND (home_team_league = $%d OR visiting_team_league = $%d)", argNum, argNum)
 		args = append(args, string(*filter.League))
 		argNum++
@@ -254,7 +267,8 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 		var gameNumber int
 		var attendance, durationMin, innings sql.NullInt64
 		var umpHome, umpFirst, umpSecond, umpThird, dayOfWeek sql.NullString
-		var homeTeam, awayTeam, homeLeague, awayLeague, parkID string
+		var homeTeam, awayTeam, parkID string
+		var homeLeague, awayLeague sql.NullString
 
 		err := rows.Scan(
 			&date,
@@ -283,8 +297,12 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 		g.ID = core.GameID(fmt.Sprintf("%s%d%s", date, gameNumber, homeTeam))
 		g.HomeTeam = core.TeamID(homeTeam)
 		g.AwayTeam = core.TeamID(awayTeam)
-		g.HomeLeague = core.LeagueID(homeLeague)
-		g.AwayLeague = core.LeagueID(awayLeague)
+		if homeLeague.Valid {
+			g.HomeLeague = core.LeagueID(homeLeague.String)
+		}
+		if awayLeague.Valid {
+			g.AwayLeague = core.LeagueID(awayLeague.String)
+		}
 		g.ParkID = core.ParkID(parkID)
 
 		parsedDate, err := time.Parse("20060102", date)
@@ -382,7 +400,15 @@ func (r *GameRepository) Count(ctx context.Context, filter core.GameFilter) (int
 		argNum++
 	}
 
-	if filter.League != nil {
+	if len(filter.Leagues) > 0 {
+		query += fmt.Sprintf(" AND (home_team_league = ANY($%d) OR visiting_team_league = ANY($%d))", argNum, argNum+1)
+		leagues := make([]string, len(filter.Leagues))
+		for i, league := range filter.Leagues {
+			leagues[i] = string(league)
+		}
+		args = append(args, leagues, leagues)
+		argNum += 2
+	} else if filter.League != nil {
 		query += fmt.Sprintf(" AND (home_team_league = $%d OR visiting_team_league = $%d)", argNum, argNum)
 		args = append(args, string(*filter.League))
 		argNum++

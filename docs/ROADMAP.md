@@ -113,57 +113,6 @@ For each dataset expansion:
 
 - Automated weekly refresh during season recommended for current plays data
 
-### Negro Leagues Endpoints - Implementation Plan
+### Optimizations
 
-**Status**: Ready for implementation
-
-**Endpoint Pattern** (mirrors Federal League implementation):
-
-```text
-GET /v1/negroleagues/games
-GET /v1/negroleagues/teams
-GET /v1/negroleagues/plays
-GET /v1/negroleagues/seasons/{year}/schedule
-GET /v1/negroleagues/seasons/{year}/teams/{team_id}/games
-```
-
-**Implementation Steps**:
-
-1. **Create `internal/api/negroleagues.go`**
-   - Copy Federal League routes pattern
-   - Set league filter to appropriate Negro Leagues identifiers
-   - League codes to filter: Check games table for Negro Leagues league codes
-
-2. **Register routes in `internal/api/server.go`**
-
-   ```go
-   NewNegroLeaguesRoutes(gameRepo, playRepo, teamRepo),
-   ```
-
-3. **Add Swagger tag**
-
-   ```go
-   // @tag.name negroleagues
-   // @tag.description Negro Leagues (1935-1949) data
-   ```
-
-4. **Test endpoints** after data load:
-
-   ```bash
-   # Load data
-   baseball etl load retrosheet --era negro
-
-   # Test endpoints
-   curl http://localhost:8080/v1/negroleagues/games
-   curl http://localhost:8080/v1/negroleagues/teams
-   curl http://localhost:8080/v1/negroleagues/seasons/1945/schedule
-   ```
-
-**Reference Implementation**: `/v1/federalleague/*` endpoints in `internal/api/federalleague.go`
-
-**Technical Notes**:
-
-- Uses existing GameFilter/PlayFilter with League field
-- Repository layer already supports league filtering
-- No schema changes required
-- Same architecture as Federal League endpoints
+- Use partitioning strategies to optimize query performance, especially for large datasets like `plays`.

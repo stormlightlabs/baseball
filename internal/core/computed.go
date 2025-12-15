@@ -108,24 +108,20 @@ type PlayerWARSummary struct {
 
 // PlateAppearanceLeverage captures leverage and win-prob data for a single plate appearance (or batter-pitcher confrontation).
 type PlateAppearanceLeverage struct {
-	GameID      GameID   `json:"game_id"`
-	EventID     int      `json:"event_id"` // index within game
-	BatterID    PlayerID `json:"batter_id"`
-	PitcherID   PlayerID `json:"pitcher_id"`
-	Inning      int      `json:"inning"`
-	TopOfInning bool     `json:"top_of_inning"`
-
-	// State before the PA.
-	HomeScoreBefore int    `json:"home_score_before"`
-	AwayScoreBefore int    `json:"away_score_before"`
-	OutsBefore      int    `json:"outs_before"`
-	BasesBefore     string `json:"bases_before"` // "100", "011", etc.
-
-	// Win expectancy and leverage index before/after the PA.
-	WinExpectancyBefore float64 `json:"we_before"` // home team WE
-	WinExpectancyAfter  float64 `json:"we_after"`
-	LeverageIndex       float64 `json:"li"`        // LI at start of PA
-	WEChange            float64 `json:"we_change"` // signed WEAfter - WEBefore
+	GameID              GameID   `json:"game_id"`
+	EventID             int      `json:"event_id"` // index within game
+	BatterID            PlayerID `json:"batter_id"`
+	PitcherID           PlayerID `json:"pitcher_id"`
+	Inning              int      `json:"inning"`
+	TopOfInning         bool     `json:"top_of_inning"`
+	HomeScoreBefore     int      `json:"home_score_before"`
+	AwayScoreBefore     int      `json:"away_score_before"`
+	OutsBefore          int      `json:"outs_before"`
+	BasesBefore         string   `json:"bases_before"` // "100", "011", etc.
+	WinExpectancyBefore float64  `json:"we_before"`    // home team WE
+	WinExpectancyAfter  float64  `json:"we_after"`
+	LeverageIndex       float64  `json:"li"`        // LI at start of PA
+	WEChange            float64  `json:"we_change"` // signed WEAfter - WEBefore
 
 	// Result summary.
 	Description string `json:"description"` // e.g. "HR to LF", "BB", "K swinging"

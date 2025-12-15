@@ -31,76 +31,32 @@ var negroLeagues = []core.LeagueID{"NAL", "NNL", "NN2", "ECL", "ANL", "EWL", "NS
 
 // ListGames returns Negro Leagues games with filtering and pagination.
 func (r *NegroLeaguesRepository) ListGames(ctx context.Context, filter core.GameFilter) ([]core.Game, error) {
-	if filter.League == nil {
-		allGames := []core.Game{}
-		for _, league := range negroLeagues {
-			leagueFilter := filter
-			l := league
-			leagueFilter.League = &l
-			games, err := r.gameRepo.List(ctx, leagueFilter)
-			if err != nil {
-				return nil, err
-			}
-			allGames = append(allGames, games...)
-		}
-		return allGames, nil
+	if filter.League == nil && len(filter.Leagues) == 0 {
+		filter.Leagues = negroLeagues
 	}
 	return r.gameRepo.List(ctx, filter)
 }
 
 // CountGames returns the total count of Negro Leagues games matching the filter.
 func (r *NegroLeaguesRepository) CountGames(ctx context.Context, filter core.GameFilter) (int, error) {
-	if filter.League == nil {
-		total := 0
-		for _, league := range negroLeagues {
-			leagueFilter := filter
-			l := league
-			leagueFilter.League = &l
-			count, err := r.gameRepo.Count(ctx, leagueFilter)
-			if err != nil {
-				return 0, err
-			}
-			total += count
-		}
-		return total, nil
+	if filter.League == nil && len(filter.Leagues) == 0 {
+		filter.Leagues = negroLeagues
 	}
 	return r.gameRepo.Count(ctx, filter)
 }
 
 // ListTeamSeasons returns teams that played in the Negro Leagues.
 func (r *NegroLeaguesRepository) ListTeamSeasons(ctx context.Context, filter core.TeamFilter) ([]core.TeamSeason, error) {
-	if filter.League == nil {
-		allTeams := []core.TeamSeason{}
-		for _, league := range negroLeagues {
-			leagueFilter := filter
-			l := league
-			leagueFilter.League = &l
-			teams, err := r.teamRepo.ListTeamSeasons(ctx, leagueFilter)
-			if err != nil {
-				return nil, err
-			}
-			allTeams = append(allTeams, teams...)
-		}
-		return allTeams, nil
+	if filter.League == nil && len(filter.Leagues) == 0 {
+		filter.Leagues = negroLeagues
 	}
 	return r.teamRepo.ListTeamSeasons(ctx, filter)
 }
 
 // CountTeamSeasons returns the count of unique team-season combinations.
 func (r *NegroLeaguesRepository) CountTeamSeasons(ctx context.Context, filter core.TeamFilter) (int, error) {
-	if filter.League == nil {
-		total := 0
-		for _, league := range negroLeagues {
-			leagueFilter := filter
-			l := league
-			leagueFilter.League = &l
-			count, err := r.teamRepo.CountTeamSeasons(ctx, leagueFilter)
-			if err != nil {
-				return 0, err
-			}
-			total += count
-		}
-		return total, nil
+	if filter.League == nil && len(filter.Leagues) == 0 {
+		filter.Leagues = negroLeagues
 	}
 	return r.teamRepo.CountTeamSeasons(ctx, filter)
 }
@@ -137,19 +93,20 @@ func (r *NegroLeaguesRepository) GetSeasonSchedule(ctx context.Context, year cor
 
 // GetTeamGames returns all games for a specific team in a season.
 func (r *NegroLeaguesRepository) GetTeamGames(ctx context.Context, teamID core.TeamID, year core.SeasonYear, p core.Pagination) ([]core.Game, error) {
-	filter := core.GameFilter{
+	allGamesFilter := core.GameFilter{
 		Season:     &year,
-		Pagination: p,
+		Leagues:    negroLeagues,
+		Pagination: core.Pagination{Page: 1, PerPage: 1000},
 	}
 
-	homeFilter := filter
+	homeFilter := allGamesFilter
 	homeFilter.HomeTeam = &teamID
 	homeGames, err := r.gameRepo.List(ctx, homeFilter)
 	if err != nil {
 		return nil, err
 	}
 
-	awayFilter := filter
+	awayFilter := allGamesFilter
 	awayFilter.AwayTeam = &teamID
 	awayGames, err := r.gameRepo.List(ctx, awayFilter)
 	if err != nil {
@@ -164,9 +121,20 @@ func (r *NegroLeaguesRepository) GetTeamGames(ctx context.Context, teamID core.T
 		gameMap[g.ID] = g
 	}
 
-	games := make([]core.Game, 0, len(gameMap))
+	allGames := make([]core.Game, 0, len(gameMap))
 	for _, g := range gameMap {
-		games = append(games, g)
+		allGames = append(allGames, g)
 	}
-	return games, nil
+
+	start := (p.Page - 1) * p.PerPage
+	end := start + p.PerPage
+
+	if start >= len(allGames) {
+		return []core.Game{}, nil
+	}
+	if end > len(allGames) {
+		end = len(allGames)
+	}
+
+	return allGames[start:end], nil
 }

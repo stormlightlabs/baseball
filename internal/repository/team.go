@@ -119,7 +119,15 @@ func (r *TeamRepository) ListTeamSeasons(ctx context.Context, filter core.TeamFi
 		argNum++
 	}
 
-	if filter.League != nil {
+	if len(filter.Leagues) > 0 {
+		query += fmt.Sprintf(" AND \"lgID\" = ANY($%d)", argNum)
+		leagues := make([]string, len(filter.Leagues))
+		for i, league := range filter.Leagues {
+			leagues[i] = string(league)
+		}
+		args = append(args, leagues)
+		argNum++
+	} else if filter.League != nil {
 		query += fmt.Sprintf(" AND \"lgID\" = $%d", argNum)
 		args = append(args, string(*filter.League))
 		argNum++
@@ -194,7 +202,15 @@ func (r *TeamRepository) CountTeamSeasons(ctx context.Context, filter core.TeamF
 		argNum++
 	}
 
-	if filter.League != nil {
+	if len(filter.Leagues) > 0 {
+		query += fmt.Sprintf(" AND \"lgID\" = ANY($%d)", argNum)
+		leagues := make([]string, len(filter.Leagues))
+		for i, league := range filter.Leagues {
+			leagues[i] = string(league)
+		}
+		args = append(args, leagues)
+		argNum++
+	} else if filter.League != nil {
 		query += fmt.Sprintf(" AND \"lgID\" = $%d", argNum)
 		args = append(args, string(*filter.League))
 		argNum++
