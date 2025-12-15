@@ -19,7 +19,7 @@ task server:start
 
 The API will be available at <http://localhost:8080>, with interactive documentation at <http://localhost:8080/docs/>.
 
-## Features
+## Features & Guides
 
 ### CLI Toolkit
 
@@ -37,7 +37,12 @@ task build
 ./tmp/baseball --help
 ```
 
-#### ETL
+#### ETL Commands
+
+**Understanding ETL vs DB Populate:**
+
+- **`etl load`**: Direct database loading - fast, no cleanup, appends data
+- **`db populate`**: Full seeding workflow - truncates tables first, records refresh metadata, better for initial setup
 
 **Fetch (download only):**
 
@@ -52,15 +57,30 @@ task build
 ./tmp/baseball etl fetch retrosheet --years=all --force   # Force redownload
 ```
 
-**Load:**
+**Load (direct loading, no cleanup):**
 
 ```bash
 # Load Lahman data
 ./tmp/baseball etl load lahman
 
-# Load Retrosheet data (same year options as fetch)
+# Load Retrosheet data - year-based
+./tmp/baseball etl load retrosheet --years=2023-2025
 ./tmp/baseball etl load retrosheet --years=all
+
+# Load Retrosheet data - era-based (phased loading)
+./tmp/baseball etl load retrosheet --era fed       # Federal League (1914-1915)
+./tmp/baseball etl load retrosheet --era nlg       # Negro Leagues (1935-1949)
+./tmp/baseball etl load retrosheet --era modern    # Modern era (2011-2025)
 ```
+
+**Available Eras:**
+
+- `federal` - Federal League (1914-1915)
+- `negro` - Negro Leagues (1935-1949)
+- `1970s` - 1970-1979
+- `1980s` - 1980-1989
+- `steroid` - Steroid Era (1990-2010)
+- `modern` - Modern Era (2011-2025)
 
 #### Database
 
@@ -68,11 +88,16 @@ task build
 # Apply migrations
 ./tmp/baseball db migrate
 
-# Populate with year flexibility
+# Populate with year flexibility (truncates tables first, records metadata)
 ./tmp/baseball db populate retrosheet --years=all              # All historical data
 ./tmp/baseball db populate retrosheet --years=2020-2024        # Recent years
 ./tmp/baseball db populate retrosheet --years=1950,1975,2000   # Specific years
 ./tmp/baseball db populate retrosheet --years=2024 --force     # Force reload (deletes + reloads)
+
+# Populate by era (phased approach)
+./tmp/baseball db populate retrosheet --era fed              # Federal League
+./tmp/baseball db populate retrosheet --era nlg              # Negro Leagues
+./tmp/baseball db populate retrosheet --era modern           # Modern era
 
 # Populate Lahman data
 ./tmp/baseball db populate lahman --csv-dir ./data/lahman/csv

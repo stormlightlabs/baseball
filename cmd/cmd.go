@@ -107,12 +107,19 @@ func LahmanLoadCmd() *cobra.Command {
 
 // RetrosheetLoadCmd creates the load retrosheet command
 func RetrosheetLoadCmd() *cobra.Command {
-	return &cobra.Command{
+	var eraFlag string
+	var yearsFlag string
+	cmd := &cobra.Command{
 		Use:   "retrosheet",
 		Short: "Load Retrosheet data into database",
 		Long:  "Load Retrosheet CSV files into PostgreSQL database.",
-		RunE:  loadRetrosheet,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return loadRetrosheet(cmd, eraFlag, yearsFlag)
+		},
 	}
+	cmd.Flags().StringVar(&eraFlag, "era", "", "Load data for a specific era (federal, nlg, 1970s, 1980s, steroid, modern)")
+	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
+	return cmd
 }
 
 // FanGraphsLoadCmd creates the load fangraphs command
@@ -435,8 +442,38 @@ func migrate(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func loadRetrosheet(cmd *cobra.Command, args []string) error {
+func loadRetrosheet(cmd *cobra.Command, eraFlag, yearsFlag string) error {
 	echo.Header("Loading Retrosheet Data")
+
+	var yearInts []int
+	var err error
+
+	if eraFlag != "" {
+		echo.Infof("Loading data for era: %s", eraFlag)
+		yearInts = seed.GetYearsForEras([]string{eraFlag})
+		if len(yearInts) == 0 {
+			return fmt.Errorf("unknown era: %s", eraFlag)
+		}
+		era := seed.GetEra(eraFlag)
+		if era != nil {
+			echo.Infof("Era: %s (%d-%d)", era.Name, era.StartYear, era.EndYear)
+		}
+	} else if yearsFlag != "" {
+		yearInts, err = parseYearFlag(yearsFlag)
+		if err != nil {
+			return err
+		}
+	} else {
+		yearInts = []int{2023, 2024, 2025}
+	}
+
+	years := make([]string, len(yearInts))
+	for i, y := range yearInts {
+		years[i] = fmt.Sprintf("%d", y)
+	}
+
+	echo.Infof("Loading data for %d years: %v", len(years), years)
+
 	echo.Info("Connecting to database...")
 
 	database, err := db.Connect("")
@@ -449,7 +486,6 @@ func loadRetrosheet(cmd *cobra.Command, args []string) error {
 
 	dataDir := "data/retrosheet"
 	gameLogsDir := filepath.Join(dataDir, "gamelogs")
-	years := []string{"2023", "2024", "2025"}
 
 	ctx := cmd.Context()
 	totalRows := int64(0)
@@ -556,6 +592,7 @@ func DbPopulateLahmanCmd() *cobra.Command {
 }
 
 func DbPopulateRetrosheetCmd() *cobra.Command {
+	var eraFlag string
 	var yearsFlag string
 	var dataDir string
 	var force bool
@@ -563,9 +600,10 @@ func DbPopulateRetrosheetCmd() *cobra.Command {
 		Use:   "retrosheet",
 		Short: "Seed Retrosheet data only",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return populateRetrosheet(cmd, dataDir, yearsFlag, force)
+			return populateRetrosheet(cmd, dataDir, eraFlag, yearsFlag, force)
 		},
 	}
+	cmd.Flags().StringVar(&eraFlag, "era", "", "Load data for a specific era (federal, nlg, 1970s, 1980s, steroid, modern)")
 	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
 	cmd.Flags().BoolVar(&force, "force", false, "Force reload even if data already exists")
@@ -606,7 +644,7 @@ func populateLahman(cmd *cobra.Command, csvDir string) error {
 	return err
 }
 
-func populateRetrosheet(cmd *cobra.Command, dataDir, yearsFlag string, force bool) error {
+func populateRetrosheet(cmd *cobra.Command, dataDir, eraFlag, yearsFlag string, force bool) error {
 	echo.Header("Seeding Retrosheet Data")
 	echo.Info("Connecting to database...")
 
@@ -618,9 +656,22 @@ func populateRetrosheet(cmd *cobra.Command, dataDir, yearsFlag string, force boo
 
 	echo.Success("✓ Connected to database")
 
-	years, err := parseYearFlag(yearsFlag)
-	if err != nil {
-		return err
+	var years []int
+	if eraFlag != "" {
+		echo.Infof("Loading data for era: %s", eraFlag)
+		years = seed.GetYearsForEras([]string{eraFlag})
+		if len(years) == 0 {
+			return fmt.Errorf("unknown era: %s", eraFlag)
+		}
+		era := seed.GetEra(eraFlag)
+		if era != nil {
+			echo.Infof("Era: %s (%d-%d)", era.Name, era.StartYear, era.EndYear)
+		}
+	} else {
+		years, err = parseYearFlag(yearsFlag)
+		if err != nil {
+			return err
+		}
 	}
 
 	ctx := cmd.Context()
@@ -748,7 +799,7 @@ func runPopulateAll(cmd *cobra.Command, csvDir, dataDir, yearsFlag string) error
 		return err
 	}
 
-	return populateRetrosheet(cmd, dataDir, yearsFlag, false)
+	return populateRetrosheet(cmd, dataDir, "", yearsFlag, false)
 }
 
 func loadFanGraphs(cmd *cobra.Command, args []string) error {
