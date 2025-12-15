@@ -24,6 +24,7 @@ func (pr *PlayerRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/players/{id}/awards", pr.handlePlayerAwards)
 	mux.HandleFunc("GET /v1/players/{id}/hall-of-fame", pr.handlePlayerHallOfFame)
 	mux.HandleFunc("GET /v1/players/{id}/game-logs", pr.handlePlayerGameLogs)
+	mux.HandleFunc("GET /v1/players/{id}/game-logs/batting", pr.handlePlayerBattingGameLogs)
 	mux.HandleFunc("GET /v1/players/{id}/appearances", pr.handlePlayerAppearances)
 	mux.HandleFunc("GET /v1/players/{id}/teams", pr.handlePlayerTeams)
 	mux.HandleFunc("GET /v1/players/{id}/salaries", pr.handlePlayerSalaries)
@@ -93,12 +94,7 @@ func (pr *PlayerRoutes) handleListPlayers(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	writeJSON(w, http.StatusOK, PaginatedResponse{
-		Data:    players,
-		Page:    filter.Pagination.Page,
-		PerPage: filter.Pagination.PerPage,
-		Total:   total,
-	})
+	writeJSON(w, http.StatusOK, NewPaginatedResponse(players, filter.Pagination.Page, filter.Pagination.PerPage, total))
 }
 
 // handlePlayerSeasons godoc
@@ -127,10 +123,7 @@ func (pr *PlayerRoutes) handlePlayerSeasons(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	writeJSON(w, http.StatusOK, PlayerSeasonsResponse{
-		Batting:  batting,
-		Pitching: pitching,
-	})
+	writeJSON(w, http.StatusOK, NewPlayerSeasonsResponse(batting, pitching))
 }
 
 // handlePlayerAwards godoc
@@ -175,12 +168,7 @@ func (pr *PlayerRoutes) handlePlayerAwards(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	writeJSON(w, http.StatusOK, PaginatedResponse{
-		Data:    awards,
-		Page:    filter.Pagination.Page,
-		PerPage: filter.Pagination.PerPage,
-		Total:   total,
-	})
+	writeJSON(w, http.StatusOK, NewPaginatedResponse(awards, filter.Pagination.Page, filter.Pagination.PerPage, total))
 }
 
 // handlePlayerHallOfFame godoc
@@ -243,12 +231,82 @@ func (pr *PlayerRoutes) handlePlayerGameLogs(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	writeJSON(w, http.StatusOK, PaginatedResponse{
-		Data:    games,
-		Page:    filter.Pagination.Page,
-		PerPage: filter.Pagination.PerPage,
-		Total:   len(games),
-	})
+	writeJSON(w, http.StatusOK, NewPaginatedResponse(games, filter.Pagination.Page, filter.Pagination.PerPage, len(games)))
+}
+
+// handlePlayerBattingGameLogs godoc
+// @Summary Get player batting game logs
+// @Description Get per-game batting statistics for a player from the materialized view. Enables "game finder" queries with filters.
+// @Tags players, stats
+// @Accept json
+// @Produce json
+// @Param id path string true "Player ID"
+// @Param season query integer false "Filter by season"
+// @Param date_from query string false "Filter by date from (YYYYMMDD)"
+// @Param date_to query string false "Filter by date to (YYYYMMDD)"
+// @Param min_hr query integer false "Minimum home runs"
+// @Param min_h query integer false "Minimum hits"
+// @Param min_rbi query integer false "Minimum RBI"
+// @Param min_pa query integer false "Minimum plate appearances"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{id}/game-logs/batting [get]
+func (pr *PlayerRoutes) handlePlayerBattingGameLogs(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.PlayerID(r.PathValue("id"))
+
+	filter := core.PlayerGameLogFilter{
+		Pagination: *core.NewPagination(getIntQuery(r, "page", 1), getIntQuery(r, "per_page", 50)),
+	}
+
+	if season := r.URL.Query().Get("season"); season != "" {
+		y := core.SeasonYear(getIntQuery(r, "season", 0))
+		filter.Season = &y
+	}
+
+	if dateFrom := r.URL.Query().Get("date_from"); dateFrom != "" {
+		filter.DateFrom = &dateFrom
+	}
+
+	if dateTo := r.URL.Query().Get("date_to"); dateTo != "" {
+		filter.DateTo = &dateTo
+	}
+
+	if minHR := r.URL.Query().Get("min_hr"); minHR != "" {
+		hr := getIntQuery(r, "min_hr", 0)
+		filter.MinHR = &hr
+	}
+
+	if minH := r.URL.Query().Get("min_h"); minH != "" {
+		h := getIntQuery(r, "min_h", 0)
+		filter.MinH = &h
+	}
+
+	if minRBI := r.URL.Query().Get("min_rbi"); minRBI != "" {
+		rbi := getIntQuery(r, "min_rbi", 0)
+		filter.MinRBI = &rbi
+	}
+
+	if minPA := r.URL.Query().Get("min_pa"); minPA != "" {
+		pa := getIntQuery(r, "min_pa", 0)
+		filter.MinPA = &pa
+	}
+
+	logs, err := pr.repo.BattingGameLogs(ctx, id, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	total, err := pr.repo.CountBattingGameLogs(ctx, id, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, NewPaginatedResponse(logs, filter.Pagination.Page, filter.Pagination.PerPage, total))
 }
 
 // handlePlayerAppearances godoc
@@ -376,11 +434,7 @@ func (pr *PlayerRoutes) handlePlayerBattingStats(w http.ResponseWriter, r *http.
 	}
 
 	career.OPS = career.OBP + career.SLG
-
-	writeJSON(w, http.StatusOK, PlayerBattingStatsResponse{
-		Career:  career,
-		Seasons: seasons,
-	})
+	writeJSON(w, http.StatusOK, NewPlayerBattingStatsResponse(career, seasons))
 }
 
 // handlePlayerPitchingStats godoc
@@ -436,8 +490,5 @@ func (pr *PlayerRoutes) handlePlayerPitchingStats(w http.ResponseWriter, r *http
 		career.HRPer9 = (float64(career.HR) * 9.0) / ip
 	}
 
-	writeJSON(w, http.StatusOK, PlayerPitchingStatsResponse{
-		Career:  career,
-		Seasons: seasons,
-	})
+	writeJSON(w, http.StatusOK, NewPlayerPitchingStatsResponse(career, seasons))
 }

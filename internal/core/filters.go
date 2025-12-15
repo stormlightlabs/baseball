@@ -14,6 +14,21 @@ type Pagination struct {
 	PerPage int
 }
 
+func NewPagination(p, pp int) *Pagination {
+	return &Pagination{Page: p, PerPage: pp}
+}
+
+type PlayerGameLogFilter struct {
+	Season     *SeasonYear // Filter by season
+	DateFrom   *string     // YYYYMMDD format
+	DateTo     *string     // YYYYMMDD format
+	MinHR      *int        // Minimum home runs
+	MinH       *int        // Minimum hits
+	MinRBI     *int        // Minimum RBI
+	MinPA      *int        // Minimum plate appearances
+	Pagination Pagination
+}
+
 type PlayerFilter struct {
 	NameQuery  string // partial name
 	DebutYear  *SeasonYear

@@ -17,6 +17,10 @@ type PaginatedResponse struct {
 	Total   int `json:"total"`
 }
 
+func NewPaginatedResponse(data any, p, pp, t int) PaginatedResponse {
+	return PaginatedResponse{Data: data, Page: p, PerPage: pp, Total: t}
+}
+
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
@@ -25,6 +29,10 @@ type ErrorResponse struct {
 type PlayerSeasonsResponse struct {
 	Batting  []core.PlayerBattingSeason  `json:"batting"`
 	Pitching []core.PlayerPitchingSeason `json:"pitching"`
+}
+
+func NewPlayerSeasonsResponse(b []core.PlayerBattingSeason, p []core.PlayerPitchingSeason) PlayerSeasonsResponse {
+	return PlayerSeasonsResponse{Batting: b, Pitching: p}
 }
 
 // HallOfFameResponse wraps Hall of Fame records
@@ -94,10 +102,18 @@ type PlayerBattingStatsResponse struct {
 	Seasons []core.PlayerBattingSeason `json:"seasons"`
 }
 
+func NewPlayerBattingStatsResponse(c core.PlayerBattingSeason, s []core.PlayerBattingSeason) PlayerBattingStatsResponse {
+	return PlayerBattingStatsResponse{Career: c, Seasons: s}
+}
+
 // PlayerPitchingStatsResponse wraps player career and season pitching stats
 type PlayerPitchingStatsResponse struct {
 	Career  core.PlayerPitchingSeason   `json:"career"`
 	Seasons []core.PlayerPitchingSeason `json:"seasons"`
+}
+
+func NewPlayerPitchingStatsResponse(c core.PlayerPitchingSeason, s []core.PlayerPitchingSeason) PlayerPitchingStatsResponse {
+	return PlayerPitchingStatsResponse{Career: c, Seasons: s}
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

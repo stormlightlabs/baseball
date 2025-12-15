@@ -278,7 +278,6 @@ func (r *PlayerRepository) FieldingSeasons(ctx context.Context, id core.PlayerID
 }
 
 // GameLogs retrieves games where the player appeared in the starting lineup.
-// It uses the Retrosheet player ID to query the games table
 func (r *PlayerRepository) GameLogs(ctx context.Context, id core.PlayerID, filter core.GameFilter) ([]core.Game, error) {
 	var retroID sql.NullString
 	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
@@ -544,4 +543,186 @@ func (r *PlayerRepository) Salaries(ctx context.Context, id core.PlayerID) ([]co
 	}
 
 	return salaries, nil
+}
+
+// BattingGameLogs returns per-game batting statistics for a player from the materialized view
+func (r *PlayerRepository) BattingGameLogs(ctx context.Context, id core.PlayerID, filter core.PlayerGameLogFilter) ([]core.PlayerGameBattingLog, error) {
+	var retroID sql.NullString
+	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("player not found: %s", id)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get player retroID: %w", err)
+	}
+
+	if !retroID.Valid || retroID.String == "" {
+		return []core.PlayerGameBattingLog{}, nil
+	}
+
+	query := `
+		SELECT
+			player_id, game_id, date, season, team_id,
+			pa, ab, h, singles, doubles, triples, hr, r, rbi,
+			bb, so, hbp, sf, sh, sb, cs, ibb, gdp,
+			avg, obp, slg
+		FROM player_game_batting_stats
+		WHERE player_id = $1
+	`
+
+	args := []any{retroID.String}
+	argNum := 2
+
+	if filter.Season != nil {
+		query += fmt.Sprintf(" AND season = $%d", argNum)
+		args = append(args, int(*filter.Season))
+		argNum++
+	}
+
+	if filter.DateFrom != nil {
+		query += fmt.Sprintf(" AND date >= $%d", argNum)
+		args = append(args, *filter.DateFrom)
+		argNum++
+	}
+
+	if filter.DateTo != nil {
+		query += fmt.Sprintf(" AND date <= $%d", argNum)
+		args = append(args, *filter.DateTo)
+		argNum++
+	}
+
+	if filter.MinHR != nil {
+		query += fmt.Sprintf(" AND hr >= $%d", argNum)
+		args = append(args, *filter.MinHR)
+		argNum++
+	}
+
+	if filter.MinH != nil {
+		query += fmt.Sprintf(" AND h >= $%d", argNum)
+		args = append(args, *filter.MinH)
+		argNum++
+	}
+
+	if filter.MinRBI != nil {
+		query += fmt.Sprintf(" AND rbi >= $%d", argNum)
+		args = append(args, *filter.MinRBI)
+		argNum++
+	}
+
+	if filter.MinPA != nil {
+		query += fmt.Sprintf(" AND pa >= $%d", argNum)
+		args = append(args, *filter.MinPA)
+		argNum++
+	}
+
+	query += fmt.Sprintf(" ORDER BY date DESC LIMIT $%d OFFSET $%d", argNum, argNum+1)
+	args = append(args, filter.Pagination.PerPage, (filter.Pagination.Page-1)*filter.Pagination.PerPage)
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch batting game logs: %w", err)
+	}
+	defer rows.Close()
+
+	var logs []core.PlayerGameBattingLog
+	for rows.Next() {
+		var log core.PlayerGameBattingLog
+		var playerID, gameID, date, teamID string
+		var season int
+
+		if err := rows.Scan(
+			&playerID, &gameID, &date, &season, &teamID,
+			&log.PA, &log.AB, &log.H, &log.Singles, &log.Doubles, &log.Triples, &log.HR, &log.R, &log.RBI,
+			&log.BB, &log.SO, &log.HBP, &log.SF, &log.SH, &log.SB, &log.CS, &log.IBB, &log.GDP,
+			&log.AVG, &log.OBP, &log.SLG,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan batting game log: %w", err)
+		}
+
+		log.PlayerID = id
+		log.GameID = core.GameID(gameID)
+		log.Date = date
+		log.Season = core.SeasonYear(season)
+		log.TeamID = core.TeamID(teamID)
+		log.OPS = log.OBP + log.SLG
+
+		logs = append(logs, log)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate batting game logs: %w", err)
+	}
+
+	return logs, nil
+}
+
+// CountBattingGameLogs returns the count of batting game logs for a player
+func (r *PlayerRepository) CountBattingGameLogs(ctx context.Context, id core.PlayerID, filter core.PlayerGameLogFilter) (int, error) {
+	var retroID sql.NullString
+	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
+	if err == sql.ErrNoRows {
+		return 0, fmt.Errorf("player not found: %s", id)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("failed to get player retroID: %w", err)
+	}
+
+	if !retroID.Valid || retroID.String == "" {
+		return 0, nil
+	}
+
+	query := `SELECT COUNT(*) FROM player_game_batting_stats WHERE player_id = $1`
+
+	args := []any{retroID.String}
+	argNum := 2
+
+	if filter.Season != nil {
+		query += fmt.Sprintf(" AND season = $%d", argNum)
+		args = append(args, int(*filter.Season))
+		argNum++
+	}
+
+	if filter.DateFrom != nil {
+		query += fmt.Sprintf(" AND date >= $%d", argNum)
+		args = append(args, *filter.DateFrom)
+		argNum++
+	}
+
+	if filter.DateTo != nil {
+		query += fmt.Sprintf(" AND date <= $%d", argNum)
+		args = append(args, *filter.DateTo)
+		argNum++
+	}
+
+	if filter.MinHR != nil {
+		query += fmt.Sprintf(" AND hr >= $%d", argNum)
+		args = append(args, *filter.MinHR)
+		argNum++
+	}
+
+	if filter.MinH != nil {
+		query += fmt.Sprintf(" AND h >= $%d", argNum)
+		args = append(args, *filter.MinH)
+		argNum++
+	}
+
+	if filter.MinRBI != nil {
+		query += fmt.Sprintf(" AND rbi >= $%d", argNum)
+		args = append(args, *filter.MinRBI)
+		argNum++
+	}
+
+	if filter.MinPA != nil {
+		query += fmt.Sprintf(" AND pa >= $%d", argNum)
+		args = append(args, *filter.MinPA)
+		argNum++
+	}
+
+	var count int
+	err = r.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count batting game logs: %w", err)
+	}
+
+	return count, nil
 }

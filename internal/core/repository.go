@@ -18,6 +18,11 @@ type PlayerRepository interface {
 	// Game-level view for a player (from Retrosheet logs / day-by-day).
 	GameLogs(ctx context.Context, id PlayerID, filter GameFilter) ([]Game, error)
 
+	// BattingGameLogs returns per-game batting statistics for a player
+	// Derived from player_game_batting_stats materialized view
+	BattingGameLogs(ctx context.Context, id PlayerID, filter PlayerGameLogFilter) ([]PlayerGameBattingLog, error)
+	CountBattingGameLogs(ctx context.Context, id PlayerID, filter PlayerGameLogFilter) (int, error)
+
 	// Appearance records by position for a player
 	Appearances(ctx context.Context, id PlayerID) ([]PlayerAppearance, error)
 

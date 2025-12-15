@@ -109,32 +109,27 @@ type RunDifferentialGamePoint struct {
 
 // RunDifferentialWindow: precomputed rolling-window stat.
 type RunDifferentialWindow struct {
-	WindowSize int    `json:"window_size"` // number of games (e.g. 10, 20, 30)
-	Label      string `json:"label"`       // e.g. "last_10", "last_30"
-
-	// Ordered by window end game/date
-	Points []RunDifferentialWindowPoint `json:"points"`
+	WindowSize int                          `json:"window_size"` // number of games (e.g. 10, 20, 30)
+	Label      string                       `json:"label"`       // e.g. "last_10", "last_30"
+	Points     []RunDifferentialWindowPoint `json:"points"`      // Ordered by window end game/date
 }
 
 type RunDifferentialWindowPoint struct {
-	EndGameID GameID `json:"end_game_id"`
-	EndDate   string `json:"end_date"` // YYYY-MM-DD
-
-	GamesInWindow   int `json:"games_in_window"`
-	RunsScored      int `json:"runs_scored"`
-	RunsAllowed     int `json:"runs_allowed"`
-	RunDifferential int `json:"run_differential"` // RS - RA in window
+	EndGameID       GameID `json:"end_game_id"`
+	EndDate         string `json:"end_date"` // YYYY-MM-DD
+	GamesInWindow   int    `json:"games_in_window"`
+	RunsScored      int    `json:"runs_scored"`
+	RunsAllowed     int    `json:"runs_allowed"`
+	RunDifferential int    `json:"run_differential"` // RS - RA in window
 }
 
 // WinProbabilityCurve is the win-probability timeline for a single game, derived from play-by-play events.
 type WinProbabilityCurve struct {
-	GameID   GameID `json:"game_id"`
-	Season   int    `json:"season"`
-	HomeTeam TeamID `json:"home_team"`
-	AwayTeam TeamID `json:"away_team"`
-
-	// One point per play/event, ordered by EventIndex ascending.
-	Points []WinProbabilityPoint `json:"points"`
+	GameID   GameID                `json:"game_id"`
+	Season   int                   `json:"season"`
+	HomeTeam TeamID                `json:"home_team"`
+	AwayTeam TeamID                `json:"away_team"`
+	Points   []WinProbabilityPoint `json:"points"` // One point per play/event, ordered by EventIndex ascending.
 }
 
 // WinProbabilityPoint describes state & win probabilities AFTER a single event.
@@ -155,8 +150,7 @@ type WinProbabilityPoint struct {
 	// Win probabilities for each team AFTER the event (0.0–1.0).
 	HomeWinProb float64 `json:"home_win_prob"`
 	AwayWinProb float64 `json:"away_win_prob"`
-
-	Description string `json:"description,omitempty"` // e.g. "Trout homers to LF (fly ball)."
+	Description string  `json:"description,omitempty"` // e.g. "Trout homers to LF (fly ball)."
 }
 
 // SplitResult is the top-level result for any split query.
@@ -165,8 +159,7 @@ type SplitResult struct {
 	EntityID   string          `json:"entity_id"`   // PlayerID or TeamID
 	Season     int             `json:"season"`
 	Dimension  SplitDimension  `json:"dimension"` // home_away, month, etc.
-
-	Groups []SplitGroup `json:"groups"` // one per split bucket
+	Groups     []SplitGroup    `json:"groups"`    // one per split bucket
 }
 
 // SplitGroup holds aggregate stats for one bucket (e.g. "home", "away", "vs_LHP").
