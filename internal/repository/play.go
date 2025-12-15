@@ -60,6 +60,12 @@ func (r *PlayRepository) List(ctx context.Context, filter core.PlayFilter) ([]co
 		argNum++
 	}
 
+	if filter.League != nil {
+		query += fmt.Sprintf(" AND gid IN (SELECT date || game_number || home_team FROM games WHERE home_team_league = $%d OR visiting_team_league = $%d)", argNum, argNum)
+		args = append(args, string(*filter.League))
+		argNum++
+	}
+
 	if filter.Date != nil {
 		query += fmt.Sprintf(" AND date = $%d", argNum)
 		args = append(args, *filter.Date)
@@ -255,6 +261,12 @@ func (r *PlayRepository) Count(ctx context.Context, filter core.PlayFilter) (int
 	if filter.PitTeam != nil {
 		query += fmt.Sprintf(" AND pitteam = $%d", argNum)
 		args = append(args, string(*filter.PitTeam))
+		argNum++
+	}
+
+	if filter.League != nil {
+		query += fmt.Sprintf(" AND gid IN (SELECT date || game_number || home_team FROM games WHERE home_team_league = $%d OR visiting_team_league = $%d)", argNum, argNum)
+		args = append(args, string(*filter.League))
 		argNum++
 	}
 

@@ -211,6 +211,12 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 		argNum++
 	}
 
+	if filter.League != nil {
+		query += fmt.Sprintf(" AND (home_team_league = $%d OR visiting_team_league = $%d)", argNum, argNum)
+		args = append(args, string(*filter.League))
+		argNum++
+	}
+
 	if filter.IsPostseason != nil {
 		if *filter.IsPostseason {
 			query += " AND (SUBSTRING(date, 5, 2) IN ('10', '11') AND game_number = 0)"
@@ -354,6 +360,12 @@ func (r *GameRepository) Count(ctx context.Context, filter core.GameFilter) (int
 	if filter.ParkID != nil {
 		query += fmt.Sprintf(" AND park_id = $%d", argNum)
 		args = append(args, string(*filter.ParkID))
+		argNum++
+	}
+
+	if filter.League != nil {
+		query += fmt.Sprintf(" AND (home_team_league = $%d OR visiting_team_league = $%d)", argNum, argNum)
+		args = append(args, string(*filter.League))
 		argNum++
 	}
 

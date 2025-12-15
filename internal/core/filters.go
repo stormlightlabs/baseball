@@ -48,6 +48,7 @@ type GameFilter struct {
 	HomeTeam     *TeamID
 	AwayTeam     *TeamID
 	ParkID       *ParkID
+	League       *LeagueID
 	IsPostseason *bool
 	SortBy       string // "date"
 	SortOrder    SortOrder
@@ -110,6 +111,7 @@ type PlayFilter struct {
 	Pitcher    *RetroPlayerID
 	BatTeam    *TeamID
 	PitTeam    *TeamID
+	League     *LeagueID
 	Date       *string // YYYYMMDD format
 	DateFrom   *string // YYYYMMDD format
 	DateTo     *string // YYYYMMDD format
