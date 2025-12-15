@@ -68,9 +68,9 @@ See [Derived & Advanced Endpoints Overview](./api-derived-advanced.md) for the a
 | Done   | plays (view) | `/v1/players/{id}/game-logs` (enh)      | Per-game batting stats via SQL views aggregating plays table. Enables "game finder" queries. Coverage: 1910-2025. |
 |        |              | `/v1/players/{id}/stats/*` (enh)        |                                                                                                                   |
 |        |              | `/v1/games/{id}/batting`                |                                                                                                                   |
-| To-Do  | plays (view) | `/v1/players/{id}/stats/*` (enh)        | Per-game pitching stats via views. Enhances advanced stats, WAR calculations, player splits. Coverage: 1910-2025. |
+| Done   | plays (view) | `/v1/players/{id}/stats/*` (enh)        | Per-game pitching stats via views. Enhances advanced stats, WAR calculations, player splits. Coverage: 1910-2025. |
 |        |              | `/v1/games/{id}/pitching`               |                                                                                                                   |
-| To-Do  | plays (view) | `/v1/players/{id}/stats/fielding` (enh) | Per-game fielding stats via views. Position-specific defensive metrics. Coverage: 1910-2025.                      |
+| Done   | plays (view) | `/v1/players/{id}/stats/fielding` (enh) | Per-game fielding stats via views. Position-specific defensive metrics. Coverage: 1910-2025.                      |
 |        |              | `/v1/games/{id}/fielding`               |                                                                                                                   |
 | To-Do  | plays (view) | `/v1/teams/{id}/daily-stats`            | Per-game team stats via views. Daily performance tracking and rolling aggregates. Coverage: 1910-2025.            |
 | To-Do  | games (enh)  | `/v1/games/{id}` (enh)                  | Enhanced game metadata already in games table: park, attendance, game time, umpires.                              |

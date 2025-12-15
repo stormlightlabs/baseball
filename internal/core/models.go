@@ -150,6 +150,54 @@ type PlayerGameBattingLog struct {
 	OPS float64 `json:"ops"`
 }
 
+// PlayerGamePitchingLog represents a pitcher's performance in a single game.
+// Derived from the player_game_pitching_stats materialized view which aggregates play-by-play data.
+type PlayerGamePitchingLog struct {
+	PlayerID PlayerID   `json:"player_id" swaggertype:"string"`
+	GameID   GameID     `json:"game_id" swaggertype:"string"`
+	Date     string     `json:"date"`
+	Season   SeasonYear `json:"season" swaggertype:"integer"`
+	TeamID   TeamID     `json:"team_id" swaggertype:"string"`
+
+	IP  float64 `json:"ip"`
+	PA  int     `json:"pa"`
+	AB  int     `json:"ab"`
+	H   int     `json:"h"`
+	R   int     `json:"r"`
+	ER  int     `json:"er"`
+	BB  int     `json:"bb"`
+	SO  int     `json:"so"`
+	HR  int     `json:"hr"`
+	HBP int     `json:"hbp"`
+	IBB int     `json:"ibb"`
+	WP  int     `json:"wp"`
+	BK  int     `json:"bk"`
+	SH  int     `json:"sh"`
+	SF  int     `json:"sf"`
+
+	ERA  float64 `json:"era"`
+	WHIP float64 `json:"whip"`
+	K9   float64 `json:"k9"`
+	BB9  float64 `json:"bb9"`
+}
+
+// PlayerGameFieldingLog represents a player's fielding performance at a position in a single game.
+// Derived from the player_game_fielding_stats materialized view which aggregates play-by-play data.
+type PlayerGameFieldingLog struct {
+	PlayerID PlayerID   `json:"player_id" swaggertype:"string"`
+	GameID   GameID     `json:"game_id" swaggertype:"string"`
+	Date     string     `json:"date"`
+	Season   SeasonYear `json:"season" swaggertype:"integer"`
+	TeamID   TeamID     `json:"team_id" swaggertype:"string"`
+	Position int        `json:"position"` // 1=P, 2=C, 3=1B, 4=2B, 5=3B, 6=SS, 7=LF, 8=CF, 9=RF
+
+	PO   int     `json:"po"`
+	A    int     `json:"a"`
+	E    int     `json:"e"`
+	TC   int     `json:"tc"`
+	Fpct float64 `json:"fpct"`
+}
+
 // PlayerPitchingSeason mapped from Lahman Pitching.
 type PlayerPitchingSeason struct {
 	PlayerID PlayerID   `json:"player_id" swaggertype:"string"`

@@ -23,6 +23,17 @@ type PlayerRepository interface {
 	BattingGameLogs(ctx context.Context, id PlayerID, filter PlayerGameLogFilter) ([]PlayerGameBattingLog, error)
 	CountBattingGameLogs(ctx context.Context, id PlayerID, filter PlayerGameLogFilter) (int, error)
 
+	// PitchingGameLogs returns per-game pitching statistics for a player
+	// Derived from player_game_pitching_stats materialized view
+	PitchingGameLogs(ctx context.Context, id PlayerID, filter PlayerGameLogFilter) ([]PlayerGamePitchingLog, error)
+	CountPitchingGameLogs(ctx context.Context, id PlayerID, filter PlayerGameLogFilter) (int, error)
+
+	// FieldingGameLogs returns per-game fielding statistics for a player
+	// Derived from player_game_fielding_stats materialized view
+	// If position filter is set, returns only games at that position
+	FieldingGameLogs(ctx context.Context, id PlayerID, filter PlayerGameLogFilter) ([]PlayerGameFieldingLog, error)
+	CountFieldingGameLogs(ctx context.Context, id PlayerID, filter PlayerGameLogFilter) (int, error)
+
 	// Appearance records by position for a player
 	Appearances(ctx context.Context, id PlayerID) ([]PlayerAppearance, error)
 

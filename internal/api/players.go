@@ -25,6 +25,8 @@ func (pr *PlayerRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/players/{id}/hall-of-fame", pr.handlePlayerHallOfFame)
 	mux.HandleFunc("GET /v1/players/{id}/game-logs", pr.handlePlayerGameLogs)
 	mux.HandleFunc("GET /v1/players/{id}/game-logs/batting", pr.handlePlayerBattingGameLogs)
+	mux.HandleFunc("GET /v1/players/{id}/game-logs/pitching", pr.handlePlayerPitchingGameLogs)
+	mux.HandleFunc("GET /v1/players/{id}/game-logs/fielding", pr.handlePlayerFieldingGameLogs)
 	mux.HandleFunc("GET /v1/players/{id}/appearances", pr.handlePlayerAppearances)
 	mux.HandleFunc("GET /v1/players/{id}/teams", pr.handlePlayerTeams)
 	mux.HandleFunc("GET /v1/players/{id}/salaries", pr.handlePlayerSalaries)
@@ -301,6 +303,126 @@ func (pr *PlayerRoutes) handlePlayerBattingGameLogs(w http.ResponseWriter, r *ht
 	}
 
 	total, err := pr.repo.CountBattingGameLogs(ctx, id, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, NewPaginatedResponse(logs, filter.Pagination.Page, filter.Pagination.PerPage, total))
+}
+
+// handlePlayerPitchingGameLogs godoc
+// @Summary Get player pitching game logs
+// @Description Get per-game pitching statistics for a player from the materialized view. Enables "game finder" queries with filters.
+// @Tags players, stats
+// @Accept json
+// @Produce json
+// @Param id path string true "Player ID"
+// @Param season query integer false "Filter by season"
+// @Param date_from query string false "Filter by date from (YYYYMMDD)"
+// @Param date_to query string false "Filter by date to (YYYYMMDD)"
+// @Param min_so query integer false "Minimum strikeouts"
+// @Param min_ip query number false "Minimum innings pitched"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{id}/game-logs/pitching [get]
+func (pr *PlayerRoutes) handlePlayerPitchingGameLogs(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.PlayerID(r.PathValue("id"))
+
+	filter := core.PlayerGameLogFilter{
+		Pagination: *core.NewPagination(getIntQuery(r, "page", 1), getIntQuery(r, "per_page", 50)),
+	}
+
+	if season := r.URL.Query().Get("season"); season != "" {
+		y := core.SeasonYear(getIntQuery(r, "season", 0))
+		filter.Season = &y
+	}
+
+	if dateFrom := r.URL.Query().Get("date_from"); dateFrom != "" {
+		filter.DateFrom = &dateFrom
+	}
+
+	if dateTo := r.URL.Query().Get("date_to"); dateTo != "" {
+		filter.DateTo = &dateTo
+	}
+
+	if minSO := r.URL.Query().Get("min_so"); minSO != "" {
+		so := getIntQuery(r, "min_so", 0)
+		filter.MinSO = &so
+	}
+
+	if minIP := r.URL.Query().Get("min_ip"); minIP != "" {
+		ip := getFloatQuery(r, "min_ip", 0)
+		filter.MinIP = &ip
+	}
+
+	logs, err := pr.repo.PitchingGameLogs(ctx, id, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	total, err := pr.repo.CountPitchingGameLogs(ctx, id, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, NewPaginatedResponse(logs, filter.Pagination.Page, filter.Pagination.PerPage, total))
+}
+
+// handlePlayerFieldingGameLogs godoc
+// @Summary Get player fielding game logs
+// @Description Get per-game fielding statistics for a player from the materialized view. Each row represents performance at a specific position. Enables "game finder" queries with filters.
+// @Tags players, stats
+// @Accept json
+// @Produce json
+// @Param id path string true "Player ID"
+// @Param season query integer false "Filter by season"
+// @Param date_from query string false "Filter by date from (YYYYMMDD)"
+// @Param date_to query string false "Filter by date to (YYYYMMDD)"
+// @Param position query integer false "Filter by position (1=P, 2=C, 3=1B, 4=2B, 5=3B, 6=SS, 7=LF, 8=CF, 9=RF)"
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{id}/game-logs/fielding [get]
+func (pr *PlayerRoutes) handlePlayerFieldingGameLogs(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.PlayerID(r.PathValue("id"))
+
+	filter := core.PlayerGameLogFilter{
+		Pagination: *core.NewPagination(getIntQuery(r, "page", 1), getIntQuery(r, "per_page", 50)),
+	}
+
+	if season := r.URL.Query().Get("season"); season != "" {
+		y := core.SeasonYear(getIntQuery(r, "season", 0))
+		filter.Season = &y
+	}
+
+	if dateFrom := r.URL.Query().Get("date_from"); dateFrom != "" {
+		filter.DateFrom = &dateFrom
+	}
+
+	if dateTo := r.URL.Query().Get("date_to"); dateTo != "" {
+		filter.DateTo = &dateTo
+	}
+
+	if position := r.URL.Query().Get("position"); position != "" {
+		pos := getIntQuery(r, "position", 0)
+		filter.Position = &pos
+	}
+
+	logs, err := pr.repo.FieldingGameLogs(ctx, id, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	total, err := pr.repo.CountFieldingGameLogs(ctx, id, filter)
 	if err != nil {
 		writeInternalServerError(w, err)
 		return

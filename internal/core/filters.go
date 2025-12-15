@@ -22,10 +22,13 @@ type PlayerGameLogFilter struct {
 	Season     *SeasonYear // Filter by season
 	DateFrom   *string     // YYYYMMDD format
 	DateTo     *string     // YYYYMMDD format
+	Position   *int        // Filter by position (1-9, for fielding logs)
 	MinHR      *int        // Minimum home runs
 	MinH       *int        // Minimum hits
 	MinRBI     *int        // Minimum RBI
 	MinPA      *int        // Minimum plate appearances
+	MinSO      *int        // Minimum strikeouts (pitching)
+	MinIP      *float64    // Minimum innings pitched (pitching)
 	Pagination Pagination
 }
 

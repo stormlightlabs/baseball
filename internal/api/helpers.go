@@ -168,3 +168,16 @@ func getIntPathValue(r *http.Request, key string) int {
 	}
 	return i
 }
+
+func getFloatQuery(r *http.Request, key string, defaultVal float64) float64 {
+	val := r.URL.Query().Get(key)
+	if val == "" {
+		return defaultVal
+	}
+
+	f, err := strconv.ParseFloat(val, 64)
+	if err != nil {
+		return defaultVal
+	}
+	return f
+}

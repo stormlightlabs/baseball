@@ -726,3 +726,300 @@ func (r *PlayerRepository) CountBattingGameLogs(ctx context.Context, id core.Pla
 
 	return count, nil
 }
+
+// PitchingGameLogs returns per-game pitching statistics for a player from the materialized view
+func (r *PlayerRepository) PitchingGameLogs(ctx context.Context, id core.PlayerID, filter core.PlayerGameLogFilter) ([]core.PlayerGamePitchingLog, error) {
+	var retroID sql.NullString
+	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("player not found: %s", id)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get player retroID: %w", err)
+	}
+
+	if !retroID.Valid || retroID.String == "" {
+		return []core.PlayerGamePitchingLog{}, nil
+	}
+
+	query := `
+		SELECT
+			player_id, game_id, date, season, team_id,
+			ip, pa, ab, h, r, er, bb, so, hr, hbp, ibb, wp, bk, sh, sf,
+			era, whip, k9, bb9
+		FROM player_game_pitching_stats
+		WHERE player_id = $1
+	`
+
+	args := []any{retroID.String}
+	argNum := 2
+
+	if filter.Season != nil {
+		query += fmt.Sprintf(" AND season = $%d", argNum)
+		args = append(args, int(*filter.Season))
+		argNum++
+	}
+
+	if filter.DateFrom != nil {
+		query += fmt.Sprintf(" AND date >= $%d", argNum)
+		args = append(args, *filter.DateFrom)
+		argNum++
+	}
+
+	if filter.DateTo != nil {
+		query += fmt.Sprintf(" AND date <= $%d", argNum)
+		args = append(args, *filter.DateTo)
+		argNum++
+	}
+
+	if filter.MinSO != nil {
+		query += fmt.Sprintf(" AND so >= $%d", argNum)
+		args = append(args, *filter.MinSO)
+		argNum++
+	}
+
+	if filter.MinIP != nil {
+		query += fmt.Sprintf(" AND ip >= $%d", argNum)
+		args = append(args, *filter.MinIP)
+		argNum++
+	}
+
+	query += fmt.Sprintf(" ORDER BY date DESC LIMIT $%d OFFSET $%d", argNum, argNum+1)
+	args = append(args, filter.Pagination.PerPage, (filter.Pagination.Page-1)*filter.Pagination.PerPage)
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch pitching game logs: %w", err)
+	}
+	defer rows.Close()
+
+	var logs []core.PlayerGamePitchingLog
+	for rows.Next() {
+		var log core.PlayerGamePitchingLog
+		var playerID, gameID, date, teamID string
+		var season int
+
+		if err := rows.Scan(
+			&playerID, &gameID, &date, &season, &teamID,
+			&log.IP, &log.PA, &log.AB, &log.H, &log.R, &log.ER, &log.BB, &log.SO, &log.HR,
+			&log.HBP, &log.IBB, &log.WP, &log.BK, &log.SH, &log.SF,
+			&log.ERA, &log.WHIP, &log.K9, &log.BB9,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan pitching game log: %w", err)
+		}
+
+		log.PlayerID = id
+		log.GameID = core.GameID(gameID)
+		log.Date = date
+		log.Season = core.SeasonYear(season)
+		log.TeamID = core.TeamID(teamID)
+
+		logs = append(logs, log)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate pitching game logs: %w", err)
+	}
+
+	return logs, nil
+}
+
+// CountPitchingGameLogs returns the count of pitching game logs for a player
+func (r *PlayerRepository) CountPitchingGameLogs(ctx context.Context, id core.PlayerID, filter core.PlayerGameLogFilter) (int, error) {
+	var retroID sql.NullString
+	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
+	if err == sql.ErrNoRows {
+		return 0, fmt.Errorf("player not found: %s", id)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("failed to get player retroID: %w", err)
+	}
+
+	if !retroID.Valid || retroID.String == "" {
+		return 0, nil
+	}
+
+	query := `SELECT COUNT(*) FROM player_game_pitching_stats WHERE player_id = $1`
+
+	args := []any{retroID.String}
+	argNum := 2
+
+	if filter.Season != nil {
+		query += fmt.Sprintf(" AND season = $%d", argNum)
+		args = append(args, int(*filter.Season))
+		argNum++
+	}
+
+	if filter.DateFrom != nil {
+		query += fmt.Sprintf(" AND date >= $%d", argNum)
+		args = append(args, *filter.DateFrom)
+		argNum++
+	}
+
+	if filter.DateTo != nil {
+		query += fmt.Sprintf(" AND date <= $%d", argNum)
+		args = append(args, *filter.DateTo)
+		argNum++
+	}
+
+	if filter.MinSO != nil {
+		query += fmt.Sprintf(" AND so >= $%d", argNum)
+		args = append(args, *filter.MinSO)
+		argNum++
+	}
+
+	if filter.MinIP != nil {
+		query += fmt.Sprintf(" AND ip >= $%d", argNum)
+		args = append(args, *filter.MinIP)
+		argNum++
+	}
+
+	var count int
+	err = r.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count pitching game logs: %w", err)
+	}
+
+	return count, nil
+}
+
+// FieldingGameLogs returns per-game fielding statistics for a player from the materialized view
+func (r *PlayerRepository) FieldingGameLogs(ctx context.Context, id core.PlayerID, filter core.PlayerGameLogFilter) ([]core.PlayerGameFieldingLog, error) {
+	var retroID sql.NullString
+	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("player not found: %s", id)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get player retroID: %w", err)
+	}
+
+	if !retroID.Valid || retroID.String == "" {
+		return []core.PlayerGameFieldingLog{}, nil
+	}
+
+	query := `
+		SELECT
+			player_id, game_id, date, season, team_id, position,
+			po, a, e, tc, fpct
+		FROM player_game_fielding_stats
+		WHERE player_id = $1
+	`
+
+	args := []any{retroID.String}
+	argNum := 2
+
+	if filter.Season != nil {
+		query += fmt.Sprintf(" AND season = $%d", argNum)
+		args = append(args, int(*filter.Season))
+		argNum++
+	}
+
+	if filter.DateFrom != nil {
+		query += fmt.Sprintf(" AND date >= $%d", argNum)
+		args = append(args, *filter.DateFrom)
+		argNum++
+	}
+
+	if filter.DateTo != nil {
+		query += fmt.Sprintf(" AND date <= $%d", argNum)
+		args = append(args, *filter.DateTo)
+		argNum++
+	}
+
+	if filter.Position != nil {
+		query += fmt.Sprintf(" AND position = $%d", argNum)
+		args = append(args, *filter.Position)
+		argNum++
+	}
+
+	query += fmt.Sprintf(" ORDER BY date DESC, position LIMIT $%d OFFSET $%d", argNum, argNum+1)
+	args = append(args, filter.Pagination.PerPage, (filter.Pagination.Page-1)*filter.Pagination.PerPage)
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch fielding game logs: %w", err)
+	}
+	defer rows.Close()
+
+	var logs []core.PlayerGameFieldingLog
+	for rows.Next() {
+		var log core.PlayerGameFieldingLog
+		var playerID, gameID, date, teamID string
+		var season int
+
+		if err := rows.Scan(
+			&playerID, &gameID, &date, &season, &teamID, &log.Position,
+			&log.PO, &log.A, &log.E, &log.TC, &log.Fpct,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan fielding game log: %w", err)
+		}
+
+		log.PlayerID = id
+		log.GameID = core.GameID(gameID)
+		log.Date = date
+		log.Season = core.SeasonYear(season)
+		log.TeamID = core.TeamID(teamID)
+
+		logs = append(logs, log)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate fielding game logs: %w", err)
+	}
+
+	return logs, nil
+}
+
+// CountFieldingGameLogs returns the count of fielding game logs for a player
+func (r *PlayerRepository) CountFieldingGameLogs(ctx context.Context, id core.PlayerID, filter core.PlayerGameLogFilter) (int, error) {
+	var retroID sql.NullString
+	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
+	if err == sql.ErrNoRows {
+		return 0, fmt.Errorf("player not found: %s", id)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("failed to get player retroID: %w", err)
+	}
+
+	if !retroID.Valid || retroID.String == "" {
+		return 0, nil
+	}
+
+	query := `SELECT COUNT(*) FROM player_game_fielding_stats WHERE player_id = $1`
+
+	args := []any{retroID.String}
+	argNum := 2
+
+	if filter.Season != nil {
+		query += fmt.Sprintf(" AND season = $%d", argNum)
+		args = append(args, int(*filter.Season))
+		argNum++
+	}
+
+	if filter.DateFrom != nil {
+		query += fmt.Sprintf(" AND date >= $%d", argNum)
+		args = append(args, *filter.DateFrom)
+		argNum++
+	}
+
+	if filter.DateTo != nil {
+		query += fmt.Sprintf(" AND date <= $%d", argNum)
+		args = append(args, *filter.DateTo)
+		argNum++
+	}
+
+	if filter.Position != nil {
+		query += fmt.Sprintf(" AND position = $%d", argNum)
+		args = append(args, *filter.Position)
+		argNum++
+	}
+
+	var count int
+	err = r.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count fielding game logs: %w", err)
+	}
+
+	return count, nil
+}
