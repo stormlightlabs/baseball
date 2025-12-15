@@ -2,9 +2,7 @@
 
 ## Database Schema & Storage
 
-- In-Progress:
-    - Views and crosswalk tables should normalize Lahman ↔ Retrosheet IDs (`player_id_map`, `team_franchise_map`).
-    - Pre-aggregate leaderboards for fast reads.
+- In-Progress: Pre-aggregate leaderboards for fast reads
 
 ### API Platform, Docs & Ops
 

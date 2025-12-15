@@ -37,13 +37,15 @@ func (r *PlayerRepository) GetByID(ctx context.Context, id core.PlayerID) (*core
 
 	query := `
 		SELECT
-			"playerID", "nameFirst", "nameLast", "nameGiven",
-			"birthYear", "birthMonth", "birthDay", "birthCity", "birthState", "birthCountry",
-			"deathYear", "deathMonth", "deathDay", "deathCity", "deathState", "deathCountry",
-			"bats", "throws", "weight", "height",
-			"debut", "finalGame", "retroID", "bbrefID"
-		FROM "People"
-		WHERE "playerID" = $1
+			p."playerID", p."nameFirst", p."nameLast", p."nameGiven",
+			p."birthYear", p."birthMonth", p."birthDay", p."birthCity", p."birthState", p."birthCountry",
+			p."deathYear", p."deathMonth", p."deathDay", p."deathCity", p."deathState", p."deathCountry",
+			p."bats", p."throws", p."weight", p."height",
+			p."debut", p."finalGame", p."retroID", p."bbrefID"
+		FROM "People" p
+		LEFT JOIN player_id_map m ON p."playerID" = m.lahman_id
+		WHERE p."playerID" = $1 OR m.retro_id = $1
+		LIMIT 1
 	`
 
 	var p core.Player

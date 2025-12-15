@@ -43,25 +43,29 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 
 	query := `
 		SELECT
-			date,
-			visiting_team,
-			home_team,
-			visiting_team_league,
-			home_team_league,
-			visiting_score,
-			home_score,
-			game_length_outs,
-			day_of_week,
-			attendance,
-			game_time_minutes,
-			park_id,
-			hp_ump_id,
-			b1_ump_id,
-			b2_ump_id,
-			b3_ump_id,
-			game_type
-		FROM games
-		WHERE game_id = $1
+			g.date,
+			g.visiting_team,
+			g.home_team,
+			g.visiting_team_league,
+			g.home_team_league,
+			g.visiting_score,
+			g.home_score,
+			g.game_length_outs,
+			g.day_of_week,
+			g.attendance,
+			g.game_time_minutes,
+			g.park_id,
+			pm.park_name,
+			pm.city,
+			pm.state,
+			g.hp_ump_id,
+			g.b1_ump_id,
+			g.b2_ump_id,
+			g.b3_ump_id,
+			g.game_type
+		FROM games g
+		LEFT JOIN park_map pm ON g.park_id = pm.retro_park_id
+		WHERE g.game_id = $1
 	`
 
 	var g core.Game
@@ -70,6 +74,7 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 	var umpHome, umpFirst, umpSecond, umpThird, dayOfWeek sql.NullString
 	var homeTeam, awayTeam, parkID string
 	var homeLeague, awayLeague sql.NullString
+	var parkName, parkCity, parkState sql.NullString
 	var gameType sql.NullString
 
 	err := r.db.QueryRowContext(ctx, query, string(id)).Scan(
@@ -85,6 +90,9 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 		&attendance,
 		&durationMin,
 		&parkID,
+		&parkName,
+		&parkCity,
+		&parkState,
 		&umpHome,
 		&umpFirst,
 		&umpSecond,
@@ -109,6 +117,15 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 		g.AwayLeague = core.LeagueID(awayLeague.String)
 	}
 	g.ParkID = core.ParkID(parkID)
+	if parkName.Valid {
+		g.ParkName = &parkName.String
+	}
+	if parkCity.Valid {
+		g.ParkCity = &parkCity.String
+	}
+	if parkState.Valid {
+		g.ParkState = &parkState.String
+	}
 
 	parsedDate, err := time.Parse("20060102", date)
 	if err != nil {
@@ -163,24 +180,28 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]core.Game, error) {
 	query := `
 		SELECT
-			date,
-			game_number,
-			visiting_team,
-			home_team,
-			visiting_team_league,
-			home_team_league,
-			visiting_score,
-			home_score,
-			game_length_outs,
-			day_of_week,
-			attendance,
-			game_time_minutes,
-			park_id,
-			hp_ump_id,
-			b1_ump_id,
-			b2_ump_id,
-			b3_ump_id
-		FROM games
+			g.date,
+			g.game_number,
+			g.visiting_team,
+			g.home_team,
+			g.visiting_team_league,
+			g.home_team_league,
+			g.visiting_score,
+			g.home_score,
+			g.game_length_outs,
+			g.day_of_week,
+			g.attendance,
+			g.game_time_minutes,
+			g.park_id,
+			pm.park_name,
+			pm.city,
+			pm.state,
+			g.hp_ump_id,
+			g.b1_ump_id,
+			g.b2_ump_id,
+			g.b3_ump_id
+		FROM games g
+		LEFT JOIN park_map pm ON g.park_id = pm.retro_park_id
 		WHERE 1=1
 	`
 
@@ -269,6 +290,7 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 		var umpHome, umpFirst, umpSecond, umpThird, dayOfWeek sql.NullString
 		var homeTeam, awayTeam, parkID string
 		var homeLeague, awayLeague sql.NullString
+		var parkName, parkCity, parkState sql.NullString
 
 		err := rows.Scan(
 			&date,
@@ -280,14 +302,9 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 			&g.AwayScore,
 			&g.HomeScore,
 			&innings,
-			&dayOfWeek,
-			&attendance,
-			&durationMin,
-			&parkID,
-			&umpHome,
-			&umpFirst,
-			&umpSecond,
-			&umpThird,
+			&dayOfWeek, &attendance, &durationMin,
+			&parkID, &parkName, &parkCity, &parkState,
+			&umpHome, &umpFirst, &umpSecond, &umpThird,
 		)
 
 		if err != nil {
@@ -304,6 +321,15 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 			g.AwayLeague = core.LeagueID(awayLeague.String)
 		}
 		g.ParkID = core.ParkID(parkID)
+		if parkName.Valid {
+			g.ParkName = &parkName.String
+		}
+		if parkCity.Valid {
+			g.ParkCity = &parkCity.String
+		}
+		if parkState.Valid {
+			g.ParkState = &parkState.String
+		}
 
 		parsedDate, err := time.Parse("20060102", date)
 		if err != nil {

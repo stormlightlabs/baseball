@@ -301,7 +301,11 @@ type Game struct {
 	Attendance  *int `json:"attendance,omitempty"`
 	DurationMin *int `json:"duration_min,omitempty"`
 
-	ParkID    ParkID    `json:"park_id"`
+	ParkID    ParkID  `json:"park_id"`
+	ParkName  *string `json:"park_name,omitempty"`  // Enriched from park_map
+	ParkCity  *string `json:"park_city,omitempty"`  // Enriched from park_map
+	ParkState *string `json:"park_state,omitempty"` // Enriched from park_map
+
 	UmpHome   *UmpireID `json:"ump_home,omitempty"`
 	UmpFirst  *UmpireID `json:"ump_first,omitempty"`
 	UmpSecond *UmpireID `json:"ump_second,omitempty"`
