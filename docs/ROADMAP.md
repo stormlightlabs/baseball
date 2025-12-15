@@ -63,20 +63,20 @@ See [Derived & Advanced Endpoints Overview](./api-derived-advanced.md) for the a
 
 ### 11. Data Coverage Expansion - **(R)**
 
-| Status | Source       | Endpoint(s)                             | Description                                                                                                                 |
-| ------ | ------------ | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| To-Do  | plays (view) | `/v1/players/{id}/game-logs` (enh)      | Per-game batting stats via SQL views aggregating plays table. Enables "game finder" queries. Coverage: 1910-2025.           |
-|        |              | `/v1/players/{id}/stats/*` (enh)        |                                                                                                                             |
-|        |              | `/v1/games/{id}/batting`                |                                                                                                                             |
-| To-Do  | plays (view) | `/v1/players/{id}/stats/*` (enh)        | Per-game pitching stats via views. Enhances advanced stats, WAR calculations, player splits. Coverage: 1910-2025.           |
-|        |              | `/v1/games/{id}/pitching`               |                                                                                                                             |
-| To-Do  | plays (view) | `/v1/players/{id}/stats/fielding` (enh) | Per-game fielding stats via views. Position-specific defensive metrics. Coverage: 1910-2025.                                |
-|        |              | `/v1/games/{id}/fielding`               |                                                                                                                             |
-| To-Do  | plays (view) | `/v1/teams/{id}/daily-stats`            | Per-game team stats via views. Daily performance tracking and rolling aggregates. Coverage: 1910-2025.                      |
-| To-Do  | games (enh)  | `/v1/games/{id}` (enh)                  | Enhanced game metadata already in games table: park, attendance, game time, umpires.                                        |
-| To-Do  | League views | `/v1/negroleagues/*`                    | Filtered views for Negro Leagues (1920-1962) and Federal League (1914-1915). Same plays data, league-specific endpoints.    |
-|        |              | `/v1/federalleague/*`                   |                                                                                                                             |
-| To-Do  | Achievements | `/v1/achievements/*`                    | Computed from plays/games: no-hitters, triple plays, cycles, 3+ HR games, 20+ inning games.                                 |
+| Status      | Source       | Endpoint(s)                              | Description                                                                                                                 |
+| ----------- | ------------ | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| To-Do       | plays (view) | `/v1/players/{id}/game-logs` (enh)       | Per-game batting stats via SQL views aggregating plays table. Enables "game finder" queries. Coverage: 1910-2025.          |
+|             |              | `/v1/players/{id}/stats/*` (enh)         |                                                                                                                             |
+|             |              | `/v1/games/{id}/batting`                 |                                                                                                                             |
+| To-Do       | plays (view) | `/v1/players/{id}/stats/*` (enh)         | Per-game pitching stats via views. Enhances advanced stats, WAR calculations, player splits. Coverage: 1910-2025.          |
+|             |              | `/v1/games/{id}/pitching`                |                                                                                                                             |
+| To-Do       | plays (view) | `/v1/players/{id}/stats/fielding` (enh)  | Per-game fielding stats via views. Position-specific defensive metrics. Coverage: 1910-2025.                               |
+|             |              | `/v1/games/{id}/fielding`                |                                                                                                                             |
+| To-Do       | plays (view) | `/v1/teams/{id}/daily-stats`             | Per-game team stats via views. Daily performance tracking and rolling aggregates. Coverage: 1910-2025.                     |
+| To-Do       | games (enh)  | `/v1/games/{id}` (enh)                   | Enhanced game metadata already in games table: park, attendance, game time, umpires.                                       |
+| Done        | League views | `/v1/federalleague/*`                    | Federal League endpoints implemented (1914-1915). Filters games/plays/teams by league='FL'.                             |
+| In-Progress | League views | `/v1/negroleagues/*`                     | Negro Leagues endpoints (1935-1949). Same pattern as Federal League. See implementation plan below.                        |
+| To-Do       | Achievements | `/v1/achievements/*`                     | Computed from plays/games: no-hitters, triple plays, cycles, 3+ HR games, 20+ inning games.                                |
 
 For each dataset expansion:
 
@@ -112,3 +112,58 @@ For each dataset expansion:
 **Data Refresh:**
 
 - Automated weekly refresh during season recommended for current plays data
+
+### Negro Leagues Endpoints - Implementation Plan
+
+**Status**: Ready for implementation
+
+**Endpoint Pattern** (mirrors Federal League implementation):
+
+```text
+GET /v1/negroleagues/games
+GET /v1/negroleagues/teams
+GET /v1/negroleagues/plays
+GET /v1/negroleagues/seasons/{year}/schedule
+GET /v1/negroleagues/seasons/{year}/teams/{team_id}/games
+```
+
+**Implementation Steps**:
+
+1. **Create `internal/api/negroleagues.go`**
+   - Copy Federal League routes pattern
+   - Set league filter to appropriate Negro Leagues identifiers
+   - League codes to filter: Check games table for Negro Leagues league codes
+
+2. **Register routes in `internal/api/server.go`**
+
+   ```go
+   NewNegroLeaguesRoutes(gameRepo, playRepo, teamRepo),
+   ```
+
+3. **Add Swagger tag**
+
+   ```go
+   // @tag.name negroleagues
+   // @tag.description Negro Leagues (1935-1949) data
+   ```
+
+4. **Test endpoints** after data load:
+
+   ```bash
+   # Load data
+   baseball etl load retrosheet --era negro
+
+   # Test endpoints
+   curl http://localhost:8080/v1/negroleagues/games
+   curl http://localhost:8080/v1/negroleagues/teams
+   curl http://localhost:8080/v1/negroleagues/seasons/1945/schedule
+   ```
+
+**Reference Implementation**: `/v1/federalleague/*` endpoints in `internal/api/federalleague.go`
+
+**Technical Notes**:
+
+- Uses existing GameFilter/PlayFilter with League field
+- Repository layer already supports league filtering
+- No schema changes required
+- Same architecture as Federal League endpoints

@@ -60,9 +60,23 @@ func (r *PlayRepository) List(ctx context.Context, filter core.PlayFilter) ([]co
 		argNum++
 	}
 
-	if filter.League != nil {
-		query += fmt.Sprintf(" AND gid IN (SELECT date || game_number || home_team FROM games WHERE home_team_league = $%d OR visiting_team_league = $%d)", argNum, argNum)
+	if len(filter.Leagues) > 0 {
+		query += fmt.Sprintf(" AND gid IN (SELECT game_id FROM games WHERE home_team_league = ANY($%d) OR visiting_team_league = ANY($%d))", argNum, argNum+1)
+		leagues := make([]string, len(filter.Leagues))
+		for i, league := range filter.Leagues {
+			leagues[i] = string(league)
+		}
+		args = append(args, leagues, leagues)
+		argNum += 2
+	} else if filter.League != nil {
+		query += fmt.Sprintf(" AND gid IN (SELECT game_id FROM games WHERE home_team_league = $%d OR visiting_team_league = $%d)", argNum, argNum)
 		args = append(args, string(*filter.League))
+		argNum++
+	}
+
+	if filter.GameType != nil {
+		query += fmt.Sprintf(" AND gametype = $%d", argNum)
+		args = append(args, *filter.GameType)
 		argNum++
 	}
 
@@ -264,9 +278,23 @@ func (r *PlayRepository) Count(ctx context.Context, filter core.PlayFilter) (int
 		argNum++
 	}
 
-	if filter.League != nil {
-		query += fmt.Sprintf(" AND gid IN (SELECT date || game_number || home_team FROM games WHERE home_team_league = $%d OR visiting_team_league = $%d)", argNum, argNum)
+	if len(filter.Leagues) > 0 {
+		query += fmt.Sprintf(" AND gid IN (SELECT game_id FROM games WHERE home_team_league = ANY($%d) OR visiting_team_league = ANY($%d))", argNum, argNum+1)
+		leagues := make([]string, len(filter.Leagues))
+		for i, league := range filter.Leagues {
+			leagues[i] = string(league)
+		}
+		args = append(args, leagues, leagues)
+		argNum += 2
+	} else if filter.League != nil {
+		query += fmt.Sprintf(" AND gid IN (SELECT game_id FROM games WHERE home_team_league = $%d OR visiting_team_league = $%d)", argNum, argNum)
 		args = append(args, string(*filter.League))
+		argNum++
+	}
+
+	if filter.GameType != nil {
+		query += fmt.Sprintf(" AND gametype = $%d", argNum)
+		args = append(args, *filter.GameType)
 		argNum++
 	}
 

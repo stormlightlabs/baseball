@@ -2,7 +2,7 @@
 -- Parameters: query text, season, home_team, away_team, series_id, game_number, limit
 WITH filtered_games AS (
     SELECT
-        date || game_number || home_team as game_id,
+        game_id,
         date,
         home_team,
         visiting_team,

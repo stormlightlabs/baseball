@@ -37,4 +37,4 @@ SELECT
 	h_player_8_id, h_player_8_name, h_player_8_pos,
 	h_player_9_id, h_player_9_name, h_player_9_pos
 FROM games
-WHERE date || game_number || home_team = $1
+WHERE game_id = $1

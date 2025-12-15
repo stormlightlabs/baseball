@@ -2,7 +2,7 @@
 -- For playoff series, ranks games chronologically and filters by game number in series
 WITH filtered_games AS (
     SELECT
-        date || game_number || home_team as game_id,
+        game_id,
         date,
         home_team,
         visiting_team,

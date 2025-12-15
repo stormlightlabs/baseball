@@ -7,11 +7,11 @@ import (
 )
 
 var (
-	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#02BA84"))
-	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5F87"))
-	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#7D56F4"))
+	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#42be65"))
+	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#ee5396"))
+	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#33B1FF"))
 	headerStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FAFAFA")).
-			Background(lipgloss.Color("#7D56F4")).Padding(0, 1).Bold(true)
+			Background(lipgloss.Color("#33B1FF")).Padding(0, 1).Bold(true)
 )
 
 // Header prints a styled header message

@@ -3,13 +3,9 @@
 
 WITH team_games AS (
     SELECT
-        date || '-' || game_number::text as game_sort_key,
+        game_id,
         date,
         game_number,
-        CASE
-            WHEN home_team = $1 THEN date || home_team || game_number::text
-            ELSE date || visiting_team || game_number::text
-        END as game_id,
         CASE WHEN home_team = $1 THEN 1 ELSE 0 END as is_home,
         CASE
             WHEN home_team = $1 THEN visiting_team

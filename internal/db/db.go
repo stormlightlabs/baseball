@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"embed"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -846,4 +847,359 @@ func (db *DB) BuildWinExpectancy(ctx context.Context, minSampleSize int) (int64,
 	}
 
 	return result.RowsAffected()
+}
+
+// loadNegroLeaguesTeamMapping reads the team-to-league mapping CSV
+func loadNegroLeaguesTeamMapping() (map[string]string, error) {
+	// Embedded mapping file path - relative to project root
+	mappingPath := "internal/db/negro_leagues_teams.csv"
+
+	file, err := os.Open(mappingPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open team mapping file: %w", err)
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	reader.Comment = '#'
+	reader.TrimLeadingSpace = true
+
+	teamMap := make(map[string]string)
+
+	// Skip header
+	if _, err := reader.Read(); err != nil {
+		return nil, fmt.Errorf("failed to read header: %w", err)
+	}
+
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to read mapping row: %w", err)
+		}
+
+		if len(record) < 2 {
+			continue
+		}
+
+		teamID := strings.TrimSpace(record[0])
+		league := strings.TrimSpace(record[1])
+
+		if teamID != "" && league != "" {
+			teamMap[teamID] = league
+		}
+	}
+
+	return teamMap, nil
+}
+
+// LoadNegroLeaguesGameInfo loads Negro Leagues game data from gameinfo.csv into games table
+// The gameinfo.csv has a different schema than standard Retrosheet gamelogs, so we map what's available
+func (db *DB) LoadNegroLeaguesGameInfo(ctx context.Context, csvPath string) (int64, error) {
+	// Load team-to-league mapping
+	teamLeagueMap, err := loadNegroLeaguesTeamMapping()
+	if err != nil {
+		return 0, fmt.Errorf("failed to load team mapping: %w", err)
+	}
+
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open gameinfo CSV: %w", err)
+	}
+	defer file.Close()
+
+	// Create temp directory for transformed CSV
+	tmpDir, err := os.MkdirTemp("", "negroleagues-*")
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	tmpCSV := filepath.Join(tmpDir, "gameinfo_transformed.csv")
+	outFile, err := os.Create(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp CSV: %w", err)
+	}
+
+	// Write header matching minimal games table columns we have data for
+	headers := []string{
+		"date", "game_number", "home_team", "visiting_team", "park_id",
+		"day_night", "attendance", "game_time_minutes",
+		"visiting_score", "home_score",
+		"winning_pitcher_id", "losing_pitcher_id", "saving_pitcher_id",
+		"hp_ump_id", "b1_ump_id", "b2_ump_id", "b3_ump_id",
+		"lf_ump_id", "rf_ump_id",
+		"game_type", "home_team_league", "visiting_team_league",
+	}
+
+	csvWriter := csv.NewWriter(outFile)
+	if err := csvWriter.Write(headers); err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("failed to write headers: %w", err)
+	}
+
+	reader := csv.NewReader(file)
+	reader.LazyQuotes = true
+	reader.TrimLeadingSpace = true
+	_, err = reader.Read()
+	if err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("failed to read source header: %w", err)
+	}
+
+	cleanNumeric := func(val string) string {
+		if val == "" {
+			return ""
+		}
+
+		if strings.HasSuffix(val, "?") || strings.HasPrefix(val, "<") || strings.HasPrefix(val, ">") {
+			return ""
+		}
+		return val
+	}
+
+	rowCount := int64(0)
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			outFile.Close()
+			return 0, fmt.Errorf("failed to read CSV row: %w", err)
+		}
+
+		if len(record) < 35 {
+			continue
+		}
+
+		gameType := record[32]
+		if gameType == "" {
+			gameType = "regular"
+		}
+
+		homeTeam := record[2]
+		visitingTeam := record[1]
+
+		homeLeague := teamLeagueMap[homeTeam]
+		visitingLeague := teamLeagueMap[visitingTeam]
+
+		row := []string{
+			record[4], record[5], // date, game_number
+			homeTeam, visitingTeam, // home_team, visiting_team
+			record[3], record[7], // park_id, day_night
+			cleanNumeric(record[13]), cleanNumeric(record[12]), cleanNumeric(record[33]), cleanNumeric(record[34]), // attendance, game_time_minutes, visiting_score, home_score
+			record[29], record[30], record[31], // winning_pitcher_id, losing_pitcher_id, saving_pitcher_id
+			record[23], record[24], record[25], record[26], // hp_ump_id, b1_ump_id, b2_ump_id, b3_ump_id
+			record[27], record[28], // lf_ump_id, rf_ump_id
+			gameType, homeLeague, visitingLeague, // game_type, home_team_league, visiting_team_league
+		}
+
+		if err := csvWriter.Write(row); err != nil {
+			outFile.Close()
+			return 0, fmt.Errorf("failed to write CSV row: %w", err)
+		}
+		rowCount++
+	}
+
+	csvWriter.Flush()
+	if err := csvWriter.Error(); err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("CSV writer error: %w", err)
+	}
+	outFile.Close()
+
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for COPY: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	csvFile, err := os.Open(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open CSV file: %w", err)
+	}
+	defer csvFile.Close()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		CREATE TEMP TABLE games_temp (LIKE games INCLUDING DEFAULTS)
+		ON COMMIT DROP
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp table: %w", err)
+	}
+
+	copySQL := fmt.Sprintf(`COPY games_temp (%s) FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`,
+		strings.Join(headers, ", "))
+
+	_, err = conn.PgConn().CopyFrom(ctx, csvFile, copySQL)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy data: %w", err)
+	}
+
+	result, err := tx.Exec(ctx, `
+		INSERT INTO games
+		SELECT DISTINCT ON (date, home_team, game_number) *
+		FROM games_temp
+		ON CONFLICT (date, home_team, game_number)
+		DO UPDATE SET
+			game_type = EXCLUDED.game_type,
+			home_team_league = EXCLUDED.home_team_league,
+			visiting_team_league = EXCLUDED.visiting_team_league
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// LoadNegroLeaguesPlays loads Negro Leagues play-by-play data from plays.csv into plays table
+func (db *DB) LoadNegroLeaguesPlays(ctx context.Context, csvPath string) (int64, error) {
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open plays CSV: %w", err)
+	}
+	defer file.Close()
+
+	tmpDir, err := os.MkdirTemp("", "negroleagues-plays-*")
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	tmpCSV := filepath.Join(tmpDir, "plays_cleaned.csv")
+	outFile, err := os.Create(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp CSV: %w", err)
+	}
+
+	reader := csv.NewReader(file)
+	reader.LazyQuotes = true
+	reader.TrimLeadingSpace = true
+
+	writer := csv.NewWriter(outFile)
+	defer writer.Flush()
+
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			outFile.Close()
+			return 0, fmt.Errorf("failed to read CSV row: %w", err)
+		}
+
+		for i := range record {
+			if record[i] == "?" || record[i] == "??" {
+				record[i] = ""
+			}
+		}
+
+		if err := writer.Write(record); err != nil {
+			outFile.Close()
+			return 0, fmt.Errorf("failed to write cleaned CSV row: %w", err)
+		}
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("CSV writer error: %w", err)
+	}
+	outFile.Close()
+
+	cleanedFile, err := os.Open(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open cleaned CSV: %w", err)
+	}
+	defer cleanedFile.Close()
+
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for COPY: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		CREATE TEMP TABLE plays_temp (LIKE plays INCLUDING DEFAULTS)
+		ON COMMIT DROP
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp table: %w", err)
+	}
+
+	copySQL := `COPY plays_temp FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`
+	_, err = conn.PgConn().CopyFrom(ctx, cleanedFile, copySQL)
+	if err != nil {
+		return 0, fmt.Errorf("COPY failed: %w", err)
+	}
+
+	result, err := tx.Exec(ctx, `
+		INSERT INTO plays
+		SELECT * FROM plays_temp
+		ON CONFLICT (gid, pn) DO NOTHING
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// LoadNegroLeaguesData loads Negro Leagues gameinfo and plays files if they exist.
+// The provided directory should contain gameinfo.csv and plays.csv extracted from Retrosheet.
+func (db *DB) LoadNegroLeaguesData(ctx context.Context, dataDir string) (int64, int64, error) {
+	if dataDir == "" {
+		dataDir = filepath.Join("data", "retrosheet", "negroleagues")
+	}
+
+	var gameRows, playRows int64
+
+	gameinfoFile := filepath.Join(dataDir, "gameinfo.csv")
+	if info, err := os.Stat(gameinfoFile); err == nil && !info.IsDir() {
+		rows, err := db.LoadNegroLeaguesGameInfo(ctx, gameinfoFile)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to load Negro Leagues gameinfo: %w", err)
+		}
+		gameRows = rows
+	} else if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return 0, 0, fmt.Errorf("failed to access %s: %w", gameinfoFile, err)
+	}
+
+	playsFile := filepath.Join(dataDir, "plays.csv")
+	if info, err := os.Stat(playsFile); err == nil && !info.IsDir() {
+		rows, err := db.LoadNegroLeaguesPlays(ctx, playsFile)
+		if err != nil {
+			return gameRows, 0, fmt.Errorf("failed to load Negro Leagues plays: %w", err)
+		}
+		playRows = rows
+	} else if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return gameRows, 0, fmt.Errorf("failed to access %s: %w", playsFile, err)
+	}
+
+	return gameRows, playRows, nil
 }

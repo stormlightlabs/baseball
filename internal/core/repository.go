@@ -394,3 +394,25 @@ type WinExpectancyRepository interface {
 	// This is a heavy operation that analyzes all games in the specified year range
 	BuildFromHistoricalData(ctx context.Context, startYear, endYear int, minSampleSize int) (int64, error)
 }
+
+// NegroLeaguesRepository provides access to Negro Leagues historical data (1903-1962).
+// Negro Leagues data is stored in the main games and plays tables with specific game_type markers.
+type NegroLeaguesRepository interface {
+	// ListGames returns Negro Leagues games with filtering and pagination
+	ListGames(ctx context.Context, filter GameFilter) ([]Game, error)
+	CountGames(ctx context.Context, filter GameFilter) (int, error)
+
+	// ListTeamSeasons returns teams that played in the Negro Leagues
+	ListTeamSeasons(ctx context.Context, filter TeamFilter) ([]TeamSeason, error)
+	CountTeamSeasons(ctx context.Context, filter TeamFilter) (int, error)
+
+	// ListPlays returns play-by-play data from Negro Leagues games
+	ListPlays(ctx context.Context, filter PlayFilter) ([]Play, error)
+	CountPlays(ctx context.Context, filter PlayFilter) (int, error)
+
+	// GetSeasonSchedule returns all Negro Leagues games for a specific season
+	GetSeasonSchedule(ctx context.Context, year SeasonYear, league *LeagueID, p Pagination) ([]Game, error)
+
+	// GetTeamGames returns all games for a specific team in a season
+	GetTeamGames(ctx context.Context, teamID TeamID, year SeasonYear, p Pagination) ([]Game, error)
+}

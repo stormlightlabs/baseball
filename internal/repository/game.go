@@ -58,16 +58,18 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 			hp_ump_id,
 			b1_ump_id,
 			b2_ump_id,
-			b3_ump_id
+			b3_ump_id,
+			game_type
 		FROM games
-		WHERE date || game_number || home_team = $1
+		WHERE game_id = $1
 	`
 
 	var g core.Game
 	var date string
 	var attendance, durationMin sql.NullInt64
-	var umpHome, umpFirst, umpSecond, umpThird sql.NullString
+	var umpHome, umpFirst, umpSecond, umpThird, dayOfWeek sql.NullString
 	var homeTeam, awayTeam, homeLeague, awayLeague, parkID string
+	var gameType sql.NullString
 
 	err := r.db.QueryRowContext(ctx, query, string(id)).Scan(
 		&date,
@@ -78,7 +80,7 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 		&g.AwayScore,
 		&g.HomeScore,
 		&g.Innings,
-		&g.DayOfWeek,
+		&dayOfWeek,
 		&attendance,
 		&durationMin,
 		&parkID,
@@ -86,6 +88,7 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 		&umpFirst,
 		&umpSecond,
 		&umpThird,
+		&gameType,
 	)
 
 	if err == sql.ErrNoRows {
@@ -111,11 +114,15 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 
 	g.Innings = g.Innings / 3
 
-	gameNumberFromID := 0
-	if len(string(id)) > 8 {
-		gameNumberFromID = int(string(id)[8] - '0')
+	if gameType.Valid {
+		g.IsPostseason = gameType.String != "regular"
+	} else {
+		g.IsPostseason = parsedDate.Month() >= 10 && parsedDate.Month() <= 11
 	}
-	g.IsPostseason = parsedDate.Month() >= 10 && parsedDate.Month() <= 11 && gameNumberFromID == 0
+
+	if dayOfWeek.Valid {
+		g.DayOfWeek = dayOfWeek.String
+	}
 
 	if attendance.Valid {
 		a := int(attendance.Int64)
@@ -225,6 +232,12 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 		}
 	}
 
+	if filter.GameType != nil {
+		query += fmt.Sprintf(" AND game_type = $%d", argNum)
+		args = append(args, *filter.GameType)
+		argNum++
+	}
+
 	query += fmt.Sprintf(" ORDER BY date DESC, game_number LIMIT $%d OFFSET $%d", argNum, argNum+1)
 	args = append(args, filter.Pagination.PerPage, (filter.Pagination.Page-1)*filter.Pagination.PerPage)
 
@@ -239,8 +252,8 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 		var g core.Game
 		var date string
 		var gameNumber int
-		var attendance, durationMin sql.NullInt64
-		var umpHome, umpFirst, umpSecond, umpThird sql.NullString
+		var attendance, durationMin, innings sql.NullInt64
+		var umpHome, umpFirst, umpSecond, umpThird, dayOfWeek sql.NullString
 		var homeTeam, awayTeam, homeLeague, awayLeague, parkID string
 
 		err := rows.Scan(
@@ -252,8 +265,8 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 			&homeLeague,
 			&g.AwayScore,
 			&g.HomeScore,
-			&g.Innings,
-			&g.DayOfWeek,
+			&innings,
+			&dayOfWeek,
 			&attendance,
 			&durationMin,
 			&parkID,
@@ -281,7 +294,13 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 		g.Date = parsedDate
 		g.Season = core.SeasonYear(parsedDate.Year())
 
-		g.Innings = g.Innings / 3
+		if innings.Valid {
+			g.Innings = int(innings.Int64) / 3
+		}
+
+		if dayOfWeek.Valid {
+			g.DayOfWeek = dayOfWeek.String
+		}
 
 		if attendance.Valid {
 			a := int(attendance.Int64)
@@ -375,6 +394,12 @@ func (r *GameRepository) Count(ctx context.Context, filter core.GameFilter) (int
 		} else {
 			query += " AND NOT (SUBSTRING(date, 5, 2) IN ('10', '11') AND game_number = 0)"
 		}
+	}
+
+	if filter.GameType != nil {
+		query += fmt.Sprintf(" AND game_type = $%d", argNum)
+		args = append(args, *filter.GameType)
+		argNum++
 	}
 
 	var count int

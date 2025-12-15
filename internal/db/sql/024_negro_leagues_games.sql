@@ -1,0 +1,205 @@
+-- Negro Leagues Games table
+-- Mirrors the structure of the games table to store Negro Leagues historical data (1903-1962)
+-- Data sourced from Retrosheet's Negro Leagues event files
+
+DROP TABLE IF EXISTS negro_leagues_games CASCADE;
+CREATE TABLE negro_leagues_games (
+    date varchar(8) NOT NULL,
+    game_number int NOT NULL,
+    day_of_week varchar(3),
+    visiting_team varchar(3),
+    visiting_team_league varchar(2),
+    visiting_team_game_number int,
+    home_team varchar(3) NOT NULL,
+    home_team_league varchar(2),
+    home_team_game_number int,
+    visiting_score int,
+    home_score int,
+    game_length_outs int,
+    day_night varchar(1),
+    completion_info text,
+    forfeit_info text,
+    protest_info text,
+    park_id varchar(5),
+    attendance int,
+    game_time_minutes int,
+    visiting_line_score varchar(50),
+    home_line_score varchar(50),
+    visiting_at_bats int,
+    visiting_hits int,
+    visiting_doubles int,
+    visiting_triples int,
+    visiting_homeruns int,
+    visiting_rbi int,
+    visiting_sac_hits int,
+    visiting_sac_flies int,
+    visiting_hit_by_pitch int,
+    visiting_walks int,
+    visiting_int_walks int,
+    visiting_strikeouts int,
+    visiting_stolen_bases int,
+    visiting_caught_stealing int,
+    visiting_gdp int,
+    visiting_interference int,
+    visiting_lob int,
+    visiting_pitchers_used int,
+    visiting_ind_er int,
+    visiting_team_er int,
+    visiting_wild_pitches int,
+    visiting_balks int,
+    visiting_putouts int,
+    visiting_assists int,
+    visiting_errors int,
+    visiting_passed_balls int,
+    visiting_double_plays int,
+    visiting_triple_plays int,
+    home_at_bats int,
+    home_hits int,
+    home_doubles int,
+    home_triples int,
+    home_homeruns int,
+    home_rbi int,
+    home_sac_hits int,
+    home_sac_flies int,
+    home_hit_by_pitch int,
+    home_walks int,
+    home_int_walks int,
+    home_strikeouts int,
+    home_stolen_bases int,
+    home_caught_stealing int,
+    home_gdp int,
+    home_interference int,
+    home_lob int,
+    home_pitchers_used int,
+    home_ind_er int,
+    home_team_er int,
+    home_wild_pitches int,
+    home_balks int,
+    home_putouts int,
+    home_assists int,
+    home_errors int,
+    home_passed_balls int,
+    home_double_plays int,
+    home_triple_plays int,
+    hp_ump_id varchar(8),
+    hp_ump_name text,
+    b1_ump_id varchar(8),
+    b1_ump_name text,
+    b2_ump_id varchar(8),
+    b2_ump_name text,
+    b3_ump_id varchar(8),
+    b3_ump_name text,
+    lf_ump_id varchar(8),
+    lf_ump_name text,
+    rf_ump_id varchar(8),
+    rf_ump_name text,
+    v_manager_id varchar(8),
+    v_manager_name text,
+    h_manager_id varchar(8),
+    h_manager_name text,
+    winning_pitcher_id varchar(8),
+    winning_pitcher_name text,
+    losing_pitcher_id varchar(8),
+    losing_pitcher_name text,
+    saving_pitcher_id varchar(8),
+    saving_pitcher_name text,
+    goahead_rbi_id varchar(8),
+    goahead_rbi_name text,
+    v_starting_pitcher_id varchar(8),
+    v_starting_pitcher_name text,
+    h_starting_pitcher_id varchar(8),
+    h_starting_pitcher_name text,
+    v_player_1_id varchar(8),
+    v_player_1_name text,
+    v_player_1_pos int,
+    v_player_2_id varchar(8),
+    v_player_2_name text,
+    v_player_2_pos int,
+    v_player_3_id varchar(8),
+    v_player_3_name text,
+    v_player_3_pos int,
+    v_player_4_id varchar(8),
+    v_player_4_name text,
+    v_player_4_pos int,
+    v_player_5_id varchar(8),
+    v_player_5_name text,
+    v_player_5_pos int,
+    v_player_6_id varchar(8),
+    v_player_6_name text,
+    v_player_6_pos int,
+    v_player_7_id varchar(8),
+    v_player_7_name text,
+    v_player_7_pos int,
+    v_player_8_id varchar(8),
+    v_player_8_name text,
+    v_player_8_pos int,
+    v_player_9_id varchar(8),
+    v_player_9_name text,
+    v_player_9_pos int,
+    h_player_1_id varchar(8),
+    h_player_1_name text,
+    h_player_1_pos int,
+    h_player_2_id varchar(8),
+    h_player_2_name text,
+    h_player_2_pos int,
+    h_player_3_id varchar(8),
+    h_player_3_name text,
+    h_player_3_pos int,
+    h_player_4_id varchar(8),
+    h_player_4_name text,
+    h_player_4_pos int,
+    h_player_5_id varchar(8),
+    h_player_5_name text,
+    h_player_5_pos int,
+    h_player_6_id varchar(8),
+    h_player_6_name text,
+    h_player_6_pos int,
+    h_player_7_id varchar(8),
+    h_player_7_name text,
+    h_player_7_pos int,
+    h_player_8_id varchar(8),
+    h_player_8_name text,
+    h_player_8_pos int,
+    h_player_9_id varchar(8),
+    h_player_9_name text,
+    h_player_9_pos int,
+    additional_info text,
+    acquisition_info text,
+    game_type varchar(20) DEFAULT 'regular',
+    search_text text,
+    search_tsv tsvector,
+    PRIMARY KEY (date, home_team, game_number)
+);
+
+-- Indexes
+CREATE INDEX idx_negro_leagues_games_game_type ON negro_leagues_games(game_type);
+CREATE INDEX idx_negro_leagues_games_home_team ON negro_leagues_games(home_team);
+CREATE INDEX idx_negro_leagues_games_visiting_team ON negro_leagues_games(visiting_team);
+CREATE INDEX idx_negro_leagues_games_date ON negro_leagues_games(date);
+CREATE INDEX idx_negro_leagues_games_home_league ON negro_leagues_games(home_team_league);
+CREATE INDEX idx_negro_leagues_games_visiting_league ON negro_leagues_games(visiting_team_league);
+
+-- Search indexes (if we want full-text search support)
+CREATE INDEX negro_leagues_games_search_tsv_idx ON negro_leagues_games USING gin(search_tsv);
+CREATE INDEX negro_leagues_games_search_trgm_idx ON negro_leagues_games USING gin(search_text gin_trgm_ops);
+
+-- Trigger for search text updates (mirrors games table)
+CREATE OR REPLACE FUNCTION update_negro_leagues_game_search_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.search_text :=
+        COALESCE(NEW.home_team, '') || ' ' ||
+        COALESCE(NEW.visiting_team, '') || ' ' ||
+        COALESCE(NEW.park_id, '') || ' ' ||
+        COALESCE(NEW.date, '');
+
+    NEW.search_tsv := to_tsvector('english', NEW.search_text);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER negro_leagues_games_search_update
+BEFORE INSERT OR UPDATE ON negro_leagues_games
+FOR EACH ROW
+EXECUTE FUNCTION update_negro_leagues_game_search_trigger();

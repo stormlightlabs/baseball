@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"archive/zip"
 	"fmt"
 	"io"
 	"net/http"
@@ -52,6 +53,7 @@ func EtlFetchCmd() *cobra.Command {
 	}
 	cmd.AddCommand(LahmanFetchCmd())
 	cmd.AddCommand(RetrosheetFetchCmd())
+	cmd.AddCommand(NegroLeaguesFetchCmd())
 	return cmd
 }
 
@@ -64,6 +66,7 @@ func EtlLoadCmd() *cobra.Command {
 	}
 	cmd.AddCommand(LahmanLoadCmd())
 	cmd.AddCommand(RetrosheetLoadCmd())
+	cmd.AddCommand(NegroLeaguesLoadCmd())
 	cmd.AddCommand(FanGraphsLoadCmd())
 	return cmd
 }
@@ -95,6 +98,16 @@ func RetrosheetFetchCmd() *cobra.Command {
 	return cmd
 }
 
+// NegroLeaguesFetchCmd creates the fetch negroleagues command
+func NegroLeaguesFetchCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "negroleagues",
+		Short: "Get instructions to download Negro Leagues data",
+		Long:  "Provides instructions for downloading Negro Leagues event files from Retrosheet.",
+		RunE:  fetchNegroLeagues,
+	}
+}
+
 // LahmanLoadCmd creates the load lahman command
 func LahmanLoadCmd() *cobra.Command {
 	return &cobra.Command{
@@ -120,6 +133,16 @@ func RetrosheetLoadCmd() *cobra.Command {
 	cmd.Flags().StringVar(&eraFlag, "era", "", "Load data for a specific era (federal, nlg, 1970s, 1980s, steroid, modern)")
 	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
 	return cmd
+}
+
+// NegroLeaguesLoadCmd creates the load negroleagues command
+func NegroLeaguesLoadCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "negroleagues",
+		Short: "Load Negro Leagues data into database",
+		Long:  "Load Negro Leagues gameinfo and plays data from CSV files into separate tables.",
+		RunE:  loadNegroLeagues,
+	}
 }
 
 // FanGraphsLoadCmd creates the load fangraphs command
@@ -207,6 +230,99 @@ func fetchLahman(cmd *cobra.Command, args []string) error {
 	echo.Infof("  Directory: %s", dataDir)
 	echo.Info("")
 	echo.Info("After downloading, use: baseball etl load lahman")
+	return nil
+}
+
+func fetchNegroLeagues(cmd *cobra.Command, args []string) error {
+	echo.Header("Fetching Negro Leagues Data")
+	dataDir := "data/retrosheet/negroleagues"
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		return fmt.Errorf("error: failed to create data directory: %w", err)
+	}
+
+	zipURL := "https://www.retrosheet.org/downloads/negroleagues.zip"
+	zipFile := filepath.Join(dataDir, "negroleagues.zip")
+
+	// Check if already downloaded
+	if _, err := os.Stat(zipFile); err == nil {
+		echo.Info("Negro Leagues zip already downloaded")
+	} else {
+		echo.Infof("Downloading Negro Leagues data...")
+
+		resp, err := http.Get(zipURL)
+		if err != nil {
+			return fmt.Errorf("error: failed to download: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("error: download failed (HTTP %d)", resp.StatusCode)
+		}
+
+		out, err := os.Create(zipFile)
+		if err != nil {
+			return fmt.Errorf("error: failed to create file: %w", err)
+		}
+		defer out.Close()
+
+		if _, err = io.Copy(out, resp.Body); err != nil {
+			return fmt.Errorf("error: failed to save file: %w", err)
+		}
+
+		echo.Success("✓ Downloaded Negro Leagues data")
+	}
+
+	// Extract zip file
+	echo.Info("Extracting files...")
+	r, err := zip.OpenReader(zipFile)
+	if err != nil {
+		return fmt.Errorf("error: failed to open zip: %w", err)
+	}
+	defer r.Close()
+
+	for _, f := range r.File {
+		// Skip directories
+		if f.FileInfo().IsDir() {
+			continue
+		}
+
+		outPath := filepath.Join(dataDir, f.Name)
+
+		// Check if already extracted
+		if _, err := os.Stat(outPath); err == nil {
+			continue
+		}
+
+		rc, err := f.Open()
+		if err != nil {
+			return fmt.Errorf("error: failed to open %s in zip: %w", f.Name, err)
+		}
+
+		outFile, err := os.Create(outPath)
+		if err != nil {
+			rc.Close()
+			return fmt.Errorf("error: failed to create %s: %w", outPath, err)
+		}
+
+		_, err = io.Copy(outFile, rc)
+		outFile.Close()
+		rc.Close()
+
+		if err != nil {
+			return fmt.Errorf("error: failed to extract %s: %w", f.Name, err)
+		}
+	}
+
+	echo.Success("✓ Extracted all files")
+	echo.Info("")
+	echo.Info("Extracted files:")
+	echo.Info("  • gameinfo.csv - Game metadata")
+	echo.Info("  • plays.csv - Play-by-play data")
+	echo.Info("  • batting.csv, pitching.csv, fielding.csv - Statistics")
+	echo.Info("")
+	echo.Infof("  Directory: %s", dataDir)
+	echo.Info("")
+	echo.Info("Next step: baseball etl load negroleagues")
 	return nil
 }
 
@@ -516,6 +632,7 @@ func loadRetrosheet(cmd *cobra.Command, eraFlag, yearsFlag string) error {
 	echo.Info("Loading play-by-play data...")
 	playsDir := filepath.Join(dataDir, "plays")
 	playsLoaded := int64(0)
+	var emptyPlayYears []string
 	for _, year := range years {
 		zipFile := filepath.Join(playsDir, fmt.Sprintf("%splays.zip", year))
 
@@ -532,9 +649,22 @@ func loadRetrosheet(cmd *cobra.Command, eraFlag, yearsFlag string) error {
 				year, err)
 		}
 
+		if rows == 0 {
+			emptyPlayYears = append(emptyPlayYears, year)
+			echo.Infof("  No plays found for %s (file empty)", year)
+		} else {
+			echo.Successf("  ✓ Loaded %s (%d rows)", year, rows)
+		}
 		playsLoaded += rows
 		totalRows += rows
-		echo.Successf("  ✓ Loaded %s (%d rows)", year, rows)
+	}
+
+	if len(emptyPlayYears) > 0 {
+		if eraFlag == "nlg" {
+			echo.Info("  Retrosheet annual play-by-play zips for Negro Leagues are empty; plays are loaded from data/retrosheet/negroleagues/plays.csv.")
+		} else {
+			echo.Infof("  No play-by-play rows found for: %s", strings.Join(emptyPlayYears, ", "))
+		}
 	}
 
 	echo.Info("")
@@ -556,6 +686,35 @@ func loadRetrosheet(cmd *cobra.Command, eraFlag, yearsFlag string) error {
 		ejectionsLoaded = rows
 		totalRows += rows
 		echo.Successf("  ✓ Loaded ejections (%d rows)", rows)
+	}
+
+	echo.Info("")
+	echo.Info("Loading Negro Leagues data (if available)...")
+	negroLeagueDir := filepath.Join(dataDir, "negroleagues")
+	negroLgGameRows, negroLgPlayRows, err := database.LoadNegroLeaguesData(ctx, negroLeagueDir)
+	if err != nil {
+		return fmt.Errorf("error: failed to load Negro Leagues data: %w", err)
+	}
+
+	if negroLgGameRows == 0 && negroLgPlayRows == 0 {
+		echo.Info("  Negro Leagues files not found (expected gameinfo.csv and plays.csv)")
+	} else {
+		totalRows += negroLgGameRows + negroLgPlayRows
+		gamesLoaded += negroLgGameRows
+		playsLoaded += negroLgPlayRows
+
+		if negroLgGameRows > 0 {
+			echo.Successf("  ✓ Loaded Negro Leagues games (%d rows)", negroLgGameRows)
+			if err := database.RecordDatasetRefresh(ctx, "negroleagues_games", negroLgGameRows); err != nil {
+				return fmt.Errorf("error: failed to record Negro Leagues games refresh: %w", err)
+			}
+		}
+		if negroLgPlayRows > 0 {
+			echo.Successf("  ✓ Loaded Negro Leagues plays (%d rows)", negroLgPlayRows)
+			if err := database.RecordDatasetRefresh(ctx, "negroleagues_plays", negroLgPlayRows); err != nil {
+				return fmt.Errorf("error: failed to record Negro Leagues plays refresh: %w", err)
+			}
+		}
 	}
 
 	echo.Info("")
@@ -861,6 +1020,60 @@ func loadFanGraphs(cmd *cobra.Command, args []string) error {
 	echo.Success("✓ All FanGraphs data loaded successfully")
 	echo.Infof("  wOBA constants: %d rows", wobaRows)
 	echo.Infof("  Park factors: %d rows", totalParkRows)
+	return nil
+}
+
+func loadNegroLeagues(cmd *cobra.Command, args []string) error {
+	echo.Header("Loading Negro Leagues Data")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	ctx := cmd.Context()
+	dataDir := "data/retrosheet/negroleagues"
+
+	// Load gameinfo.csv
+	gameinfoFile := filepath.Join(dataDir, "gameinfo.csv")
+	echo.Info("Loading Negro Leagues games from gameinfo.csv...")
+
+	if _, err := os.Stat(gameinfoFile); os.IsNotExist(err) {
+		return fmt.Errorf("error: gameinfo.csv not found at %s", gameinfoFile)
+	}
+
+	gameRows, err := database.LoadNegroLeaguesGameInfo(ctx, gameinfoFile)
+	if err != nil {
+		return fmt.Errorf("error: failed to load gameinfo: %w", err)
+	}
+
+	echo.Successf("✓ Loaded Negro Leagues games (%d rows)", gameRows)
+	if err := database.RecordDatasetRefresh(ctx, "negroleagues_games", gameRows); err != nil {
+		return fmt.Errorf("error: failed to record Negro Leagues games refresh: %w", err)
+	}
+
+	playsFile := filepath.Join(dataDir, "plays.csv")
+	echo.Info("Loading Negro Leagues plays from plays.csv...")
+
+	if _, err := os.Stat(playsFile); os.IsNotExist(err) {
+		echo.Info("  Skipping plays (file not found)")
+	} else {
+		playRows, err := database.LoadNegroLeaguesPlays(ctx, playsFile)
+		if err != nil {
+			return fmt.Errorf("error: failed to load plays: %w", err)
+		}
+		echo.Successf("✓ Loaded Negro Leagues plays (%d rows)", playRows)
+		if err := database.RecordDatasetRefresh(ctx, "negroleagues_plays", playRows); err != nil {
+			return fmt.Errorf("error: failed to record Negro Leagues plays refresh: %w", err)
+		}
+	}
+
+	echo.Info("")
+	echo.Success("✓ All Negro Leagues data loaded successfully")
 	return nil
 }
 

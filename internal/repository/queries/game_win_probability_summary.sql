@@ -1,11 +1,11 @@
 WITH game_info AS (
     SELECT
-        home_team || date || game_number as game_id,
+        game_id,
         SUBSTRING(date FROM 1 FOR 4)::int as year_id,
         home_team as home_team_id,
         visiting_team as away_team_id
     FROM games
-    WHERE home_team || date || game_number = $1
+    WHERE game_id = $1
 ),
 plate_appearances AS (
     SELECT

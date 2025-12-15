@@ -235,6 +235,7 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 
 	playsLoadedCount := 0
 	playsSkippedCount := 0
+	var emptyPlayYears []int
 
 	for i, year := range years {
 		zipFile := filepath.Join(playsDir, fmt.Sprintf("%dplays.zip", year))
@@ -258,7 +259,12 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 
 		result.PlayRows += rows
 		playsLoadedCount++
-		echo.Infof("  [%d/%d] %d: %s rows", i+1, totalYears, year, formatNumber(rows))
+		if rows == 0 {
+			emptyPlayYears = append(emptyPlayYears, year)
+			echo.Infof("  [%d/%d] %d: no plays found (file empty)", i+1, totalYears, year)
+		} else {
+			echo.Infof("  [%d/%d] %d: %s rows", i+1, totalYears, year, formatNumber(rows))
+		}
 
 		if err := database.RecordDatasetRefresh(ctx, playsKey, rows); err != nil {
 			return result, fmt.Errorf("error: failed to record %s refresh: %w", playsKey, err)
@@ -268,6 +274,9 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 
 	if playsSkippedCount > 0 {
 		echo.Infof("  Skipped %d already-loaded years", playsSkippedCount)
+	}
+	if len(emptyPlayYears) > 0 {
+		echo.Infof("  No play-by-play rows found for: %v", emptyPlayYears)
 	}
 
 	specialGameTypes := []struct {
@@ -320,6 +329,34 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 
 	if specialSkippedCount > 0 {
 		echo.Infof("  Skipped %d already-loaded types", specialSkippedCount)
+	}
+
+	echo.Info("")
+	echo.Info("Loading Negro Leagues data (if available)...")
+	negroDir := filepath.Join(dataDir, "negroleagues")
+	negroGameRows, negroPlayRows, err := database.LoadNegroLeaguesData(ctx, negroDir)
+	if err != nil {
+		return result, fmt.Errorf("error: failed to load Negro Leagues data: %w", err)
+	}
+
+	if negroGameRows == 0 && negroPlayRows == 0 {
+		echo.Info("  Negro Leagues files not found (expected gameinfo.csv and plays.csv)")
+	} else {
+		result.GameRows += negroGameRows
+		result.PlayRows += negroPlayRows
+
+		if negroGameRows > 0 {
+			echo.Successf("  ✓ Loaded Negro Leagues games (%d rows)", negroGameRows)
+			if err := database.RecordDatasetRefresh(ctx, "negroleagues_games", negroGameRows); err != nil {
+				return result, fmt.Errorf("error: failed to record Negro Leagues games refresh: %w", err)
+			}
+		}
+		if negroPlayRows > 0 {
+			echo.Successf("  ✓ Loaded Negro Leagues plays (%d rows)", negroPlayRows)
+			if err := database.RecordDatasetRefresh(ctx, "negroleagues_plays", negroPlayRows); err != nil {
+				return result, fmt.Errorf("error: failed to record Negro Leagues plays refresh: %w", err)
+			}
+		}
 	}
 
 	totalRows := result.GameRows + result.PlayRows

@@ -20,5 +20,5 @@ SELECT
 	g.game_time_minutes
 FROM allstar_games ag
 JOIN games g
-	ON ag."gameID" = g.home_team || g.date || COALESCE(g.game_number::text, '0')
+	ON ag."gameID" = g.game_id
 WHERE g.game_type = 'allstar'
