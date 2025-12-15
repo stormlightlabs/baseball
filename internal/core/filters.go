@@ -172,6 +172,17 @@ type TeamStatsFilter struct {
 	Pagination Pagination
 }
 
+type TeamDailyStatsFilter struct {
+	TeamID     *TeamID
+	Season     *SeasonYear
+	DateFrom   *string // YYYYMMDD format
+	DateTo     *string // YYYYMMDD format
+	Result     *string // Filter by result: W, L, or T
+	SortBy     string  // "date", "runs", "runs_allowed"
+	SortOrder  SortOrder
+	Pagination Pagination
+}
+
 type EjectionFilter struct {
 	Season     *SeasonYear
 	PlayerID   *RetroPlayerID

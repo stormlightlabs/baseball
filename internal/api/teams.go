@@ -18,6 +18,7 @@ func NewTeamRoutes(repo core.TeamRepository, gameRepo core.GameRepository) *Team
 func (tr *TeamRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/teams", tr.handleListTeams)
 	mux.HandleFunc("GET /v1/teams/{id}", tr.handleGetTeam)
+	mux.HandleFunc("GET /v1/teams/{id}/daily-stats", tr.handleTeamDailyStats)
 	mux.HandleFunc("GET /v1/seasons", tr.handleListSeasons)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams", tr.handleSeasonTeams)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/roster", tr.handleTeamRoster)
@@ -47,10 +48,7 @@ func (tr *TeamRoutes) handleListTeams(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	filter := core.TeamFilter{
-		Pagination: core.Pagination{
-			Page:    getIntQuery(r, "page", 1),
-			PerPage: getIntQuery(r, "per_page", 50),
-		},
+		Pagination: *core.NewPagination(getIntQuery(r, "page", 1), getIntQuery(r, "per_page", 50)),
 	}
 
 	if year := r.URL.Query().Get("year"); year != "" {
@@ -75,12 +73,7 @@ func (tr *TeamRoutes) handleListTeams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, PaginatedResponse{
-		Data:    teams,
-		Page:    filter.Pagination.Page,
-		PerPage: filter.Pagination.PerPage,
-		Total:   total,
-	})
+	writeJSON(w, http.StatusOK, NewPaginatedResponse(teams, filter.Pagination.Page, filter.Pagination.PerPage, total))
 }
 
 // handleGetTeam godoc
@@ -98,7 +91,6 @@ func (tr *TeamRoutes) handleListTeams(w http.ResponseWriter, r *http.Request) {
 func (tr *TeamRoutes) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.TeamID(r.PathValue("id"))
-
 	year := core.SeasonYear(getIntQuery(r, "year", 2024))
 
 	team, err := tr.repo.GetTeamSeason(ctx, id, year)
@@ -128,11 +120,8 @@ func (tr *TeamRoutes) handleSeasonTeams(w http.ResponseWriter, r *http.Request) 
 	year := core.SeasonYear(getIntQuery(r, "year", 2024))
 
 	filter := core.TeamFilter{
-		Year: &year,
-		Pagination: core.Pagination{
-			Page:    getIntQuery(r, "page", 1),
-			PerPage: getIntQuery(r, "per_page", 50),
-		},
+		Year:       &year,
+		Pagination: *core.NewPagination(getIntQuery(r, "page", 1), getIntQuery(r, "per_page", 50)),
 	}
 
 	if league := r.URL.Query().Get("league"); league != "" {
@@ -152,12 +141,7 @@ func (tr *TeamRoutes) handleSeasonTeams(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	writeJSON(w, http.StatusOK, PaginatedResponse{
-		Data:    teams,
-		Page:    filter.Pagination.Page,
-		PerPage: filter.Pagination.PerPage,
-		Total:   total,
-	})
+	writeJSON(w, http.StatusOK, NewPaginatedResponse(teams, filter.Pagination.Page, filter.Pagination.PerPage, total))
 }
 
 // handleListFranchises godoc
@@ -400,12 +384,7 @@ func (tr *TeamRoutes) handleTeamSchedule(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, PaginatedResponse{
-		Data:    allGames,
-		Page:    pagination.Page,
-		PerPage: pagination.PerPage,
-		Total:   homeCount + awayCount,
-	})
+	writeJSON(w, http.StatusOK, NewPaginatedResponse(allGames, pagination.Page, pagination.PerPage, homeCount+awayCount))
 }
 
 // handleTeamDailyLogs godoc
@@ -425,16 +404,8 @@ func (tr *TeamRoutes) handleTeamDailyLogs(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))
 	teamID := core.TeamID(r.PathValue("team_id"))
-
-	pagination := core.Pagination{
-		Page:    getIntQuery(r, "page", 1),
-		PerPage: getIntQuery(r, "per_page", 100),
-	}
-
-	filter := core.GameFilter{
-		Season:     &year,
-		Pagination: core.Pagination{Page: 1, PerPage: 1000},
-	}
+	pagination := core.NewPagination(getIntQuery(r, "page", 1), getIntQuery(r, "per_page", 100))
+	filter := core.GameFilter{Season: &year, Pagination: *core.NewPagination(1, 1000)}
 
 	homeFilter := filter
 	homeFilter.HomeTeam = &teamID
@@ -519,4 +490,70 @@ func (tr *TeamRoutes) handleTeamDailyLogs(w http.ResponseWriter, r *http.Request
 		PerPage: pagination.PerPage,
 		Total:   len(logs),
 	})
+}
+
+// handleTeamDailyStats godoc
+// @Summary Get team daily statistics
+// @Description Get per-game team statistics for daily performance tracking and analysis
+// @Tags teams
+// @Accept json
+// @Produce json
+// @Param id path string true "Team ID"
+// @Param season query integer false "Filter by season year"
+// @Param date_from query string false "Filter by start date (YYYYMMDD)"
+// @Param date_to query string false "Filter by end date (YYYYMMDD)"
+// @Param result query string false "Filter by result (W, L, or T)"
+// @Param sort_by query string false "Sort by field (date, runs, runs_allowed)" default("date")
+// @Param sort_order query string false "Sort order (asc, desc)" default("desc")
+// @Param page query integer false "Page number" default(1)
+// @Param per_page query integer false "Results per page" default(50)
+// @Success 200 {object} PaginatedResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /v1/teams/{id}/daily-stats [get]
+func (tr *TeamRoutes) handleTeamDailyStats(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	teamID := core.TeamID(r.PathValue("id"))
+	filter := core.TeamDailyStatsFilter{
+		TeamID:     &teamID,
+		Pagination: *core.NewPagination(getIntQuery(r, "page", 1), getIntQuery(r, "per_page", 50)),
+	}
+
+	if seasonStr := r.URL.Query().Get("season"); seasonStr != "" {
+		season := core.SeasonYear(getIntQuery(r, "season", 0))
+		filter.Season = &season
+	}
+
+	if dateFrom := r.URL.Query().Get("date_from"); dateFrom != "" {
+		filter.DateFrom = &dateFrom
+	}
+
+	if dateTo := r.URL.Query().Get("date_to"); dateTo != "" {
+		filter.DateTo = &dateTo
+	}
+
+	if result := r.URL.Query().Get("result"); result != "" {
+		filter.Result = &result
+	}
+
+	if sortBy := r.URL.Query().Get("sort_by"); sortBy != "" {
+		filter.SortBy = sortBy
+	}
+
+	if sortOrder := r.URL.Query().Get("sort_order"); sortOrder != "" {
+		filter.SortOrder = core.SortOrder(sortOrder)
+	}
+
+	stats, err := tr.repo.DailyStats(ctx, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	total, err := tr.repo.CountDailyStats(ctx, filter)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, NewPaginatedResponse(stats, filter.Pagination.Page, filter.Pagination.PerPage, total))
 }

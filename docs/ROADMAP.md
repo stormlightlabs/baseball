@@ -72,7 +72,7 @@ See [Derived & Advanced Endpoints Overview](./api-derived-advanced.md) for the a
 |        |              | `/v1/games/{id}/pitching`               |                                                                                                                   |
 | Done   | plays (view) | `/v1/players/{id}/stats/fielding` (enh) | Per-game fielding stats via views. Position-specific defensive metrics. Coverage: 1910-2025.                      |
 |        |              | `/v1/games/{id}/fielding`               |                                                                                                                   |
-| To-Do  | plays (view) | `/v1/teams/{id}/daily-stats`            | Per-game team stats via views. Daily performance tracking and rolling aggregates. Coverage: 1910-2025.            |
+| Done   | plays (view) | `/v1/teams/{id}/daily-stats`            | Per-game team stats via views. Daily performance tracking and rolling aggregates. Coverage: 1910-2025.            |
 | To-Do  | games (enh)  | `/v1/games/{id}` (enh)                  | Enhanced game metadata already in games table: park, attendance, game time, umpires.                              |
 | Done   | League views | `/v1/federalleague/*`                   | Federal League endpoints implemented (1914-1915). Filters games/plays/teams by league='FL'.                       |
 | Done   | League views | `/v1/negroleagues/*`                    | Negro Leagues endpoints (1935-1949). Same pattern as Federal League. See implementation plan below.               |
@@ -113,6 +113,7 @@ For each dataset expansion:
 
 - Automated weekly refresh during season recommended for current plays data
 
-### Optimizations
+### 12. Optimizations
 
 - Use partitioning strategies to optimize query performance, especially for large datasets like `plays`.
+    - Do it by eras

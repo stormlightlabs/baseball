@@ -676,6 +676,43 @@ type TeamFieldingStats struct {
 	Players []PlayerFieldingSeason `json:"players,omitempty"`
 }
 
+// TeamDailyStats represents per-game team performance statistics
+// Aggregated from play-by-play data via the team_game_stats materialized view
+type TeamDailyStats struct {
+	GameID      GameID     `json:"game_id" swaggertype:"string"`
+	TeamID      TeamID     `json:"team_id" swaggertype:"string"`
+	Date        string     `json:"date"`
+	Season      SeasonYear `json:"season" swaggertype:"integer"`
+	PA          int        `json:"pa"`
+	AB          int        `json:"ab"`
+	H           int        `json:"h"`
+	Singles     int        `json:"singles"`
+	Doubles     int        `json:"doubles"`
+	Triples     int        `json:"triples"`
+	HR          int        `json:"hr"`
+	Runs        int        `json:"runs"`
+	BB          int        `json:"bb"`
+	SO          int        `json:"so"`
+	HBP         int        `json:"hbp"`
+	SF          int        `json:"sf"`
+	SH          int        `json:"sh"`
+	SB          int        `json:"sb"`
+	CS          int        `json:"cs"`
+	IBB         int        `json:"ibb"`
+	GDP         int        `json:"gdp"`
+	AVG         float64    `json:"avg"`
+	OBP         float64    `json:"obp"`
+	SLG         float64    `json:"slg"`
+	ABAgainst   int        `json:"ab_against"`
+	HitsAgainst int        `json:"h_against"`
+	HRAgainst   int        `json:"hr_against"`
+	BBAgainst   int        `json:"bb_against"`
+	SOAgainst   int        `json:"so_against"`
+	RunsAllowed int        `json:"runs_allowed"`
+	Errors      int        `json:"errors"`
+	Result      string     `json:"result"` // W, L, or T
+}
+
 // UserID is a unique identifier for a user
 type UserID string
 

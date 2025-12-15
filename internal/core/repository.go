@@ -63,6 +63,10 @@ type TeamRepository interface {
 	BattingStats(ctx context.Context, year SeasonYear, teamID TeamID, includePlayers bool) (*TeamBattingStats, error)
 	PitchingStats(ctx context.Context, year SeasonYear, teamID TeamID, includePlayers bool) (*TeamPitchingStats, error)
 	FieldingStats(ctx context.Context, year SeasonYear, teamID TeamID, includePlayers bool) (*TeamFieldingStats, error)
+
+	// Per-game team statistics for daily performance tracking
+	DailyStats(ctx context.Context, filter TeamDailyStatsFilter) ([]TeamDailyStats, error)
+	CountDailyStats(ctx context.Context, filter TeamDailyStatsFilter) (int, error)
 }
 
 // GameRepository manages game-log level data.

@@ -532,9 +532,8 @@ func (r *TeamRepository) PitchingStats(ctx context.Context, year core.SeasonYear
 
 			err := rows.Scan(
 				&ps.PlayerID, &ps.Year, &ps.TeamID, &ps.League,
-				&ps.W, &ps.L, &ps.G, &ps.GS, &ps.CG, &ps.SHO, &ps.SV,
-				&ps.IPOuts, &ps.H, &ps.ER, &ps.HR, &ps.BB, &ps.SO,
-				&ps.HBP, &ps.BK, &ps.WP,
+				&ps.W, &ps.L, &ps.G, &ps.GS, &ps.CG, &ps.SHO, &ps.SV, &ps.IPOuts,
+				&ps.H, &ps.ER, &ps.HR, &ps.BB, &ps.SO, &ps.HBP, &ps.BK, &ps.WP,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to scan player pitching: %w", err)
@@ -608,4 +607,134 @@ func (r *TeamRepository) FieldingStats(ctx context.Context, year core.SeasonYear
 	}
 
 	return &stats, nil
+}
+
+func (r *TeamRepository) DailyStats(ctx context.Context, filter core.TeamDailyStatsFilter) ([]core.TeamDailyStats, error) {
+	query := `
+		SELECT
+			game_id, team_id, date, season,
+			pa, ab, h, singles, doubles, triples, hr, runs_scored,
+			bb, so, hbp, sf, sh, sb, cs, ibb, gdp,
+			avg, obp, slg,
+			ab_against, h_against, hr_against, bb_against, so_against, runs_allowed,
+			errors, result
+		FROM team_game_stats
+		WHERE 1=1
+	`
+
+	args := []any{}
+	argNum := 1
+
+	if filter.TeamID != nil {
+		query += fmt.Sprintf(" AND team_id = $%d", argNum)
+		args = append(args, string(*filter.TeamID))
+		argNum++
+	}
+
+	if filter.Season != nil {
+		query += fmt.Sprintf(" AND season = $%d", argNum)
+		args = append(args, int(*filter.Season))
+		argNum++
+	}
+
+	if filter.DateFrom != nil {
+		query += fmt.Sprintf(" AND date >= $%d", argNum)
+		args = append(args, *filter.DateFrom)
+		argNum++
+	}
+
+	if filter.DateTo != nil {
+		query += fmt.Sprintf(" AND date <= $%d", argNum)
+		args = append(args, *filter.DateTo)
+		argNum++
+	}
+
+	if filter.Result != nil {
+		query += fmt.Sprintf(" AND result = $%d", argNum)
+		args = append(args, *filter.Result)
+		argNum++
+	}
+
+	orderBy := "date DESC"
+	if filter.SortBy != "" {
+		sortCol := filter.SortBy
+		sortDir := "DESC"
+		if filter.SortOrder == core.SortAsc {
+			sortDir = "ASC"
+		}
+		orderBy = fmt.Sprintf("%s %s", sortCol, sortDir)
+	}
+	query += fmt.Sprintf(" ORDER BY %s", orderBy)
+
+	if filter.Pagination.PerPage > 0 {
+		query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argNum, argNum+1)
+		args = append(args, filter.Pagination.PerPage, (filter.Pagination.Page-1)*filter.Pagination.PerPage)
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query daily stats: %w", err)
+	}
+	defer rows.Close()
+
+	var stats []core.TeamDailyStats
+	for rows.Next() {
+		var s core.TeamDailyStats
+
+		err := rows.Scan(
+			&s.GameID, &s.TeamID, &s.Date, &s.Season,
+			&s.PA, &s.AB, &s.H, &s.Singles, &s.Doubles, &s.Triples, &s.HR, &s.Runs,
+			&s.BB, &s.SO, &s.HBP, &s.SF, &s.SH, &s.SB, &s.CS, &s.IBB, &s.GDP,
+			&s.AVG, &s.OBP, &s.SLG,
+			&s.ABAgainst, &s.HitsAgainst, &s.HRAgainst, &s.BBAgainst, &s.SOAgainst, &s.RunsAllowed,
+			&s.Errors, &s.Result,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan daily stats: %w", err)
+		}
+
+		stats = append(stats, s)
+	}
+
+	return stats, nil
+}
+
+func (r *TeamRepository) CountDailyStats(ctx context.Context, filter core.TeamDailyStatsFilter) (int, error) {
+	query := `SELECT COUNT(*) FROM team_game_stats WHERE 1=1`
+
+	args := []any{}
+	argNum := 1
+
+	if filter.TeamID != nil {
+		query += fmt.Sprintf(" AND team_id = $%d", argNum)
+		args = append(args, string(*filter.TeamID))
+		argNum++
+	}
+
+	if filter.Season != nil {
+		query += fmt.Sprintf(" AND season = $%d", argNum)
+		args = append(args, int(*filter.Season))
+		argNum++
+	}
+
+	if filter.DateFrom != nil {
+		query += fmt.Sprintf(" AND date >= $%d", argNum)
+		args = append(args, *filter.DateFrom)
+		argNum++
+	}
+
+	if filter.DateTo != nil {
+		query += fmt.Sprintf(" AND date <= $%d", argNum)
+		args = append(args, *filter.DateTo)
+		argNum++
+	}
+
+	if filter.Result != nil {
+		query += fmt.Sprintf(" AND result = $%d", argNum)
+		args = append(args, *filter.Result)
+	}
+
+	var count int
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	return count, err
 }
