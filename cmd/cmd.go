@@ -986,12 +986,21 @@ func recreateDatabase(cmd *cobra.Command, dbURL string) error {
 	}
 
 	echo.Error(fmt.Sprintf("⚠ WARNING: This will drop and recreate database %s (all data will be lost).", dbName))
+	ctx := cmd.Context()
+
+	for i := 5; i > 0; i-- {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			echo.Infof("  Continuing in %d seconds... (Ctrl-C to cancel)", i)
+			time.Sleep(time.Second)
+		}
+	}
 
 	adminURL := *parsed
 	adminURL.Path = "/postgres"
 	adminURL.RawPath = "/postgres"
-
-	ctx := cmd.Context()
 
 	conn, err := sql.Open("pgx", adminURL.String())
 	if err != nil {

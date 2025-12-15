@@ -19,25 +19,21 @@ task server:start
 
 The API will be available at <http://localhost:8080>, with interactive documentation at <http://localhost:8080/docs/>.
 
-## Features & Guides
-
-### CLI Toolkit
-
-The `baseball` CLI handles ETL, database, and server operations so you can rebuild the stack without bespoke scripts.
+## Local Development
 
 <details>
 <summary>
-Usage
+The CLI handles ETL, database, and server operations so you can rebuild the stack without bespoke scripts.
 </summary>
 
-#### Build
+### Build
 
 ```bash
 task build
 ./tmp/baseball --help
 ```
 
-#### ETL Commands
+### ETL Commands
 
 **Understanding ETL vs DB Populate:**
 
@@ -82,7 +78,7 @@ task build
 - `steroid` - Steroid Era (1990-2010)
 - `modern` - Modern Era (2011-2025)
 
-#### Database
+### Database
 
 **Fresh setup**:
 
@@ -158,7 +154,7 @@ task build
 ./tmp/baseball db populate win-expectancy --min-sample-size 50
 ```
 
-#### Server
+### Server
 
 ```bash
 # Start the HTTP API (pass --debug to bypass auth locally)
@@ -174,7 +170,7 @@ task build
 
 Every command accepts `--config` to point at a custom `conf.toml`, inherits rate-limits/auth from your server configuration, and prints structured output
 
-#### Fetch
+### Fetch
 
 Think of `baseball server fetch` as a built-in, auth-aware `curl`. It:
 
@@ -183,6 +179,8 @@ Think of `baseball server fetch` as a built-in, auth-aware `curl`. It:
 - Injects bearer tokens/API keys via `--token` or `--api-key` flags, so you can hit protected routes without manually crafting headers
 
 </details>
+
+## Features
 
 ### HTTP API
 
