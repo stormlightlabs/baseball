@@ -59,7 +59,6 @@ func (r *PitchRepository) parsePitchSequence(play core.Play) []core.Pitch {
 			StrikeCount: strikes,
 		}
 
-		// Classify pitch type and update counts
 		switch pitchChar {
 		case "B": // Ball
 			pitch.IsBall = true

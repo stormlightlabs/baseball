@@ -45,7 +45,6 @@ func (r *ManagerRepository) GetByID(ctx context.Context, id core.ManagerID) (*co
 		return nil, fmt.Errorf("failed to get manager: %w", err)
 	}
 
-	// Check if this person was also a player
 	var playerID string
 	checkPlayerQuery := `SELECT "playerID" FROM "People" WHERE "playerID" = $1`
 	if err := r.db.QueryRowContext(ctx, checkPlayerQuery, string(id)).Scan(&playerID); err == nil {

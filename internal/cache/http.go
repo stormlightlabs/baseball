@@ -11,17 +11,13 @@ import (
 // HTTPCacheEntry stores cached HTTP responses with headers for conditional revalidation.
 // Implements RFC 9111 HTTP caching semantics including ETag and Last-Modified support.
 type HTTPCacheEntry struct {
-	// Response body
-	Body []byte
-	// HTTP status code
-	Status int
-	// Headers for conditional revalidation
-	ETag         string
+	Body         []byte // Response body
+	Status       int    // HTTP status code
+	ETag         string // Headers for conditional revalidation
 	LastModified string
 	CacheControl string
 	Vary         string
-	// Timestamp when cached
-	CachedAt time.Time
+	CachedAt     time.Time // Timestamp when cached
 }
 
 // CacheHTTPResponse stores an HTTP response in cache with headers for conditional revalidation.
@@ -137,16 +133,11 @@ func ParseCacheControlMaxAge(cacheControl string) time.Duration {
 
 // UpstreamCacheConfig defines caching behavior for third-party API proxying.
 type UpstreamCacheConfig struct {
-	// RespectCacheControl enables RFC 9111 Cache-Control directive parsing
-	RespectCacheControl bool
-	// MaxTTL is the upper bound for cache TTL (safety cap)
-	MaxTTL time.Duration
-	// DefaultTTL is used when upstream doesn't provide caching directives
-	DefaultTTL time.Duration
-	// EnableConditionalRevalidation enables 304 Not Modified support
-	EnableConditionalRevalidation bool
-	// CacheNegativeResponses caches 4xx/5xx with short TTL
-	CacheNegativeResponses bool
+	RespectCacheControl           bool          // Enables RFC 9111 Cache-Control directive parsing
+	MaxTTL                        time.Duration // The upper bound for cache TTL (safety cap)
+	DefaultTTL                    time.Duration // Used when upstream doesn't provide caching directives
+	EnableConditionalRevalidation bool          // Enables 304 Not Modified support
+	CacheNegativeResponses        bool          // Caches 4xx/5xx with short TTL
 }
 
 // DefaultUpstreamConfig returns recommended settings for third-party API proxying.

@@ -25,31 +25,21 @@ type Client struct {
 
 // Config defines cache behavior and TTL durations for different cache types.
 type Config struct {
-	// App is the application namespace (e.g., "baseball")
-	App string
-	// Env is the environment (e.g., "dev", "prod")
-	Env string
-	// Version is the cache schema version for invalidation via version bumping
-	Version string
-	// Enabled controls whether caching is active
-	Enabled bool
-	// TTLs for different cache types
-	TTLs TTLConfig
+	App     string // Application namespace (e.g., "baseball")
+	Env     string
+	Version string    // Cache schema version for invalidation via version bumping
+	Enabled bool      // Controls whether caching is active
+	TTLs    TTLConfig // TTLs for different cache types
 }
 
 // TTLConfig defines time-to-live durations for different cache categories.
 // All durations use jitter to prevent simultaneous expiration (thundering herd).
 type TTLConfig struct {
-	// Entity caches for single resource lookups (e.g., GET /players/:id)
-	Entity time.Duration
-	// List caches for collection queries (e.g., GET /teams?league=AL)
-	List time.Duration
-	// Search result caches for high-cardinality queries
-	Search time.Duration
-	// Upstream caches for third-party API proxying (e.g., MLB Stats API)
-	Upstream time.Duration
-	// Negative caches for "not found" responses to reduce DB load
-	Negative time.Duration
+	Entity   time.Duration // Caches for single resource lookups (e.g., GET /players/:id)
+	List     time.Duration // Caches for collection queries (e.g., GET /teams?league=AL)
+	Search   time.Duration // Search result caches for high-cardinality queries
+	Upstream time.Duration // Caches for third-party API proxying (e.g., MLB Stats API)
+	Negative time.Duration // Caches for "not found" responses to reduce DB load
 }
 
 // DefaultTTLConfig returns the recommended TTL values from the caching strategy doc.

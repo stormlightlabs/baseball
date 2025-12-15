@@ -525,7 +525,6 @@ func (r *StatsRepository) QueryFieldingStats(ctx context.Context, filter core.Fi
 			s.CS = int(cs.Int64)
 		}
 
-		// Calculate range factor per 9 innings
 		if s.Inn > 0 {
 			innings := float64(s.Inn) / 3.0
 			s.RF9 = (float64(s.PO+s.A) / innings) * 9.0

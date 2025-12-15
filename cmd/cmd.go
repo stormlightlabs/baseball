@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"archive/zip"
+	"database/sql"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -13,6 +15,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"stormlightlabs.org/baseball/internal/config"
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
 	"stormlightlabs.org/baseball/internal/seed"
@@ -41,6 +44,7 @@ func DbCmd() *cobra.Command {
 	cmd.AddCommand(DbMigrateCmd())
 	cmd.AddCommand(DbResetCmd())
 	cmd.AddCommand(DbPopulateCmd())
+	cmd.AddCommand(DbRecreateCmd())
 	return cmd
 }
 
@@ -184,6 +188,21 @@ func DbResetCmd() *cobra.Command {
 	return cmd
 }
 
+// DbRecreateCmd creates the recreate command
+func DbRecreateCmd() *cobra.Command {
+	var dbURL string
+	cmd := &cobra.Command{
+		Use:   "recreate",
+		Short: "Drop and recreate the configured PostgreSQL database",
+		Long:  "Drops the database referenced by --url (or DATABASE_URL) and creates it again. Useful before re-running migrations from scratch.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return recreateDatabase(cmd, dbURL)
+		},
+	}
+	cmd.Flags().StringVar(&dbURL, "url", "", "Database URL to recreate (defaults to DATABASE_URL or local dev)")
+	return cmd
+}
+
 // DbPopulateCmd creates the populate command
 func DbPopulateCmd() *cobra.Command {
 	var csvDir string
@@ -243,7 +262,6 @@ func fetchNegroLeagues(cmd *cobra.Command, args []string) error {
 	zipURL := "https://www.retrosheet.org/downloads/negroleagues.zip"
 	zipFile := filepath.Join(dataDir, "negroleagues.zip")
 
-	// Check if already downloaded
 	if _, err := os.Stat(zipFile); err == nil {
 		echo.Info("Negro Leagues zip already downloaded")
 	} else {
@@ -272,7 +290,6 @@ func fetchNegroLeagues(cmd *cobra.Command, args []string) error {
 		echo.Success("✓ Downloaded Negro Leagues data")
 	}
 
-	// Extract zip file
 	echo.Info("Extracting files...")
 	r, err := zip.OpenReader(zipFile)
 	if err != nil {
@@ -281,14 +298,12 @@ func fetchNegroLeagues(cmd *cobra.Command, args []string) error {
 	defer r.Close()
 
 	for _, f := range r.File {
-		// Skip directories
 		if f.FileInfo().IsDir() {
 			continue
 		}
 
 		outPath := filepath.Join(dataDir, f.Name)
 
-		// Check if already extracted
 		if _, err := os.Stat(outPath); err == nil {
 			continue
 		}
@@ -953,6 +968,101 @@ func resetDatabase(cmd *cobra.Command, csvDir, dataDir, yearsFlag string) error 
 	return runPopulateAll(cmd, csvDir, dataDir, yearsFlag)
 }
 
+func recreateDatabase(cmd *cobra.Command, dbURL string) error {
+	echo.Header("Recreating Database")
+
+	targetURL, err := resolveDatabaseURL(cmd, dbURL)
+	if err != nil {
+		return err
+	}
+	parsed, err := url.Parse(targetURL)
+	if err != nil {
+		return fmt.Errorf("error: invalid database URL: %w", err)
+	}
+
+	dbName := strings.TrimPrefix(parsed.Path, "/")
+	if dbName == "" {
+		return fmt.Errorf("error: database URL must include a database name: %s", targetURL)
+	}
+
+	echo.Error(fmt.Sprintf("⚠ WARNING: This will drop and recreate database %s (all data will be lost).", dbName))
+
+	adminURL := *parsed
+	adminURL.Path = "/postgres"
+	adminURL.RawPath = "/postgres"
+
+	ctx := cmd.Context()
+
+	conn, err := sql.Open("pgx", adminURL.String())
+	if err != nil {
+		return fmt.Errorf("error: failed to connect to server: %w", err)
+	}
+	defer conn.Close()
+
+	if err := conn.PingContext(ctx); err != nil {
+		return fmt.Errorf("error: failed to ping server: %w", err)
+	}
+
+	echo.Info("Terminating active connections...")
+	if _, err := conn.ExecContext(ctx, `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()`, dbName); err != nil {
+		return fmt.Errorf("error: failed to terminate sessions: %w", err)
+	}
+
+	echo.Info("Dropping database...")
+	if _, err := conn.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS %s", quoteIdentifier(dbName))); err != nil {
+		return fmt.Errorf("error: failed to drop database: %w", err)
+	}
+
+	echo.Info("Creating database...")
+	if _, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s", quoteIdentifier(dbName))); err != nil {
+		return fmt.Errorf("error: failed to create database: %w", err)
+	}
+
+	echo.Successf("✓ Recreated database %s", dbName)
+	return nil
+}
+
+func resolveDatabaseURL(cmd *cobra.Command, flagValue string) (string, error) {
+	if strings.TrimSpace(flagValue) != "" {
+		return flagValue, nil
+	}
+
+	cfg, err := loadConfigForCmd(cmd)
+	if err == nil && cfg != nil && strings.TrimSpace(cfg.Database.URL) != "" {
+		return cfg.Database.URL, nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to load config: %w", err)
+	}
+
+	if env := os.Getenv("DATABASE_URL"); env != "" {
+		return env, nil
+	}
+
+	return "postgres://postgres:postgres@localhost:5432/baseball_dev?sslmode=disable", nil
+}
+
+func quoteIdentifier(id string) string {
+	return `"` + strings.ReplaceAll(id, `"`, `""`) + `"`
+}
+
+func loadConfigForCmd(cmd *cobra.Command) (*config.Config, error) {
+	configPath := findConfigPath(cmd)
+	return config.Load(configPath)
+}
+
+func findConfigPath(cmd *cobra.Command) string {
+	if cmd == nil {
+		return ""
+	}
+
+	if flag := cmd.Flags().Lookup("config"); flag != nil {
+		return flag.Value.String()
+	}
+
+	return findConfigPath(cmd.Parent())
+}
+
 func runPopulateAll(cmd *cobra.Command, csvDir, dataDir, yearsFlag string) error {
 	if err := populateLahman(cmd, csvDir); err != nil {
 		return err
@@ -1038,7 +1148,6 @@ func loadNegroLeagues(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	dataDir := "data/retrosheet/negroleagues"
 
-	// Load gameinfo.csv
 	gameinfoFile := filepath.Join(dataDir, "gameinfo.csv")
 	echo.Info("Loading Negro Leagues games from gameinfo.csv...")
 

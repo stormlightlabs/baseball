@@ -35,7 +35,7 @@ type MLBRoutes struct {
 	baseURL string
 }
 
-func NewMLBRoutes(cacheClient *cache.Client) *MLBRoutes {
+func NewMLBStatsAPIRoutes(cacheClient *cache.Client) *MLBRoutes {
 	return &MLBRoutes{
 		client:  &http.Client{Timeout: 10 * time.Second},
 		cache:   cacheClient,

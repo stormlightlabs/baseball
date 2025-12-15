@@ -84,9 +84,58 @@ task build
 
 #### Database
 
+**Fresh setup**:
+
+1. Create or update `conf.toml` with your desired `database.url`.
+2. Drop & recreate the database (terminates active sessions):
+
+   ```bash
+   ./tmp/baseball db recreate --config conf.toml
+   ```
+
+3. Apply migrations:
+
+   ```bash
+   ./tmp/baseball db migrate --config conf.toml
+   ```
+
+4. Fetch source data (if needed):
+
+   ```bash
+   ./tmp/baseball etl fetch lahman
+   ./tmp/baseball etl fetch retrosheet --years=all
+   ./tmp/baseball etl fetch negroleagues
+   ```
+
+5. Load / populate data:
+   - Direct loads:
+
+     ```bash
+     ./tmp/baseball etl load lahman
+     ./tmp/baseball etl load retrosheet --era nlg  # repeat for other eras/years
+     ```
+
+   - or truncate + populate:
+
+     ```bash
+     ./tmp/baseball db populate lahman
+     ./tmp/baseball db populate retrosheet --years=all
+     ```
+
+6. Optional derived tables (e.g., win expectancy):
+
+   ```bash
+   ./tmp/baseball db populate win-expectancy --min-sample-size 50
+   ```
+
+**Common commands**:
+
 ```bash
 # Apply migrations
 ./tmp/baseball db migrate
+
+# Drop and recreate the dev database (terminates sessions)
+./tmp/baseball db recreate --config conf.toml    # or use --url to override
 
 # Populate with year flexibility (truncates tables first, records metadata)
 ./tmp/baseball db populate retrosheet --years=all              # All historical data
@@ -484,15 +533,18 @@ Available Dimensions
 
 ### Natural Language Game Search
 
+<details>
+<summary>
 Search for games using natural language queries. The search understands team names, years, series keywords, and game numbers.
-
-This supports:
+</summary>
 
 - Team names and common aliases (e.g., "yankees", "red sox", "dodgers")
 - Years (any 4-digit year)
 - Postseason keywords ("world series", "playoffs", "postseason", "alcs", "nlcs", etc.)
 - All-Star games ("all-star", "all star", "midsummer classic")
 - Flexible query formats with automatic fuzzy matching
+
+</details>
 
 **Endpoint:** `GET /v1/search/games?q={query}&limit={limit}`
 

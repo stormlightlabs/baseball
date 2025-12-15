@@ -307,7 +307,6 @@ func (nlr *NegroLeaguesRoutes) handleTeamGames(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// For count, use the same filtering logic
 	filter := core.GameFilter{
 		Season:     &year,
 		Pagination: pagination,
@@ -318,7 +317,6 @@ func (nlr *NegroLeaguesRoutes) handleTeamGames(w http.ResponseWriter, r *http.Re
 		filter.League = &league
 	}
 
-	// Count needs both home and away games
 	filter.HomeTeam = &teamID
 	homeCount, err := nlr.repo.CountGames(ctx, filter)
 	if err != nil {

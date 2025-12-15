@@ -210,7 +210,6 @@ func (sr *SearchRoutes) handleSearchGames(w http.ResponseWriter, r *http.Request
 		pagination.PerPage = 200
 	}
 
-	// Get all matching games
 	allGames, err := sr.gameRepo.SearchGamesNL(ctx, query, 1000)
 	if err != nil {
 		writeInternalServerError(w, err)

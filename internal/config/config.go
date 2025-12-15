@@ -88,14 +88,13 @@ func Load(configPath string) (*Config, error) {
 	v.SetDefault("database.url", "postgres://postgres:postgres@localhost:5432/baseball_dev?sslmode=disable")
 	v.SetDefault("redis.url", "redis://localhost:6379/0")
 
-	// Cache defaults (TTLs in seconds, following caching.md recommendations)
 	v.SetDefault("cache.enabled", true)
 	v.SetDefault("cache.version", "v1")
-	v.SetDefault("cache.ttls.entity", 1800)   // 30 minutes
-	v.SetDefault("cache.ttls.list", 60)       // 60 seconds
-	v.SetDefault("cache.ttls.search", 45)     // 45 seconds
-	v.SetDefault("cache.ttls.upstream", 120)  // 2 minutes
-	v.SetDefault("cache.ttls.negative", 30)   // 30 seconds
+	v.SetDefault("cache.ttls.entity", 1800)
+	v.SetDefault("cache.ttls.list", 60)
+	v.SetDefault("cache.ttls.search", 45)
+	v.SetDefault("cache.ttls.upstream", 120)
+	v.SetDefault("cache.ttls.negative", 30)
 
 	v.AutomaticEnv()
 	v.BindEnv("database.url", "DATABASE_URL")

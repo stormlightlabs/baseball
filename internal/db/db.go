@@ -388,11 +388,13 @@ func (db *DB) LoadRetrosheetGameLog(ctx context.Context, zipPath string, gameTyp
 		return 0, fmt.Errorf("failed to copy data: %w", err)
 	}
 
-	result, err := tx.Exec(ctx, `
-		INSERT INTO games SELECT * FROM games_temp
+	columnList := strings.Join(headers, ", ")
+	result, err := tx.Exec(ctx, fmt.Sprintf(`
+		INSERT INTO games (%s)
+		SELECT %s FROM games_temp
 		ON CONFLICT (date, home_team, game_number)
 		DO UPDATE SET game_type = EXCLUDED.game_type
-	`)
+	`, columnList, columnList))
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
 	}
@@ -851,7 +853,6 @@ func (db *DB) BuildWinExpectancy(ctx context.Context, minSampleSize int) (int64,
 
 // loadNegroLeaguesTeamMapping reads the team-to-league mapping CSV
 func loadNegroLeaguesTeamMapping() (map[string]string, error) {
-	// Embedded mapping file path - relative to project root
 	mappingPath := "internal/db/negro_leagues_teams.csv"
 
 	file, err := os.Open(mappingPath)
@@ -866,7 +867,6 @@ func loadNegroLeaguesTeamMapping() (map[string]string, error) {
 
 	teamMap := make(map[string]string)
 
-	// Skip header
 	if _, err := reader.Read(); err != nil {
 		return nil, fmt.Errorf("failed to read header: %w", err)
 	}
@@ -898,7 +898,6 @@ func loadNegroLeaguesTeamMapping() (map[string]string, error) {
 // LoadNegroLeaguesGameInfo loads Negro Leagues game data from gameinfo.csv into games table
 // The gameinfo.csv has a different schema than standard Retrosheet gamelogs, so we map what's available
 func (db *DB) LoadNegroLeaguesGameInfo(ctx context.Context, csvPath string) (int64, error) {
-	// Load team-to-league mapping
 	teamLeagueMap, err := loadNegroLeaguesTeamMapping()
 	if err != nil {
 		return 0, fmt.Errorf("failed to load team mapping: %w", err)
@@ -910,7 +909,6 @@ func (db *DB) LoadNegroLeaguesGameInfo(ctx context.Context, csvPath string) (int
 	}
 	defer file.Close()
 
-	// Create temp directory for transformed CSV
 	tmpDir, err := os.MkdirTemp("", "negroleagues-*")
 	if err != nil {
 		return 0, fmt.Errorf("failed to create temp directory: %w", err)
@@ -923,7 +921,6 @@ func (db *DB) LoadNegroLeaguesGameInfo(ctx context.Context, csvPath string) (int
 		return 0, fmt.Errorf("failed to create temp CSV: %w", err)
 	}
 
-	// Write header matching minimal games table columns we have data for
 	headers := []string{
 		"date", "game_number", "home_team", "visiting_team", "park_id",
 		"day_night", "attendance", "game_time_minutes",
@@ -1045,16 +1042,17 @@ func (db *DB) LoadNegroLeaguesGameInfo(ctx context.Context, csvPath string) (int
 		return 0, fmt.Errorf("failed to copy data: %w", err)
 	}
 
-	result, err := tx.Exec(ctx, `
-		INSERT INTO games
-		SELECT DISTINCT ON (date, home_team, game_number) *
+	columnList := strings.Join(headers, ", ")
+	result, err := tx.Exec(ctx, fmt.Sprintf(`
+		INSERT INTO games (%s)
+		SELECT DISTINCT ON (date, home_team, game_number) %s
 		FROM games_temp
 		ON CONFLICT (date, home_team, game_number)
 		DO UPDATE SET
 			game_type = EXCLUDED.game_type,
 			home_team_league = EXCLUDED.home_team_league,
 			visiting_team_league = EXCLUDED.visiting_team_league
-	`)
+	`, columnList, columnList))
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
 	}

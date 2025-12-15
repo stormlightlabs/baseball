@@ -31,9 +31,7 @@ var negroLeagues = []core.LeagueID{"NAL", "NNL", "NN2", "ECL", "ANL", "EWL", "NS
 
 // ListGames returns Negro Leagues games with filtering and pagination.
 func (r *NegroLeaguesRepository) ListGames(ctx context.Context, filter core.GameFilter) ([]core.Game, error) {
-	// If no league filter specified, get games from all Negro Leagues
 	if filter.League == nil {
-		// Query all Negro Leagues and combine results
 		allGames := []core.Game{}
 		for _, league := range negroLeagues {
 			leagueFilter := filter
@@ -47,14 +45,11 @@ func (r *NegroLeaguesRepository) ListGames(ctx context.Context, filter core.Game
 		}
 		return allGames, nil
 	}
-
-	// User specified a specific Negro League
 	return r.gameRepo.List(ctx, filter)
 }
 
 // CountGames returns the total count of Negro Leagues games matching the filter.
 func (r *NegroLeaguesRepository) CountGames(ctx context.Context, filter core.GameFilter) (int, error) {
-	// If no league filter specified, count games from all Negro Leagues
 	if filter.League == nil {
 		total := 0
 		for _, league := range negroLeagues {
@@ -69,14 +64,11 @@ func (r *NegroLeaguesRepository) CountGames(ctx context.Context, filter core.Gam
 		}
 		return total, nil
 	}
-
-	// User specified a specific Negro League
 	return r.gameRepo.Count(ctx, filter)
 }
 
 // ListTeamSeasons returns teams that played in the Negro Leagues.
 func (r *NegroLeaguesRepository) ListTeamSeasons(ctx context.Context, filter core.TeamFilter) ([]core.TeamSeason, error) {
-	// If no league filter specified, get teams from all Negro Leagues
 	if filter.League == nil {
 		allTeams := []core.TeamSeason{}
 		for _, league := range negroLeagues {
@@ -91,14 +83,11 @@ func (r *NegroLeaguesRepository) ListTeamSeasons(ctx context.Context, filter cor
 		}
 		return allTeams, nil
 	}
-
-	// User specified a specific Negro League
 	return r.teamRepo.ListTeamSeasons(ctx, filter)
 }
 
 // CountTeamSeasons returns the count of unique team-season combinations.
 func (r *NegroLeaguesRepository) CountTeamSeasons(ctx context.Context, filter core.TeamFilter) (int, error) {
-	// If no league filter specified, count teams from all Negro Leagues
 	if filter.League == nil {
 		total := 0
 		for _, league := range negroLeagues {
@@ -113,34 +102,26 @@ func (r *NegroLeaguesRepository) CountTeamSeasons(ctx context.Context, filter co
 		}
 		return total, nil
 	}
-
-	// User specified a specific Negro League
 	return r.teamRepo.CountTeamSeasons(ctx, filter)
 }
 
 // ListPlays returns play-by-play data from Negro Leagues games.
 func (r *NegroLeaguesRepository) ListPlays(ctx context.Context, filter core.PlayFilter) ([]core.Play, error) {
-	// If no league filter specified, get plays from all Negro Leagues
 	if filter.League == nil {
 		leagueFilter := filter
 		leagueFilter.Leagues = negroLeagues
 		return r.playRepo.List(ctx, leagueFilter)
 	}
-
-	// User specified a specific Negro League
 	return r.playRepo.List(ctx, filter)
 }
 
 // CountPlays returns the count of plays in Negro Leagues games.
 func (r *NegroLeaguesRepository) CountPlays(ctx context.Context, filter core.PlayFilter) (int, error) {
-	// If no league filter specified, count plays from all Negro Leagues
 	if filter.League == nil {
 		leagueFilter := filter
 		leagueFilter.Leagues = negroLeagues
 		return r.playRepo.Count(ctx, leagueFilter)
 	}
-
-	// User specified a specific Negro League
 	return r.playRepo.Count(ctx, filter)
 }
 
@@ -161,9 +142,6 @@ func (r *NegroLeaguesRepository) GetTeamGames(ctx context.Context, teamID core.T
 		Pagination: p,
 	}
 
-	// Use HomeTeam filter - the game repo List method will return games where teamID is home or away
-	// Actually, looking at the GameRepository.List, it only filters by HomeTeam OR AwayTeam, not both
-	// We need to get games where the team is either home or away
 	homeFilter := filter
 	homeFilter.HomeTeam = &teamID
 	homeGames, err := r.gameRepo.List(ctx, homeFilter)
@@ -178,7 +156,6 @@ func (r *NegroLeaguesRepository) GetTeamGames(ctx context.Context, teamID core.T
 		return nil, err
 	}
 
-	// Combine and deduplicate
 	gameMap := make(map[core.GameID]core.Game)
 	for _, g := range homeGames {
 		gameMap[g.ID] = g
@@ -191,6 +168,5 @@ func (r *NegroLeaguesRepository) GetTeamGames(ctx context.Context, teamID core.T
 	for _, g := range gameMap {
 		games = append(games, g)
 	}
-
 	return games, nil
 }

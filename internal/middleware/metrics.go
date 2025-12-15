@@ -10,14 +10,10 @@ import (
 // Metrics holds global HTTP metrics exposed via expvar at /debug/vars.
 // Tracks total requests, errors (5xx), per-route request counts, and latency sums.
 type Metrics struct {
-	// total HTTP requests across all routes
-	RequestsTotal *expvar.Int
-	// total 5xx responses
-	ErrorsTotal *expvar.Int
-	// RequestsByRoute maps route -> request count
-	RequestsByRoute *expvar.Map
-	// LatencyMsByRoute maps route -> cumulative latency in milliseconds
-	LatencyMsByRoute *expvar.Map
+	RequestsTotal    *expvar.Int // total HTTP requests across all routes
+	ErrorsTotal      *expvar.Int // total 5xx responses
+	RequestsByRoute  *expvar.Map // RequestsByRoute maps route -> request count
+	LatencyMsByRoute *expvar.Map // LatencyMsByRoute maps route -> cumulative latency in milliseconds
 }
 
 var (

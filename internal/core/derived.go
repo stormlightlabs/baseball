@@ -37,8 +37,7 @@ type Streak struct {
 	EntityType StreakEntityType `json:"entity_type"` // player or team
 	EntityID   string           `json:"entity_id"`   // PlayerID or TeamID (as string)
 	Label      string           `json:"label"`       // human-readable label
-
-	Season int `json:"season"` // season year (e.g. 2024)
+	Season     int              `json:"season"`      // season year (e.g. 2024)
 
 	// Length of the streak:
 	// - For hitting: number of consecutive games with ≥1 hit.
@@ -175,19 +174,15 @@ type SplitGroup struct {
 	Key   string            `json:"key"`            // e.g. "home", "away", "vs_LHP", "04" (April), "1" (leadoff)
 	Label string            `json:"label"`          // human-readable label
 	Meta  map[string]string `json:"meta,omitempty"` // arbitrary: month_number, handedness, etc.
-
-	// Sample counting stats.
-	Games int `json:"games"`
-	PA    int `json:"pa"`
-	AB    int `json:"ab"`
-	H     int `json:"h"`
-	HR    int `json:"hr"`
-	BB    int `json:"bb"`
-	SO    int `json:"so"`
-
-	// Derived rate stats (as decimals, 3–4 places).
-	AVG float64 `json:"avg"`
-	OBP float64 `json:"obp"`
-	SLG float64 `json:"slg"`
-	OPS float64 `json:"ops"`
+	Games int               `json:"games"`
+	PA    int               `json:"pa"`
+	AB    int               `json:"ab"`
+	H     int               `json:"h"`
+	HR    int               `json:"hr"`
+	BB    int               `json:"bb"`
+	SO    int               `json:"so"`
+	AVG   float64           `json:"avg"`
+	OBP   float64           `json:"obp"`
+	SLG   float64           `json:"slg"`
+	OPS   float64           `json:"ops"`
 }

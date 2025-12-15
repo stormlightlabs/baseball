@@ -161,7 +161,7 @@ type MLBGame struct {
 	GameType string `json:"gameType"`
 	Season   string `json:"season"`
 	GameDate string `json:"gameDate"`
-	// Additional fields would be added based on actual game data structure
+	// TODO: add additional fields
 }
 
 // MLBSeasonsResponse represents the response from the seasons endpoint

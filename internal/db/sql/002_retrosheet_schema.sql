@@ -4,23 +4,23 @@ CREATE TABLE games (
     game_number int,
     day_of_week varchar(3),
     visiting_team varchar(3),
-    visiting_team_league varchar(2),
+    visiting_team_league varchar(3),
     visiting_team_game_number int,
     home_team varchar(3),
-    home_team_league varchar(2),
+    home_team_league varchar(3),
     home_team_game_number int,
     visiting_score int,
     home_score int,
     game_length_outs int,
-    day_night varchar(1),
+    day_night varchar(10),
     completion_info text,
     forfeit_info text,
     protest_info text,
     park_id varchar(5),
     attendance int,
     game_time_minutes int,
-    visiting_line_score varchar(20),
-    home_line_score varchar(20),
+    visiting_line_score varchar(50),
+    home_line_score varchar(50),
     visiting_at_bats int,
     visiting_hits int,
     visiting_doubles int,
@@ -160,5 +160,8 @@ CREATE TABLE games (
     h_player_9_name text,
     h_player_9_pos int,
     additional_info text,
-    acquisition_info text
+    acquisition_info text,
+    game_id varchar(16) GENERATED ALWAYS AS (home_team || date || COALESCE(game_number::text, '0')) STORED
 );
+
+CREATE UNIQUE INDEX idx_games_game_id ON games(game_id);

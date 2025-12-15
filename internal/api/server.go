@@ -158,8 +158,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewComputedRoutes(advancedStatsRepo, leverageRepo, parkFactorRepo),
 		NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
 		NewUIRoutes(apiKeyRepo),
-		// TODO: rename to mlbstatsapiroutes
-		NewMLBRoutes(cacheClient),
+		NewMLBStatsAPIRoutes(cacheClient),
 		NewFederalLeagueRoutes(gameRepo, playRepo, teamRepo),
 		NewNegroLeaguesRoutes(negroLeaguesRepo),
 	)

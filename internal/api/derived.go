@@ -225,8 +225,6 @@ func (dr *DerivedRoutes) handlePlayerSplits(w http.ResponseWriter, r *http.Reque
 // @Router /win-expectancy [get]
 func (dr *DerivedRoutes) handleGetWinExpectancy(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	// Parse required parameters
 	inning := getIntQuery(r, "inning", 0)
 	if inning < 1 || inning > 9 {
 		writeBadRequest(w, "inning must be between 1 and 9")
