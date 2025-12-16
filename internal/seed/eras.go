@@ -25,24 +25,39 @@ func GetAllEras() []Era {
 			Notes: "Negro Leagues games available in Retrosheet",
 		},
 		{
-			Name: "1970s", ShortName: "1970s",
-			StartYear: 1970, EndYear: 1979,
-			Notes: "Expansion era and free agency begins",
+			Name: "Baby Boomer Era", ShortName: "boomer",
+			StartYear: 1950, EndYear: 1962,
+			Notes: "Post-war expansion and integration",
 		},
 		{
-			Name: "1980s", ShortName: "1980s",
-			StartYear: 1980, EndYear: 1989,
-			Notes: "Rise of power hitting and offensive explosion",
+			Name: "Pitcher Era", ShortName: "pitcher",
+			StartYear: 1963, EndYear: 1968,
+			Notes: "Dominant pitching before mound lowering",
+		},
+		{
+			Name: "Turf Time", ShortName: "turf",
+			StartYear: 1969, EndYear: 1993,
+			Notes: "Artificial turf, expansion, and free agency",
 		},
 		{
 			Name: "Steroid Era", ShortName: "steroid",
-			StartYear: 1990, EndYear: 2010,
+			StartYear: 1994, EndYear: 2004,
 			Notes: "Enhanced performance and home run records",
 		},
 		{
+			Name: "Moneyball Era", ShortName: "moneyball",
+			StartYear: 2005, EndYear: 2012,
+			Notes: "Analytics revolution and sabermetrics adoption",
+		},
+		{
+			Name: "Statcast Era", ShortName: "statcast",
+			StartYear: 2013, EndYear: 2019,
+			Notes: "Launch angle revolution and tracking data",
+		},
+		{
 			Name: "Modern Era", ShortName: "modern",
-			StartYear: 2011, EndYear: 2025,
-			Notes: "Analytics-driven baseball and pitch clock",
+			StartYear: 2020, EndYear: 2025,
+			Notes: "Pitch clock and pace of play changes",
 		},
 	}
 }
