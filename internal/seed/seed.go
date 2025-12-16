@@ -382,6 +382,35 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 	return result, nil
 }
 
+// LoadWeatherData loads weather and game metadata from the master gameinfo.csv file.
+// This updates existing games with weather data (temperature, wind, sky conditions, etc.).
+func LoadWeatherData(ctx context.Context, database *db.DB, csvPath string) (int64, error) {
+	if csvPath == "" {
+		csvPath = filepath.Join("data", "retrosheet", "gameinfo.csv")
+	}
+
+	if _, err := os.Stat(csvPath); errors.Is(err, os.ErrNotExist) {
+		return 0, fmt.Errorf("error: gameinfo.csv not found at %s", csvPath)
+	} else if err != nil {
+		return 0, fmt.Errorf("error: failed to stat gameinfo.csv: %w", err)
+	}
+
+	echo.Infof("Loading weather data from %s...", csvPath)
+
+	rows, err := database.LoadGameInfo(ctx, csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("error: failed to load gameinfo: %w", err)
+	}
+
+	echo.Successf("✓ Updated %s games with weather data", formatNumber(rows))
+
+	if err := database.RecordDatasetRefresh(ctx, "retrosheet_gameinfo", rows); err != nil {
+		return rows, fmt.Errorf("error: failed to record gameinfo refresh: %w", err)
+	}
+
+	return rows, nil
+}
+
 func truncateTable(ctx context.Context, database *db.DB, table string) error {
 	query := fmt.Sprintf(`TRUNCATE TABLE "%s"`, table)
 	if _, err := database.ExecContext(ctx, query); err != nil {

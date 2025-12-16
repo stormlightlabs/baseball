@@ -59,9 +59,36 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 			pm.city,
 			pm.state,
 			g.hp_ump_id,
+			g.hp_ump_name,
 			g.b1_ump_id,
+			g.b1_ump_name,
 			g.b2_ump_id,
+			g.b2_ump_name,
 			g.b3_ump_id,
+			g.b3_ump_name,
+			g.lf_ump_id,
+			g.lf_ump_name,
+			g.rf_ump_id,
+			g.rf_ump_name,
+			g.winning_pitcher_id,
+			g.winning_pitcher_name,
+			g.losing_pitcher_id,
+			g.losing_pitcher_name,
+			g.saving_pitcher_id,
+			g.saving_pitcher_name,
+			g.h_manager_id,
+			g.h_manager_name,
+			g.v_manager_id,
+			g.v_manager_name,
+			g.day_night,
+			g.temp_f,
+			g.sky,
+			g.wind_direction,
+			g.wind_speed_mph,
+			g.precip,
+			g.field_condition,
+			g.start_time,
+			g.used_dh,
 			g.game_type
 		FROM games g
 		LEFT JOIN park_map pm ON g.park_id = pm.retro_park_id
@@ -71,7 +98,16 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 	var g core.Game
 	var date string
 	var attendance, durationMin sql.NullInt64
-	var umpHome, umpFirst, umpSecond, umpThird, dayOfWeek sql.NullString
+	var umpHome, umpHomeName, umpFirst, umpFirstName sql.NullString
+	var umpSecond, umpSecondName, umpThird, umpThirdName sql.NullString
+	var umpLeft, umpLeftName, umpRight, umpRightName sql.NullString
+	var winPitcherID, winPitcherName, losePitcherID, losePitcherName sql.NullString
+	var savePitcherID, savePitcherName sql.NullString
+	var homeManagerID, homeManagerName, awayManagerID, awayManagerName sql.NullString
+	var dayOfWeek, dayNight sql.NullString
+	var tempF, windSpeedMph sql.NullInt64
+	var sky, windDirection, precip, fieldCondition, startTime sql.NullString
+	var usedDH sql.NullBool
 	var homeTeam, awayTeam, parkID string
 	var homeLeague, awayLeague sql.NullString
 	var parkName, parkCity, parkState sql.NullString
@@ -94,9 +130,36 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 		&parkCity,
 		&parkState,
 		&umpHome,
+		&umpHomeName,
 		&umpFirst,
+		&umpFirstName,
 		&umpSecond,
+		&umpSecondName,
 		&umpThird,
+		&umpThirdName,
+		&umpLeft,
+		&umpLeftName,
+		&umpRight,
+		&umpRightName,
+		&winPitcherID,
+		&winPitcherName,
+		&losePitcherID,
+		&losePitcherName,
+		&savePitcherID,
+		&savePitcherName,
+		&homeManagerID,
+		&homeManagerName,
+		&awayManagerID,
+		&awayManagerName,
+		&dayNight,
+		&tempF,
+		&sky,
+		&windDirection,
+		&windSpeedMph,
+		&precip,
+		&fieldCondition,
+		&startTime,
+		&usedDH,
 		&gameType,
 	)
 
@@ -158,17 +221,104 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 		u := core.UmpireID(umpHome.String)
 		g.UmpHome = &u
 	}
+	if umpHomeName.Valid {
+		g.UmpHomeName = &umpHomeName.String
+	}
 	if umpFirst.Valid {
 		u := core.UmpireID(umpFirst.String)
 		g.UmpFirst = &u
+	}
+	if umpFirstName.Valid {
+		g.UmpFirstName = &umpFirstName.String
 	}
 	if umpSecond.Valid {
 		u := core.UmpireID(umpSecond.String)
 		g.UmpSecond = &u
 	}
+	if umpSecondName.Valid {
+		g.UmpSecondName = &umpSecondName.String
+	}
 	if umpThird.Valid {
 		u := core.UmpireID(umpThird.String)
 		g.UmpThird = &u
+	}
+	if umpThirdName.Valid {
+		g.UmpThirdName = &umpThirdName.String
+	}
+	if umpLeft.Valid {
+		u := core.UmpireID(umpLeft.String)
+		g.UmpLeft = &u
+	}
+	if umpLeftName.Valid {
+		g.UmpLeftName = &umpLeftName.String
+	}
+	if umpRight.Valid {
+		u := core.UmpireID(umpRight.String)
+		g.UmpRight = &u
+	}
+	if umpRightName.Valid {
+		g.UmpRightName = &umpRightName.String
+	}
+	if winPitcherID.Valid {
+		g.WinningPitcherID = &winPitcherID.String
+	}
+	if winPitcherName.Valid {
+		g.WinningPitcherName = &winPitcherName.String
+	}
+	if losePitcherID.Valid {
+		g.LosingPitcherID = &losePitcherID.String
+	}
+	if losePitcherName.Valid {
+		g.LosingPitcherName = &losePitcherName.String
+	}
+	if savePitcherID.Valid {
+		g.SavePitcherID = &savePitcherID.String
+	}
+	if savePitcherName.Valid {
+		g.SavePitcherName = &savePitcherName.String
+	}
+	if homeManagerID.Valid {
+		m := core.ManagerID(homeManagerID.String)
+		g.HomeManagerID = &m
+	}
+	if homeManagerName.Valid {
+		g.HomeManagerName = &homeManagerName.String
+	}
+	if awayManagerID.Valid {
+		m := core.ManagerID(awayManagerID.String)
+		g.AwayManagerID = &m
+	}
+	if awayManagerName.Valid {
+		g.AwayManagerName = &awayManagerName.String
+	}
+	if dayNight.Valid {
+		g.DayNight = &dayNight.String
+	}
+	if tempF.Valid {
+		t := int(tempF.Int64)
+		g.TempF = &t
+	}
+	if sky.Valid {
+		g.Sky = &sky.String
+	}
+	if windDirection.Valid {
+		g.WindDirection = &windDirection.String
+	}
+	if windSpeedMph.Valid {
+		ws := int(windSpeedMph.Int64)
+		g.WindSpeedMph = &ws
+	}
+	if precip.Valid {
+		g.Precip = &precip.String
+	}
+	if fieldCondition.Valid {
+		g.FieldCondition = &fieldCondition.String
+	}
+	if startTime.Valid {
+		g.StartTime = &startTime.String
+	}
+	if usedDH.Valid {
+		g.UsedDH = &usedDH.Bool
 	}
 
 	_ = r.cache.Entity.Set(ctx, string(id), &g)

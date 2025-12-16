@@ -928,6 +928,8 @@ func (db *DB) LoadNegroLeaguesGameInfo(ctx context.Context, csvPath string) (int
 		"winning_pitcher_id", "losing_pitcher_id", "saving_pitcher_id",
 		"hp_ump_id", "b1_ump_id", "b2_ump_id", "b3_ump_id",
 		"lf_ump_id", "rf_ump_id",
+		"start_time", "temp_f", "wind_direction", "wind_speed_mph",
+		"sky", "precip", "field_condition", "used_dh",
 		"game_type", "home_team_league", "visiting_team_league",
 	}
 
@@ -957,6 +959,17 @@ func (db *DB) LoadNegroLeaguesGameInfo(ctx context.Context, csvPath string) (int
 		return val
 	}
 
+	cleanBoolean := func(val string) string {
+		val = strings.ToLower(strings.TrimSpace(val))
+		if val == "true" || val == "t" || val == "1" {
+			return "true"
+		}
+		if val == "false" || val == "f" || val == "0" {
+			return "false"
+		}
+		return ""
+	}
+
 	rowCount := int64(0)
 	for {
 		record, err := reader.Read()
@@ -983,6 +996,13 @@ func (db *DB) LoadNegroLeaguesGameInfo(ctx context.Context, csvPath string) (int
 		homeLeague := teamLeagueMap[homeTeam]
 		visitingLeague := teamLeagueMap[visitingTeam]
 
+		getField := func(idx int) string {
+			if idx < len(record) {
+				return record[idx]
+			}
+			return ""
+		}
+
 		row := []string{
 			record[4], record[5], // date, game_number
 			homeTeam, visitingTeam, // home_team, visiting_team
@@ -991,6 +1011,8 @@ func (db *DB) LoadNegroLeaguesGameInfo(ctx context.Context, csvPath string) (int
 			record[29], record[30], record[31], // winning_pitcher_id, losing_pitcher_id, saving_pitcher_id
 			record[23], record[24], record[25], record[26], // hp_ump_id, b1_ump_id, b2_ump_id, b3_ump_id
 			record[27], record[28], // lf_ump_id, rf_ump_id
+			getField(6), cleanNumeric(getField(8)), getField(9), cleanNumeric(getField(10)), // start_time, temp_f, wind_direction, wind_speed_mph
+			getField(11), getField(14), getField(15), cleanBoolean(getField(16)), // sky, precip, field_condition, used_dh
 			gameType, homeLeague, visitingLeague, // game_type, home_team_league, visiting_team_league
 		}
 
@@ -1159,6 +1181,165 @@ func (db *DB) LoadNegroLeaguesPlays(ctx context.Context, csvPath string) (int64,
 	`)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// LoadGameInfo loads weather and game metadata from Retrosheet's master gameinfo.csv.
+// Updates existing games with weather data (temp, wind, sky, precipitation, field conditions).
+// The gameinfo.csv covers 1898-2025 with enhanced weather data available 2015+.
+func (db *DB) LoadGameInfo(ctx context.Context, csvPath string) (int64, error) {
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open gameinfo CSV: %w", err)
+	}
+	defer file.Close()
+
+	tmpDir, err := os.MkdirTemp("", "gameinfo-*")
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	tmpCSV := filepath.Join(tmpDir, "gameinfo_transformed.csv")
+	outFile, err := os.Create(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp CSV: %w", err)
+	}
+
+	headers := []string{
+		"date", "home_team", "game_number",
+		"start_time", "temp_f", "wind_direction", "wind_speed_mph",
+		"sky", "precip", "field_condition", "used_dh",
+	}
+
+	csvWriter := csv.NewWriter(outFile)
+	if err := csvWriter.Write(headers); err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("failed to write headers: %w", err)
+	}
+
+	reader := csv.NewReader(file)
+	reader.LazyQuotes = true
+	reader.TrimLeadingSpace = true
+
+	_, err = reader.Read()
+	if err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("failed to read source header: %w", err)
+	}
+
+	rowCount := int64(0)
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			outFile.Close()
+			return 0, fmt.Errorf("failed to read CSV row: %w", err)
+		}
+
+		if len(record) < 20 {
+			continue
+		}
+
+		row := []string{
+			record[4],                // date
+			record[2],                // home_team
+			record[5],                // game_number
+			parseTime(record[6]),     // start_time
+			cleanNumeric(record[17]), // temp_f
+			cleanText(record[18]),    // wind_direction
+			cleanNumeric(record[19]), // wind_speed_mph
+			cleanText(record[16]),    // sky
+			cleanText(record[15]),    // precip
+			cleanText(record[14]),    // field_condition
+			cleanBoolean(record[10]), // used_dh
+		}
+
+		if err := csvWriter.Write(row); err != nil {
+			outFile.Close()
+			return 0, fmt.Errorf("failed to write CSV row: %w", err)
+		}
+		rowCount++
+	}
+
+	csvWriter.Flush()
+	if err := csvWriter.Error(); err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("CSV writer error: %w", err)
+	}
+	outFile.Close()
+
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for COPY: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	csvFile, err := os.Open(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open transformed CSV: %w", err)
+	}
+	defer csvFile.Close()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		CREATE TEMP TABLE gameinfo_temp (
+			date varchar(8),
+			home_team varchar(3),
+			game_number int,
+			start_time TIME,
+			temp_f INTEGER,
+			wind_direction VARCHAR(20),
+			wind_speed_mph INTEGER,
+			sky VARCHAR(20),
+			precip VARCHAR(20),
+			field_condition VARCHAR(20),
+			used_dh BOOLEAN
+		) ON COMMIT DROP
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp table: %w", err)
+	}
+
+	copySQL := fmt.Sprintf(`COPY gameinfo_temp (%s) FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`,
+		strings.Join(headers, ", "))
+
+	_, err = conn.PgConn().CopyFrom(ctx, csvFile, copySQL)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy data: %w", err)
+	}
+
+	result, err := tx.Exec(ctx, `
+		UPDATE games
+		SET
+			start_time = gameinfo_temp.start_time,
+			temp_f = gameinfo_temp.temp_f,
+			wind_direction = gameinfo_temp.wind_direction,
+			wind_speed_mph = gameinfo_temp.wind_speed_mph,
+			sky = gameinfo_temp.sky,
+			precip = gameinfo_temp.precip,
+			field_condition = gameinfo_temp.field_condition,
+			used_dh = gameinfo_temp.used_dh
+		FROM gameinfo_temp
+		WHERE games.date = gameinfo_temp.date
+			AND games.home_team = gameinfo_temp.home_team
+			AND games.game_number = gameinfo_temp.game_number
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to update games: %w", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {

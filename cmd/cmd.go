@@ -72,6 +72,7 @@ func EtlLoadCmd() *cobra.Command {
 	cmd.AddCommand(RetrosheetLoadCmd())
 	cmd.AddCommand(NegroLeaguesLoadCmd())
 	cmd.AddCommand(FanGraphsLoadCmd())
+	cmd.AddCommand(WeatherLoadCmd())
 	return cmd
 }
 
@@ -156,6 +157,16 @@ func FanGraphsLoadCmd() *cobra.Command {
 		Short: "Load FanGraphs constants into database",
 		Long:  "Load FanGraphs wOBA constants and park factors from CSV files.",
 		RunE:  loadFanGraphs,
+	}
+}
+
+// WeatherLoadCmd creates the load weather command
+func WeatherLoadCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "weather",
+		Short: "Load weather data into database",
+		Long:  "Updates existing games with weather and game metadata from Retrosheet's master gameinfo.csv file.",
+		RunE:  loadWeatherData,
 	}
 }
 
@@ -1192,6 +1203,39 @@ func loadNegroLeagues(cmd *cobra.Command, args []string) error {
 
 	echo.Info("")
 	echo.Success("✓ All Negro Leagues data loaded successfully")
+	return nil
+}
+
+func loadWeatherData(cmd *cobra.Command, args []string) error {
+	echo.Header("Loading Game Weather Data")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	ctx := cmd.Context()
+
+	csvPath := "data/retrosheet/gameinfo.csv"
+	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
+		return fmt.Errorf(`error: gameinfo.csv not found at %s
+
+The gameinfo.csv file should be downloaded as part of the Retrosheet data.
+It contains weather and game metadata for 224K games (1898-2025).`, csvPath)
+	}
+
+	_, err = seed.LoadWeatherData(ctx, database, csvPath)
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	echo.Info("")
+	echo.Success("✓ Game weather data loaded successfully")
+	echo.Infof("  Coverage: 1898-2025 (weather details from 2015+)")
 	return nil
 }
 

@@ -293,23 +293,50 @@ type Game struct {
 	AwayTeam   TeamID   `json:"away_team"`
 	HomeLeague LeagueID `json:"home_league"`
 	AwayLeague LeagueID `json:"away_league"`
-
-	HomeScore int `json:"home_score"`
-	AwayScore int `json:"away_score"`
-	Innings   int `json:"innings"`
+	HomeScore  int      `json:"home_score"`
+	AwayScore  int      `json:"away_score"`
+	Innings    int      `json:"innings"`
 
 	Attendance  *int `json:"attendance,omitempty"`
 	DurationMin *int `json:"duration_min,omitempty"`
 
-	ParkID    ParkID  `json:"park_id"`
-	ParkName  *string `json:"park_name,omitempty"`  // Enriched from park_map
-	ParkCity  *string `json:"park_city,omitempty"`  // Enriched from park_map
-	ParkState *string `json:"park_state,omitempty"` // Enriched from park_map
+	ParkID             ParkID     `json:"park_id"`
+	ParkName           *string    `json:"park_name,omitempty"`
+	ParkCity           *string    `json:"park_city,omitempty"`
+	ParkState          *string    `json:"park_state,omitempty"`
+	UmpHome            *UmpireID  `json:"ump_home,omitempty"`
+	UmpHomeName        *string    `json:"ump_home_name,omitempty"`
+	UmpFirst           *UmpireID  `json:"ump_first,omitempty"`
+	UmpFirstName       *string    `json:"ump_first_name,omitempty"`
+	UmpSecond          *UmpireID  `json:"ump_second,omitempty"`
+	UmpSecondName      *string    `json:"ump_second_name,omitempty"`
+	UmpThird           *UmpireID  `json:"ump_third,omitempty"`
+	UmpThirdName       *string    `json:"ump_third_name,omitempty"`
+	UmpLeft            *UmpireID  `json:"ump_left,omitempty"`
+	UmpLeftName        *string    `json:"ump_left_name,omitempty"`
+	UmpRight           *UmpireID  `json:"ump_right,omitempty"`
+	UmpRightName       *string    `json:"ump_right_name,omitempty"`
+	WinningPitcherID   *string    `json:"winning_pitcher_id,omitempty"`
+	WinningPitcherName *string    `json:"winning_pitcher_name,omitempty"`
+	LosingPitcherID    *string    `json:"losing_pitcher_id,omitempty"`
+	LosingPitcherName  *string    `json:"losing_pitcher_name,omitempty"`
+	SavePitcherID      *string    `json:"save_pitcher_id,omitempty"`
+	SavePitcherName    *string    `json:"save_pitcher_name,omitempty"`
+	HomeManagerID      *ManagerID `json:"home_manager_id,omitempty"`
+	HomeManagerName    *string    `json:"home_manager_name,omitempty"`
+	AwayManagerID      *ManagerID `json:"away_manager_id,omitempty"`
+	AwayManagerName    *string    `json:"away_manager_name,omitempty"`
 
-	UmpHome   *UmpireID `json:"ump_home,omitempty"`
-	UmpFirst  *UmpireID `json:"ump_first,omitempty"`
-	UmpSecond *UmpireID `json:"ump_second,omitempty"`
-	UmpThird  *UmpireID `json:"ump_third,omitempty"`
+	DayNight *string `json:"day_night,omitempty"` // "day", "night", "D", "N"
+
+	TempF          *int    `json:"temp_f,omitempty"`          // Temperature in Fahrenheit
+	Sky            *string `json:"sky,omitempty"`             // Sky condition (sunny, cloudy, dome, etc.)
+	WindDirection  *string `json:"wind_direction,omitempty"`  // Wind direction (fromcf, fromlf, etc.)
+	WindSpeedMph   *int    `json:"wind_speed_mph,omitempty"`  // Wind speed in mph
+	Precip         *string `json:"precip,omitempty"`          // Precipitation (none, drizzle, showers, rain, snow)
+	FieldCondition *string `json:"field_condition,omitempty"` // Field condition (dry, wet, damp, soaked)
+	StartTime      *string `json:"start_time,omitempty"`      // Game start time (HH:MM format)
+	UsedDH         *bool   `json:"used_dh,omitempty"`         // Whether designated hitter was used
 
 	IsPostseason bool    `json:"is_postseason"`
 	SeriesID     *string `json:"series_id,omitempty"`
@@ -421,7 +448,6 @@ type PlayerSalary struct {
 // Play represents a single play from Retrosheet play-by-play data.
 // This is the core model with essential fields for most use cases.
 type Play struct {
-	// Game identification
 	GameID   GameID `json:"game_id"`
 	PlayNum  int    `json:"play_num"`
 	Inning   int    `json:"inning"`
@@ -460,9 +486,8 @@ type Play struct {
 	Runner1Pre *RetroPlayerID `json:"runner1_pre,omitempty"`
 	Runner2Pre *RetroPlayerID `json:"runner2_pre,omitempty"`
 	Runner3Pre *RetroPlayerID `json:"runner3_pre,omitempty"`
-
-	Runs *int `json:"runs,omitempty"`
-	RBI  *int `json:"rbi,omitempty"`
+	Runs       *int           `json:"runs,omitempty"`
+	RBI        *int           `json:"rbi,omitempty"`
 }
 
 // Park / Ballpark from Lahman & Retrosheet park tables.
