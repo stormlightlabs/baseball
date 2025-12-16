@@ -844,3 +844,90 @@ type WinExpectancyEra struct {
 	StateCount  int    `json:"state_count"`  // Number of unique game states in this era
 	TotalSample int64  `json:"total_sample"` // Total sample size across all states
 }
+
+// NoHitter represents a game where a team allowed zero hits to the opposing team.
+type NoHitter struct {
+	GameID             GameID     `json:"game_id"`
+	TeamID             TeamID     `json:"team_id"`          // Team that threw the no-hitter
+	OpponentTeamID     TeamID     `json:"opponent_team_id"` // Team that was no-hit
+	Date               time.Time  `json:"date"`
+	Season             SeasonYear `json:"season"`
+	HomeTeam           TeamID     `json:"home_team"`
+	VisitingTeam       TeamID     `json:"visiting_team"`
+	HomeScore          int        `json:"home_score"`
+	VisitingScore      int        `json:"visiting_score"`
+	Innings            int        `json:"innings"`
+	ParkID             ParkID     `json:"park_id"`
+	TeamLocation       string     `json:"team_location"` // "home" or "away"
+	WinningPitcherID   *string    `json:"winning_pitcher_id,omitempty"`
+	WinningPitcherName *string    `json:"winning_pitcher_name,omitempty"`
+}
+
+// Cycle represents a game where a player hit a single, double, triple, and home run.
+type Cycle struct {
+	GameID       GameID     `json:"game_id"`
+	PlayerID     string     `json:"player_id"` // Retrosheet player ID
+	TeamID       TeamID     `json:"team_id"`
+	Date         time.Time  `json:"date"`
+	Season       SeasonYear `json:"season"`
+	HomeTeam     TeamID     `json:"home_team"`
+	VisitingTeam TeamID     `json:"visiting_team"`
+	Singles      int        `json:"singles"`
+	Doubles      int        `json:"doubles"`
+	Triples      int        `json:"triples"`
+	HomeRuns     int        `json:"home_runs"`
+	TotalHits    int        `json:"total_hits"`
+	ParkID       ParkID     `json:"park_id"`
+	TeamLocation string     `json:"team_location"` // "home" or "away"
+}
+
+// MultiHRGame represents a game where a player hit 3 or more home runs.
+type MultiHRGame struct {
+	GameID       GameID     `json:"game_id"`
+	PlayerID     string     `json:"player_id"` // Retrosheet player ID
+	TeamID       TeamID     `json:"team_id"`
+	Date         time.Time  `json:"date"`
+	Season       SeasonYear `json:"season"`
+	HomeTeam     TeamID     `json:"home_team"`
+	VisitingTeam TeamID     `json:"visiting_team"`
+	HomeRuns     int        `json:"home_runs"`
+	TotalHits    int        `json:"total_hits"`
+	AtBats       int        `json:"at_bats"`
+	ParkID       ParkID     `json:"park_id"`
+	TeamLocation string     `json:"team_location"` // "home" or "away"
+}
+
+// TriplePlay represents a game where a team recorded one or more triple plays.
+type TriplePlay struct {
+	GameID           GameID     `json:"game_id"`
+	TeamID           TeamID     `json:"team_id"`          // Team that turned the triple play
+	OpponentTeamID   TeamID     `json:"opponent_team_id"` // Team that hit into the triple play
+	Date             time.Time  `json:"date"`
+	Season           SeasonYear `json:"season"`
+	HomeTeam         TeamID     `json:"home_team"`
+	VisitingTeam     TeamID     `json:"visiting_team"`
+	TeamScore        int        `json:"team_score"`
+	OpponentScore    int        `json:"opponent_score"`
+	TriplePlaysCount int        `json:"triple_plays_count"` // Number of triple plays in the game
+	TeamLocation     string     `json:"team_location"`      // "home" or "away"
+	ParkID           ParkID     `json:"park_id"`
+}
+
+// ExtraInningGame represents a game that lasted 20 or more innings.
+type ExtraInningGame struct {
+	GameID             GameID     `json:"game_id"`
+	Date               time.Time  `json:"date"`
+	Season             SeasonYear `json:"season"`
+	HomeTeam           TeamID     `json:"home_team"`
+	VisitingTeam       TeamID     `json:"visiting_team"`
+	HomeTeamLeague     *string    `json:"home_team_league,omitempty"`
+	VisitingTeamLeague *string    `json:"visiting_team_league,omitempty"`
+	HomeScore          int        `json:"home_score"`
+	VisitingScore      int        `json:"visiting_score"`
+	Innings            int        `json:"innings"`
+	GameLengthOuts     int        `json:"game_length_outs"`
+	GameTimeMinutes    *int       `json:"game_time_minutes,omitempty"`
+	ParkID             ParkID     `json:"park_id"`
+	WinningTeam        *TeamID    `json:"winning_team,omitempty"`
+	ResultType         string     `json:"result_type"` // "tie", "home_win", or "away_win"
+}

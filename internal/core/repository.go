@@ -436,3 +436,27 @@ type NegroLeaguesRepository interface {
 	// GetTeamGames returns all games for a specific team in a season
 	GetTeamGames(ctx context.Context, teamID TeamID, year SeasonYear, p Pagination) ([]Game, error)
 }
+
+// AchievementRepository provides access to rare baseball achievements computed from games and plays data.
+// All achievement data is derived from materialized views built on top of games and plays tables.
+type AchievementRepository interface {
+	// ListNoHitters returns games where a team allowed zero hits
+	ListNoHitters(ctx context.Context, filter AchievementFilter) ([]NoHitter, error)
+	CountNoHitters(ctx context.Context, filter AchievementFilter) (int, error)
+
+	// ListCycles returns games where a player hit for the cycle (single, double, triple, HR)
+	ListCycles(ctx context.Context, filter AchievementFilter) ([]Cycle, error)
+	CountCycles(ctx context.Context, filter AchievementFilter) (int, error)
+
+	// ListMultiHRGames returns games where a player hit 3+ home runs
+	ListMultiHRGames(ctx context.Context, filter AchievementFilter) ([]MultiHRGame, error)
+	CountMultiHRGames(ctx context.Context, filter AchievementFilter) (int, error)
+
+	// ListTriplePlays returns games where a team recorded one or more triple plays
+	ListTriplePlays(ctx context.Context, filter AchievementFilter) ([]TriplePlay, error)
+	CountTriplePlays(ctx context.Context, filter AchievementFilter) (int, error)
+
+	// ListExtraInningGames returns games that lasted 20+ innings
+	ListExtraInningGames(ctx context.Context, filter AchievementFilter) ([]ExtraInningGame, error)
+	CountExtraInningGames(ctx context.Context, filter AchievementFilter) (int, error)
+}

@@ -89,6 +89,9 @@
 //
 // @tag.name federalleague
 // @tag.description Federal League (1914-1915) data
+//
+// @tag.name achievements
+// @tag.description Baseball achievements and milestones
 package api
 
 import (
@@ -131,6 +134,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 	parkFactorRepo := repository.NewParkFactorRepository(db)
 
 	negroLeaguesRepo := repository.NewNegroLeaguesRepository(db, cacheClient)
+	achievementRepo := repository.NewAchievementRepository(db, cacheClient)
 
 	userRepo := repository.NewUserRepository(db)
 	apiKeyRepo := repository.NewAPIKeyRepository(db)
@@ -161,6 +165,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewMLBStatsAPIRoutes(cacheClient),
 		NewFederalLeagueRoutes(gameRepo, playRepo, teamRepo),
 		NewNegroLeaguesRoutes(negroLeaguesRepo),
+		NewAchievementRoutes(achievementRepo),
 	)
 }
 

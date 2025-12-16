@@ -255,3 +255,17 @@ type WARFilter struct {
 	Provider   *StatProvider // fangraphs, bbref, internal
 	Pagination Pagination
 }
+
+type AchievementFilter struct {
+	Season     *SeasonYear
+	SeasonFrom *SeasonYear // Filter from season (inclusive)
+	SeasonTo   *SeasonYear // Filter to season (inclusive)
+	TeamID     *TeamID
+	PlayerID   *string //  Retrosheet player ID
+	DateFrom   *time.Time
+	DateTo     *time.Time
+	ParkID     *ParkID
+	MinHR      *int // Minimum home runs for multi-HR games
+	MinInnings *int // Minimum innings for extra inning games
+	Pagination Pagination
+}

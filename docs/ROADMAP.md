@@ -71,10 +71,10 @@ See [Derived & Advanced Endpoints Overview](./api-derived-advanced.md) for the a
 | Done   | plays (view) | `/v1/players/{id}/stats/fielding` (enh) | Per-game fielding stats via views. Position-specific defensive metrics. Coverage: 1910-2025.                      |
 |        |              | `/v1/games/{id}/fielding`               |                                                                                                                   |
 | Done   | plays (view) | `/v1/teams/{id}/daily-stats`            | Per-game team stats via views. Daily performance tracking and rolling aggregates. Coverage: 1910-2025.            |
-| To-Do  | games (enh)  | `/v1/games/{id}` (enh)                  | Enhanced game metadata already in games table: park, attendance, game time, umpires.                              |
+| To-Do  | games (enh)  | `/v1/games/{id}` (enh)                  | Enhanced game metadata already in games table: park, weather, attendance, game time, umpires.                     |
 | Done   | League views | `/v1/federalleague/*`                   | Federal League endpoints implemented (1914-1915). Filters games/plays/teams by league='FL'.                       |
 | Done   | League views | `/v1/negroleagues/*`                    | Negro Leagues endpoints (1935-1949). Same pattern as Federal League. See implementation plan below.               |
-| To-Do  | Achievements | `/v1/achievements/*`                    | Computed from plays/games: no-hitters, triple plays, cycles, 3+ HR games, 20+ inning games.                       |
+| Done   | Achievements | `/v1/achievements/*`                    | Computed from plays/games: no-hitters (446), cycles (90), multi-HR games (236), triple plays (143), 20+ inning games (3851). |
 
 For each dataset expansion:
 
