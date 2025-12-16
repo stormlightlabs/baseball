@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"stormlightlabs.org/baseball/internal/core"
+	"stormlightlabs.org/baseball/internal/seed"
 )
 
 //go:embed queries/play_list.sql
@@ -25,6 +26,25 @@ func NewPlayRepository(db *sql.DB) *PlayRepository {
 
 // List retrieves plays based on filter criteria
 func (r *PlayRepository) List(ctx context.Context, filter core.PlayFilter) ([]core.Play, error) {
+	if filter.DateFrom == nil && filter.DateTo == nil {
+		var leagues []string
+		if len(filter.Leagues) > 0 {
+			leagues = make([]string, len(filter.Leagues))
+			for i, l := range filter.Leagues {
+				leagues[i] = string(l)
+			}
+		} else if filter.League != nil {
+			leagues = []string{string(*filter.League)}
+		}
+
+		if len(leagues) > 0 {
+			if dateRange := seed.GetLeagueDateRange(leagues); dateRange != nil {
+				filter.DateFrom = &dateRange.From
+				filter.DateTo = &dateRange.To
+			}
+		}
+	}
+
 	query := playListQuery
 
 	args := []any{}
@@ -243,6 +263,26 @@ func (r *PlayRepository) List(ctx context.Context, filter core.PlayFilter) ([]co
 
 // Count returns the total number of plays matching the filter
 func (r *PlayRepository) Count(ctx context.Context, filter core.PlayFilter) (int, error) {
+	// Apply implicit date filters for league queries to enable partition pruning
+	if filter.DateFrom == nil && filter.DateTo == nil {
+		var leagues []string
+		if len(filter.Leagues) > 0 {
+			leagues = make([]string, len(filter.Leagues))
+			for i, l := range filter.Leagues {
+				leagues[i] = string(l)
+			}
+		} else if filter.League != nil {
+			leagues = []string{string(*filter.League)}
+		}
+
+		if len(leagues) > 0 {
+			if dateRange := seed.GetLeagueDateRange(leagues); dateRange != nil {
+				filter.DateFrom = &dateRange.From
+				filter.DateTo = &dateRange.To
+			}
+		}
+	}
+
 	query := `SELECT COUNT(*) FROM plays WHERE 1=1`
 
 	args := []any{}

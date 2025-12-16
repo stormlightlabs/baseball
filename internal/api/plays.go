@@ -78,6 +78,11 @@ func (pr *PlayRoutes) handleListPlays(w http.ResponseWriter, r *http.Request) {
 		filter.PitTeam = &t
 	}
 
+	if league := r.URL.Query().Get("league"); league != "" {
+		l := core.LeagueID(league)
+		filter.League = &l
+	}
+
 	if date := r.URL.Query().Get("date"); date != "" {
 		filter.Date = &date
 	}

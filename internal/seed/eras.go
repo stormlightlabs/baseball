@@ -129,3 +129,67 @@ func ListEras() string {
 	}
 	return result
 }
+
+// DateRange represents a date range in YYYYMMDD format
+type DateRange struct {
+	From string
+	To   string
+}
+
+// LeagueDateRanges maps league codes to their historical active date ranges
+// This enables partition pruning for league-specific queries
+// Modern leagues (AL, NL) are intentionally omitted - they span the entire dataset (1876-2025)
+var LeagueDateRanges = map[string]DateRange{
+	// 19th Century Leagues & Early 20th Century Leagues
+	"UA": {From: "18840101", To: "18841231"}, // Union Association (1884)
+	"PL": {From: "18900101", To: "18901231"}, // Players League (1890)
+	"AA": {From: "18820101", To: "18911231"}, // American Association (1882-1891)
+	"FL": {From: "19140101", To: "19151231"}, // Federal League (1914-1915)
+
+	// Negro Leagues
+	"NAL": {From: "19350101", To: "19491231"}, // Negro American League
+	"NNL": {From: "19350101", To: "19491231"}, // Negro National League
+	"NN2": {From: "19350101", To: "19491231"}, // Negro National League (second)
+	"ECL": {From: "19350101", To: "19491231"}, // East Coast League
+	"ANL": {From: "19350101", To: "19491231"}, // American Negro League
+	"EWL": {From: "19350101", To: "19491231"}, // East-West League
+	"NSL": {From: "19350101", To: "19491231"}, // Negro Southern League
+	"IND": {From: "19350101", To: "19491231"}, // Independent Negro League teams
+}
+
+// GetLeagueDateRange returns the active date range for a set of leagues
+// This enables partition pruning by adding implicit date filters to the query
+func GetLeagueDateRange(leagues []string) *DateRange {
+	if len(leagues) == 0 {
+		return nil
+	}
+
+	for _, league := range leagues {
+		if league == "AL" || league == "NL" {
+			return nil
+		}
+	}
+
+	if len(leagues) == 1 {
+		if dateRange, exists := LeagueDateRanges[leagues[0]]; exists {
+			return &dateRange
+		}
+		return nil
+	}
+
+	var firstRange *DateRange
+	for _, league := range leagues {
+		dateRange, exists := LeagueDateRanges[league]
+		if !exists {
+			return nil
+		}
+
+		if firstRange == nil {
+			firstRange = &dateRange
+		} else if dateRange.From != firstRange.From || dateRange.To != firstRange.To {
+			return nil
+		}
+	}
+
+	return firstRange
+}

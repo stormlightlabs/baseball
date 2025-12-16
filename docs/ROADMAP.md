@@ -68,7 +68,28 @@ See the dedicated Data Coverage docs for the newly completed endpoints:
 - [League-specific Coverage](./api-league-coverage.md)
 - [Achievements & Event Feeds](./api-achievements.md)
 
-### 12. Optimizations
+### 12. Optimizations ✓
 
-- Use partitioning strategies to optimize query performance, especially for large datasets like `plays`.
-    - Do it by eras
+- Era-based partitioning (61 partitions)
+    - Partitioned by year:
+        - pre-1914, 1914-1915 (Federal)
+        - 1916-1934 (sparse)
+        - 1935-1949 (Negro Leagues yearly)
+        - 1950-1962 (Baby Boomer)
+        - 1963-1968 (Pitcher),
+        - 1969-1993 (Turf Time in 5-year chunks)
+        - 1994-2025+ (yearly by era - steroid, moneyball, statcast)
+- League column denormalization - Added league columns to plays table
+    - Columns: `home_team_league`, `visiting_team_league`
+    - Eliminates expensive joins with games table for league filtering and creates bitmap indexes for fast league lookups
+- Implicit date filters for league queries - Enable partition pruning
+- League mappings
+    - 19th Century: UA (1884), PL (1890), AA (1882-1891)
+    - Early 20th: FL (1914-1915)
+    - Negro Leagues: NAL, NNL, NN2, ECL, ANL, EWL, NSL, IND (1935-1949)
+    - Modern: AL/NL (no restriction - full historical range)
+
+#### Maybes?
+
+- **Filtered indexes** - Create partial indexes for specific league + date combinations if query patterns show benefit
+- **Composite partition key** - Repartition by (league, year) only if league-specific queries dominate and current performance is insufficient

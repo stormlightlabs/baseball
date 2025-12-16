@@ -340,14 +340,33 @@ func startServer(cmd *cobra.Command, args []string) error {
 	echo.Info("✓ Request tracing enabled (X-Trace-ID)")
 
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
-	echo.Success(fmt.Sprintf("✓ Server starting on %s", addr))
+	echo.Info(fmt.Sprintf("ℹ Starting server on %s...", addr))
+	echo.Info("")
+
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- http.ListenAndServe(addr, handler)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	select {
+	case err := <-errChan:
+		return err
+	default:
+		// Server started successfully
+	}
+
+	echo.Success(fmt.Sprintf("✓ Server started on %s", addr))
 	if !cfg.Server.DebugMode {
-		echo.Info("✓ Authentication enabled")
+		echo.Info("ℹ Authentication enabled")
 		echo.Info("  GitHub OAuth: /v1/auth/github")
 		echo.Info("  Codeberg OAuth: /v1/auth/codeberg")
 		echo.Info("  Dashboard: /dashboard")
 	}
+	echo.Info("")
 	echo.Info("Press Ctrl+C to stop")
 	echo.Info("")
-	return http.ListenAndServe(addr, handler)
+
+	return <-errChan
 }
