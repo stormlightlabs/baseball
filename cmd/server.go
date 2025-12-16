@@ -4,8 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io"
 	"net/http"
+	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -20,6 +26,11 @@ import (
 	"stormlightlabs.org/baseball/internal/repository"
 )
 
+type Route struct {
+	Method string
+	Path   string
+}
+
 // ServerCmd creates the server command group
 func ServerCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -32,6 +43,7 @@ func ServerCmd() *cobra.Command {
 	cmd.AddCommand(ServerFetchCmd())
 	cmd.AddCommand(ServerHealthCmd())
 	cmd.AddCommand(ServerAuthCmd())
+	cmd.AddCommand(ServerRoutesCmd())
 	return cmd
 }
 
@@ -84,6 +96,16 @@ func ServerAuthCmd() *cobra.Command {
 		Short: "Get API authentication instructions",
 		Long:  "Display instructions for authenticating with the Baseball API.",
 		RunE:  authInstructions,
+	}
+}
+
+// ServerRoutesCmd creates the routes command
+func ServerRoutesCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "routes",
+		Short: "List all registered API routes",
+		Long:  "Display all registered API routes in a Rails rake routes style format.",
+		RunE:  showRoutes,
 	}
 }
 
@@ -369,4 +391,129 @@ func startServer(cmd *cobra.Command, args []string) error {
 	echo.Info("")
 
 	return <-errChan
+}
+
+func showRoutes(cmd *cobra.Command, args []string) error {
+	echo.Header("API Routes")
+	echo.Info("Scanning internal/api directory...")
+
+	routes, err := extractRoutesFromAST("internal/api")
+	if err != nil {
+		return fmt.Errorf("error: failed to extract routes: %w", err)
+	}
+
+	sort.Slice(routes, func(i, j int) bool {
+		if routes[i].Method != routes[j].Method {
+			return routes[i].Method < routes[j].Method
+		}
+		return routes[i].Path < routes[j].Path
+	})
+
+	echo.Info("")
+	echo.Success(fmt.Sprintf("✓ Found %d routes", len(routes)))
+	echo.Info("")
+
+	printRoutesTable(routes)
+
+	echo.Info("")
+	return nil
+}
+
+func extractRoutesFromAST(dir string) ([]Route, error) {
+	var routes []Route
+
+	matches, err := filepath.Glob(filepath.Join(dir, "*.go"))
+	if err != nil {
+		return nil, err
+	}
+
+	fset := token.NewFileSet()
+	for _, match := range matches {
+		file, err := parser.ParseFile(fset, match, nil, parser.ParseComments)
+		if err != nil {
+			continue
+		}
+
+		ast.Inspect(file, func(n ast.Node) bool {
+			callExpr, ok := n.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+
+			selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
+			if !ok {
+				return true
+			}
+
+			if selExpr.Sel.Name != "HandleFunc" {
+				return true
+			}
+
+			if len(callExpr.Args) < 2 {
+				return true
+			}
+
+			patternLit, ok := callExpr.Args[0].(*ast.BasicLit)
+			if !ok || patternLit.Kind != token.STRING {
+				return true
+			}
+
+			pattern := strings.Trim(patternLit.Value, "\"")
+			method, path := parsePattern(pattern)
+			if path != "" {
+				routes = append(routes, Route{Method: method, Path: path})
+			}
+
+			return true
+		})
+	}
+
+	routes = append(routes, Route{Method: "GET", Path: "/v1/health"})
+	routes = append(routes, Route{Method: "GET", Path: "/docs/"})
+	routes = append(routes, Route{Method: "GET", Path: "/debug/vars"})
+
+	return routes, nil
+}
+
+func parsePattern(pattern string) (method, path string) {
+	parts := strings.SplitN(pattern, " ", 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return "ALL", pattern
+}
+
+func printRoutesTable(routes []Route) {
+	if len(routes) == 0 {
+		echo.Info("No routes found")
+		return
+	}
+
+	maxMethodLen := 6
+	maxPathLen := 4
+	for _, r := range routes {
+		if len(r.Method) > maxMethodLen {
+			maxMethodLen = len(r.Method)
+		}
+		if len(r.Path) > maxPathLen {
+			maxPathLen = len(r.Path)
+		}
+	}
+
+	headerMethod := padRight("METHOD", maxMethodLen)
+	headerPath := padRight("PATH", maxPathLen)
+	echo.Info(fmt.Sprintf("%s  %s", headerMethod, headerPath))
+	echo.Info(strings.Repeat("-", maxMethodLen+2+maxPathLen))
+
+	for _, r := range routes {
+		method := padRight(r.Method, maxMethodLen)
+		echo.Info(fmt.Sprintf("%s  %s", method, r.Path))
+	}
+}
+
+func padRight(s string, length int) string {
+	if len(s) >= length {
+		return s
+	}
+	return s + strings.Repeat(" ", length-len(s))
 }
