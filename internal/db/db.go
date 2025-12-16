@@ -22,9 +22,6 @@ import (
 //go:embed sql/*.sql
 var migrationFiles embed.FS
 
-//go:embed queries/build_win_expectancy.sql
-var buildWinExpectancyQuery string
-
 // Migration represents a single database migration.
 type Migration struct {
 	Name    string
@@ -836,19 +833,50 @@ func csvReader(r io.Reader) *csv.Reader {
 	return reader
 }
 
-// BuildWinExpectancy computes win expectancy data from historical play-by-play data and populates the win_expectancy_historical table.
-// This analyzes all plays in the plays table, joins with game outcomes, and calculates win probabilities for each unique game state.
-func (db *DB) BuildWinExpectancy(ctx context.Context, minSampleSize int) (int64, error) {
-	if minSampleSize < 1 {
-		minSampleSize = 50
+// RefreshMaterializedViews refreshes one or more materialized views.
+// If viewNames is empty, refreshes all materialized views in the database.
+func (db *DB) RefreshMaterializedViews(ctx context.Context, viewNames []string) (int, error) {
+	views := viewNames
+	if len(views) == 0 {
+		rows, err := db.QueryContext(ctx, `
+			SELECT schemaname || '.' || matviewname as viewname
+			FROM pg_matviews
+			WHERE schemaname = 'public'
+			ORDER BY matviewname
+		`)
+		if err != nil {
+			return 0, fmt.Errorf("failed to list materialized views: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var viewName string
+			if err := rows.Scan(&viewName); err != nil {
+				return 0, fmt.Errorf("failed to scan view name: %w", err)
+			}
+			views = append(views, viewName)
+		}
+		if err := rows.Err(); err != nil {
+			return 0, fmt.Errorf("failed to iterate views: %w", err)
+		}
 	}
 
-	result, err := db.ExecContext(ctx, buildWinExpectancyQuery, minSampleSize)
-	if err != nil {
-		return 0, fmt.Errorf("failed to build win expectancy: %w", err)
+	for _, view := range views {
+		query := fmt.Sprintf("REFRESH MATERIALIZED VIEW CONCURRENTLY %s", view)
+		_, err := db.ExecContext(ctx, query)
+		if err != nil {
+			if strings.Contains(err.Error(), "cannot refresh materialized view") && strings.Contains(err.Error(), "concurrently") {
+				query = fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", view)
+				if _, err := db.ExecContext(ctx, query); err != nil {
+					return 0, fmt.Errorf("failed to refresh view %s: %w", view, err)
+				}
+			} else {
+				return 0, fmt.Errorf("failed to refresh view %s: %w", view, err)
+			}
+		}
 	}
 
-	return result.RowsAffected()
+	return len(views), nil
 }
 
 // loadNegroLeaguesTeamMapping reads the team-to-league mapping CSV

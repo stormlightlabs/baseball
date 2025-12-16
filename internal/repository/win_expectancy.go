@@ -316,8 +316,3 @@ func (r *WinExpectancyRepository) UpsertWinExpectancy(ctx context.Context, we *c
 
 	return nil
 }
-
-// BuildFromHistoricalData is implemented in the db package
-func (r *WinExpectancyRepository) BuildFromHistoricalData(_ context.Context, _, _, _ int) (int64, error) {
-	return 0, fmt.Errorf("BuildFromHistoricalData should be called via db.BuildWinExpectancy")
-}

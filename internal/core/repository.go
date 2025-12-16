@@ -409,10 +409,6 @@ type WinExpectancyRepository interface {
 	// UpsertWinExpectancy inserts or updates win expectancy data
 	// Used for populating the table from historical analysis
 	UpsertWinExpectancy(ctx context.Context, we *WinExpectancy) error
-
-	// BuildFromHistoricalData computes win expectancies from play-by-play data for a given era
-	// This is a heavy operation that analyzes all games in the specified year range
-	BuildFromHistoricalData(ctx context.Context, startYear, endYear int, minSampleSize int) (int64, error)
 }
 
 // NegroLeaguesRepository provides access to Negro Leagues historical data (1903-1962).

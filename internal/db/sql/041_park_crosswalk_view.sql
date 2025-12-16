@@ -53,13 +53,11 @@ SELECT
 FROM retrosheet_parks rp
 LEFT JOIN deduplicated_parks p ON rp.park_id = p.parkkey;
 
--- Indexes for efficient lookups
 CREATE UNIQUE INDEX idx_park_map_retro ON park_map(retro_park_id);
 CREATE INDEX idx_park_map_lahman ON park_map(lahman_park_id) WHERE lahman_park_id IS NOT NULL;
 CREATE INDEX idx_park_map_city ON park_map(city) WHERE city IS NOT NULL;
 CREATE INDEX idx_park_map_era ON park_map(era);
 
--- Helper functions
 CREATE OR REPLACE FUNCTION get_park_info(park_code VARCHAR)
 RETURNS TABLE(
     park_name VARCHAR,

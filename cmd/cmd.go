@@ -45,6 +45,7 @@ func DbCmd() *cobra.Command {
 	cmd.AddCommand(DbResetCmd())
 	cmd.AddCommand(DbPopulateCmd())
 	cmd.AddCommand(DbRecreateCmd())
+	cmd.AddCommand(DbRefreshViewsCmd())
 	return cmd
 }
 
@@ -230,7 +231,6 @@ func DbPopulateCmd() *cobra.Command {
 	cmd.AddCommand(DbPopulateLahmanCmd())
 	cmd.AddCommand(DbPopulateRetrosheetCmd())
 	cmd.AddCommand(DbPopulateAllCmd())
-	cmd.AddCommand(DbPopulateWinExpectancyCmd())
 	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
 	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
@@ -1239,23 +1239,39 @@ It contains weather and game metadata for 224K games (1898-2025).`, csvPath)
 	return nil
 }
 
-// DbPopulateWinExpectancyCmd creates the populate win-expectancy command
-func DbPopulateWinExpectancyCmd() *cobra.Command {
-	var minSampleSize int
-	cmd := &cobra.Command{
-		Use:   "win-expectancy",
-		Short: "Build win expectancy table from historical play-by-play data",
-		Long:  "Analyzes all plays in the database and computes win probabilities for each unique game state.",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return populateWinExpectancy(cmd, minSampleSize)
-		},
+// DbRefreshViewsCmd creates the refresh-views command
+func DbRefreshViewsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "refresh-views [view-names...]",
+		Short: "Refresh materialized views",
+		Long: `Refresh one or more materialized views. If no view names are provided, refreshes all materialized views.
+
+Available materialized views:
+  • player_game_batting_stats - Per-game batting statistics
+  • player_game_pitching_stats - Per-game pitching statistics
+  • player_game_fielding_stats - Per-game fielding statistics
+  • team_game_stats - Per-game team statistics
+  • player_id_crosswalk - Player ID mappings (Lahman/Retrosheet)
+  • team_franchise_crosswalk - Team and franchise mappings
+  • park_map - Park ID crosswalk and metadata
+  • no_hitters - No-hitter achievements
+  • cycles - Hitting for the cycle achievements
+  • multi_hr_games - Multi-home run games
+  • triple_plays - Triple play achievements
+  • extra_inning_games - Extra inning games
+  • win_expectancy_historical - Win expectancy probabilities by game state
+
+Examples:
+  baseball db refresh-views                           # Refresh all views
+  baseball db refresh-views win_expectancy_historical # Refresh one view
+  baseball db refresh-views park_map no_hitters       # Refresh multiple views
+`,
+		RunE: refreshViews,
 	}
-	cmd.Flags().IntVar(&minSampleSize, "min-sample-size", 50, "Minimum sample size for a game state to be included")
-	return cmd
 }
 
-func populateWinExpectancy(cmd *cobra.Command, minSampleSize int) error {
-	echo.Header("Building Win Expectancy Data")
+func refreshViews(cmd *cobra.Command, args []string) error {
+	echo.Header("Refreshing Materialized Views")
 	echo.Info("Connecting to database...")
 
 	database, err := db.Connect("")
@@ -1267,15 +1283,18 @@ func populateWinExpectancy(cmd *cobra.Command, minSampleSize int) error {
 	echo.Success("✓ Connected to database")
 
 	ctx := cmd.Context()
-	echo.Info("Analyzing play-by-play data and computing win probabilities...")
-	echo.Infof("  Minimum sample size: %d", minSampleSize)
-	echo.Info("  This may take a few minutes for large datasets...")
-	rows, err := database.BuildWinExpectancy(ctx, minSampleSize)
+
+	if len(args) == 0 {
+		echo.Info("Refreshing all materialized views...")
+	} else {
+		echo.Infof("Refreshing %d view(s): %v", len(args), args)
+	}
+
+	count, err := database.RefreshMaterializedViews(ctx, args)
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
 
-	echo.Success("✓ Win expectancy data built successfully")
-	echo.Infof("  Game states populated: %d", rows)
+	echo.Success(fmt.Sprintf("✓ Successfully refreshed %d materialized view(s)", count))
 	return nil
 }

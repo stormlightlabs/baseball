@@ -25,13 +25,11 @@ FROM "Teams" t
 LEFT JOIN "TeamsFranchises" tf ON t."franchID" = tf."franchID"
 WHERE t."teamID" IS NOT NULL;
 
--- Indexes for efficient lookups
 CREATE INDEX idx_team_franchise_map_team ON team_franchise_map(team_id);
 CREATE INDEX idx_team_franchise_map_franchise ON team_franchise_map(franchise_id);
 CREATE INDEX idx_team_franchise_map_season ON team_franchise_map(season);
 CREATE UNIQUE INDEX idx_team_franchise_map_unique ON team_franchise_map(team_id, season);
 
--- Helper function to get current team for a franchise
 CREATE OR REPLACE FUNCTION franchise_current_team(franchise VARCHAR)
 RETURNS VARCHAR AS $$
     SELECT team_id
@@ -41,7 +39,6 @@ RETURNS VARCHAR AS $$
     LIMIT 1;
 $$ LANGUAGE SQL STABLE;
 
--- Helper function to get all historical teams for a franchise
 CREATE OR REPLACE FUNCTION franchise_all_teams(franchise VARCHAR)
 RETURNS TABLE(team_id VARCHAR, season INT, team_name VARCHAR) AS $$
     SELECT DISTINCT team_id, season, team_name

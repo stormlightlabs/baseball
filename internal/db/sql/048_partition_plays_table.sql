@@ -277,31 +277,20 @@ CREATE TABLE plays_2028 PARTITION OF plays_partitioned FOR VALUES FROM ('2028000
 CREATE TABLE plays_2029 PARTITION OF plays_partitioned FOR VALUES FROM ('20290000') TO ('20300000');
 CREATE TABLE plays_2030 PARTITION OF plays_partitioned FOR VALUES FROM ('20300000') TO ('20310000');
 
--- Default partition for any overflow
 CREATE TABLE plays_default PARTITION OF plays_partitioned DEFAULT;
 
--- Step 3: Copy data from old table to new partitioned table
 INSERT INTO plays_partitioned SELECT * FROM plays;
 
 -- Step 4: Create indexes on the partitioned table
 -- These will automatically be created on all child partitions
-
--- Primary key index (automatically created with PRIMARY KEY constraint)
-
--- Game ID index
 CREATE INDEX idx_plays_partitioned_gid ON plays_partitioned(gid);
-
--- Game ID + play number compound index
 CREATE INDEX idx_plays_partitioned_gid_pn ON plays_partitioned(gid, pn);
 
 -- Date index (critical for partition pruning)
 CREATE INDEX idx_plays_partitioned_date ON plays_partitioned(date);
 
--- Player indexes
 CREATE INDEX idx_plays_partitioned_batter ON plays_partitioned(batter);
 CREATE INDEX idx_plays_partitioned_pitcher ON plays_partitioned(pitcher);
-
--- Team indexes
 CREATE INDEX idx_plays_partitioned_batteam ON plays_partitioned(batteam);
 CREATE INDEX idx_plays_partitioned_pitteam ON plays_partitioned(pitteam);
 
@@ -313,6 +302,3 @@ COMMIT;
 
 -- Step 6: Analyze new table for query planner
 ANALYZE plays;
-
--- Note: plays_old table is kept for safety
--- Can be dropped manually after verification with: DROP TABLE plays_old CASCADE;

@@ -4,7 +4,6 @@
 
 DROP TABLE IF EXISTS negro_leagues_plays CASCADE;
 CREATE TABLE negro_leagues_plays (
-    -- Game identification
     gid varchar(12) NOT NULL,           -- Game ID
     event text,                         -- Play as it appears in event file
     inning int,                         -- Inning number
@@ -16,7 +15,6 @@ CREATE TABLE negro_leagues_plays (
     score_v int,                        -- Visiting team score at start of play
     score_h int,                        -- Home team score at start of play
 
-    -- Players involved
     batter varchar(8),                  -- Batter ID
     pitcher varchar(8),                 -- Pitcher ID
     lp int,                             -- Lineup position of batter
@@ -224,13 +222,11 @@ CREATE TABLE negro_leagues_plays (
     umplf varchar(8),                   -- Left field umpire
     umprf varchar(8),                   -- Right field umpire
 
-    -- Game metadata
     date varchar(8),                    -- Date of game (YYYYMMDD)
     gametype varchar(20),               -- Type of game (regular, etc.)
     pbp varchar(10)                     -- Play-by-play type (deduced or full)
 );
 
--- Indexes
 CREATE INDEX idx_negro_leagues_plays_gid ON negro_leagues_plays(gid);
 CREATE INDEX idx_negro_leagues_plays_batter ON negro_leagues_plays(batter);
 CREATE INDEX idx_negro_leagues_plays_pitcher ON negro_leagues_plays(pitcher);

@@ -171,7 +171,6 @@ CREATE TABLE negro_leagues_games (
     PRIMARY KEY (date, home_team, game_number)
 );
 
--- Indexes
 CREATE INDEX idx_negro_leagues_games_game_type ON negro_leagues_games(game_type);
 CREATE INDEX idx_negro_leagues_games_home_team ON negro_leagues_games(home_team);
 CREATE INDEX idx_negro_leagues_games_visiting_team ON negro_leagues_games(visiting_team);
@@ -179,11 +178,9 @@ CREATE INDEX idx_negro_leagues_games_date ON negro_leagues_games(date);
 CREATE INDEX idx_negro_leagues_games_home_league ON negro_leagues_games(home_team_league);
 CREATE INDEX idx_negro_leagues_games_visiting_league ON negro_leagues_games(visiting_team_league);
 
--- Search indexes (if we want full-text search support)
 CREATE INDEX negro_leagues_games_search_tsv_idx ON negro_leagues_games USING gin(search_tsv);
 CREATE INDEX negro_leagues_games_search_trgm_idx ON negro_leagues_games USING gin(search_text gin_trgm_ops);
 
--- Trigger for search text updates (mirrors games table)
 CREATE OR REPLACE FUNCTION update_negro_leagues_game_search_trigger()
 RETURNS TRIGGER AS $$
 BEGIN

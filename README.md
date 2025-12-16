@@ -120,10 +120,10 @@ task build
      ./tmp/baseball db populate retrosheet --years=all
      ```
 
-6. Optional derived tables (e.g., win expectancy):
+6. Refresh materialized views (after initial data load):
 
    ```bash
-   ./tmp/baseball db populate win-expectancy --min-sample-size 50
+   ./tmp/baseball db refresh-views
    ```
 
 **Common commands**:
@@ -152,8 +152,11 @@ task build
 # Reset everything (migrate + populate)
 ./tmp/baseball db reset --years=2023-2025
 
-# Build win expectancy data from play-by-play
-./tmp/baseball db populate win-expectancy --min-sample-size 50
+# Refresh all materialized views (win expectancy, achievements, stats aggregations)
+./tmp/baseball db refresh-views
+
+# Or refresh specific views
+./tmp/baseball db refresh-views win_expectancy_historical park_map
 ```
 
 ### Server
