@@ -1260,11 +1260,15 @@ Available materialized views:
   • triple_plays - Triple play achievements
   • extra_inning_games - Extra inning games
   • win_expectancy_historical - Win expectancy probabilities by game state
+  • season_batting_leaders - Season batting statistics and leaderboards
+  • season_pitching_leaders - Season pitching statistics and leaderboards
+  • career_batting_leaders - Career batting statistics and leaderboards
+  • career_pitching_leaders - Career pitching statistics and leaderboards
 
 Examples:
-  baseball db refresh-views                           # Refresh all views
-  baseball db refresh-views win_expectancy_historical # Refresh one view
-  baseball db refresh-views park_map no_hitters       # Refresh multiple views
+  baseball db refresh-views                            # Refresh all views
+  baseball db refresh-views season_batting_leaders     # Refresh one view
+  baseball db refresh-views park_map no_hitters        # Refresh multiple views
 `,
 		RunE: refreshViews,
 	}

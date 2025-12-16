@@ -1,8 +1,4 @@
 -- Create materialized view for triple play achievements
--- Triple plays are rare defensive plays where three outs are recorded on a single play
--- Data comes from games table which aggregates triple plays per game
--- Coverage: All games in games table (1910-2025)
-
 DROP MATERIALIZED VIEW IF EXISTS triple_plays CASCADE;
 
 CREATE MATERIALIZED VIEW triple_plays AS
@@ -48,7 +44,6 @@ ORDER BY date DESC;
 COMMENT ON MATERIALIZED VIEW triple_plays IS
 'Triple play achievements: games where a team recorded one or more triple plays.';
 
--- Create indexes for triple_plays materialized view
 CREATE INDEX idx_triple_plays_game_id ON triple_plays(game_id);
 CREATE INDEX idx_triple_plays_team_id ON triple_plays(team_id);
 CREATE INDEX idx_triple_plays_season ON triple_plays(season);

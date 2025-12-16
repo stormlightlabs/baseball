@@ -70,7 +70,6 @@ SELECT
     NOW() as updated_at
 FROM win_rates;
 
--- Recreate indexes
 CREATE UNIQUE INDEX idx_win_expectancy_state ON win_expectancy_historical(
     inning, is_bottom, outs, runners_state, score_diff, start_year, end_year
 );
@@ -79,7 +78,6 @@ CREATE INDEX idx_win_expectancy_outs ON win_expectancy_historical(outs);
 CREATE INDEX idx_win_expectancy_runners ON win_expectancy_historical(runners_state);
 CREATE INDEX idx_win_expectancy_score ON win_expectancy_historical(score_diff);
 
--- Recreate helper function
 CREATE OR REPLACE FUNCTION get_win_expectancy(
     p_inning INT,
     p_is_bottom BOOLEAN,

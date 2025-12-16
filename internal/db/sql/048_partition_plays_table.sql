@@ -1,6 +1,4 @@
--- 048_partition_plays_table.sql
 -- Partition the plays table by year to improve query performance
--- Particularly for Negro Leagues and date-range queries
 
 -- Step 1: Create new partitioned table with same schema as plays
 CREATE TABLE plays_partitioned (

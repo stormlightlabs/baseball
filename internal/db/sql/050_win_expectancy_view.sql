@@ -1,9 +1,7 @@
 -- Create materialized view for win expectancy from historical play-by-play data
 
--- Drop the old table version (from migration 019) if it exists
 DROP TABLE IF EXISTS win_expectancy_historical CASCADE;
 
--- Drop any existing materialized view
 DROP MATERIALIZED VIEW IF EXISTS win_expectancy_historical CASCADE;
 
 CREATE MATERIALIZED VIEW win_expectancy_historical AS
@@ -57,7 +55,7 @@ win_rates AS (
         COUNT(*) as sample_size
     FROM game_states
     GROUP BY inning, is_bottom, outs, runners_state, score_diff
-    HAVING COUNT(*) >= 100  -- Minimum sample size for statistical reliability
+    HAVING COUNT(*) >= 100
 )
 SELECT
     inning,

@@ -1,7 +1,4 @@
 -- Create materialized view for multiple home run game achievements
--- Tracks games where a player hit 3 or more home runs
--- Coverage: All games in plays table (1910-2025)
-
 DROP MATERIALIZED VIEW IF EXISTS multi_hr_games CASCADE;
 
 CREATE MATERIALIZED VIEW multi_hr_games AS
@@ -31,7 +28,6 @@ SELECT
     pgh.total_hits,
     pgh.at_bats,
     g.park_id,
-    -- Determine if player was home or away
     CASE
         WHEN pgh.team_id = g.home_team THEN 'home'
         ELSE 'away'
@@ -43,7 +39,6 @@ WHERE pgh.home_runs >= 3;
 COMMENT ON MATERIALIZED VIEW multi_hr_games IS
 'Multiple home run game achievements: games where a player hit 3 or more home runs.';
 
--- Create indexes for multi_hr_games materialized view
 CREATE INDEX idx_multi_hr_games_game_id ON multi_hr_games(game_id);
 CREATE INDEX idx_multi_hr_games_player_id ON multi_hr_games(player_id);
 CREATE INDEX idx_multi_hr_games_team_id ON multi_hr_games(team_id);
