@@ -138,6 +138,7 @@ func RetrosheetLoadCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&eraFlag, "era", "", "Load data for a specific era (federal, nlg, 1970s, 1980s, steroid, modern)")
 	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
+	cmd.AddCommand(RetrosheetPlayersLoadCmd())
 	return cmd
 }
 
@@ -168,6 +169,16 @@ func WeatherLoadCmd() *cobra.Command {
 		Short: "Load weather data into database",
 		Long:  "Updates existing games with weather and game metadata from Retrosheet's master gameinfo.csv file.",
 		RunE:  loadWeatherData,
+	}
+}
+
+// RetrosheetPlayersLoadCmd creates the load retrosheet players command
+func RetrosheetPlayersLoadCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "players",
+		Short: "Load Retrosheet player data into database",
+		Long:  "Load Retrosheet allplayers.csv with per-team-season appearances, pitcher roles, and exact game dates.",
+		RunE:  loadRetrosheetPlayers,
 	}
 }
 
@@ -500,10 +511,40 @@ func fetchRetrosheet(_ *cobra.Command, yearsFlag string, force bool) error {
 	}
 
 	echo.Info("")
+	echo.Info("Downloading player data...")
+	allplayersURL := "https://www.retrosheet.org/downloads/allplayers.zip"
+	echo.Infof("  Downloading allplayers.zip...")
+
+	resp2, err := http.Get(allplayersURL)
+	if err != nil {
+		echo.Infof("  ⚠ Failed to download allplayers: %v", err)
+	} else {
+		defer resp2.Body.Close()
+
+		if resp2.StatusCode != http.StatusOK {
+			echo.Infof("  ⚠ allplayers.zip not available (HTTP %d)", resp2.StatusCode)
+		} else {
+			outputPath := filepath.Join(dataDir, "allplayers.zip")
+			out, err := os.Create(outputPath)
+			if err != nil {
+				return fmt.Errorf("error: failed to create allplayers.zip: %w", err)
+			}
+			defer out.Close()
+
+			if _, err = io.Copy(out, resp2.Body); err != nil {
+				return fmt.Errorf("error: failed to save allplayers.zip: %w", err)
+			}
+
+			echo.Successf("  ✓ allplayers.zip downloaded")
+		}
+	}
+
+	echo.Info("")
 	echo.Success("✓ Retrosheet data downloaded successfully")
 	echo.Infof("  Game logs: %s", gameLogsDir)
 	echo.Infof("  Play-by-play: %s", playsDir)
 	echo.Infof("  Ejections: %s", ejectionsDir)
+	echo.Infof("  Players: %s/allplayers.zip", dataDir)
 	return nil
 }
 
@@ -1236,6 +1277,75 @@ It contains weather and game metadata for 224K games (1898-2025).`, csvPath)
 	echo.Info("")
 	echo.Success("✓ Game weather data loaded successfully")
 	echo.Infof("  Coverage: 1898-2025 (weather details from 2015+)")
+	return nil
+}
+
+func loadRetrosheetPlayers(cmd *cobra.Command, args []string) error {
+	echo.Header("Loading Retrosheet Player Data")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	ctx := cmd.Context()
+
+	// Check if allplayers.csv exists
+	csvPath := "data/retrosheet/allplayers.csv"
+	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
+		// Try to extract from zip
+		zipPath := "data/retrosheet/allplayers.zip"
+		if _, err := os.Stat(zipPath); os.IsNotExist(err) {
+			return fmt.Errorf(`error: allplayers data not found
+
+Run this command first to download the data:
+  ./tmp/baseball etl fetch retrosheet`)
+		}
+
+		echo.Info("Extracting allplayers.zip...")
+		r, err := zip.OpenReader(zipPath)
+		if err != nil {
+			return fmt.Errorf("error: failed to open allplayers.zip: %w", err)
+		}
+		defer r.Close()
+
+		for _, f := range r.File {
+			if f.Name == "allplayers.csv" {
+				rc, err := f.Open()
+				if err != nil {
+					return fmt.Errorf("error: failed to read allplayers.csv from zip: %w", err)
+				}
+				defer rc.Close()
+
+				out, err := os.Create(csvPath)
+				if err != nil {
+					return fmt.Errorf("error: failed to create allplayers.csv: %w", err)
+				}
+				defer out.Close()
+
+				if _, err = io.Copy(out, rc); err != nil {
+					return fmt.Errorf("error: failed to extract allplayers.csv: %w", err)
+				}
+
+				echo.Success("✓ Extracted allplayers.csv")
+				break
+			}
+		}
+	}
+
+	rowCount, err := seed.LoadRetrosheetPlayers(ctx, database, csvPath)
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	echo.Info("")
+	echo.Success("✓ Retrosheet player data loaded successfully")
+	echo.Infof("  Rows loaded: %d", rowCount)
+	echo.Infof("  Coverage: per-team-season appearances (1898-2025)")
 	return nil
 }
 

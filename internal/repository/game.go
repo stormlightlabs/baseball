@@ -818,9 +818,105 @@ func (r *GameRepository) GetBoxscore(ctx context.Context, id core.GameID) (*core
 		homeLineup = append(homeLineup, *p)
 	}
 
+	playerIDs := make([]string, 0, len(awayLineup)+len(homeLineup))
+	for _, p := range awayLineup {
+		playerIDs = append(playerIDs, string(p.PlayerID))
+	}
+	for _, p := range homeLineup {
+		playerIDs = append(playerIDs, string(p.PlayerID))
+	}
+
+	if len(playerIDs) > 0 {
+		bioData, err := r.getPlayerBioData(ctx, playerIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch player bio data: %w", err)
+		}
+
+		for i := range awayLineup {
+			if bio, ok := bioData[awayLineup[i].PlayerID]; ok {
+				awayLineup[i].Bats = bio.Bats
+				awayLineup[i].Throws = bio.Throws
+				awayLineup[i].HeightInches = bio.HeightInches
+				awayLineup[i].WeightLbs = bio.WeightLbs
+			}
+		}
+
+		for i := range homeLineup {
+			if bio, ok := bioData[homeLineup[i].PlayerID]; ok {
+				homeLineup[i].Bats = bio.Bats
+				homeLineup[i].Throws = bio.Throws
+				homeLineup[i].HeightInches = bio.HeightInches
+				homeLineup[i].WeightLbs = bio.WeightLbs
+			}
+		}
+	}
+
 	box.AwayLineup = awayLineup
 	box.HomeLineup = homeLineup
 	return &box, nil
+}
+
+// playerBioData holds bio information for a player
+type playerBioData struct {
+	Bats         *string
+	Throws       *string
+	HeightInches *int
+	WeightLbs    *int
+}
+
+// getPlayerBioData fetches bio data for multiple players in a single query.
+// It joins on retroID since games table stores Retrosheet IDs.
+func (r *GameRepository) getPlayerBioData(ctx context.Context, playerIDs []string) (map[core.PlayerID]playerBioData, error) {
+	if len(playerIDs) == 0 {
+		return make(map[core.PlayerID]playerBioData), nil
+	}
+
+	query := `
+		SELECT "retroID", "bats", "throws", "height", "weight"
+		FROM "People"
+		WHERE "retroID" = ANY($1)
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, playerIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query player bio data: %w", err)
+	}
+	defer rows.Close()
+
+	bioData := make(map[core.PlayerID]playerBioData)
+	for rows.Next() {
+		var retroID string
+		var bats, throws sql.NullString
+		var height, weight sql.NullInt64
+
+		if err := rows.Scan(&retroID, &bats, &throws, &height, &weight); err != nil {
+			return nil, fmt.Errorf("failed to scan bio data: %w", err)
+		}
+
+		bio := playerBioData{}
+		if bats.Valid {
+			bio.Bats = &bats.String
+		}
+		if throws.Valid {
+			bio.Throws = &throws.String
+		}
+		if height.Valid {
+			h := int(height.Int64)
+			bio.HeightInches = &h
+		}
+		if weight.Valid {
+			w := int(weight.Int64)
+			bio.WeightLbs = &w
+		}
+
+		bioData[core.PlayerID(retroID)] = bio
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating bio data rows: %w", err)
+	}
+
+	return bioData, nil
 }
 
 // SearchGamesNL performs a natural language search for games.

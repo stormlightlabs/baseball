@@ -82,8 +82,12 @@ type Player struct {
 	HeightInches *int `json:"height_inches,omitempty"`
 	WeightLbs    *int `json:"weight_lbs,omitempty"`
 
-	Debut     *time.Time `json:"debut,omitempty"`
-	FinalGame *time.Time `json:"final_game,omitempty"`
+	Debut        *time.Time `json:"debut,omitempty"`
+	FinalGame    *time.Time `json:"final_game,omitempty"`
+	LatestSeason *int       `json:"latest_season,omitempty"`
+	LatestTeam   *string    `json:"latest_team,omitempty"`
+	Positions    *string    `json:"positions,omitempty"`   // Comma-separated position breakdown
+	DataSource   *string    `json:"data_source,omitempty"` // "lahman", "retrosheet", "lahman+retrosheet"
 }
 
 // PlayerBattingSeason is a single season/team batting line.
@@ -114,6 +118,8 @@ type PlayerBattingSeason struct {
 	OBP float64 `json:"obp"`
 	SLG float64 `json:"slg"`
 	OPS float64 `json:"ops"`
+
+	DataSources []string `json:"data_sources,omitempty"` // e.g. ["lahman"] or ["retrosheet"]
 }
 
 // PlayerGameBattingLog represents a player's batting performance in a single game.
@@ -228,6 +234,8 @@ type PlayerPitchingSeason struct {
 	BBPer9 float64  `json:"bb_per_9"`
 	HRPer9 float64  `json:"hr_per_9"`
 	FIP    *float64 `json:"fip,omitempty"`
+
+	DataSources []string `json:"data_sources,omitempty"` // e.g. ["lahman"] or ["retrosheet"]
 }
 
 // PlayerFieldingSeason from Lahman Fielding.
@@ -393,9 +401,13 @@ type TeamGameStats struct {
 
 // LineupPlayer represents a starting lineup player with position
 type LineupPlayer struct {
-	PlayerID PlayerID `json:"player_id"`
-	Name     string   `json:"name,omitempty"`
-	Position int      `json:"position"`
+	PlayerID     PlayerID `json:"player_id"`
+	Name         string   `json:"name,omitempty"`
+	Position     int      `json:"position"`
+	Bats         *string  `json:"bats,omitempty"`
+	Throws       *string  `json:"throws,omitempty"`
+	HeightInches *int     `json:"height_inches,omitempty"`
+	WeightLbs    *int     `json:"weight_lbs,omitempty"`
 }
 
 // PlayerAppearance represents a player's appearance data for a season
@@ -457,10 +469,12 @@ type Play struct {
 	Date     string `json:"date"`
 	GameType string `json:"game_type"`
 
-	Batter  RetroPlayerID `json:"batter"`
-	Pitcher RetroPlayerID `json:"pitcher"`
-	BatHand *string       `json:"bat_hand,omitempty"`
-	PitHand *string       `json:"pit_hand,omitempty"`
+	Batter      RetroPlayerID `json:"batter"`
+	BatterName  *string       `json:"batter_name,omitempty"`
+	Pitcher     RetroPlayerID `json:"pitcher"`
+	PitcherName *string       `json:"pitcher_name,omitempty"`
+	BatHand     *string       `json:"bat_hand,omitempty"`
+	PitHand     *string       `json:"pit_hand,omitempty"`
 
 	ScoreVis  int `json:"score_vis"`
 	ScoreHome int `json:"score_home"`
@@ -818,7 +832,9 @@ type Pitch struct {
 	PitTeam     TeamID        `json:"pit_team" swaggertype:"string"`
 	Date        string        `json:"date"`
 	Batter      RetroPlayerID `json:"batter" swaggertype:"string"`
+	BatterName  *string       `json:"batter_name,omitempty"`
 	Pitcher     RetroPlayerID `json:"pitcher" swaggertype:"string"`
+	PitcherName *string       `json:"pitcher_name,omitempty"`
 	BatHand     *string       `json:"bat_hand,omitempty"`
 	PitHand     *string       `json:"pit_hand,omitempty"`
 	OutsPre     int           `json:"outs_pre"`

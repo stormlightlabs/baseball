@@ -49,7 +49,9 @@ func (r *PitchRepository) parsePitchSequence(play core.Play) []core.Pitch {
 			PitTeam:     play.PitTeam,
 			Date:        play.Date,
 			Batter:      play.Batter,
+			BatterName:  play.BatterName,
 			Pitcher:     play.Pitcher,
+			PitcherName: play.PitcherName,
 			BatHand:     play.BatHand,
 			PitHand:     play.PitHand,
 			OutsPre:     play.OutsPre,
@@ -157,19 +159,23 @@ func (r *PitchRepository) parsePitchSequence(play core.Play) []core.Pitch {
 func (r *PitchRepository) List(ctx context.Context, filter core.PitchFilter) ([]core.Pitch, error) {
 	query := `
 		SELECT
-			gid, pn, inning, top_bot, batteam, pitteam,
-			SUBSTRING(gid, 4, 8) as date,
+			p.gid, p.pn, p.inning, p.top_bot, p.batteam, p.pitteam,
+			SUBSTRING(p.gid, 4, 8) as date,
 			CASE
-				WHEN SUBSTRING(gid, 12, 1) = '0' THEN 'regular'
-				WHEN SUBSTRING(gid, 12, 1) = '1' THEN 'postseason'
+				WHEN SUBSTRING(p.gid, 12, 1) = '0' THEN 'regular'
+				WHEN SUBSTRING(p.gid, 12, 1) = '1' THEN 'postseason'
 				ELSE 'other'
 			END as game_type,
-			batter, pitcher, bathand, pithand,
-			score_v, score_h, outs_pre, outs_post,
-			balls, strikes, pitches,
-			event
-		FROM plays
-		WHERE pitches IS NOT NULL AND pitches != ''
+			p.batter,
+			(SELECT first_name || ' ' || last_name FROM retrosheet_players WHERE player_id = p.batter LIMIT 1) as batter_name,
+			p.pitcher,
+			(SELECT first_name || ' ' || last_name FROM retrosheet_players WHERE player_id = p.pitcher LIMIT 1) as pitcher_name,
+			p.bathand, p.pithand,
+			p.score_v, p.score_h, p.outs_pre, p.outs_post,
+			p.balls, p.strikes, p.pitches,
+			p.event
+		FROM plays p
+		WHERE p.pitches IS NOT NULL AND p.pitches != ''
 	`
 
 	args := []any{}
@@ -253,14 +259,16 @@ func (r *PitchRepository) List(ctx context.Context, filter core.PitchFilter) ([]
 
 	for rows.Next() {
 		var play core.Play
-		var batHand, pitHand sql.NullString
+		var batterName, pitcherName, batHand, pitHand sql.NullString
 		var balls, strikes sql.NullInt64
 		var pitches sql.NullString
 
 		err := rows.Scan(
 			&play.GameID, &play.PlayNum, &play.Inning, &play.TopBot, &play.BatTeam, &play.PitTeam,
 			&play.Date, &play.GameType,
-			&play.Batter, &play.Pitcher, &batHand, &pitHand,
+			&play.Batter, &batterName,
+			&play.Pitcher, &pitcherName,
+			&batHand, &pitHand,
 			&play.ScoreVis, &play.ScoreHome, &play.OutsPre, &play.OutsPost,
 			&balls, &strikes, &pitches,
 			&play.Event,
@@ -269,6 +277,12 @@ func (r *PitchRepository) List(ctx context.Context, filter core.PitchFilter) ([]
 			return nil, fmt.Errorf("failed to scan play: %w", err)
 		}
 
+		if batterName.Valid {
+			play.BatterName = &batterName.String
+		}
+		if pitcherName.Valid {
+			play.PitcherName = &pitcherName.String
+		}
 		if batHand.Valid {
 			play.BatHand = &batHand.String
 		}
@@ -360,14 +374,16 @@ func (r *PitchRepository) ListByGame(ctx context.Context, gameID core.GameID, p 
 // ListByPlay retrieves all pitches from a specific plate appearance
 func (r *PitchRepository) ListByPlay(ctx context.Context, gameID core.GameID, playNum int) ([]core.Pitch, error) {
 	var play core.Play
-	var batHand, pitHand sql.NullString
+	var batterName, pitcherName, batHand, pitHand sql.NullString
 	var balls, strikes sql.NullInt64
 	var pitches sql.NullString
 
 	err := r.db.QueryRowContext(ctx, pitchByPlayQuery, string(gameID), playNum).Scan(
 		&play.GameID, &play.PlayNum, &play.Inning, &play.TopBot, &play.BatTeam, &play.PitTeam,
 		&play.Date, &play.GameType,
-		&play.Batter, &play.Pitcher, &batHand, &pitHand,
+		&play.Batter, &batterName,
+		&play.Pitcher, &pitcherName,
+		&batHand, &pitHand,
 		&play.ScoreVis, &play.ScoreHome, &play.OutsPre, &play.OutsPost,
 		&balls, &strikes, &pitches,
 		&play.Event,
@@ -379,6 +395,12 @@ func (r *PitchRepository) ListByPlay(ctx context.Context, gameID core.GameID, pl
 		return nil, fmt.Errorf("failed to query play: %w", err)
 	}
 
+	if batterName.Valid {
+		play.BatterName = &batterName.String
+	}
+	if pitcherName.Valid {
+		play.PitcherName = &pitcherName.String
+	}
 	if batHand.Valid {
 		play.BatHand = &batHand.String
 	}

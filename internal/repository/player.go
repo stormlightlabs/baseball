@@ -72,40 +72,124 @@ func (r *PlayerRepository) GetByID(ctx context.Context, id core.PlayerID) (*core
 		p.RetroID = &rid
 	}
 
+	dataSource := "lahman"
+
+	var searchRetroID string
+	if p.RetroID != nil {
+		searchRetroID = string(*p.RetroID)
+	} else {
+		searchRetroID = string(id)
+	}
+
+	retroQuery := `
+		SELECT season, team_id,
+			CONCAT_WS(', ',
+				NULLIF(CONCAT('P: ', games_p), 'P: 0'),
+				NULLIF(CONCAT('C: ', games_c), 'C: 0'),
+				NULLIF(CONCAT('1B: ', games_1b), '1B: 0'),
+				NULLIF(CONCAT('2B: ', games_2b), '2B: 0'),
+				NULLIF(CONCAT('3B: ', games_3b), '3B: 0'),
+				NULLIF(CONCAT('SS: ', games_ss), 'SS: 0'),
+				NULLIF(CONCAT('OF: ', games_of), 'OF: 0'),
+				NULLIF(CONCAT('DH: ', games_dh), 'DH: 0')
+			) as positions
+		FROM retrosheet_players
+		WHERE player_id = $1
+		ORDER BY season DESC, last_game DESC
+		LIMIT 1
+	`
+
+	var season sql.NullInt64
+	var teamID, positions sql.NullString
+	err = r.db.QueryRowContext(ctx, retroQuery, searchRetroID).Scan(&season, &teamID, &positions)
+	if err == nil {
+		if season.Valid {
+			s := int(season.Int64)
+			p.LatestSeason = &s
+		}
+		if teamID.Valid {
+			p.LatestTeam = &teamID.String
+		}
+		if positions.Valid && positions.String != "" {
+			p.Positions = &positions.String
+		}
+		if p.ID == "" {
+			dataSource = "retrosheet"
+		} else {
+			dataSource = "lahman+retrosheet"
+		}
+	} else if err != sql.ErrNoRows {
+		fmt.Printf("Warning: failed to fetch retrosheet data for %s: %v\n", searchRetroID, err)
+	}
+
+	p.DataSource = &dataSource
+
 	_ = r.cache.Entity.Set(ctx, string(id), &p)
 
 	return &p, nil
 }
 
 func (r *PlayerRepository) List(ctx context.Context, filter core.PlayerFilter) ([]core.Player, error) {
-	query := `
-		SELECT
-			"playerID", "nameFirst", "nameLast", "nameGiven",
-			"birthYear", "birthMonth", "birthDay", "birthCity", "birthState", "birthCountry",
-			"deathYear", "deathMonth", "deathDay", "deathCity", "deathState", "deathCountry",
-			"bats", "throws", "weight", "height",
-			"debut", "finalGame", "retroID", "bbrefID"
-		FROM "People"
-		WHERE 1=1
-	`
-
 	args := []any{}
 	argNum := 1
 
+	nameFilter := ""
 	if filter.NameQuery != "" {
-		query += fmt.Sprintf(" AND (LOWER(\"nameFirst\" || ' ' || \"nameLast\") LIKE LOWER($%d))", argNum)
+		nameFilter = fmt.Sprintf(" AND (LOWER(\"nameFirst\" || ' ' || \"nameLast\") LIKE LOWER($%d))", argNum)
 		args = append(args, "%"+filter.NameQuery+"%")
 		argNum++
 	}
 
+	debutFilter := ""
 	if filter.DebutYear != nil {
-		query += fmt.Sprintf(" AND EXTRACT(YEAR FROM \"debut\"::date) = $%d", argNum)
+		debutFilter = fmt.Sprintf(" AND EXTRACT(YEAR FROM \"debut\"::date) = $%d", argNum)
 		args = append(args, int(*filter.DebutYear))
 		argNum++
 	}
 
-	query += fmt.Sprintf(" ORDER BY \"nameLast\", \"nameFirst\" LIMIT $%d OFFSET $%d", argNum, argNum+1)
-	args = append(args, filter.Pagination.PerPage, (filter.Pagination.Page-1)*filter.Pagination.PerPage)
+	retroNameFilter := ""
+	if filter.NameQuery != "" {
+		retroNameFilter = " AND (LOWER(rp.first_name || ' ' || rp.last_name) LIKE LOWER($1))"
+	}
+
+	query := fmt.Sprintf(`
+		WITH lahman_players AS (
+			SELECT
+				"playerID", "nameFirst", "nameLast", "nameGiven",
+				"birthYear", "birthMonth", "birthDay", "birthCity", "birthState", "birthCountry",
+				"deathYear", "deathMonth", "deathDay", "deathCity", "deathState", "deathCountry",
+				"bats", "throws", "weight", "height",
+				"debut", "finalGame", "retroID", "bbrefID"
+			FROM "People"
+			WHERE 1=1%s%s
+		), retrosheet_only AS (
+			SELECT DISTINCT ON (rp.player_id)
+				rp.player_id as "playerID",
+				rp.first_name as "nameFirst",
+				rp.last_name as "nameLast",
+				rp.first_name || ' ' || rp.last_name as "nameGiven",
+				NULL::int as "birthYear", NULL::int as "birthMonth", NULL::int as "birthDay",
+				NULL::text as "birthCity", NULL::text as "birthState", NULL::text as "birthCountry",
+				NULL::int as "deathYear", NULL::int as "deathMonth", NULL::int as "deathDay",
+				NULL::text as "deathCity", NULL::text as "deathState", NULL::text as "deathCountry",
+				rp.bats, rp.throws,
+				NULL::int as "weight", NULL::int as "height",
+				NULL::text as "debut", NULL::text as "finalGame",
+				rp.player_id as "retroID",
+				NULL::text as "bbrefID"
+			FROM retrosheet_players rp
+			LEFT JOIN "People" p ON p."retroID" = rp.player_id
+			WHERE p."playerID" IS NULL%s
+			ORDER BY rp.player_id, rp.season DESC
+		)
+		SELECT * FROM (
+			SELECT * FROM lahman_players
+			UNION ALL
+			SELECT * FROM retrosheet_only
+		) AS combined
+		ORDER BY "nameLast", "nameFirst"
+		LIMIT %d OFFSET %d
+	`, nameFilter, debutFilter, retroNameFilter, filter.Pagination.PerPage, (filter.Pagination.Page-1)*filter.Pagination.PerPage)
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -142,20 +226,39 @@ func (r *PlayerRepository) List(ctx context.Context, filter core.PlayerFilter) (
 }
 
 func (r *PlayerRepository) Count(ctx context.Context, filter core.PlayerFilter) (int, error) {
-	query := `SELECT COUNT(*) FROM "People" WHERE 1=1`
 	args := []any{}
 	argNum := 1
 
+	nameFilter := ""
 	if filter.NameQuery != "" {
-		query += fmt.Sprintf(" AND (LOWER(\"nameFirst\" || ' ' || \"nameLast\") LIKE LOWER($%d))", argNum)
+		nameFilter = fmt.Sprintf(" AND (LOWER(\"nameFirst\" || ' ' || \"nameLast\") LIKE LOWER($%d))", argNum)
 		args = append(args, "%"+filter.NameQuery+"%")
 		argNum++
 	}
 
+	debutFilter := ""
 	if filter.DebutYear != nil {
-		query += fmt.Sprintf(" AND EXTRACT(YEAR FROM \"debut\"::date) = $%d", argNum)
+		debutFilter = fmt.Sprintf(" AND EXTRACT(YEAR FROM \"debut\"::date) = $%d", argNum)
 		args = append(args, int(*filter.DebutYear))
+		argNum++
 	}
+
+	retroNameFilter := ""
+	if filter.NameQuery != "" {
+		retroNameFilter = " AND (LOWER(rp.first_name || ' ' || rp.last_name) LIKE LOWER($1))"
+	}
+
+	query := fmt.Sprintf(`
+		WITH lahman_count AS (
+			SELECT COUNT(*) as cnt FROM "People" WHERE 1=1%s%s
+		), retrosheet_count AS (
+			SELECT COUNT(DISTINCT rp.player_id) as cnt
+			FROM retrosheet_players rp
+			LEFT JOIN "People" p ON p."retroID" = rp.player_id
+			WHERE p."playerID" IS NULL%s
+		)
+		SELECT (SELECT cnt FROM lahman_count) + (SELECT cnt FROM retrosheet_count)
+	`, nameFilter, debutFilter, retroNameFilter)
 
 	var count int
 	err := r.db.QueryRowContext(ctx, query, args...).Scan(&count)
@@ -221,6 +324,7 @@ func (r *PlayerRepository) BattingSeasons(ctx context.Context, id core.PlayerID)
 		}
 
 		s.OPS = s.OBP + s.SLG
+		s.DataSources = []string{"lahman"}
 
 		seasons = append(seasons, s)
 	}
@@ -268,6 +372,8 @@ func (r *PlayerRepository) PitchingSeasons(ctx context.Context, id core.PlayerID
 			s.BBPer9 = (float64(s.BB) / ip) * 9.0
 			s.HRPer9 = (float64(s.HR) / ip) * 9.0
 		}
+
+		s.DataSources = []string{"lahman"}
 
 		seasons = append(seasons, s)
 	}

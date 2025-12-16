@@ -1,14 +1,18 @@
 SELECT
-	gid, pn, inning, top_bot, batteam, pitteam,
-	SUBSTRING(gid, 4, 8) as date,
+	p.gid, p.pn, p.inning, p.top_bot, p.batteam, p.pitteam,
+	SUBSTRING(p.gid, 4, 8) as date,
 	CASE
-		WHEN SUBSTRING(gid, 12, 1) = '0' THEN 'regular'
-		WHEN SUBSTRING(gid, 12, 1) = '1' THEN 'postseason'
+		WHEN SUBSTRING(p.gid, 12, 1) = '0' THEN 'regular'
+		WHEN SUBSTRING(p.gid, 12, 1) = '1' THEN 'postseason'
 		ELSE 'other'
 	END as game_type,
-	batter, pitcher, bathand, pithand,
-	score_v, score_h, outs_pre, outs_post,
-	balls, strikes, pitches,
-	event
-FROM plays
-WHERE gid = $1 AND pn = $2 AND pitches IS NOT NULL
+	p.batter,
+	(SELECT first_name || ' ' || last_name FROM retrosheet_players WHERE player_id = p.batter LIMIT 1) as batter_name,
+	p.pitcher,
+	(SELECT first_name || ' ' || last_name FROM retrosheet_players WHERE player_id = p.pitcher LIMIT 1) as pitcher_name,
+	p.bathand, p.pithand,
+	p.score_v, p.score_h, p.outs_pre, p.outs_post,
+	p.balls, p.strikes, p.pitches,
+	p.event
+FROM plays p
+WHERE p.gid = $1 AND p.pn = $2 AND p.pitches IS NOT NULL

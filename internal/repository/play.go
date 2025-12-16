@@ -158,14 +158,16 @@ func (r *PlayRepository) List(ctx context.Context, filter core.PlayFilter) ([]co
 	var plays []core.Play
 	for rows.Next() {
 		var p core.Play
-		var batHand, pitHand sql.NullString
+		var batterName, pitcherName, batHand, pitHand sql.NullString
 		var balls, strikes, pa, ab, single, double, triple, hr, walk, k, hbp, runs, rbi sql.NullInt64
 		var pitches sql.NullString
 		var br1Pre, br2Pre, br3Pre sql.NullString
 
 		err := rows.Scan(
 			&p.GameID, &p.PlayNum, &p.Inning, &p.TopBot, &p.BatTeam, &p.PitTeam, &p.Date, &p.GameType,
-			&p.Batter, &p.Pitcher, &batHand, &pitHand,
+			&p.Batter, &batterName,
+			&p.Pitcher, &pitcherName,
+			&batHand, &pitHand,
 			&p.ScoreVis, &p.ScoreHome, &p.OutsPre, &p.OutsPost,
 			&balls, &strikes, &pitches,
 			&p.Event,
@@ -177,6 +179,12 @@ func (r *PlayRepository) List(ctx context.Context, filter core.PlayFilter) ([]co
 			return nil, fmt.Errorf("failed to scan play: %w", err)
 		}
 
+		if batterName.Valid {
+			p.BatterName = &batterName.String
+		}
+		if pitcherName.Valid {
+			p.PitcherName = &pitcherName.String
+		}
 		if batHand.Valid {
 			p.BatHand = &batHand.String
 		}
@@ -406,14 +414,14 @@ func (r *PlayRepository) ListByPlayer(ctx context.Context, playerID core.RetroPl
 	var plays []core.Play
 	for rows.Next() {
 		var p core.Play
-		var batHand, pitHand sql.NullString
+		var batterName, pitcherName, batHand, pitHand sql.NullString
 		var balls, strikes, pa, ab, single, double, triple, hr, walk, k, hbp, runs, rbi sql.NullInt64
 		var pitches sql.NullString
 		var br1Pre, br2Pre, br3Pre sql.NullString
 
 		err := rows.Scan(
 			&p.GameID, &p.PlayNum, &p.Inning, &p.TopBot, &p.BatTeam, &p.PitTeam, &p.Date, &p.GameType,
-			&p.Batter, &p.Pitcher, &batHand, &pitHand,
+			&p.Batter, &batterName, &p.Pitcher, &pitcherName, &batHand, &pitHand,
 			&p.ScoreVis, &p.ScoreHome, &p.OutsPre, &p.OutsPost,
 			&balls, &strikes, &pitches,
 			&p.Event,
@@ -425,6 +433,12 @@ func (r *PlayRepository) ListByPlayer(ctx context.Context, playerID core.RetroPl
 			return nil, fmt.Errorf("failed to scan play: %w", err)
 		}
 
+		if batterName.Valid {
+			p.BatterName = &batterName.String
+		}
+		if pitcherName.Valid {
+			p.PitcherName = &pitcherName.String
+		}
 		if batHand.Valid {
 			p.BatHand = &batHand.String
 		}

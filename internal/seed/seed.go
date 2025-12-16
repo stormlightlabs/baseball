@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jackc/pgx/v5/stdlib"
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
 )
@@ -665,4 +666,136 @@ func extractAndZipFile(zipFile *zip.File, destZip string) error {
 		return fmt.Errorf("failed to copy file content: %w", err)
 	}
 	return nil
+}
+
+// LoadRetrosheetPlayers loads Retrosheet player data (allplayers.csv) into the database.
+// This provides per-team-season appearances with granular positional data including pitcher roles (starter/reliever) and exact game date ranges.
+func LoadRetrosheetPlayers(ctx context.Context, database *db.DB, csvPath string) (int64, error) {
+	if csvPath == "" {
+		csvPath = filepath.Join("data", "retrosheet", "allplayers.csv")
+	}
+
+	if _, err := os.Stat(csvPath); errors.Is(err, os.ErrNotExist) {
+		return 0, fmt.Errorf("error: allplayers.csv not found at %s", csvPath)
+	} else if err != nil {
+		return 0, fmt.Errorf("error: failed to stat allplayers.csv: %w", err)
+	}
+
+	echo.Infof("Loading Retrosheet player data from %s...", csvPath)
+
+	if _, err := database.ExecContext(ctx, "TRUNCATE TABLE retrosheet_players"); err != nil {
+		return 0, fmt.Errorf("error: failed to truncate retrosheet_players: %w", err)
+	}
+
+	connCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	conn, err := database.Conn(connCtx)
+	if err != nil {
+		return 0, fmt.Errorf("error: failed to acquire connection: %w", err)
+	}
+	defer conn.Close()
+
+	var rows int64
+
+	err = conn.Raw(func(driverConn any) error {
+		pgxConn := driverConn.(*stdlib.Conn).Conn()
+
+		_, err := pgxConn.Exec(connCtx, `
+			CREATE TEMP TABLE retrosheet_players_staging (
+				player_id VARCHAR(8),
+				last_name VARCHAR(50),
+				first_name VARCHAR(50),
+				bats VARCHAR(1),
+				throws VARCHAR(1),
+				team_id VARCHAR(3),
+				games INTEGER,
+				games_p INTEGER,
+				games_sp INTEGER,
+				games_rp INTEGER,
+				games_c INTEGER,
+				games_1b INTEGER,
+				games_2b INTEGER,
+				games_3b INTEGER,
+				games_ss INTEGER,
+				games_lf INTEGER,
+				games_cf INTEGER,
+				games_rf INTEGER,
+				games_of INTEGER,
+				games_dh INTEGER,
+				games_ph INTEGER,
+				games_pr INTEGER,
+				first_game_raw TEXT,
+				last_game_raw TEXT,
+				season INTEGER
+			)
+		`)
+		if err != nil {
+			return fmt.Errorf("failed to create staging table: %w", err)
+		}
+
+		copySQL := `
+			COPY retrosheet_players_staging (
+				player_id, last_name, first_name, bats, throws, team_id,
+				games, games_p, games_sp, games_rp,
+				games_c, games_1b, games_2b, games_3b, games_ss,
+				games_lf, games_cf, games_rf, games_of,
+				games_dh, games_ph, games_pr,
+				first_game_raw, last_game_raw, season
+			)
+			FROM STDIN WITH (FORMAT CSV, HEADER true)
+		`
+
+		file, err := os.Open(csvPath)
+		if err != nil {
+			return fmt.Errorf("failed to open CSV: %w", err)
+		}
+		defer file.Close()
+
+		tag, copyErr := pgxConn.PgConn().CopyFrom(connCtx, file, copySQL)
+		if copyErr != nil {
+			return fmt.Errorf("failed to copy data: %w", copyErr)
+		}
+
+		rows = tag.RowsAffected()
+
+		_, err = pgxConn.Exec(connCtx, `
+			INSERT INTO retrosheet_players (
+				player_id, last_name, first_name, bats, throws, team_id, season,
+				games, games_p, games_sp, games_rp,
+				games_c, games_1b, games_2b, games_3b, games_ss,
+				games_lf, games_cf, games_rf, games_of,
+				games_dh, games_ph, games_pr,
+				first_game, last_game
+			)
+			SELECT
+				player_id, last_name, first_name, bats, throws, team_id, season,
+				games, games_p, games_sp, games_rp,
+				games_c, games_1b, games_2b, games_3b, games_ss,
+				games_lf, games_cf, games_rf, games_of,
+				games_dh, games_ph, games_pr,
+				CASE
+					WHEN first_game_raw = '0' OR first_game_raw = '' THEN NULL
+					ELSE TO_DATE(first_game_raw, 'YYYYMMDD')
+				END,
+				CASE
+					WHEN last_game_raw = '0' OR last_game_raw = '' THEN NULL
+					ELSE TO_DATE(last_game_raw, 'YYYYMMDD')
+				END
+			FROM retrosheet_players_staging
+		`)
+		if err != nil {
+			return fmt.Errorf("failed to transform and insert: %w", err)
+		}
+
+		return nil
+	})
+
+	echo.Successf("✓ Loaded %s player-team-season records", formatNumber(rows))
+
+	if err := database.RecordDatasetRefresh(ctx, "retrosheet_players", rows); err != nil {
+		return rows, fmt.Errorf("error: failed to record refresh: %w", err)
+	}
+
+	return rows, nil
 }

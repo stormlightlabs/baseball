@@ -23,6 +23,405 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/achievements/cycles": {
+            "get": {
+                "description": "Get all games where a player hit a single, double, triple, and home run",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "achievements"
+                ],
+                "summary": "List hitting for the cycle achievements",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter from season (inclusive)",
+                        "name": "season_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter to season (inclusive)",
+                        "name": "season_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by team ID",
+                        "name": "team_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by player ID (Retrosheet format)",
+                        "name": "player_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by park ID",
+                        "name": "park_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/achievements/extra-inning-games": {
+            "get": {
+                "description": "Get all games that lasted 20 or more innings",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "achievements"
+                ],
+                "summary": "List extra inning games",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter from season (inclusive)",
+                        "name": "season_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter to season (inclusive)",
+                        "name": "season_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by team ID (home or away)",
+                        "name": "team_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by park ID",
+                        "name": "park_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum innings (default: 20)",
+                        "name": "min_innings",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/achievements/multi-hr-games": {
+            "get": {
+                "description": "Get all games where a player hit 3 or more home runs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "achievements"
+                ],
+                "summary": "List multiple home run games",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter from season (inclusive)",
+                        "name": "season_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter to season (inclusive)",
+                        "name": "season_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by team ID",
+                        "name": "team_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by player ID (Retrosheet format)",
+                        "name": "player_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by park ID",
+                        "name": "park_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum home runs (default: 3)",
+                        "name": "min_hr",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/achievements/no-hitters": {
+            "get": {
+                "description": "Get all games where a team allowed zero hits to the opposing team",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "achievements"
+                ],
+                "summary": "List no-hitters",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter from season (inclusive)",
+                        "name": "season_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter to season (inclusive)",
+                        "name": "season_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by team ID",
+                        "name": "team_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by park ID",
+                        "name": "park_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/achievements/triple-plays": {
+            "get": {
+                "description": "Get all games where a team recorded one or more triple plays",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "achievements"
+                ],
+                "summary": "List triple plays",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter from season (inclusive)",
+                        "name": "season_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter to season (inclusive)",
+                        "name": "season_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by team ID",
+                        "name": "team_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by park ID",
+                        "name": "park_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/allstar/games": {
             "get": {
                 "description": "Get All-Star Game history by joining Lahman participation data with Retrosheet game logs",
@@ -255,6 +654,312 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Filter by season year",
                         "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/federalleague/games": {
+            "get": {
+                "description": "Get all games from the Federal League (1914-1915)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "federalleague",
+                    "games"
+                ],
+                "summary": "List Federal League games",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year (1914 or 1915)",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by home team ID",
+                        "name": "home_team",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by away team ID",
+                        "name": "away_team",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/federalleague/plays": {
+            "get": {
+                "description": "Get play-by-play data from Federal League games",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "federalleague",
+                    "plays"
+                ],
+                "summary": "List Federal League plays",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by batter ID",
+                        "name": "batter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by pitcher ID",
+                        "name": "pitcher",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by team ID (batting team)",
+                        "name": "team",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYYMMDD)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYYMMDD)",
+                        "name": "date_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/federalleague/seasons/{year}/schedule": {
+            "get": {
+                "description": "Get all games for a specific Federal League season (1914 or 1915)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "federalleague",
+                    "games"
+                ],
+                "summary": "Get Federal League season schedule",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year (1914 or 1915)",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/federalleague/seasons/{year}/teams/{team_id}/games": {
+            "get": {
+                "description": "Get all games for a specific Federal League team in a season",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "federalleague",
+                    "games",
+                    "teams"
+                ],
+                "summary": "Get Federal League team games for a season",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year (1914 or 1915)",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/federalleague/teams": {
+            "get": {
+                "description": "Get all teams that played in the Federal League (1914-1915)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "federalleague",
+                    "teams"
+                ],
+                "summary": "List Federal League teams",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year (1914 or 1915)",
+                        "name": "year",
                         "in": "query"
                     },
                     {
@@ -1978,6 +2683,342 @@ const docTemplate = `{
                 }
             }
         },
+        "/negroleagues/games": {
+            "get": {
+                "description": "Get all games from the Negro Leagues (1935-1949)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "negroleagues",
+                    "games"
+                ],
+                "summary": "List Negro Leagues games",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by home team ID",
+                        "name": "home_team",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by away team ID",
+                        "name": "away_team",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by specific league code (NAL, NNL, etc.)",
+                        "name": "league",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/negroleagues/plays": {
+            "get": {
+                "description": "Get play-by-play data from Negro Leagues games",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "negroleagues",
+                    "plays"
+                ],
+                "summary": "List Negro Leagues plays",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by batter ID",
+                        "name": "batter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by pitcher ID",
+                        "name": "pitcher",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by team ID (batting team)",
+                        "name": "team",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by specific league code (NAL, NNL, etc.)",
+                        "name": "league",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYYMMDD)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYYMMDD)",
+                        "name": "date_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/negroleagues/seasons/{year}/schedule": {
+            "get": {
+                "description": "Get all games for a specific Negro Leagues season",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "negroleagues",
+                    "games"
+                ],
+                "summary": "Get Negro Leagues season schedule",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year (1935-1949)",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by specific league code (NAL, NNL, etc.)",
+                        "name": "league",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/negroleagues/seasons/{year}/teams/{team_id}/games": {
+            "get": {
+                "description": "Get all games for a specific Negro Leagues team in a season",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "negroleagues",
+                    "games",
+                    "teams"
+                ],
+                "summary": "Get Negro Leagues team games for a season",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by specific league code (NAL, NNL, etc.)",
+                        "name": "league",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/negroleagues/teams": {
+            "get": {
+                "description": "Get all teams that played in the Negro Leagues (1935-1949)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "negroleagues",
+                    "teams"
+                ],
+                "summary": "List Negro Leagues teams",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "year",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by specific league code (NAL, NNL, etc.)",
+                        "name": "league",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/parks": {
             "get": {
                 "description": "Get a paginated list of all ballparks",
@@ -2610,6 +3651,261 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Filter by season",
                         "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/players/{id}/game-logs/batting": {
+            "get": {
+                "description": "Get per-game batting statistics for a player from the materialized view. Enables \"game finder\" queries with filters.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players",
+                    "stats"
+                ],
+                "summary": "Get player batting game logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by season",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by date from (YYYYMMDD)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by date to (YYYYMMDD)",
+                        "name": "date_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum home runs",
+                        "name": "min_hr",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum hits",
+                        "name": "min_h",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum RBI",
+                        "name": "min_rbi",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum plate appearances",
+                        "name": "min_pa",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/players/{id}/game-logs/fielding": {
+            "get": {
+                "description": "Get per-game fielding statistics for a player from the materialized view. Each row represents performance at a specific position. Enables \"game finder\" queries with filters.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players",
+                    "stats"
+                ],
+                "summary": "Get player fielding game logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by season",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by date from (YYYYMMDD)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by date to (YYYYMMDD)",
+                        "name": "date_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by position (1=P, 2=C, 3=1B, 4=2B, 5=3B, 6=SS, 7=LF, 8=CF, 9=RF)",
+                        "name": "position",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/players/{id}/game-logs/pitching": {
+            "get": {
+                "description": "Get per-game pitching statistics for a player from the materialized view. Enables \"game finder\" queries with filters.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players",
+                    "stats"
+                ],
+                "summary": "Get player pitching game logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by season",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by date from (YYYYMMDD)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by date to (YYYYMMDD)",
+                        "name": "date_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum strikeouts",
+                        "name": "min_so",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum innings pitched",
+                        "name": "min_ip",
                         "in": "query"
                     },
                     {
@@ -6172,6 +7468,96 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/teams/{id}/daily-stats": {
+            "get": {
+                "description": "Get per-game team statistics for daily performance tracking and analysis",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Get team daily statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by season year",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by start date (YYYYMMDD)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by end date (YYYYMMDD)",
+                        "name": "date_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by result (W, L, or T)",
+                        "name": "result",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"date\"",
+                        "description": "Sort by field (date, runs, runs_allowed)",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"desc\"",
+                        "description": "Sort order (asc, desc)",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/win-expectancy": {
             "get": {
                 "description": "Get the historical win probability for a specific game situation",
@@ -6640,18 +8026,15 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "off_war": {
-                    "description": "WAR ascribed to offense (offensive component only; not full WAR).",
                     "type": "number"
                 },
                 "ops": {
                     "type": "number"
                 },
                 "ops_plus": {
-                    "description": "OPS+ if you choose to compute it (BBRef-style).",
                     "type": "integer"
                 },
                 "pa": {
-                    "description": "Underlying counting stats for transparency.",
                     "type": "integer"
                 },
                 "player_id": {
@@ -6717,15 +8100,14 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "era": {
-                    "description": "Basic rate stats.",
+                    "description": "9 * ER/IP",
                     "type": "number"
                 },
                 "era_plus": {
-                    "description": "Context-normalized rate stats.",
+                    "description": "ERA+ (100 = league avg)",
                     "type": "integer"
                 },
                 "fip": {
-                    "description": "Fielding-independent metrics.",
                     "type": "number"
                 },
                 "fip_minus": {
@@ -6752,7 +8134,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "ip_outs": {
-                    "description": "Underlying counting stats.",
+                    "description": "outs recorded (IP * 3)",
                     "type": "integer"
                 },
                 "k_per_9": {
@@ -6765,7 +8147,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "ra9_war": {
-                    "description": "Optional breakdowns if you compute them.",
+                    "description": "BBRef-style",
                     "type": "number"
                 },
                 "replacement_runs": {
@@ -6778,7 +8160,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "war": {
-                    "description": "WAR components for pitchers.\nTotal WAR from chosen provider (FG, BR, etc.).",
+                    "description": "Total WAR from chosen provider (FG, BR, etc.).",
                     "type": "number"
                 },
                 "whip": {
@@ -7043,6 +8425,12 @@ const docTemplate = `{
                 "away_league": {
                     "type": "string"
                 },
+                "away_manager_id": {
+                    "type": "string"
+                },
+                "away_manager_name": {
+                    "type": "string"
+                },
                 "away_score": {
                     "type": "integer"
                 },
@@ -7052,16 +8440,30 @@ const docTemplate = `{
                 "date": {
                     "type": "string"
                 },
+                "day_night": {
+                    "description": "\"day\", \"night\", \"D\", \"N\"",
+                    "type": "string"
+                },
                 "day_of_week": {
                     "type": "string"
                 },
                 "duration_min": {
                     "type": "integer"
                 },
+                "field_condition": {
+                    "description": "Field condition (dry, wet, damp, soaked)",
+                    "type": "string"
+                },
                 "game_in_series": {
                     "type": "integer"
                 },
                 "home_league": {
+                    "type": "string"
+                },
+                "home_manager_id": {
+                    "type": "string"
+                },
+                "home_manager_name": {
                     "type": "string"
                 },
                 "home_score": {
@@ -7079,7 +8481,32 @@ const docTemplate = `{
                 "is_postseason": {
                     "type": "boolean"
                 },
+                "losing_pitcher_id": {
+                    "type": "string"
+                },
+                "losing_pitcher_name": {
+                    "type": "string"
+                },
+                "park_city": {
+                    "type": "string"
+                },
                 "park_id": {
+                    "type": "string"
+                },
+                "park_name": {
+                    "type": "string"
+                },
+                "park_state": {
+                    "type": "string"
+                },
+                "precip": {
+                    "description": "Precipitation (none, drizzle, showers, rain, snow)",
+                    "type": "string"
+                },
+                "save_pitcher_id": {
+                    "type": "string"
+                },
+                "save_pitcher_name": {
                     "type": "string"
                 },
                 "season": {
@@ -7088,16 +8515,70 @@ const docTemplate = `{
                 "series_id": {
                     "type": "string"
                 },
+                "sky": {
+                    "description": "Sky condition (sunny, cloudy, dome, etc.)",
+                    "type": "string"
+                },
+                "start_time": {
+                    "description": "Game start time (HH:MM format)",
+                    "type": "string"
+                },
+                "temp_f": {
+                    "description": "Temperature in Fahrenheit",
+                    "type": "integer"
+                },
                 "ump_first": {
+                    "type": "string"
+                },
+                "ump_first_name": {
                     "type": "string"
                 },
                 "ump_home": {
                     "type": "string"
                 },
+                "ump_home_name": {
+                    "type": "string"
+                },
+                "ump_left": {
+                    "type": "string"
+                },
+                "ump_left_name": {
+                    "type": "string"
+                },
+                "ump_right": {
+                    "type": "string"
+                },
+                "ump_right_name": {
+                    "type": "string"
+                },
                 "ump_second": {
                     "type": "string"
                 },
+                "ump_second_name": {
+                    "type": "string"
+                },
                 "ump_third": {
+                    "type": "string"
+                },
+                "ump_third_name": {
+                    "type": "string"
+                },
+                "used_dh": {
+                    "description": "Whether designated hitter was used",
+                    "type": "boolean"
+                },
+                "wind_direction": {
+                    "description": "Wind direction (fromcf, fromlf, etc.)",
+                    "type": "string"
+                },
+                "wind_speed_mph": {
+                    "description": "Wind speed in mph",
+                    "type": "integer"
+                },
+                "winning_pitcher_id": {
+                    "type": "string"
+                },
+                "winning_pitcher_name": {
                     "type": "string"
                 }
             }
@@ -7196,6 +8677,12 @@ const docTemplate = `{
         "core.LineupPlayer": {
             "type": "object",
             "properties": {
+                "bats": {
+                    "type": "string"
+                },
+                "height_inches": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -7203,6 +8690,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "position": {
+                    "type": "integer"
+                },
+                "throws": {
+                    "type": "string"
+                },
+                "weight_lbs": {
                     "type": "integer"
                 }
             }
@@ -8076,11 +9569,11 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "basic_5yr": {
-                    "description": "Overall park factors (100 = neutral, \u003e100 = hitter-friendly)",
+                    "description": "5-year regressed (most stable)",
                     "type": "integer"
                 },
                 "factor_1b": {
-                    "description": "Component park factors",
+                    "description": "singles",
                     "type": "integer"
                 },
                 "factor_2b": {
@@ -8160,7 +9653,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "home_score_before": {
-                    "description": "State before the PA.",
                     "type": "integer"
                 },
                 "inning": {
@@ -8183,7 +9675,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "we_before": {
-                    "description": "Win expectancy and leverage index before/after the PA.",
+                    "description": "home team WE",
                     "type": "number"
                 },
                 "we_change": {
@@ -8210,6 +9702,9 @@ const docTemplate = `{
                 "batter": {
                     "type": "string"
                 },
+                "batter_name": {
+                    "type": "string"
+                },
                 "date": {
                     "type": "string"
                 },
@@ -8221,7 +9716,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "game_id": {
-                    "description": "Game identification",
                     "type": "string"
                 },
                 "game_type": {
@@ -8256,6 +9750,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "pitcher": {
+                    "type": "string"
+                },
+                "pitcher_name": {
                     "type": "string"
                 },
                 "pitches": {
@@ -8328,6 +9825,10 @@ const docTemplate = `{
                 "birth_year": {
                     "type": "integer"
                 },
+                "data_source": {
+                    "description": "\"lahman\", \"retrosheet\", \"lahman+retrosheet\"",
+                    "type": "string"
+                },
                 "death_city": {
                     "type": "string"
                 },
@@ -8369,7 +9870,17 @@ const docTemplate = `{
                 "last_name": {
                     "type": "string"
                 },
+                "latest_season": {
+                    "type": "integer"
+                },
+                "latest_team": {
+                    "type": "string"
+                },
                 "nickname": {
+                    "type": "string"
+                },
+                "positions": {
+                    "description": "Comma-separated position breakdown",
                     "type": "string"
                 },
                 "retro_id": {
@@ -8480,6 +9991,13 @@ const docTemplate = `{
                 },
                 "cs": {
                     "type": "integer"
+                },
+                "data_sources": {
+                    "description": "e.g. [\"lahman\"] or [\"retrosheet\"]",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "doubles": {
                     "type": "integer"
@@ -8637,7 +10155,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "wpa": {
-                    "description": "Aggregate WPA (win probability added) if you calculate it.",
                     "type": "number"
                 }
             }
@@ -8656,6 +10173,13 @@ const docTemplate = `{
                 },
                 "cg": {
                     "type": "integer"
+                },
+                "data_sources": {
+                    "description": "e.g. [\"lahman\"] or [\"retrosheet\"]",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "er": {
                     "type": "integer"
@@ -8779,7 +10303,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "batting_runs": {
-                    "description": "Components for position players.",
+                    "description": "wRAA-like",
                     "type": "number"
                 },
                 "context": {
@@ -9101,14 +10625,12 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "avg": {
-                    "description": "Derived rate stats (as decimals, 3–4 places).",
                     "type": "number"
                 },
                 "bb": {
                     "type": "integer"
                 },
                 "games": {
-                    "description": "Sample counting stats.",
                     "type": "integer"
                 },
                 "h": {
@@ -9704,7 +11226,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "r_pa": {
-                    "description": "League context",
+                    "description": "runs per plate appearance",
                     "type": "number"
                 },
                 "r_w": {
@@ -9716,7 +11238,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "run_sb": {
-                    "description": "Base running run values",
+                    "description": "stolen base runs",
                     "type": "number"
                 },
                 "season": {
@@ -9735,7 +11257,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "w_bb": {
-                    "description": "wOBA weights for each event type",
+                    "description": "unintentional walk",
                     "type": "number"
                 },
                 "w_hbp": {
@@ -9751,7 +11273,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "woba_scale": {
-                    "description": "wOBA scale and league average",
+                    "description": "scaling factor",
                     "type": "number"
                 }
             }
@@ -9989,6 +11511,14 @@ const docTemplate = `{
         {
             "description": "Computed win expectancy data",
             "name": "win-expectancy"
+        },
+        {
+            "description": "Federal League (1914-1915) data",
+            "name": "federalleague"
+        },
+        {
+            "description": "Baseball achievements and milestones",
+            "name": "achievements"
         }
     ]
 }`
