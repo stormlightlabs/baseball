@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"strings"
 	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
@@ -46,9 +47,7 @@ func (r *UmpireRepository) GetByID(ctx context.Context, id core.UmpireID) (*core
 	}
 
 	if fullName.Valid {
-		name := fullName.String
-		umpire.FirstName = ""
-		umpire.LastName = name
+		umpire.FirstName, umpire.LastName = splitFullName(fullName.String)
 	}
 
 	return &umpire, nil
@@ -83,8 +82,7 @@ func (r *UmpireRepository) List(ctx context.Context, p core.Pagination) ([]core.
 		}
 
 		if fullName.Valid {
-			umpire.FirstName = ""
-			umpire.LastName = fullName.String
+			umpire.FirstName, umpire.LastName = splitFullName(fullName.String)
 		}
 
 		umpires = append(umpires, umpire)
@@ -231,4 +229,26 @@ func (r *UmpireRepository) GamesForUmpire(ctx context.Context, id core.UmpireID,
 	}
 
 	return games, nil
+}
+
+// splitFullName splits a full name string into first and last names.
+// Handles formats like "John Doe", "John", "John Q. Public".
+// For multi-part names, treats everything before the last space as first name.
+func splitFullName(fullName string) (string, string) {
+	fullName = strings.TrimSpace(fullName)
+	if fullName == "" {
+		return "", ""
+	}
+
+	parts := strings.Fields(fullName)
+	if len(parts) == 0 {
+		return "", ""
+	}
+	if len(parts) == 1 {
+		return "", parts[0]
+	}
+
+	lastName := parts[len(parts)-1]
+	firstName := strings.Join(parts[:len(parts)-1], " ")
+	return firstName, lastName
 }

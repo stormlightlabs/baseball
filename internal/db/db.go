@@ -495,8 +495,9 @@ func (db *DB) LoadRetrosheetPlays(ctx context.Context, zipPath string) (int64, e
 	defer tx.Rollback(ctx)
 
 	_, err = tx.Exec(ctx, `
-		CREATE TEMP TABLE plays_temp (LIKE plays INCLUDING DEFAULTS)
-		ON COMMIT DROP
+		CREATE TEMP TABLE plays_temp (LIKE plays INCLUDING DEFAULTS);
+		ALTER TABLE plays_temp DROP COLUMN IF EXISTS home_team_league;
+		ALTER TABLE plays_temp DROP COLUMN IF EXISTS visiting_team_league;
 	`)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create temp table: %w", err)
@@ -509,8 +510,14 @@ func (db *DB) LoadRetrosheetPlays(ctx context.Context, zipPath string) (int64, e
 	}
 
 	result, err := tx.Exec(ctx, `
-		INSERT INTO plays SELECT * FROM plays_temp
-		ON CONFLICT (gid, pn) DO NOTHING
+		INSERT INTO plays
+		SELECT
+			pt.*,
+			g.home_team_league,
+			g.visiting_team_league
+		FROM plays_temp pt
+		LEFT JOIN games g ON pt.gid = g.game_id
+		ON CONFLICT (gid, pn, date) DO NOTHING
 	`)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
@@ -981,6 +988,11 @@ func (db *DB) LoadNegroLeaguesGameInfo(ctx context.Context, csvPath string) (int
 			return ""
 		}
 
+		lowerVal := strings.ToLower(strings.TrimSpace(val))
+		if lowerVal == "true" || lowerVal == "false" || lowerVal == "t" || lowerVal == "f" {
+			return ""
+		}
+
 		if strings.HasSuffix(val, "?") || strings.HasPrefix(val, "<") || strings.HasPrefix(val, ">") {
 			return ""
 		}
@@ -1189,8 +1201,9 @@ func (db *DB) LoadNegroLeaguesPlays(ctx context.Context, csvPath string) (int64,
 	defer tx.Rollback(ctx)
 
 	_, err = tx.Exec(ctx, `
-		CREATE TEMP TABLE plays_temp (LIKE plays INCLUDING DEFAULTS)
-		ON COMMIT DROP
+		CREATE TEMP TABLE plays_temp (LIKE plays INCLUDING DEFAULTS);
+		ALTER TABLE plays_temp DROP COLUMN IF EXISTS home_team_league;
+		ALTER TABLE plays_temp DROP COLUMN IF EXISTS visiting_team_league;
 	`)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create temp table: %w", err)
@@ -1204,8 +1217,13 @@ func (db *DB) LoadNegroLeaguesPlays(ctx context.Context, csvPath string) (int64,
 
 	result, err := tx.Exec(ctx, `
 		INSERT INTO plays
-		SELECT * FROM plays_temp
-		ON CONFLICT (gid, pn) DO NOTHING
+		SELECT
+			pt.*,
+			g.home_team_league,
+			g.visiting_team_league
+		FROM plays_temp pt
+		LEFT JOIN games g ON pt.gid = g.game_id
+		ON CONFLICT (gid, pn, date) DO NOTHING
 	`)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
