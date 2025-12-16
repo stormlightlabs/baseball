@@ -1,525 +1,230 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Baseball API - Chart Examples</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:wght@400;500;700&display=swap"
-      rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/ui.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script defer src="/static/js/examples.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <style>
-      body {
-        background: radial-gradient(circle at 25% 20%, rgba(59, 130, 246, 0.2), transparent 55%),
-          radial-gradient(circle at 80% 0%, rgba(124, 58, 237, 0.15), transparent 45%), var(--sl-bg);
-        color: var(--sl-text);
-      }
+{{define "examples.html"}}
+{{template "base" .}}
+{{end}}
 
-      .chart-container {
-        position: relative;
-        height: 400px;
-        margin-bottom: 2rem;
-        background-color: var(--sl-panel);
-        border: 1px solid var(--sl-border);
-        border-radius: 16px;
-        padding: 1rem;
-      }
+{{define "title"}}Baseball API - Basic Charts{{end}}
 
-      .stat-card {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(124, 58, 237, 0.2));
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        box-shadow: 0 20px 40px rgba(5, 11, 22, 0.35);
-        transition: transform 0.2s, box-shadow 0.2s;
-      }
+{{define "body_attrs"}}data-page="examples-basic"{{end}}
 
-      .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 25px 45px rgba(5, 11, 22, 0.45);
-      }
+{{define "main_attrs"}}x-data="basicStatsApp()" x-init="init()"{{end}}
 
-      .nav-tabs {
-        border-bottom: 1px solid var(--sl-border);
-      }
+{{define "head_extra"}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script defer src="/static/js/examples.js"></script>
+{{end}}
 
-      .nav-tabs .nav-link {
-        color: var(--sl-muted);
-        background-color: transparent;
-        border: none;
-        margin-right: 0.5rem;
-      }
-
-      .nav-tabs .nav-link.active {
-        color: var(--sl-primary-contrast);
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.4), rgba(124, 58, 237, 0.4));
-        border-radius: 999px;
-      }
-
-      .endpoint-display {
-        font-family: "Roboto Mono", "Google Sans Code", monospace;
-        background-color: var(--sl-panel);
-        border-left: 4px solid var(--sl-primary);
-        border-radius: 8px;
-        padding: 0.75rem;
-        margin: 1rem 0;
-        font-size: 0.875rem;
-        overflow-x: auto;
-      }
-
-      .json-display {
-        font-family: "Roboto Mono", "Google Sans Code", monospace;
-        background-color: #0b1120;
-        color: #d4d4d4;
-        padding: 1rem;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        overflow-x: auto;
-        max-height: 400px;
-        overflow-y: auto;
-        font-size: 0.875rem;
-      }
-      .json-display pre {
-        margin: 0;
-        white-space: pre-wrap;
-        font-family: inherit;
-        color: inherit;
-        background: transparent;
-      }
-
-      .json-key {
-        color: #8ab4ff;
-      }
-
-      .json-string {
-        color: #f7b267;
-      }
-
-      .json-number {
-        color: #9dd79c;
-      }
-
-      .json-boolean,
-      .json-null {
-        color: #7cd4ff;
-      }
-
-      .api-info {
-        background-color: var(--sl-panel);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 15px 35px rgba(5, 11, 22, 0.35);
-      }
-
-      .endpoint-badge {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 999px;
-        font-family: "Roboto Mono", "Google Sans Code", monospace;
-        font-size: 0.75rem;
-        margin-right: 0.5rem;
-        letter-spacing: 0.03em;
-      }
-    </style>
-  </head>
-
-  <body>
-    <nav class="navbar navbar-dark bg-dark">
-      <div class="container-fluid">
-        <span class="navbar-brand mb-0 h1">Baseball API - Chart Examples</span>
-        <div class="d-flex">
-          <a href="/dashboard" class="btn btn-outline-light me-2">Dashboard</a>
-          {{if .User}}
-          <span class="navbar-text me-3 text-light">
-            {{if .User.AvatarURL}}<img
-              src="{{.User.AvatarURL}}"
-              class="rounded-circle me-2"
-              width="32"
-              height="32" />{{end}} {{.User.Email}}
-          </span>
-          {{else}}
-          <a href="/login" class="btn btn-outline-light">Login</a>
-          {{end}}
-        </div>
+{{define "content"}}
+<div class="stack">
+  <section class="panel">
+    <h2>Season Pitching Leaders</h2>
+    <p>Fetch strikeout leaders per season and render as a horizontal bar chart.</p>
+    <div class="form-grid">
+      <div class="field">
+        <label for="pitchingYear">Season</label>
+        <input type="number" id="pitchingYear" x-model.number="pitchingYear" min="1871" max="2024" />
       </div>
-    </nav>
-
-    <div class="container mt-4">
-      <h1 class="mb-4">Baseball Statistics Visualizations</h1>
-      <p class="lead text-muted">Interactive examples using Chart.js and Alpine.js with our Baseball API</p>
-
-      <!-- Navigation Tabs -->
-      <ul class="nav nav-tabs mb-4" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link active"
-            id="basic-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#basic-stats"
-            type="button">
-            Basic Stats
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link"
-            id="advanced-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#advanced-stats"
-            type="button">
-            Advanced Stats (wOBA, wRC+, FIP, WAR)
-          </button>
-        </li>
-      </ul>
-
-      <div class="tab-content">
-        <!-- Basic Stats Tab -->
-        <div class="tab-pane fade show active" id="basic-stats" role="tabpanel">
-          <div x-data="basicStatsApp()" x-init="init()">
-            <!-- Season Pitching Leaders (Strikeouts) -->
-            <div class="card mb-4">
-              <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Season Pitching Leaders - Strikeouts</h4>
-              </div>
-              <div class="card-body">
-                <div class="row mb-3">
-                  <div class="col-md-4">
-                    <label class="form-label">Season:</label>
-                    <input type="number" class="form-control" x-model.number="pitchingYear" min="1871" max="2024" />
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">League:</label>
-                    <select class="form-select" x-model="pitchingLeague">
-                      <option value="">Both Leagues</option>
-                      <option value="AL">American League</option>
-                      <option value="NL">National League</option>
-                    </select>
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-primary w-100" @click="loadPitchingLeaders()">Load Leaders</button>
-                  </div>
-                </div>
-                <div x-show="pitchingChart" x-transition class="chart-container">
-                  <canvas id="pitchingChart" x-ref="pitchingChart"></canvas>
-                </div>
-                <div x-show="!pitchingChart" class="text-center text-muted py-5">
-                  <p>Click "Load Leaders" to view the strikeout leaders chart</p>
-                </div>
-                <div class="api-info" x-show="pitchingEndpoint" x-transition>
-                  <div class="mb-2">
-                    <span class="endpoint-badge">GET</span>
-                    <code x-text="pitchingEndpoint"></code>
-                  </div>
-                  <button class="btn btn-sm btn-outline-secondary" @click="showPitchingJSON = !showPitchingJSON">
-                    <span x-text="showPitchingJSON ? 'Hide JSON' : 'Show JSON Response'"></span>
-                  </button>
-                  <div x-show="showPitchingJSON" class="json-display mt-2" x-html="pitchingJSON"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Season Batting Leaders -->
-            <div class="card mb-4">
-              <div class="card-header bg-success text-white">
-                <h4 class="mb-0">Season Batting Leaders</h4>
-              </div>
-              <div class="card-body">
-                <div class="row mb-3">
-                  <div class="col-md-3">
-                    <label class="form-label">Season:</label>
-                    <input type="number" class="form-control" x-model.number="leaderYear" min="1871" max="2024" />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Stat:</label>
-                    <select class="form-select" x-model="leaderStat">
-                      <option value="hr">Home Runs</option>
-                      <option value="avg">Batting Average</option>
-                      <option value="rbi">RBI</option>
-                      <option value="sb">Stolen Bases</option>
-                      <option value="ops">OPS</option>
-                    </select>
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">League:</label>
-                    <select class="form-select" x-model="league">
-                      <option value="">Both Leagues</option>
-                      <option value="AL">American League</option>
-                      <option value="NL">National League</option>
-                    </select>
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-primary w-100" @click="loadBattingLeaders()">Load Leaders</button>
-                  </div>
-                </div>
-                <div x-show="leadersChart" x-transition class="chart-container">
-                  <canvas id="leadersChart" x-ref="leadersChart"></canvas>
-                </div>
-                <div x-show="!leadersChart" class="text-center text-muted py-5">
-                  <p>Click "Load Leaders" to view the batting leaders chart</p>
-                </div>
-                <div class="api-info" x-show="leadersEndpoint" x-transition>
-                  <div class="mb-2">
-                    <span class="endpoint-badge">GET</span>
-                    <code x-text="leadersEndpoint"></code>
-                  </div>
-                  <button class="btn btn-sm btn-outline-secondary" @click="showLeadersJSON = !showLeadersJSON">
-                    <span x-text="showLeadersJSON ? 'Hide JSON' : 'Show JSON Response'"></span>
-                  </button>
-                  <div x-show="showLeadersJSON" class="json-display mt-2" x-html="leadersJSON"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Player Career Progression -->
-            <div class="card mb-4">
-              <div class="card-header bg-info text-white">
-                <h4 class="mb-0">Player Career Progression</h4>
-              </div>
-              <div class="card-body">
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <label class="form-label">Player ID:</label>
-                    <input
-                      type="text"
-                      class="form-control"
-                      x-model="playerId"
-                      placeholder="e.g., ruthba01, bondsba01" />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Stat Type:</label>
-                    <select class="form-select" x-model="playerStatType">
-                      <option value="batting">Batting</option>
-                      <option value="pitching">Pitching</option>
-                    </select>
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-primary w-100" @click="loadPlayerCareer()">Load Career</button>
-                  </div>
-                </div>
-                <div x-show="playerChart" x-transition class="chart-container">
-                  <canvas id="playerChart" x-ref="playerChart"></canvas>
-                </div>
-                <div x-show="!playerChart && !playerError" class="text-center text-muted py-5">
-                  <p>Click "Load Career" to view the player career stats chart</p>
-                </div>
-                <div x-show="playerError" class="alert alert-danger mt-3" x-text="playerError"></div>
-                <div class="api-info" x-show="playerEndpoint" x-transition>
-                  <div class="mb-2">
-                    <span class="endpoint-badge">GET</span>
-                    <code x-text="playerEndpoint"></code>
-                  </div>
-                  <button class="btn btn-sm btn-outline-secondary" @click="showPlayerJSON = !showPlayerJSON">
-                    <span x-text="showPlayerJSON ? 'Hide JSON' : 'Show JSON Response'"></span>
-                  </button>
-                  <div x-show="showPlayerJSON" class="json-display mt-2" x-html="playerJSON"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- End Basic Stats Tab -->
-
-        <!-- Advanced Stats Tab -->
-        <div class="tab-pane fade" id="advanced-stats" role="tabpanel">
-          <div x-data="advancedStatsApp()" x-init="init()">
-            <!-- Player Advanced Batting Stats -->
-            <div class="card mb-4">
-              <div class="card-header bg-success text-white">
-                <h4 class="mb-0">Player Advanced Batting (wOBA, wRC+, ISO, BABIP)</h4>
-              </div>
-              <div class="card-body">
-                <div class="row mb-3">
-                  <div class="col-md-4">
-                    <label class="form-label">Player ID:</label>
-                    <input type="text" class="form-control" x-model="playerIdAdv" placeholder="e.g., troutmi01" />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Season:</label>
-                    <input type="number" class="form-control" x-model.number="advSeasonPlayer" min="2002" max="2024" />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-primary w-100" @click="loadPlayerAdvancedBatting()">Load Stats</button>
-                  </div>
-                </div>
-                <div x-show="playerAdvData" x-transition class="row">
-                  <div class="col-md-3">
-                    <div class="card stat-card">
-                      <div class="card-body text-center">
-                        <h6 class="text-muted">wOBA</h6>
-                        <h3 x-text="playerAdvData?.woba?.toFixed(3) || 'N/A'"></h3>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="card stat-card">
-                      <div class="card-body text-center">
-                        <h6 class="text-muted">wRC+</h6>
-                        <h3 x-text="playerAdvData?.wrc_plus?.toFixed(0) || 'N/A'"></h3>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="card stat-card">
-                      <div class="card-body text-center">
-                        <h6 class="text-muted">ISO</h6>
-                        <h3 x-text="playerAdvData?.iso?.toFixed(3) || 'N/A'"></h3>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="card stat-card">
-                      <div class="card-body text-center">
-                        <h6 class="text-muted">BABIP</h6>
-                        <h3 x-text="playerAdvData?.babip?.toFixed(3) || 'N/A'"></h3>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div x-show="!playerAdvData && !playerAdvError" class="text-center text-muted py-5">
-                  <p>Click "Load Stats" to view advanced batting metrics</p>
-                </div>
-                <div x-show="playerAdvError" x-transition class="alert alert-danger mt-3" x-text="playerAdvError"></div>
-                <div class="api-info mt-3" x-show="playerAdvEndpoint">
-                  <div class="mb-2">
-                    <span class="endpoint-badge">GET</span>
-                    <code x-text="playerAdvEndpoint"></code>
-                  </div>
-                  <button class="btn btn-sm btn-outline-secondary" @click="showPlayerAdvJSON = !showPlayerAdvJSON">
-                    <span x-text="showPlayerAdvJSON ? 'Hide JSON' : 'Show JSON Response'"></span>
-                  </button>
-                  <div x-show="showPlayerAdvJSON" class="json-display mt-2" x-html="playerAdvJSON"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Season wOBA & wRC+ Leaders -->
-            <div class="card mb-4">
-              <div class="card-header bg-warning">
-                <h4 class="mb-0">Season wOBA & wRC+ Leaders</h4>
-              </div>
-              <div class="card-body">
-                <div class="row mb-3">
-                  <div class="col-md-4">
-                    <label class="form-label">Season:</label>
-                    <input type="number" class="form-control" x-model.number="advancedYear" min="2002" max="2024" />
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Min PA:</label>
-                    <input type="number" class="form-control" x-model.number="minPA" min="0" value="502" />
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-primary w-100" @click="loadAdvancedStats()">Load Stats</button>
-                  </div>
-                </div>
-                <div x-show="advancedLeadersChart" x-transition class="chart-container">
-                  <canvas id="advancedLeadersChart" x-ref="advancedLeadersChart"></canvas>
-                </div>
-                <div x-show="!advancedLeadersChart" class="text-center text-muted py-5">
-                  <p>Click "Load Stats" to view the advanced stats leaders chart</p>
-                </div>
-                <p class="text-muted small mt-2">
-                  <strong>wOBA:</strong> Weighted On-Base Average - measures offensive value per plate appearance<br />
-                  <strong>wRC+:</strong> Weighted Runs Created Plus - park/league adjusted offensive production (100 =
-                  average)
-                </p>
-                <div class="api-info" x-show="advLeadersEndpoint">
-                  <div class="mb-2">
-                    <span class="endpoint-badge">GET</span>
-                    <code x-text="advLeadersEndpoint"></code>
-                  </div>
-                  <button class="btn btn-sm btn-outline-secondary" @click="showAdvLeadersJSON = !showAdvLeadersJSON">
-                    <span x-text="showAdvLeadersJSON ? 'Hide JSON' : 'Show JSON Response'"></span>
-                  </button>
-                  <div x-show="showAdvLeadersJSON" class="json-display mt-2" x-html="advLeadersJSON"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Player WAR -->
-            <div class="card mb-4">
-              <div class="card-header bg-danger text-white">
-                <h4 class="mb-0">Player WAR (Wins Above Replacement)</h4>
-              </div>
-              <div class="card-body">
-                <div class="row mb-3">
-                  <div class="col-md-4">
-                    <label class="form-label">Player ID:</label>
-                    <input type="text" class="form-control" x-model="playerIdWAR" placeholder="e.g., troutmi01" />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Season:</label>
-                    <input type="number" class="form-control" x-model.number="warSeason" min="1871" max="2024" />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-primary w-100" @click="loadPlayerWAR()">Load WAR</button>
-                  </div>
-                </div>
-                <div x-show="warData" x-transition class="row">
-                  <div class="col-md-4">
-                    <div class="card stat-card">
-                      <div class="card-body text-center">
-                        <h6 class="text-muted">Total WAR</h6>
-                        <h3 x-text="warData?.war?.toFixed(1) || 'N/A'"></h3>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="card stat-card">
-                      <div class="card-body text-center">
-                        <h6 class="text-muted">Batting</h6>
-                        <h3 x-text="warData?.batting_runs?.toFixed(1) || 'N/A'"></h3>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="card stat-card">
-                      <div class="card-body text-center">
-                        <h6 class="text-muted">Fielding</h6>
-                        <h3 x-text="warData?.fielding_runs?.toFixed(1) || 'N/A'"></h3>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div x-show="!warData && !warError" class="text-center text-muted py-5">
-                  <p>Click "Load WAR" to view player WAR breakdown</p>
-                </div>
-                <div x-show="warError" x-transition class="alert alert-danger mt-3" x-text="warError"></div>
-                <p class="text-muted small mt-3">
-                  <strong>WAR:</strong> Wins Above Replacement - total value of a player compared to a replacement-level
-                  player
-                </p>
-                <div class="api-info mt-3" x-show="warEndpoint">
-                  <div class="mb-2">
-                    <span class="endpoint-badge">GET</span>
-                    <code x-text="warEndpoint"></code>
-                  </div>
-                  <button class="btn btn-sm btn-outline-secondary" @click="showWARJSON = !showWARJSON">
-                    <span x-text="showWARJSON ? 'Hide JSON' : 'Show JSON Response'"></span>
-                  </button>
-                  <div x-show="showWARJSON" class="json-display mt-2" x-html="warJSON"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- End Advanced Stats Tab -->
+      <div class="field">
+        <label for="pitchingLeague">League</label>
+        <select id="pitchingLeague" x-model="pitchingLeague">
+          <option value="">Both Leagues</option>
+          <option value="AL">American League</option>
+          <option value="NL">National League</option>
+        </select>
       </div>
     </div>
+    <button class="btn btn-primary" style="margin-top: 1rem" @click="loadPitchingLeaders()">Load Leaders</button>
+    <div class="table-container" style="margin-top: 1.25rem" x-show="pitchingRows.length">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Team</th>
+            <th>Strikeouts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(row, idx) in pitchingRows" :key="row.player_id">
+            <tr>
+              <td x-text="idx + 1"></td>
+              <td x-text="row.player_id || 'Unknown'"></td>
+              <td x-text="row.team || row.team_id || '—'"></td>
+              <td x-text="row.so || 0"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" x-show="!pitchingRows.length" style="margin-top: 1.5rem">
+      Run the query to populate the table and chart.
+    </p>
+    <div class="chart-frame" x-show="pitchingChart">
+      <canvas id="pitchingChart" x-ref="pitchingChart"></canvas>
+    </div>
+    <div x-show="pitchingEndpoint" class="stack" style="gap: 0.5rem; margin-top: 1rem">
+      <div class="endpoint">
+        <strong>GET</strong>
+        <code x-text="pitchingEndpoint"></code>
+      </div>
+      <button class="btn btn-compact" @click="showPitchingJSON = !showPitchingJSON">
+        <span x-text="showPitchingJSON ? 'Hide Sample JSON' : 'Show Sample JSON'"></span>
+      </button>
+      <div class="json-display" x-show="showPitchingJSON" x-html="pitchingJSON"></div>
+    </div>
+  </section>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
-</html>
+  <section class="panel">
+    <h2>Season Batting Leaders</h2>
+    <p>Select a batting stat and quickly compare the top performers.</p>
+    <div class="form-grid">
+      <div class="field">
+        <label for="leaderYear">Season</label>
+        <input type="number" id="leaderYear" x-model.number="leaderYear" min="1871" max="2024" />
+      </div>
+      <div class="field">
+        <label for="leaderStat">Stat</label>
+        <select id="leaderStat" x-model="leaderStat">
+          <option value="hr">Home Runs</option>
+          <option value="avg">Batting Average</option>
+          <option value="rbi">Runs Batted In</option>
+          <option value="sb">Stolen Bases</option>
+          <option value="ops">OPS</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="league">League</label>
+        <select id="league" x-model="league">
+          <option value="">Both Leagues</option>
+          <option value="AL">American League</option>
+          <option value="NL">National League</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="margin-top: 1rem" @click="loadBattingLeaders()">Load Leaders</button>
+    <div class="table-container" style="margin-top: 1.25rem" x-show="leadersRows.length">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Team</th>
+            <th x-text="leaderStat.toUpperCase()"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(row, idx) in leadersRows" :key="row.player_id + idx">
+            <tr>
+              <td x-text="idx + 1"></td>
+              <td x-text="row.player_id || 'Unknown'"></td>
+              <td x-text="row.team || row.team_id || '—'"></td>
+              <td x-text="formatStat(row, leaderStat)"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" x-show="!leadersRows.length" style="margin-top: 1.5rem">
+      Request a leaderboard to populate the table and chart.
+    </p>
+    <div class="chart-frame" x-show="leadersChart">
+      <canvas id="leadersChart" x-ref="leadersChart"></canvas>
+    </div>
+    <div x-show="leadersEndpoint" class="stack" style="gap: 0.5rem; margin-top: 1rem">
+      <div class="endpoint">
+        <strong>GET</strong>
+        <code x-text="leadersEndpoint"></code>
+      </div>
+      <button class="btn btn-compact" @click="showLeadersJSON = !showLeadersJSON">
+        <span x-text="showLeadersJSON ? 'Hide Sample JSON' : 'Show Sample JSON'"></span>
+      </button>
+      <div class="json-display" x-show="showLeadersJSON" x-html="leadersJSON"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Player Career Progression</h2>
+    <p>Plot a player's year-by-year batting or pitching line.</p>
+    <div class="form-grid">
+      <div class="field">
+        <label for="playerId">Player ID</label>
+        <input type="text" id="playerId" x-model="playerId" placeholder="e.g. troutmi01" />
+      </div>
+      <div class="field">
+        <label for="playerStatType">Stat Type</label>
+        <select id="playerStatType" x-model="playerStatType">
+          <option value="batting">Batting</option>
+          <option value="pitching">Pitching</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="margin-top: 1rem" @click="loadPlayerCareer()">Load Career</button>
+    <p class="muted" x-show="!playerChart && !playerError" style="margin-top: 1rem">
+      Provide a player id (like <code>ruthba01</code>) and choose the stat split to begin.
+    </p>
+    <div class="alert danger" x-show="playerError" style="margin-top: 1rem" x-text="playerError"></div>
+    <div class="table-container" style="margin-top: 1.25rem" x-show="playerRows.length">
+      <table class="data-table" x-show="playerStatType === 'batting'">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Team</th>
+            <th>AVG</th>
+            <th>OBP</th>
+            <th>SLG</th>
+            <th>HR</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="season in playerRows" :key="season.year + season.team_id">
+            <tr>
+              <td x-text="season.year"></td>
+              <td x-text="season.team || season.team_id || '—'"></td>
+              <td x-text="formatRate(season.avg)"></td>
+              <td x-text="formatRate(season.obp)"></td>
+              <td x-text="formatRate(season.slg)"></td>
+              <td x-text="season.hr"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      <table class="data-table" x-show="playerStatType === 'pitching'">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Team</th>
+            <th>ERA</th>
+            <th>WHIP</th>
+            <th>K/9</th>
+            <th>IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="season in playerRows" :key="season.year + season.team_id + '-pitching'">
+            <tr>
+              <td x-text="season.year"></td>
+              <td x-text="season.team || season.team_id || '—'"></td>
+              <td x-text="formatRate(season.era)"></td>
+              <td x-text="formatRate(season.whip)"></td>
+              <td x-text="formatRate(season.k_per_9)"></td>
+              <td x-text="season.ip"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+    <div class="chart-frame" x-show="playerChart">
+      <canvas id="playerChart" x-ref="playerChart"></canvas>
+    </div>
+    <div x-show="playerEndpoint" class="stack" style="gap: 0.5rem; margin-top: 1rem">
+      <div class="endpoint">
+        <strong>GET</strong>
+        <code x-text="playerEndpoint"></code>
+      </div>
+      <button class="btn btn-compact" @click="showPlayerJSON = !showPlayerJSON">
+        <span x-text="showPlayerJSON ? 'Hide Sample JSON' : 'Show Sample JSON'"></span>
+      </button>
+      <div class="json-display" x-show="showPlayerJSON" x-html="playerJSON"></div>
+    </div>
+  </section>
+</div>
+{{end}}

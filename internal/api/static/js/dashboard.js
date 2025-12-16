@@ -11,50 +11,58 @@
       .then((res) => res.json())
       .then((keys) => {
         if (!Array.isArray(keys) || keys.length === 0) {
-          container.innerHTML = '<p class="text-muted">No API keys yet. Generate one above to get started.</p>';
+          container.innerHTML =
+            '<p class="muted" style="padding: 1rem">No API keys yet. Generate one above to get started.</p>';
           return;
         }
 
-        const html = keys
+        const rows = keys
           .map((key) => {
             const createdAt = new Date(key.created_at).toLocaleString();
             const lastUsed = key.last_used_at ? new Date(key.last_used_at).toLocaleString() : "Never";
             const expires = key.expires_at ? new Date(key.expires_at).toLocaleString() : "Never";
             const status = key.is_active
-              ? '<span class="badge bg-success">Active</span>'
-              : '<span class="badge bg-danger">Revoked</span>';
+              ? '<span class="status-pill success">Active</span>'
+              : '<span class="status-pill muted">Revoked</span>';
+
+            const revokeButton = key.is_active
+              ? `<button class="btn btn-danger btn-compact" onclick="revokeKey('${key.id}')">Revoke</button>`
+              : "";
 
             return `
-                        <div class="card mb-2">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="card-title">${key.name || "Unnamed Key"}</h6>
-                                        <p class="card-text text-muted mb-1">
-                                            <small>Prefix: <code>${key.key_prefix}...</code></small><br>
-                                            <small>Created: ${createdAt}</small><br>
-                                            <small>Last Used: ${lastUsed}</small><br>
-                                            <small>Expires: ${expires}</small>
-                                        </p>
-                                        ${status}
-                                    </div>
-                                    ${
-                                      key.is_active
-                                        ? `<button class="btn btn-sm btn-danger" onclick="revokeKey('${key.id}')">Revoke</button>`
-                                        : ""
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    `;
+              <tr>
+                <td>${key.name || "Unnamed Key"}</td>
+                <td><code>${key.key_prefix}...</code></td>
+                <td>${createdAt}</td>
+                <td>${lastUsed}</td>
+                <td>${expires}</td>
+                <td>${status}</td>
+                <td style="text-align:right">${revokeButton}</td>
+              </tr>
+            `;
           })
           .join("");
 
-        container.innerHTML = html;
+        container.innerHTML = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Prefix</th>
+                <th>Created</th>
+                <th>Last Used</th>
+                <th>Expires</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
       })
       .catch((err) => {
         console.error("Error loading keys:", err);
-        container.innerHTML = '<p class="text-danger">Failed to load API keys.</p>';
+        container.innerHTML = '<p class="alert danger" style="margin: 1rem">Failed to load API keys.</p>';
       });
   }
 
@@ -92,16 +100,16 @@
         }
 
         resultDiv.innerHTML = `
-                    <div class="alert alert-success">
-                        <h6>API Key Created!</h6>
-                        <p class="mb-2">Please save this key securely. It will only be shown once:</p>
-                        <div class="input-group">
-                            <input type="text" class="form-control" value="${data.key}" id="new-key-value" readonly>
-                            <button class="btn btn-outline-secondary" type="button" onclick="copyKey(event)">Copy</button>
-                        </div>
-                        <small class="text-muted">${data.warning}</small>
-                    </div>
-                `;
+          <div class="alert success">
+            <strong>API Key Created!</strong>
+            <p>Please save this key securely. It will only be shown once.</p>
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; margin: 1rem 0;">
+              <input type="text" value="${data.key}" id="new-key-value" readonly>
+              <button class="btn btn-compact" type="button" onclick="copyKey(event)">Copy</button>
+            </div>
+            <p class="muted" style="margin: 0">${data.warning}</p>
+          </div>
+        `;
 
         if (nameInput) {
           nameInput.value = "";
@@ -116,9 +124,7 @@
         if (!resultDiv) {
           return;
         }
-        resultDiv.innerHTML = `
-                    <div class="alert alert-danger">Failed to create API key: ${err.message}</div>
-                `;
+        resultDiv.innerHTML = `<div class="alert danger">Failed to create API key: ${err.message}</div>`;
       });
   }
 

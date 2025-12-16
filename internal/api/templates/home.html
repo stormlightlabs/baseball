@@ -1,0 +1,45 @@
+{{define "home.html"}}
+{{template "base" .}}
+{{end}}
+
+{{define "title"}}Baseball API - Data for Builders{{end}}
+
+{{define "body_attrs"}}data-page="home"{{end}}
+
+{{define "content"}}
+
+<div class="stack">
+  <section class="panel hero">
+    <h2>Modern Baseball Data for Builders</h2>
+    <p class="muted">
+      Query Lahman, Retrosheet, advanced sabermetrics, and park factors through one fast API.
+      Explore interactive examples, then grab an API key to power your apps.
+    </p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/login">Sign in to Dashboard</a>
+      <a class="btn" href="/docs/">View API Docs</a>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h3>"Nominatim" for Baseball Data</h3>
+    <p>
+      Nominatim is OpenStreetMap’s open-source search service: type anything, get a precise entity back. Baseball API
+      applies that philosophy to the diamond. You can look up “trout”, “BOS 1912”, or a Retrosheet game ID and we map it
+      to canonical players, teams, parks, or seasons—then expose the underlying data through consistent endpoints. It’s
+      a lightweight layer on top of Retrosheet play-by-play, FanGraphs park factors and constants, Lahman (via SABR),
+      and the MLB Stats API, so you can prototype tools, analyses, or visualizations without rebuilding the ingestion
+      stack.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h3>Get Started</h3>
+    <ol class="feature-list">
+      <li>Browse <a href="/examples">Basic</a> or <a href="/examples/advanced">Advanced</a> charts.</li>
+      <li>Read the <a href="/docs/">REST documentation</a> or hit <code>/v1/health</code>.</li>
+      <li>Sign in via GitHub or Codeberg to mint keys for production apps.</li>
+    </ol>
+  </section>
+</div>
+{{end}}

@@ -1,0 +1,73 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{block "title" .}}Baseball API{{end}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet" />
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <style>
+    [x-cloak] {
+      display: none !important;
+    }
+  </style>
+  {{block "head_extra" .}}{{end}}
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+</head>
+
+<body {{block "body_attrs" .}}data-page="app" {{end}}>
+  <header class="top-bar">
+    <h1 class="brand">
+      <img src="/static/favicon.svg" alt="" aria-hidden="true" width="28" height="28" />
+      <span>Baseball API</span>
+    </h1>
+    <nav class="nav-links" x-data="{open:false}">
+      <a href="/" class="{{if eq .ActivePage " home"}}active{{end}}">Home</a>
+      <a href="/dashboard" class="{{if eq .ActivePage " dashboard"}}active{{end}}">Dashboard</a>
+      <div class="dropdown" style="position: relative;" @click.outside="open = false"
+        @keydown.escape.window="open=false">
+        <button class="btn btn-compact" type="button" @click="open = !open" aria-haspopup="true" :aria-expanded="open">
+          Examples
+          <svg width="12" height="12" style="margin-left: 0.25rem;" aria-hidden="true" viewBox="0 0 20 20"
+            fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M5.23 7.21a.75.75 0 011.06.02L10 11.084l3.71-3.854a.75.75 0 011.08 1.04l-4.24 4.4a.75.75 0 01-1.08 0l-4.24-4.4a.75.75 0 01.02-1.06z"
+              clip-rule="evenodd" />
+          </svg>
+        </button>
+        <div class="dropdown-menu panel" x-cloak x-show="open" x-transition
+          style="position: absolute; right: 0; top: 2rem; min-width: 180px; z-index: 20; padding: 0.5rem;">
+          <a href="/examples" class="btn btn-ghost {{if eq .ActivePage " examples-basic"}}active{{end}}"
+            @click="open=false">Basic</a>
+          <a href="/examples/advanced" class="btn btn-ghost {{if eq .ActivePage " examples-advanced"}}active{{end}}"
+            @click="open=false">Advanced</a>
+        </div>
+      </div>
+      <a href="/docs/" class="{{if eq .ActivePage " docs"}}active{{end}}">API Docs</a>
+      <a class="muted" href="mailto:{{.ContactEmail}}">Contact</a>
+      {{if not .User}}
+      <a href="/login" class="btn btn-compact btn-primary">Login</a>
+      {{end}}
+      {{if and .User .ShowLogout}}
+      <button class="btn btn-compact" hx-post="/v1/auth/logout" hx-swap="none"
+        onclick="window.location.href='/login'">Logout</button>
+      {{end}}
+    </nav>
+  </header>
+
+  <main class="page" {{block "main_attrs" .}}{{end}}>
+    {{block "content" .}}{{end}}
+  </main>
+
+  {{block "body_scripts" .}}{{end}}
+</body>
+
+</html>
+{{end}}

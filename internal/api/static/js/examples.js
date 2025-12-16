@@ -63,20 +63,18 @@
     return [];
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const advancedTab = document.getElementById("advanced-tab");
-    if (advancedTab) {
-      advancedTab.addEventListener("shown.bs.tab", () => {
-        document.dispatchEvent(new CustomEvent("load-advanced-stats"));
-      });
+  function formatRateValue(value, digits = 3) {
+    if (value === undefined || value === null || Number.isNaN(value)) {
+      return "—";
     }
-  });
+    return Number(value).toFixed(digits);
+  }
 
   window.basicStatsApp = function basicStatsApp() {
     return {
-      pitchingYear: 2023,
+      pitchingYear: 2024,
       pitchingLeague: "",
-      leaderYear: 2023,
+      leaderYear: 2024,
       leaderStat: "hr",
       league: "",
       playerId: "troutmi01",
@@ -94,6 +92,9 @@
       pitchingChart: null,
       leadersChart: null,
       playerChart: null,
+      pitchingRows: [],
+      leadersRows: [],
+      playerRows: [],
 
       init() {},
 
@@ -101,11 +102,33 @@
         return highlightJSON(data);
       },
 
+      formatStat(row, statKey) {
+        if (!row) {
+          return "—";
+        }
+        const raw = row[statKey];
+        if (raw === undefined || raw === null) {
+          return "—";
+        }
+        if (typeof raw === "number") {
+          if (["avg", "obp", "slg", "ops"].includes(statKey)) {
+            return formatRateValue(raw);
+          }
+          return raw;
+        }
+        return raw;
+      },
+
+      formatRate(value) {
+        return formatRateValue(value);
+      },
+
       getCanvasContext(refName) {
         return createChartContext(this.$refs, refName);
       },
 
       async loadPitchingLeaders() {
+        this.pitchingRows = [];
         try {
           let url = `/v1/seasons/${this.pitchingYear}/leaders/pitching?stat=so&limit=10`;
           if (this.pitchingLeague) {
@@ -117,9 +140,11 @@
           const result = await response.json();
           const data = extractArray(result, ["leaders"]);
           this.pitchingJSON = this.formatJSON(data.slice(0, 3));
+          this.pitchingRows = data.slice(0, 10);
 
           if (!data || data.length === 0) {
             console.warn("No pitching leaders data found");
+            this.pitchingChart = null;
             return;
           }
 
@@ -170,6 +195,7 @@
       },
 
       async loadBattingLeaders() {
+        this.leadersRows = [];
         try {
           let url = `/v1/seasons/${this.leaderYear}/leaders/batting?stat=${this.leaderStat}&limit=10`;
           if (this.league) {
@@ -181,9 +207,11 @@
           const result = await response.json();
           const data = extractArray(result, ["leaders"]);
           this.leadersJSON = this.formatJSON(data.slice(0, 3));
+          this.leadersRows = data.slice(0, 10);
 
           if (!data || data.length === 0) {
             console.warn("No leaders data found");
+            this.leadersChart = null;
             return;
           }
 
@@ -238,6 +266,8 @@
 
       async loadPlayerCareer() {
         this.playerError = "";
+        this.playerRows = [];
+        this.playerChart = null;
         try {
           const endpoint = this.playerStatType === "batting" ? "batting" : "pitching";
           const url = `/v1/players/${this.playerId}/stats/${endpoint}`;
@@ -253,9 +283,11 @@
           const payload = await response.json();
           const data = extractArray(payload, ["seasons"]);
           this.playerJSON = this.formatJSON(data.slice(0, 3));
+          this.playerRows = data.slice(0, 15);
 
           if (!data || data.length === 0) {
             this.playerError = "No career data found for this player";
+            this.playerChart = null;
             return;
           }
 
@@ -395,11 +427,11 @@
   window.advancedStatsApp = function advancedStatsApp() {
     return {
       playerIdAdv: "troutmi01",
-      advSeasonPlayer: 2023,
-      advancedYear: 2023,
+      advSeasonPlayer: 2024,
+      advancedYear: 2024,
       minPA: 502,
       playerIdWAR: "troutmi01",
-      warSeason: 2023,
+      warSeason: 2024,
       playerAdvData: null,
       warData: null,
       playerAdvError: "",
@@ -414,25 +446,18 @@
       advLeadersJSON: "",
       warJSON: "",
       advancedLeadersChart: null,
+      advLeaderRows: [],
 
       init() {
-        let loaded = false;
-        document.addEventListener("load-advanced-stats", () => {
-          if (!loaded) {
-            loaded = true;
-            this.$nextTick(() => this.loadAdvancedStats());
-          }
-        });
-
-        const advTab = document.getElementById("advanced-tab");
-        if (advTab && advTab.classList.contains("active")) {
-          loaded = true;
-          this.$nextTick(() => this.loadAdvancedStats());
-        }
+        this.$nextTick(() => this.loadAdvancedStats());
       },
 
       formatJSON(data) {
         return highlightJSON(data);
+      },
+
+      formatRate(value, digits = 3) {
+        return formatRateValue(value, digits);
       },
 
       getCanvasContext(refName) {
@@ -442,6 +467,7 @@
       async loadPlayerAdvancedBatting() {
         this.playerAdvError = "";
         this.playerAdvData = null;
+        this.showPlayerAdvJSON = false;
         try {
           const url = `/v1/players/${this.playerIdAdv}/stats/batting/advanced?season=${this.advSeasonPlayer}`;
           this.playerAdvEndpoint = url;
@@ -463,6 +489,7 @@
       },
 
       async loadAdvancedStats() {
+        this.advLeaderRows = [];
         try {
           const url = `/v1/stats/batting?season=${this.advancedYear}&min_ab=${this.minPA}&sort_by=woba&sort_order=desc&per_page=10`;
           this.advLeadersEndpoint = url;
@@ -470,6 +497,7 @@
           const result = await response.json();
           const data = extractArray(result, ["data"]);
           this.advLeadersJSON = this.formatJSON(data.slice(0, 3));
+          this.advLeaderRows = data.slice(0, 10);
 
           if (!data || data.length === 0) {
             console.warn("No advanced stats data found");
@@ -546,6 +574,7 @@
       async loadPlayerWAR() {
         this.warError = "";
         this.warData = null;
+        this.showWARJSON = false;
         try {
           const url = `/v1/players/${this.playerIdWAR}/stats/war?season=${this.warSeason}`;
           this.warEndpoint = url;

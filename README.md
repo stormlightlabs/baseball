@@ -1,6 +1,8 @@
 <!-- markdownlint-disable MD033 -->
 # Baseball API
 
+![API Banner](./docs/banner.png)
+
 A comprehensive REST API for baseball statistics built with Go, serving data from the Lahman Baseball Database and Retrosheet.
 
 ## Quick Start
@@ -638,7 +640,7 @@ internal/docs/docs.go:1086:2: unknown field RightDelim in struct literal of type
 
 </details>
 
-## Available Tasks
+### Available Tasks
 
 Run `task --list` to see all available tasks.
 

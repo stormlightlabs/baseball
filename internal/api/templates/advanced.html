@@ -1,0 +1,183 @@
+{{define "advanced.html"}}
+{{template "base" .}}
+{{end}}
+
+{{define "title"}}Baseball API - Advanced Charts{{end}}
+
+{{define "body_attrs"}}data-page="examples-advanced"{{end}}
+
+{{define "main_attrs"}}x-data="advancedStatsApp()" x-init="init()"{{end}}
+
+{{define "head_extra"}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script defer src="/static/js/examples.js"></script>
+{{end}}
+
+{{define "content"}}
+<div class="stack">
+  <section class="panel">
+    <h2>Advanced Batting Snapshot</h2>
+    <p>Compare wOBA, wRC+, ISO, and BABIP for a player in a specific season.</p>
+    <div class="form-grid">
+      <div class="field">
+        <label for="playerIdAdv">Player ID</label>
+        <input type="text" id="playerIdAdv" x-model="playerIdAdv" placeholder="e.g. troutmi01" />
+      </div>
+      <div class="field">
+        <label for="advSeasonPlayer">Season</label>
+        <input type="number" id="advSeasonPlayer" x-model.number="advSeasonPlayer" min="2002" max="2024" />
+      </div>
+    </div>
+    <button class="btn btn-primary" style="margin-top: 1rem" @click="loadPlayerAdvancedBatting()">
+      Load Metrics
+    </button>
+    <div class="alert danger" x-show="playerAdvError" style="margin-top: 1rem" x-text="playerAdvError"></div>
+    <div class="table-container" style="margin-top: 1.25rem" x-show="playerAdvData">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>wOBA</td>
+            <td x-text="formatRate(playerAdvData?.woba)"></td>
+          </tr>
+          <tr>
+            <td>wRC+</td>
+            <td x-text="playerAdvData?.wrc_plus ?? '—'"></td>
+          </tr>
+          <tr>
+            <td>ISO</td>
+            <td x-text="formatRate(playerAdvData?.iso)"></td>
+          </tr>
+          <tr>
+            <td>BABIP</td>
+            <td x-text="formatRate(playerAdvData?.babip)"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div x-show="playerAdvEndpoint" class="stack" style="gap: 0.5rem; margin-top: 1rem">
+      <div class="endpoint">
+        <strong>GET</strong>
+        <code x-text="playerAdvEndpoint"></code>
+      </div>
+      <button class="btn btn-compact" @click="showPlayerAdvJSON = !showPlayerAdvJSON">
+        <span x-text="showPlayerAdvJSON ? 'Hide Sample JSON' : 'Show Sample JSON'"></span>
+      </button>
+      <div class="json-display" x-show="showPlayerAdvJSON" x-html="playerAdvJSON"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Seasonal wOBA &amp; wRC+ Leaders</h2>
+    <p>Top hitters filtered by minimum plate appearances with both chart and rows.</p>
+    <div class="form-grid">
+      <div class="field">
+        <label for="advancedYear">Season</label>
+        <input type="number" id="advancedYear" x-model.number="advancedYear" min="2002" max="2024" />
+      </div>
+      <div class="field">
+        <label for="minPA">Min Plate Appearances</label>
+        <input type="number" id="minPA" x-model.number="minPA" min="0" />
+      </div>
+    </div>
+    <button class="btn btn-primary" style="margin-top: 1rem" @click="loadAdvancedStats()">Load Leaders</button>
+    <div class="table-container" style="margin-top: 1.25rem" x-show="advLeaderRows.length">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Team</th>
+            <th>wOBA</th>
+            <th>wRC+</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(row, idx) in advLeaderRows" :key="row.player_id + idx">
+            <tr>
+              <td x-text="idx + 1"></td>
+              <td x-text="row.player_id || 'Unknown'"></td>
+              <td x-text="row.team || row.team_id || '—'"></td>
+              <td x-text="formatRate(row.woba ?? row.obp)"></td>
+              <td x-text="row.wrc_plus ?? Math.round((row.ops || 0) * 100)"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+    <div class="chart-frame" x-show="advancedLeadersChart">
+      <canvas id="advancedLeadersChart" x-ref="advancedLeadersChart"></canvas>
+    </div>
+    <div x-show="advLeadersEndpoint" class="stack" style="gap: 0.5rem; margin-top: 1rem">
+      <div class="endpoint">
+        <strong>GET</strong>
+        <code x-text="advLeadersEndpoint"></code>
+      </div>
+      <button class="btn btn-compact" @click="showAdvLeadersJSON = !showAdvLeadersJSON">
+        <span x-text="showAdvLeadersJSON ? 'Hide Sample JSON' : 'Show Sample JSON'"></span>
+      </button>
+      <div class="json-display" x-show="showAdvLeadersJSON" x-html="advLeadersJSON"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Player WAR Snapshot</h2>
+    <p>Quick view of WAR plus batting and fielding components.</p>
+    <div class="form-grid">
+      <div class="field">
+        <label for="playerIdWAR">Player ID</label>
+        <input type="text" id="playerIdWAR" x-model="playerIdWAR" placeholder="e.g. troutmi01" />
+      </div>
+      <div class="field">
+        <label for="warSeason">Season</label>
+        <input type="number" id="warSeason" x-model.number="warSeason" min="1871" max="2024" />
+      </div>
+    </div>
+    <button class="btn btn-primary" style="margin-top: 1rem" @click="loadPlayerWAR()">Load WAR</button>
+    <div class="alert danger" x-show="warError" style="margin-top: 1rem" x-text="warError"></div>
+    <div class="table-container" style="margin-top: 1.25rem" x-show="warData">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Total WAR</td>
+            <td x-text="formatRate(warData?.war, 1)"></td>
+          </tr>
+          <tr>
+            <td>Batting Runs</td>
+            <td x-text="formatRate(warData?.batting_runs, 1)"></td>
+          </tr>
+          <tr>
+            <td>Fielding Runs</td>
+            <td x-text="formatRate(warData?.fielding_runs, 1)"></td>
+          </tr>
+          <tr>
+            <td>Replacement Runs</td>
+            <td x-text="formatRate(warData?.replacement_runs, 1)"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div x-show="warEndpoint" class="stack" style="gap: 0.5rem; margin-top: 1rem">
+      <div class="endpoint">
+        <strong>GET</strong>
+        <code x-text="warEndpoint"></code>
+      </div>
+      <button class="btn btn-compact" @click="showWARJSON = !showWARJSON">
+        <span x-text="showWARJSON ? 'Hide Sample JSON' : 'Show Sample JSON'"></span>
+      </button>
+      <div class="json-display" x-show="showWARJSON" x-html="warJSON"></div>
+    </div>
+  </section>
+</div>
+{{end}}

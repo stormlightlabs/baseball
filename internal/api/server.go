@@ -191,11 +191,7 @@ func newServer(registrars ...Registrar) *Server {
 		writeJSON(w, http.StatusOK, HealthResponse{Status: "ok"})
 	})
 
-	mux.HandleFunc("/docs/", httpSwagger.WrapHandler)
-	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/docs/", http.StatusMovedPermanently)
-	})
-
+	mux.Handle("GET /docs/", httpSwagger.WrapHandler)
 	mux.Handle("GET /debug/vars", http.DefaultServeMux)
 	return &Server{mux: mux}
 }
