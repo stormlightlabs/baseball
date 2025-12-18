@@ -113,7 +113,7 @@ Transfer the following to your production server:
 
 ```bash
 # Transfer codebase and config
-scp -r docker-compose.yml Caddyfile user@server:/opt/baseball/
+scp -r conf/docker-compose.yml conf/Caddyfile user@server:/opt/baseball/conf/
 
 # Transfer data files (if loading data on server)
 rsync -avz data/ user@server:/opt/baseball/data/
