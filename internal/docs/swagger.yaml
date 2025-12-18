@@ -153,6 +153,13 @@ definitions:
       year:
         type: integer
     type: object
+  api.SalarySummaryResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/core.SalarySummary'
+        type: array
+    type: object
   api.datasetCoverage:
     properties:
       from:
@@ -1918,6 +1925,17 @@ definitions:
       runs_allowed:
         type: integer
       runs_scored:
+        type: integer
+    type: object
+  core.SalarySummary:
+    properties:
+      average:
+        type: number
+      median:
+        type: number
+      total:
+        type: number
+      year:
         type: integer
     type: object
   core.Season:
@@ -5907,6 +5925,54 @@ paths:
       summary: List plays
       tags:
       - plays
+  /salaries/summary:
+    get:
+      consumes:
+      - application/json
+      description: Get salary aggregates (total, average, median) for all years
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SalarySummaryResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: List all salary summaries
+      tags:
+      - salaries
+  /salaries/summary/{year}:
+    get:
+      consumes:
+      - application/json
+      description: Get salary aggregates (total, average, median) for a specific season
+      parameters:
+      - description: Season year
+        in: path
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.SalarySummary'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get salary summary for a specific year
+      tags:
+      - salaries
   /search/games:
     get:
       consumes:
@@ -7779,3 +7845,5 @@ tags:
   name: federalleague
 - description: Baseball achievements and milestones
   name: achievements
+- description: Player salary data and trends
+  name: salaries

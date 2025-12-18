@@ -5000,6 +5000,79 @@
                 }
             }
         },
+        "/salaries/summary": {
+            "get": {
+                "description": "Get salary aggregates (total, average, median) for all years",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "salaries"
+                ],
+                "summary": "List all salary summaries",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.SalarySummaryResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/salaries/summary/{year}": {
+            "get": {
+                "description": "Get salary aggregates (total, average, median) for a specific season",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "salaries"
+                ],
+                "summary": "Get salary summary for a specific year",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.SalarySummary"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/search/games": {
             "get": {
                 "description": "Natural language game search supporting queries like \"yankees red sox 2004 alcs game 7\" or \"dodgers giants 2014 nlcs\"",
@@ -7913,6 +7986,17 @@
                 }
             }
         },
+        "api.SalarySummaryResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.SalarySummary"
+                    }
+                }
+            }
+        },
         "api.datasetCoverage": {
             "type": "object",
             "properties": {
@@ -10533,6 +10617,23 @@
                 }
             }
         },
+        "core.SalarySummary": {
+            "type": "object",
+            "properties": {
+                "average": {
+                    "type": "number"
+                },
+                "median": {
+                    "type": "number"
+                },
+                "total": {
+                    "type": "number"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "core.Season": {
             "type": "object",
             "properties": {
@@ -11512,6 +11613,10 @@
         {
             "description": "Baseball achievements and milestones",
             "name": "achievements"
+        },
+        {
+            "description": "Player salary data and trends",
+            "name": "salaries"
         }
     ]
 }

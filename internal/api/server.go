@@ -92,6 +92,9 @@
 //
 // @tag.name achievements
 // @tag.description Baseball achievements and milestones
+//
+// @tag.name salaries
+// @tag.description Player salary data and trends
 package api
 
 import (
@@ -135,6 +138,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 
 	negroLeaguesRepo := repository.NewNegroLeaguesRepository(db, cacheClient)
 	achievementRepo := repository.NewAchievementRepository(db, cacheClient)
+	salaryRepo := repository.NewSalaryRepository(db)
 
 	userRepo := repository.NewUserRepository(db)
 	apiKeyRepo := repository.NewAPIKeyRepository(db)
@@ -166,6 +170,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewFederalLeagueRoutes(gameRepo, playRepo, teamRepo),
 		NewNegroLeaguesRoutes(negroLeaguesRepo),
 		NewAchievementRoutes(achievementRepo),
+		NewSalaryRoutes(salaryRepo),
 	)
 }
 

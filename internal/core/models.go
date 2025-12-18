@@ -972,3 +972,11 @@ type ExtraInningGame struct {
 	WinningTeam        *TeamID    `json:"winning_team,omitempty"`
 	ResultType         string     `json:"result_type"` // "tie", "home_win", or "away_win"
 }
+
+// SalarySummary represents yearly salary aggregate statistics.
+type SalarySummary struct {
+	Year    SeasonYear `json:"year"`
+	Total   float64    `json:"total"`
+	Average float64    `json:"average"`
+	Median  float64    `json:"median"`
+}

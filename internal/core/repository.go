@@ -456,3 +456,12 @@ type AchievementRepository interface {
 	ListExtraInningGames(ctx context.Context, filter AchievementFilter) ([]ExtraInningGame, error)
 	CountExtraInningGames(ctx context.Context, filter AchievementFilter) (int, error)
 }
+
+// SalaryRepository provides access to salary summary data and trends.
+type SalaryRepository interface {
+	// List retrieves all yearly salary aggregates (total, average, median)
+	List(ctx context.Context) ([]SalarySummary, error)
+
+	// Get retrieves salary aggregate for a specific year
+	Get(ctx context.Context, year SeasonYear) (*SalarySummary, error)
+}
