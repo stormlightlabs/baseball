@@ -59,11 +59,11 @@ func (pr *ParkRoutes) handleListParks(w http.ResponseWriter, r *http.Request) {
 
 // handleGetPark godoc
 // @Summary Get ballpark by ID
-// @Description Get detailed information about a specific ballpark
+// @Description Get detailed information about a specific ballpark. Examples: LOS03 (Dodger Stadium), NWK04 (Ruppert Stadium - Negro Leagues), SAC01 (Sutter Health Park - A's 2025 temporary home)
 // @Tags parks
 // @Accept json
 // @Produce json
-// @Param park_id path string true "Park ID (park key)"
+// @Param park_id path string true "Park ID (park key)" example(LOS03)
 // @Success 200 {object} core.Park
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -83,12 +83,12 @@ func (pr *ParkRoutes) handleGetPark(w http.ResponseWriter, r *http.Request) {
 
 // handleParkGames godoc
 // @Summary Get games played at a ballpark
-// @Description Get all games played at a specific ballpark
+// @Description Get all games played at a specific ballpark. Returns games with full details including scores, attendance, and umpires. Examples: LOS03 (Dodger Stadium - 323 games 2022-2025), NWK04 (Ruppert Stadium - 324 Negro Leagues games 1936-1949)
 // @Tags parks, games
 // @Accept json
 // @Produce json
-// @Param park_id path string true "Park ID (park key)"
-// @Param season query integer false "Filter by season year"
+// @Param park_id path string true "Park ID (park key)" example(LOS03)
+// @Param season query integer false "Filter by season year" example(2024)
 // @Param page query integer false "Page number" default(1)
 // @Param per_page query integer false "Results per page" default(50)
 // @Success 200 {object} PaginatedResponse

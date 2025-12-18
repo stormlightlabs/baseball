@@ -22,6 +22,9 @@ import (
 //go:embed sql/*.sql
 var migrationFiles embed.FS
 
+//go:embed queries/fill_missing_parks.sql
+var fillMissingParksQuery string
+
 // Migration represents a single database migration.
 type Migration struct {
 	Name    string
@@ -1575,4 +1578,32 @@ func (db *DB) LoadSalaryData(ctx context.Context, csvPath string, year int) (int
 	}
 
 	return rowCount, nil
+}
+
+// LoadMissingParks executes the fill_missing_parks.sql script to add missing park metadata.
+// This fills gaps in the Parks table for high-usage Negro Leagues parks and modern parks lacking metadata.
+// Returns the number of parks inserted and refreshes the park_map materialized view.
+func (db *DB) LoadMissingParks(ctx context.Context) (int64, error) {
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	result, err := tx.Exec(ctx, fillMissingParksQuery)
+	if err != nil {
+		return 0, fmt.Errorf("failed to execute park fills: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
 }

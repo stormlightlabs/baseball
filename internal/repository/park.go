@@ -221,9 +221,9 @@ func (r *ParkRepository) GamesAtPark(ctx context.Context, id core.ParkID, filter
 		var g core.Game
 		var date string
 		var gameNumber int
-		var attendance, durationMin sql.NullInt64
-		var umpHome, umpFirst, umpSecond, umpThird sql.NullString
-		var homeTeam, awayTeam, homeLeague, awayLeague, parkID string
+		var innings, attendance, durationMin sql.NullInt64
+		var dayOfWeek, homeLeague, awayLeague, umpHome, umpFirst, umpSecond, umpThird sql.NullString
+		var homeTeam, awayTeam, parkID string
 
 		err := rows.Scan(
 			&date,
@@ -234,8 +234,8 @@ func (r *ParkRepository) GamesAtPark(ctx context.Context, id core.ParkID, filter
 			&homeLeague,
 			&g.AwayScore,
 			&g.HomeScore,
-			&g.Innings,
-			&g.DayOfWeek,
+			&innings,
+			&dayOfWeek,
 			&attendance,
 			&durationMin,
 			&parkID,
@@ -252,9 +252,14 @@ func (r *ParkRepository) GamesAtPark(ctx context.Context, id core.ParkID, filter
 		g.ID = core.GameID(fmt.Sprintf("%s%d%s", date, gameNumber, homeTeam))
 		g.HomeTeam = core.TeamID(homeTeam)
 		g.AwayTeam = core.TeamID(awayTeam)
-		g.HomeLeague = core.LeagueID(homeLeague)
-		g.AwayLeague = core.LeagueID(awayLeague)
 		g.ParkID = core.ParkID(parkID)
+
+		if homeLeague.Valid {
+			g.HomeLeague = core.LeagueID(homeLeague.String)
+		}
+		if awayLeague.Valid {
+			g.AwayLeague = core.LeagueID(awayLeague.String)
+		}
 
 		parsedDate, err := time.Parse("20060102", date)
 		if err != nil {
@@ -263,7 +268,13 @@ func (r *ParkRepository) GamesAtPark(ctx context.Context, id core.ParkID, filter
 		g.Date = parsedDate
 		g.Season = core.SeasonYear(parsedDate.Year())
 
-		g.Innings = g.Innings / 3
+		if innings.Valid {
+			g.Innings = int(innings.Int64) / 3
+		}
+
+		if dayOfWeek.Valid {
+			g.DayOfWeek = dayOfWeek.String
+		}
 
 		if attendance.Valid {
 			a := int(attendance.Int64)

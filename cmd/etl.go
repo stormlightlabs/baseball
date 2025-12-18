@@ -54,6 +54,7 @@ func EtlLoadCmd() *cobra.Command {
 	cmd.AddCommand(FanGraphsLoadCmd())
 	cmd.AddCommand(WeatherLoadCmd())
 	cmd.AddCommand(SalaryLoadCmd())
+	cmd.AddCommand(ParksLoadCmd())
 	return cmd
 }
 
@@ -159,6 +160,16 @@ func SalaryLoadCmd() *cobra.Command {
 		Short: "Load salary data into database",
 		Long:  "Enriches the Salaries table with additional salary data by matching player names to Lahman IDs. Also loads salary summary statistics.",
 		RunE:  loadSalaryData,
+	}
+}
+
+// ParksLoadCmd creates the load parks command
+func ParksLoadCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "parks",
+		Short: "Load missing parks data into database",
+		Long:  "Fills gaps in the Parks table for high-usage Negro Leagues parks and modern parks lacking metadata. Also refreshes the park_map materialized view.",
+		RunE:  loadParksData,
 	}
 }
 
@@ -867,11 +878,8 @@ func loadRetrosheetPlayers(cmd *cobra.Command, args []string) error {
 	echo.Success("✓ Connected to database")
 
 	ctx := cmd.Context()
-
-	// Check if allplayers.csv exists
 	csvPath := "data/retrosheet/allplayers.csv"
 	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
-		// Try to extract from zip
 		zipPath := "data/retrosheet/allplayers.zip"
 		if _, err := os.Stat(zipPath); os.IsNotExist(err) {
 			return fmt.Errorf(`error: allplayers data not found
@@ -957,5 +965,37 @@ Expected format:
 	echo.Info("")
 	echo.Success("✓ Salary data loaded successfully")
 	echo.Infof("  Data enriches Lahman Salaries table with player name matching")
+	return nil
+}
+
+func loadParksData(cmd *cobra.Command, args []string) error {
+	echo.Header("Loading Missing Parks Data")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	ctx := cmd.Context()
+
+	echo.Info("Filling missing park metadata...")
+	rows, err := database.LoadMissingParks(ctx)
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	echo.Info("")
+	echo.Success("✓ Missing parks data loaded successfully")
+	echo.Infof("  Parks processed: %d", rows)
+	echo.Info("  Refreshed park_map materialized view")
+
+	if err := database.RecordDatasetRefresh(ctx, "parks_metadata", rows); err != nil {
+		return fmt.Errorf("error: failed to record parks refresh: %w", err)
+	}
+
 	return nil
 }
