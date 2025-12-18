@@ -20,6 +20,7 @@ import (
 type LahmanOptions struct {
 	CSVDir string
 	Tables []string
+	Skip   bool
 }
 
 // RetrosheetOptions controls Retrosheet ingestion.
@@ -37,6 +38,17 @@ type RetrosheetResult struct {
 
 // LoadLahman loads Lahman CSVs into the database, truncating the target tables first.
 func LoadLahman(ctx context.Context, database *db.DB, opts LahmanOptions) (int64, error) {
+	if opts.Skip {
+		loaded, err := database.IsDatasetLoaded(ctx, "lahman")
+		if err != nil {
+			return 0, fmt.Errorf("error: failed to check if Lahman is loaded: %w", err)
+		}
+		if loaded {
+			echo.Info("Lahman data already loaded, skipping")
+			return 0, nil
+		}
+	}
+
 	csvDir := opts.CSVDir
 	if csvDir == "" {
 		csvDir = filepath.Join("data", "lahman", "csv")
@@ -48,10 +60,8 @@ func LoadLahman(ctx context.Context, database *db.DB, opts LahmanOptions) (int64
 	}
 
 	var totalRows int64
-
 	for _, table := range tables {
 		csvFile := filepath.Join(csvDir, table+".csv")
-
 		if _, err := os.Stat(csvFile); errors.Is(err, os.ErrNotExist) {
 			echo.Infof("Skipping %s (file not found)", table)
 			continue
@@ -64,7 +74,6 @@ func LoadLahman(ctx context.Context, database *db.DB, opts LahmanOptions) (int64
 		}
 
 		echo.Infof("Loading %s...", table)
-
 		rows, err := database.CopyCSV(ctx, table, csvFile)
 		if err != nil {
 			return 0, fmt.Errorf("error: failed to load %s: %w", table, err)
@@ -78,7 +87,6 @@ func LoadLahman(ctx context.Context, database *db.DB, opts LahmanOptions) (int64
 	if err := database.RecordDatasetRefresh(ctx, "lahman", totalRows); err != nil {
 		return totalRows, fmt.Errorf("error: failed to record Lahman refresh: %w", err)
 	}
-
 	return totalRows, nil
 }
 
@@ -422,21 +430,15 @@ func truncateTable(ctx context.Context, database *db.DB, table string) error {
 
 func defaultLahmanTables() []string {
 	return []string{
-		"AllstarFull",
-		"Appearances",
+		"AllstarFull", "Appearances",
 		"AwardsManagers", "AwardsPlayers", "AwardsShareManagers", "AwardsSharePlayers",
-		"Batting", "BattingPost",
-		"CollegePlaying",
+		"Batting", "BattingPost", "CollegePlaying",
 		"Fielding", "FieldingOF", "FieldingOFsplit", "FieldingPost",
-		"HomeGames",
-		"HallOfFame",
+		"HomeGames", "HallOfFame",
 		"Managers", "ManagersHalf",
-		"Parks",
-		"People",
+		"Parks", "People",
 		"Pitching", "PitchingPost",
-		"Salaries",
-		"Schools",
-		"SeriesPost",
+		"Salaries", "Schools", "SeriesPost",
 		"Teams", "TeamsFranchises", "TeamsHalf",
 	}
 }

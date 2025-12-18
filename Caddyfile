@@ -1,0 +1,65 @@
+{
+	admin off
+	auto_https off
+	# Set to "on" for production with baseball.stormlightlabs.org
+	# auto_https on
+}
+
+:80 {
+	handle /health {
+		respond "OK" 200
+	}
+
+	handle /v1/* {
+		reverse_proxy app:8080 {
+			lb_policy round_robin
+
+			health_uri /v1/health
+			health_interval 10s
+			health_timeout 5s
+
+			# Timeouts
+			transport http {
+				dial_timeout 5s
+				response_header_timeout 30s
+			}
+		}
+	}
+
+	handle / {
+		respond "Baseball API - Use /v1/* endpoints" 200
+	}
+
+	encode gzip zstd
+
+	log {
+		output stdout
+		format console
+		level INFO
+	}
+}
+
+# Production HTTPS configuration
+#
+# baseball.stormlightlabs.org {
+# 	handle /v1/* {
+# 		reverse_proxy app:8080 {
+# 			lb_policy round_robin
+# 			health_uri /v1/health
+# 			health_interval 10s
+# 			health_timeout 5s
+# 		}
+# 	}
+#
+# 	handle / {
+# 		respond "Baseball API - Use /v1/* endpoints" 200
+# 	}
+#
+# 	encode gzip zstd
+#
+# 	log {
+# 		output stdout
+# 		format json
+# 		level INFO
+# 	}
+# }

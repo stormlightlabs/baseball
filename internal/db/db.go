@@ -694,6 +694,26 @@ func (db *DB) DatasetRefreshes(ctx context.Context) (map[string]DatasetRefresh, 
 	return result, nil
 }
 
+// IsDatasetLoaded checks if a dataset has been loaded before by querying dataset_refreshes.
+// Returns true if the dataset exists in the table with row_count > 0.
+func (db *DB) IsDatasetLoaded(ctx context.Context, dataset string) (bool, error) {
+	var rowCount int64
+	err := db.QueryRowContext(ctx, `
+		SELECT row_count
+		FROM dataset_refreshes
+		WHERE dataset = $1
+	`, dataset).Scan(&rowCount)
+
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to check if dataset %s is loaded: %w", dataset, err)
+	}
+
+	return rowCount > 0, nil
+}
+
 // LoadFanGraphsWOBA loads wOBA constants from FanGraphs CSV into the database.
 // CSV format: Season,wOBA,wOBAScale,wBB,wHBP,w1B,w2B,w3B,wHR,runSB,runCS,R/PA,R/W,cFIP
 func (db *DB) LoadFanGraphsWOBA(ctx context.Context, csvPath string) (int64, error) {

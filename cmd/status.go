@@ -219,27 +219,6 @@ func seasonRange(ctx context.Context, database *db.DB) (*int, *int, error) {
 	return minPtr, maxPtr, nil
 }
 
-func formatRefresh(entry *db.DatasetRefresh) string {
-	if entry == nil || entry.LastLoadedAt.IsZero() {
-		return "not yet recorded"
-	}
-
-	return fmt.Sprintf("%s (%s ago, %d rows)",
-		entry.LastLoadedAt.Format(time.RFC1123),
-		time.Since(entry.LastLoadedAt).Round(time.Minute),
-		entry.RowCount,
-	)
-}
-
-func humanizeModTime(t time.Time) string {
-	if t.IsZero() {
-		return "unknown"
-	}
-
-	ago := time.Since(t)
-	return fmt.Sprintf("%s (%s ago)", t.Format("2006-01-02 15:04"), ago.Round(time.Minute))
-}
-
 func retroDateRange(ctx context.Context, database *db.DB, table, column string) (*time.Time, *time.Time, error) {
 	query := fmt.Sprintf(`SELECT MIN(%s), MAX(%s) FROM %s`, column, column, table)
 	var minVal, maxVal sql.NullString

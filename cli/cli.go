@@ -25,6 +25,7 @@ Supports Lahman and Retrosheet data sources.
 	root.AddCommand(cmd.DbCmd())
 	root.AddCommand(cmd.ServerCmd())
 	root.AddCommand(cmd.CacheCmd())
+	root.AddCommand(cmd.DeployCmd())
 	return root
 }
 

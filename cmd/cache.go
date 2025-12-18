@@ -395,16 +395,3 @@ func clearCache(cmd *cobra.Command, args []string) error {
 	echo.Successf("✓ Cleared cache: %d keys deleted", deleted)
 	return nil
 }
-
-func formatTTL(ttl time.Duration) string {
-	if ttl < 0 {
-		return "No expiry"
-	}
-	if ttl < time.Minute {
-		return fmt.Sprintf("%ds", int(ttl.Seconds()))
-	}
-	if ttl < time.Hour {
-		return fmt.Sprintf("%dm", int(ttl.Minutes()))
-	}
-	return fmt.Sprintf("%.1fh", ttl.Hours())
-}

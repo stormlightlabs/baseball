@@ -1,6 +1,21 @@
 version: "3.9"
 
 services:
+  caddy:
+    image: caddy:2.9-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - baseball-net
+
   app:
     build:
       context: .
@@ -14,9 +29,19 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/baseball_dev?sslmode=disable
       REDIS_URL: redis://redis:6379/0
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     command: ["server", "start"]
+    restart: unless-stopped
+    networks:
+      - baseball-net
+    # NOTE: For production scaling, use docker-compose --scale app=3
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
 
   postgres:
     image: postgres:17.5
@@ -24,8 +49,13 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: baseball_dev
+      POSTGRES_SHARED_BUFFERS: 256MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
+      POSTGRES_WORK_MEM: 16MB
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Expose for migrations/admin access
+    # TODO: consider removing in production
     ports:
       - "5432:5432"
     healthcheck:
@@ -33,20 +63,37 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+    networks:
+      - baseball-net
 
   redis:
     image: redis:7.4
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
     volumes:
       - redis_data:/data
-    ports:
-      - "6379:6379"
+    # Internal port only
+    expose:
+      - "6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+    networks:
+      - baseball-net
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+networks:
+  baseball-net:
+    driver: bridge
