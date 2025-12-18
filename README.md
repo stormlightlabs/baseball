@@ -120,6 +120,7 @@ task build
      ./tmp/baseball etl load negroleagues          # Negro Leagues play-by-play
      ./tmp/baseball etl load fangraphs             # wOBA constants, park factors (needed for advanced stats)
      ./tmp/baseball etl load weather               # Weather metadata (optional)
+     ./tmp/baseball etl load parks                 # Fill missing park metadata (optional)
      ./tmp/baseball etl load salary                # Enriches Salaries table with additional salary data (2000-2025)
      ```
 
@@ -155,11 +156,16 @@ Load complete Lahman database plus all available Retrosheet data (1910-2025):
 # 3. Load FanGraphs constants (needed for advanced stats like wOBA, wRC+, FIP)
 ./tmp/baseball etl load fangraphs
 
-# 4. Load weather and Negro Leagues data
+# 4. Load Negro Leagues data
 ./tmp/baseball etl load negroleagues
+
+# 5. Load weather data
 ./tmp/baseball etl load weather
 
-# 5. Refresh materialized views
+# 6. Load parks data
+./tmp/baseball etl load parks
+
+# 7. Refresh materialized views
 ./tmp/baseball db refresh-views
 ```
 
@@ -188,11 +194,16 @@ Load specific historical eras plus recent years for faster setup:
 # 5. Load FanGraphs constants (needed for advanced stats)
 ./tmp/baseball etl load fangraphs
 
-# 6. Load Negro Leagues play-by-play and weather
+# 6. Load Negro Leagues play-by-play
 ./tmp/baseball etl load negroleagues
+
+# 7. Load weather data
 ./tmp/baseball etl load weather
 
-# 7. Refresh materialized views
+# 8. Load missing parks metadata
+./tmp/baseball etl load parks
+
+# 9. Refresh materialized views
 ./tmp/baseball db refresh-views
 ```
 
