@@ -120,6 +120,7 @@ task build
      ./tmp/baseball etl load negroleagues          # Negro Leagues play-by-play
      ./tmp/baseball etl load fangraphs             # wOBA constants, park factors (needed for advanced stats)
      ./tmp/baseball etl load weather               # Weather metadata (optional)
+     ./tmp/baseball etl load salary                # Enriches Salaries table with additional salary data (2000-2025)
      ```
 
    - or truncate + repopulate:
@@ -731,6 +732,7 @@ This project uses data from:
 [SABR Lahman Database](https://sabr.org/lahman-database/)
 - **Retrosheet**: The information used here was obtained free of charge from and is copyrighted by Retrosheet.
 [Retrosheet.org](https://www.retrosheet.org/)
+- **Baseball Prospectus**: Salary data sourced from [Cot's Baseball Contracts](https://legacy.baseballprospectus.com/compensation/cots/).
 - **MLB**: This project and its author are not affiliated with MLB or any MLB team. This REST API interfaces with MLB's Stats API.
 Use of MLB data is subject to the notice posted at <http://gdx.mlb.com/components/copyright.txt> (is also available in every request)
 - wOBA weights, league wOBA, wOBA scale, FIP constants, and park factors are taken from [FanGraphs' Guts! tool](https://www.fangraphs.com/tools/guts).

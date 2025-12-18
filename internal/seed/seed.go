@@ -801,3 +801,79 @@ func LoadRetrosheetPlayers(ctx context.Context, database *db.DB, csvPath string)
 
 	return rows, nil
 }
+
+// LoadSalaryData loads salary data from individual year CSV files and summary data.
+// This enriches the Lahman Salaries table with additional modern salary data.
+func LoadSalaryData(ctx context.Context, database *db.DB, dataDir string) (int64, error) {
+	if dataDir == "" {
+		dataDir = filepath.Join("data", "salaries")
+	}
+
+	if _, err := os.Stat(dataDir); errors.Is(err, os.ErrNotExist) {
+		return 0, fmt.Errorf("error: salary data directory not found at %s", dataDir)
+	} else if err != nil {
+		return 0, fmt.Errorf("error: failed to access salary data directory: %w", err)
+	}
+
+	echo.Info("Loading salary summary data...")
+	summaryFile := filepath.Join(dataDir, "summary.csv")
+	if _, err := os.Stat(summaryFile); errors.Is(err, os.ErrNotExist) {
+		echo.Info("  Summary file not found, skipping")
+	} else {
+		summaryRows, err := database.LoadSalarySummary(ctx, summaryFile)
+		if err != nil {
+			return 0, fmt.Errorf("error: failed to load salary summary: %w", err)
+		}
+		echo.Successf("✓ Loaded salary summary (%d years)", summaryRows)
+	}
+
+	echo.Info("")
+	echo.Info("Loading individual salary files...")
+
+	files, err := filepath.Glob(filepath.Join(dataDir, "[0-9][0-9][0-9][0-9].csv"))
+	if err != nil {
+		return 0, fmt.Errorf("error: failed to list salary files: %w", err)
+	}
+
+	if len(files) == 0 {
+		return 0, fmt.Errorf("error: no salary CSV files found in %s", dataDir)
+	}
+
+	var years []string
+	for _, file := range files {
+		basename := filepath.Base(file)
+		year := strings.TrimSuffix(basename, ".csv")
+		years = append(years, year)
+	}
+
+	totalRows := int64(0)
+	for i, file := range files {
+		basename := filepath.Base(file)
+		yearStr := strings.TrimSuffix(basename, ".csv")
+
+		var year int
+		if _, err := fmt.Sscanf(yearStr, "%d", &year); err != nil {
+			echo.Infof("  Skipping %s (invalid year format)", basename)
+			continue
+		}
+
+		rows, err := database.LoadSalaryData(ctx, file, year)
+		if err != nil {
+			return totalRows, fmt.Errorf("error: failed to load %s: %w", basename, err)
+		}
+
+		totalRows += rows
+		echo.Infof("  [%d/%d] %d: %s players", i+1, len(files), year, formatNumber(rows))
+	}
+
+	echo.Info("")
+	echo.Success("✓ Salary data loaded successfully")
+	echo.Infof("  Total players updated: %s", formatNumber(totalRows))
+	echo.Infof("  Years: %d-%s", len(years), strings.Join([]string{years[0], years[len(years)-1]}, " to "))
+
+	if err := database.RecordDatasetRefresh(ctx, "salaries", totalRows); err != nil {
+		return totalRows, fmt.Errorf("error: failed to record salary refresh: %w", err)
+	}
+
+	return totalRows, nil
+}

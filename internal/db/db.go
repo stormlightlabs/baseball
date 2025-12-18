@@ -1448,3 +1448,131 @@ func (db *DB) LoadNegroLeaguesData(ctx context.Context, dataDir string) (int64, 
 
 	return gameRows, playRows, nil
 }
+
+// LoadSalarySummary loads salary summary data (year, total, average, median) into the database.
+// CSV format: Year,Total,Average,Median
+func (db *DB) LoadSalarySummary(ctx context.Context, csvPath string) (int64, error) {
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open salary summary CSV: %w", err)
+	}
+	defer file.Close()
+
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for salary summary load: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	if _, err := conn.Exec(ctx, "TRUNCATE TABLE salary_summary"); err != nil {
+		return 0, fmt.Errorf("failed to truncate salary_summary: %w", err)
+	}
+
+	copyQuery := `
+		COPY salary_summary (year, total, average, median)
+		FROM STDIN WITH (FORMAT CSV, HEADER true)
+	`
+
+	tag, err := conn.PgConn().CopyFrom(ctx, file, copyQuery)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy salary summary data: %w", err)
+	}
+
+	return tag.RowsAffected(), nil
+}
+
+// LoadSalaryData loads individual player salary data and matches to Lahman player IDs.
+// CSV format: Year,Player,Pos,Salary
+// Matches players by name to Lahman People table and updates/inserts into Salaries table.
+func (db *DB) LoadSalaryData(ctx context.Context, csvPath string, year int) (int64, error) {
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open salary CSV: %w", err)
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	reader.LazyQuotes = true
+	reader.TrimLeadingSpace = true
+
+	header, err := reader.Read()
+	if err != nil {
+		return 0, fmt.Errorf("failed to read header: %w", err)
+	}
+
+	colIdx := make(map[string]int)
+	for i, name := range header {
+		colIdx[name] = i
+	}
+
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	query := `
+		INSERT INTO "Salaries" ("yearID", "teamID", "lgID", "playerID", "salary")
+		SELECT $1, COALESCE(p_team."teamID", ''), COALESCE(p_team."lgID", ''), p."playerID", $2
+		FROM "People" p
+		LEFT JOIN LATERAL (
+			SELECT "teamID", "lgID"
+			FROM "Batting"
+			WHERE "playerID" = p."playerID" AND "yearID" = $1
+			LIMIT 1
+		) p_team ON true
+		WHERE p."nameFirst" || ' ' || p."nameLast" = $3
+		   OR p."nameLast" || ', ' || p."nameFirst" = $3
+		LIMIT 1
+		ON CONFLICT ("yearID", "teamID", "lgID", "playerID")
+		DO UPDATE SET "salary" = EXCLUDED."salary"
+	`
+
+	rowCount := int64(0)
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return 0, fmt.Errorf("failed to read CSV row: %w", err)
+		}
+
+		if len(record) < 4 {
+			continue
+		}
+
+		playerName := strings.TrimSpace(record[colIdx["Player"]])
+		salaryStr := strings.TrimSpace(record[colIdx["Salary"]])
+
+		if playerName == "" || salaryStr == "" {
+			continue
+		}
+
+		var salary float64
+		if _, err := fmt.Sscanf(salaryStr, "%f", &salary); err != nil {
+			continue
+		}
+
+		tag, err := tx.Exec(ctx, query, year, salary, playerName)
+		if err != nil {
+			return 0, fmt.Errorf("failed to insert salary for %s: %w", playerName, err)
+		}
+
+		if tag.RowsAffected() > 0 {
+			rowCount++
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return rowCount, nil
+}

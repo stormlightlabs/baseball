@@ -74,6 +74,7 @@ func EtlLoadCmd() *cobra.Command {
 	cmd.AddCommand(NegroLeaguesLoadCmd())
 	cmd.AddCommand(FanGraphsLoadCmd())
 	cmd.AddCommand(WeatherLoadCmd())
+	cmd.AddCommand(SalaryLoadCmd())
 	return cmd
 }
 
@@ -169,6 +170,16 @@ func WeatherLoadCmd() *cobra.Command {
 		Short: "Load weather data into database",
 		Long:  "Updates existing games with weather and game metadata from Retrosheet's master gameinfo.csv file.",
 		RunE:  loadWeatherData,
+	}
+}
+
+// SalaryLoadCmd creates the load salary command
+func SalaryLoadCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "salary",
+		Short: "Load salary data into database",
+		Long:  "Enriches the Salaries table with additional salary data by matching player names to Lahman IDs. Also loads salary summary statistics.",
+		RunE:  loadSalaryData,
 	}
 }
 
@@ -1346,6 +1357,43 @@ Run this command first to download the data:
 	echo.Success("✓ Retrosheet player data loaded successfully")
 	echo.Infof("  Rows loaded: %d", rowCount)
 	echo.Infof("  Coverage: per-team-season appearances (1898-2025)")
+	return nil
+}
+
+func loadSalaryData(cmd *cobra.Command, args []string) error {
+	echo.Header("Loading Salary Data")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	ctx := cmd.Context()
+	dataDir := "data/salaries"
+
+	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
+		return fmt.Errorf(`error: salary data directory not found: %s
+
+The salary data directory should contain:
+  - Individual year CSV files (2000.csv, 2001.csv, etc.)
+  - summary.csv with yearly aggregate statistics
+
+Expected format:
+  Year,Player,Pos,Salary`, dataDir)
+	}
+
+	_, err = seed.LoadSalaryData(ctx, database, dataDir)
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	echo.Info("")
+	echo.Success("✓ Salary data loaded successfully")
+	echo.Infof("  Data enriches Lahman Salaries table with player name matching")
 	return nil
 }
 
