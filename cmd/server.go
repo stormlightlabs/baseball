@@ -333,28 +333,30 @@ func startServer(cmd *cobra.Command, args []string) error {
 	tokenRepo := repository.NewOAuthTokenRepository(database.DB)
 	apiKeyRepo := repository.NewAPIKeyRepository(database.DB)
 
-	rateLimiter := middleware.NewRateLimiter(redisClient, cfg.Server.DebugMode, 60, time.Minute)
+	rateLimiter := middleware.NewRateLimiter(redisClient, cfg.Server.DebugMode, 60, 10, time.Minute)
 
 	var handler http.Handler = server
 	handler = middleware.Logger(logger)(handler)
 	handler = middleware.MetricsMiddleware(nil)(handler)
 	handler = middleware.TraceMiddleware(handler)
 
-	if cfg.Server.DebugMode {
-		handler = api.AuthMiddleware(userRepo, tokenRepo, apiKeyRepo, true)(handler)
-	} else {
-		handler = api.OptionalAuthMiddleware(userRepo, tokenRepo, apiKeyRepo)(handler)
-	}
-
 	if !cfg.Server.DebugMode && redisClient != nil {
 		handler = rateLimiter.Middleware(handler)
-		echo.Info("✓ Rate limiting enabled (60 req/min per IP)")
+		echo.Info("✓ Rate limiting enabled")
+		echo.Info("  Authenticated (API key): 60 req/min per key")
+		echo.Info("  Unauthenticated: 10 req/min per IP")
 	} else if cfg.Server.DebugMode {
 		echo.Info("⚠ Rate limiting disabled (debug mode)")
 	} else if redisClient == nil {
 		echo.Info("⚠ Rate limiting disabled (Redis unavailable)")
 	} else {
 		echo.Info("⚠ Rate limiting disabled (debug mode or Redis unavailable)")
+	}
+
+	if cfg.Server.DebugMode {
+		handler = api.AuthMiddleware(userRepo, tokenRepo, apiKeyRepo, true)(handler)
+	} else {
+		handler = api.OptionalAuthMiddleware(userRepo, tokenRepo, apiKeyRepo)(handler)
 	}
 
 	echo.Info("✓ Request logging enabled")
@@ -475,14 +477,6 @@ func extractRoutesFromAST(dir string) ([]Route, error) {
 	return routes, nil
 }
 
-func parsePattern(pattern string) (method, path string) {
-	parts := strings.SplitN(pattern, " ", 2)
-	if len(parts) == 2 {
-		return parts[0], parts[1]
-	}
-	return "ALL", pattern
-}
-
 func printRoutesTable(routes []Route) {
 	if len(routes) == 0 {
 		echo.Info("No routes found")
@@ -509,11 +503,4 @@ func printRoutesTable(routes []Route) {
 		method := padRight(r.Method, maxMethodLen)
 		echo.Info(fmt.Sprintf("%s  %s", method, r.Path))
 	}
-}
-
-func padRight(s string, length int) string {
-	if len(s) >= length {
-		return s
-	}
-	return s + strings.Repeat(" ", length-len(s))
 }

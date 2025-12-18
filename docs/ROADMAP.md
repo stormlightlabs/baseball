@@ -1,13 +1,5 @@
 # Baseball API Development Roadmap
 
-## Database Schema & Storage
-
-- In-Progress: Pre-aggregate leaderboards for fast reads
-
-### API Platform, Docs & Ops
-
-- To-Do: Add deployment scripts
-
 ## API Roadmap
 
 ### 0. Meta / Utility ✓

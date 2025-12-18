@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,19 @@ import (
 	"golang.org/x/oauth2/github"
 	"stormlightlabs.org/baseball/internal/core"
 )
+
+// OAuthUser represents user info from OAuth provider
+type OAuthUser struct {
+	Email     string
+	Name      string
+	AvatarURL string
+}
+
+// AuthContext represents authentication context
+type AuthContext struct {
+	User   *core.User
+	APIKey *core.APIKey
+}
 
 // AuthRoutes handles authentication endpoints
 type AuthRoutes struct {
@@ -90,13 +104,36 @@ func generateState() (string, error) {
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-// handleGitHubLogin initiates GitHub OAuth flow
+// generateCodeVerifier creates a random code verifier for PKCE
+func generateCodeVerifier() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(b), nil
+}
+
+// generateCodeChallenge creates a code challenge from a code verifier for PKCE
+func generateCodeChallenge(verifier string) string {
+	hash := sha256.Sum256([]byte(verifier))
+	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(hash[:])
+}
+
+// handleGitHubLogin initiates GitHub OAuth flow with PKCE
 func (r *AuthRoutes) handleGitHubLogin(w http.ResponseWriter, req *http.Request) {
 	state, err := generateState()
 	if err != nil {
 		writeInternalServerError(w, fmt.Errorf("failed to generate state: %w", err))
 		return
 	}
+
+	codeVerifier, err := generateCodeVerifier()
+	if err != nil {
+		writeInternalServerError(w, fmt.Errorf("failed to generate code verifier: %w", err))
+		return
+	}
+
+	codeChallenge := generateCodeChallenge(codeVerifier)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "oauth_state",
@@ -108,11 +145,23 @@ func (r *AuthRoutes) handleGitHubLogin(w http.ResponseWriter, req *http.Request)
 		MaxAge:   600,
 	})
 
-	url := r.githubConfig.AuthCodeURL(state)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth_verifier",
+		Value:    codeVerifier,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   req.TLS != nil,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   600,
+	})
+
+	url := r.githubConfig.AuthCodeURL(state,
+		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
+		oauth2.SetAuthURLParam("code_challenge_method", "S256"))
 	http.Redirect(w, req, url, http.StatusTemporaryRedirect)
 }
 
-// handleGitHubCallback processes GitHub OAuth callback
+// handleGitHubCallback processes GitHub OAuth callback with PKCE
 func (r *AuthRoutes) handleGitHubCallback(w http.ResponseWriter, req *http.Request) {
 	state := req.URL.Query().Get("state")
 	code := req.URL.Query().Get("code")
@@ -123,6 +172,12 @@ func (r *AuthRoutes) handleGitHubCallback(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	verifierCookie, err := req.Cookie("oauth_verifier")
+	if err != nil {
+		writeInternalServerError(w, fmt.Errorf("missing OAuth verifier"))
+		return
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:   "oauth_state",
 		Value:  "",
@@ -130,7 +185,14 @@ func (r *AuthRoutes) handleGitHubCallback(w http.ResponseWriter, req *http.Reque
 		MaxAge: -1,
 	})
 
-	token, err := r.githubConfig.Exchange(req.Context(), code)
+	http.SetCookie(w, &http.Cookie{
+		Name:   "oauth_verifier",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
+
+	token, err := r.githubConfig.Exchange(req.Context(), code, oauth2.SetAuthURLParam("code_verifier", verifierCookie.Value))
 	if err != nil {
 		writeInternalServerError(w, fmt.Errorf("failed to exchange code: %w", err))
 		return
@@ -176,13 +238,21 @@ func (r *AuthRoutes) handleGitHubCallback(w http.ResponseWriter, req *http.Reque
 	http.Redirect(w, req, "/", http.StatusTemporaryRedirect)
 }
 
-// handleCodebergLogin initiates Codeberg OAuth flow
+// handleCodebergLogin initiates Codeberg OAuth flow with PKCE
 func (r *AuthRoutes) handleCodebergLogin(w http.ResponseWriter, req *http.Request) {
 	state, err := generateState()
 	if err != nil {
 		writeInternalServerError(w, fmt.Errorf("failed to generate state: %w", err))
 		return
 	}
+
+	codeVerifier, err := generateCodeVerifier()
+	if err != nil {
+		writeInternalServerError(w, fmt.Errorf("failed to generate code verifier: %w", err))
+		return
+	}
+
+	codeChallenge := generateCodeChallenge(codeVerifier)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "oauth_state",
@@ -194,11 +264,25 @@ func (r *AuthRoutes) handleCodebergLogin(w http.ResponseWriter, req *http.Reques
 		MaxAge:   600,
 	})
 
-	url := r.codebergConfig.AuthCodeURL(state)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth_verifier",
+		Value:    codeVerifier,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   req.TLS != nil,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   600,
+	})
+
+	url := r.codebergConfig.AuthCodeURL(
+		state,
+		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
+		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
+	)
 	http.Redirect(w, req, url, http.StatusTemporaryRedirect)
 }
 
-// handleCodebergCallback processes Codeberg OAuth callback
+// handleCodebergCallback processes Codeberg OAuth callback with PKCE
 func (r *AuthRoutes) handleCodebergCallback(w http.ResponseWriter, req *http.Request) {
 	state := req.URL.Query().Get("state")
 	code := req.URL.Query().Get("code")
@@ -209,6 +293,12 @@ func (r *AuthRoutes) handleCodebergCallback(w http.ResponseWriter, req *http.Req
 		return
 	}
 
+	verifierCookie, err := req.Cookie("oauth_verifier")
+	if err != nil {
+		writeInternalServerError(w, fmt.Errorf("missing OAuth verifier"))
+		return
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:   "oauth_state",
 		Value:  "",
@@ -216,7 +306,14 @@ func (r *AuthRoutes) handleCodebergCallback(w http.ResponseWriter, req *http.Req
 		MaxAge: -1,
 	})
 
-	token, err := r.codebergConfig.Exchange(req.Context(), code)
+	http.SetCookie(w, &http.Cookie{
+		Name:   "oauth_verifier",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
+
+	token, err := r.codebergConfig.Exchange(req.Context(), code, oauth2.SetAuthURLParam("code_verifier", verifierCookie.Value))
 	if err != nil {
 		writeInternalServerError(w, fmt.Errorf("failed to exchange code: %w", err))
 		return
@@ -258,7 +355,6 @@ func (r *AuthRoutes) handleCodebergCallback(w http.ResponseWriter, req *http.Req
 		SameSite: http.SameSiteLaxMode,
 		Expires:  expiresAt,
 	})
-
 	http.Redirect(w, req, "/", http.StatusTemporaryRedirect)
 }
 
@@ -278,7 +374,6 @@ func (r *AuthRoutes) handleLogout(w http.ResponseWriter, req *http.Request) {
 		Path:   "/",
 		MaxAge: -1,
 	})
-
 	writeJSON(w, http.StatusOK, map[string]string{"message": "logged out"})
 }
 
@@ -289,7 +384,6 @@ func (r *AuthRoutes) handleMe(w http.ResponseWriter, req *http.Request) {
 		writeInternalServerError(w, fmt.Errorf("unauthorized"))
 		return
 	}
-
 	writeJSON(w, http.StatusOK, user)
 }
 
@@ -372,13 +466,6 @@ func (r *AuthRoutes) handleRevokeAPIKey(w http.ResponseWriter, req *http.Request
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "API key revoked"})
-}
-
-// OAuthUser represents user info from OAuth provider
-type OAuthUser struct {
-	Email     string
-	Name      string
-	AvatarURL string
 }
 
 // getGitHubUser fetches user info from GitHub API
@@ -529,12 +616,6 @@ func (r *AuthRoutes) getCodebergUser(ctx context.Context, accessToken string) (*
 	}, nil
 }
 
-// AuthContext represents authentication context
-type AuthContext struct {
-	User   *core.User
-	APIKey *core.APIKey
-}
-
 // AuthMiddleware provides authentication middleware that checks for session tokens or API keys
 func AuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepository, apiKeyRepo core.APIKeyRepository, debugMode bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -542,7 +623,7 @@ func AuthMiddleware(userRepo core.UserRepository, tokenRepo core.OAuthTokenRepos
 			if debugMode {
 				debugName := "Debug User"
 				debugUser := &core.User{
-					ID:       "fun-differential-90",
+					ID:       "00000000-0000-0000-0000-000000000001",
 					Email:    "info@stormlightlabs.org",
 					Name:     &debugName,
 					IsActive: true,
