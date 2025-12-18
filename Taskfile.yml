@@ -71,19 +71,12 @@ tasks:
     cmds:
       - ./{{.BUILD_DIR}}/{{.BINARY_NAME}} db migrate
 
-  dev:setup:
-    desc: Complete development setup
+  test:
+    desc: Run all tests
     cmds:
-      - task: swagger:generate
-      - task: build
-      - task: db:migrate
-      - echo ""
-      - echo "Setup complete!"
+      - go test ./... -v
 
-  dev:reload:
-    desc: Rebuild and restart server
+  test:filter:
+    desc: "Run tests matching a pattern (usage: task test:filter -- -run TestPattern)"
     cmds:
-      - task: swagger:generate
-      - task: rebuild
-      - echo ""
-      - echo "Rebuild complete! Restart the server to pick up changes"
+      - go test ./... -v {{.CLI_ARGS}}
