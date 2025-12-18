@@ -176,13 +176,13 @@ Load specific historical eras plus recent years for faster setup:
 ./tmp/baseball etl load lahman
 
 # 2. Load Federal League era (1914-1915)
-./tmp/baseball etl load retrosheet --era federal
+./tmp/baseball etl load retrosheet --era fed
 
 # 3. Load Negro Leagues era (1935-1949)
 ./tmp/baseball etl load retrosheet --era nlg
 
-# 4. Load recent years (2023-2025)
-./tmp/baseball etl load retrosheet --years=2023-2025
+# 4. Load recent years (2022-2025)
+./tmp/baseball etl load retrosheet --years=2022-2025
 
 # 5. Load FanGraphs constants (needed for advanced stats)
 ./tmp/baseball etl load fangraphs

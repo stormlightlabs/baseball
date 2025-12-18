@@ -1,10 +1,12 @@
 ID,playerID,birthYear,birthMonth,birthDay,birthCity,birthCountry,birthState,deathYear,deathMonth,deathDay,deathCountry,deathState,deathCity,nameFirst,nameLast,nameGiven,weight,height,bats,throws,debut,bbrefID,finalGame,retroID
+1,aardsda01,1981,12,27,Denver,USA,CO,,,,,,,David,Aardsma,David Allan,215,75,R,R,2004-04-06,aardsda01,2015-08-23,aardd001
 661,baderha01,1994,6,3,Bronxville,USA,NY,,,,,,,Harrison,Bader,Harrison Joseph,210,72,R,R,2017-07-25,baderha01,,badeh001
 871,barneau01,1989,12,28,Fullerton,USA,CA,,,,,,,Austin,Barnes,Austin Scott,187,70,R,R,2015-05-24,barneau01,,barna001
 1038,bauerja01,1995,10,6,Newport Beach,USA,CA,,,,,,,Jake,Bauers,Jakob Christopher,195,73,L,L,2018-06-07,bauerja01,,bauej001
 1408,bettsmo01,1992,10,7,Brentwood,USA,TN,,,,,,,Mookie,Betts,Markus Lynn,180,69,R,R,2014-06-29,bettsmo01,,bettm001
 2613,cabreos01,1999,3,1,Guarenas,Venezuela,Miranda,,,,,,,Oswaldo,Cabrera,Oswaldo Alberto,200,72,B,R,2022-08-17,cabreos01,,cabro002
 2650,calhowi01,1994,11,4,Vallejo,USA,CA,,,,,,,Willie,Calhoun,Willie Shawn Lamont,200,68,L,R,2017-09-12,calhowi01,,calhw001
+3497,colege01,1990,9,8,Newport Beach,USA,CA,,,,,,,Gerrit,Cole,Gerrit Alan,220,76,R,R,2013-06-11,colege01,,coleg001
 3934,crawfjp01,1995,1,11,Long Beach,USA,CA,,,,,,,J. P.,Crawford,John Paul,202,74,L,R,2017-09-05,crawfjp01,,crawj002
 4851,donaljo02,1985,12,8,Pensacola,USA,FL,,,,,,,Josh,Donaldson,Joshua Adam,210,73,R,R,2010-04-30,donaljo02,2023-10-01,donaj001
 6008,fordmi01,1992,7,4,Belle Mead,USA,NJ,,,,,,,Mike,Ford,Michael Harrison,225,72,L,R,2019-04-18,fordmi01,,fordm002
@@ -31,6 +33,7 @@ ID,playerID,birthYear,birthMonth,birthDay,birthCity,birthCountry,birthState,deat
 15700,rizzoan01,1989,8,8,Fort Lauderdale,USA,FL,,,,,,,Anthony,Rizzo,Anthony Vincent,240,75,L,L,2011-06-09,rizzoan01,,rizza001
 15867,rodriju01,2000,12,29,Loma de Cabrera,D.R.,Dajabón,,,,,,,Julio,Rodriguez,Julio Yarnel,228,75,R,R,2022-04-08,rodriju01,,rodrj007
 15943,rojasjo01,1994,6,30,Litchfield Park,USA,AZ,,,,,,,Josh,Rojas,Joshua Luke,207,73,L,R,2019-08-12,rojasjo01,,rojaj001
+16217,ruthba01,1895,2,6,Baltimore,USA,MD,1948,8,16,USA,NY,New York,Babe,Ruth,George Herman,215,74,L,L,1914-07-11,ruthba01,1935-05-30,ruthb101
 15948,rojasmi02,1989,2,24,Los Teques,Venezuela,Miranda,,,,,,,Miguel,Rojas,Miguel Elias,188,72,R,R,2014-06-06,rojasmi02,,rojam002
 16025,rosaram01,1995,11,20,Santo Domingo Centro,D.R.,Distrito Nacional,,,,,,,Amed,Rosario,German Amed,190,74,R,R,2017-08-01,rosaram01,,rosaa003
 17455,smithwi05,1995,3,28,Louisville,USA,KY,,,,,,,Will,Smith,William Dills,195,70,R,R,2019-05-28,smithwi05,,smitw003

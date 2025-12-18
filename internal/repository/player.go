@@ -628,7 +628,7 @@ func (r *PlayerRepository) Salaries(ctx context.Context, id core.PlayerID) ([]co
 	for rows.Next() {
 		var salary core.PlayerSalary
 		var league sql.NullString
-		var amount sql.NullInt64
+		var amount sql.NullFloat64
 
 		if err := rows.Scan(&salary.Year, &salary.TeamID, &league, &amount); err != nil {
 			return nil, fmt.Errorf("failed to scan salary row: %w", err)
@@ -640,7 +640,7 @@ func (r *PlayerRepository) Salaries(ctx context.Context, id core.PlayerID) ([]co
 			salary.League = &lg
 		}
 		if amount.Valid {
-			salary.Salary = amount.Int64
+			salary.Salary = int64(amount.Float64)
 		}
 
 		salaries = append(salaries, salary)
