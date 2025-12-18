@@ -1,0 +1,46 @@
+ID,playerID,birthYear,birthMonth,birthDay,birthCity,birthCountry,birthState,deathYear,deathMonth,deathDay,deathCountry,deathState,deathCity,nameFirst,nameLast,nameGiven,weight,height,bats,throws,debut,bbrefID,finalGame,retroID
+661,baderha01,1994,6,3,Bronxville,USA,NY,,,,,,,Harrison,Bader,Harrison Joseph,210,72,R,R,2017-07-25,baderha01,,badeh001
+871,barneau01,1989,12,28,Fullerton,USA,CA,,,,,,,Austin,Barnes,Austin Scott,187,70,R,R,2015-05-24,barneau01,,barna001
+1038,bauerja01,1995,10,6,Newport Beach,USA,CA,,,,,,,Jake,Bauers,Jakob Christopher,195,73,L,L,2018-06-07,bauerja01,,bauej001
+1408,bettsmo01,1992,10,7,Brentwood,USA,TN,,,,,,,Mookie,Betts,Markus Lynn,180,69,R,R,2014-06-29,bettsmo01,,bettm001
+2613,cabreos01,1999,3,1,Guarenas,Venezuela,Miranda,,,,,,,Oswaldo,Cabrera,Oswaldo Alberto,200,72,B,R,2022-08-17,cabreos01,,cabro002
+2650,calhowi01,1994,11,4,Vallejo,USA,CA,,,,,,,Willie,Calhoun,Willie Shawn Lamont,200,68,L,R,2017-09-12,calhowi01,,calhw001
+3934,crawfjp01,1995,1,11,Long Beach,USA,CA,,,,,,,J. P.,Crawford,John Paul,202,74,L,R,2017-09-05,crawfjp01,,crawj002
+4851,donaljo02,1985,12,8,Pensacola,USA,FL,,,,,,,Josh,Donaldson,Joshua Adam,210,73,R,R,2010-04-30,donaljo02,2023-10-01,donaj001
+6008,fordmi01,1992,7,4,Belle Mead,USA,NJ,,,,,,,Mike,Ford,Michael Harrison,225,72,L,R,2019-04-18,fordmi01,,fordm002
+6110,francty01,1994,7,13,Downey,USA,CA,,,,,,,Ty,France,Tyler Lawrence,215,71,R,R,2019-04-26,francty01,,frant002
+6153,freemfr01,1989,9,12,Fountain Valley,USA,CA,,,,,,,Freddie,Freeman,Frederick Charles,220,77,L,R,2010-09-01,freemfr01,,freef001
+8154,hernaen02,1991,8,24,San Juan,P.R.,,,,,,,,Enrique,Hernandez,Enrique J.,190,71,R,R,2014-07-01,hernaen02,,herne001
+8182,hernate01,1992,10,15,Cotui,D.R.,Sanchez Ramirez,,,,,,,Teoscar,Hernandez,Teoscar Jose,215,74,R,R,2016-08-12,hernate01,,hernt002
+8257,heywaja01,1989,8,9,Ridgewood,USA,NJ,,,,,,,Jason,Heyward,Jason Alias,240,77,L,L,2010-04-05,heywaja01,,heywj001
+8285,higasky01,1990,4,20,Huntington Beach,USA,CA,,,,,,,Kyle,Higashioka,Kyle Harris,202,73,R,R,2017-04-10,higasky01,,higak001
+9468,judgeaa01,1992,4,26,Linden,USA,CA,,,,,,,Aaron,Judge,Aaron James,282,79,R,R,2016-08-13,judgeaa01,,judga001
+9627,kelenja01,1999,7,16,Waukesha,USA,WI,,,,,,,Jarred,Kelenic,Jarred Robert,206,73,L,L,2021-05-13,kelenja01,,kelej001
+9846,kineris01,1995,3,23,Honolulu,USA,HI,,,,,,,Isiah,Kiner-Falefa,Isiah,190,71,R,R,2018-04-10,kineris01,,kinei001
+10628,lemahdj01,1988,7,13,Visalia,USA,CA,,,,,,,DJ,LeMahieu,David John,220,76,R,R,2011-05-30,lemahdj01,,lemad001
+11614,martijd02,1987,8,21,Miami,USA,FL,,,,,,,J. D.,Martinez,Julio Daniel,230,75,R,R,2011-07-30,martijd02,,martj006
+12194,mckinbi01,1994,8,23,Dallas,USA,TX,,,,,,,Billy,McKinney,William Landis,205,73,L,L,2018-03-30,mckinbi01,,mckib001
+12885,mooredy01,1992,8,2,Newport Beach,USA,CA,,,,,,,Dylan,Moore,Dylan,205,72,R,R,2019-03-20,mooredy01,,moord002
+13179,muncyma01,1990,8,25,Midland,USA,TX,,,,,,,Max,Muncy,Maxwell Steven,215,72,L,R,2015-04-25,muncyma01,,muncm001
+13258,murphto04,1991,4,3,West Monroe,USA,NY,,,,,,,Tom,Murphy,Thomas James,206,73,R,R,2015-09-12,murphto04,,murpt002
+14036,outmaja01,1997,5,14,Redwood City,USA,CA,,,,,,,James,Outman,James Matthew,215,75,L,R,2022-07-31,outmaja01,,outmj002
+14443,peralda01,1987,8,14,Valencia,Venezuela,Carabobo,,,,,,,David,Peralta,Senger David,210,73,L,L,2014-06-01,peralda01,,perad001
+14452,perazos02,2000,6,15,Barquisimeto,Venezuela,Lara,,,,,,,Oswald,Peraza,Oswald Dair,200,72,R,R,2022-09-02,perazos02,,perao002
+14830,polloaj01,1987,12,5,Hebron,USA,CT,,,,,,,AJ,Pollock,Allen Lorenz,210,73,R,R,2012-04-18,polloaj01,2022-10-04,polla001
+15163,raleica01,1996,11,26,Cullowhee,USA,NC,,,,,,,Cal,Raleigh,Caleb John,235,75,B,R,2021-07-11,raleica01,,ralec001
+15700,rizzoan01,1989,8,8,Fort Lauderdale,USA,FL,,,,,,,Anthony,Rizzo,Anthony Vincent,240,75,L,L,2011-06-09,rizzoan01,,rizza001
+15867,rodriju01,2000,12,29,Loma de Cabrera,D.R.,Dajabón,,,,,,,Julio,Rodriguez,Julio Yarnel,228,75,R,R,2022-04-08,rodriju01,,rodrj007
+15943,rojasjo01,1994,6,30,Litchfield Park,USA,AZ,,,,,,,Josh,Rojas,Joshua Luke,207,73,L,R,2019-08-12,rojasjo01,,rojaj001
+15948,rojasmi02,1989,2,24,Los Teques,Venezuela,Miranda,,,,,,,Miguel,Rojas,Miguel Elias,188,72,R,R,2014-06-06,rojasmi02,,rojam002
+16025,rosaram01,1995,11,20,Santo Domingo Centro,D.R.,Distrito Nacional,,,,,,,Amed,Rosario,German Amed,190,74,R,R,2017-08-01,rosaram01,,rosaa003
+17455,smithwi05,1995,3,28,Louisville,USA,KY,,,,,,,Will,Smith,William Dills,195,70,R,R,2019-05-28,smithwi05,,smitw003
+17756,stantmi03,1989,11,8,Panorama City,USA,CA,,,,,,,Giancarlo,Stanton,Giancarlo Cruz-Michael,245,78,R,R,2010-06-08,stantmi03,,stanm004
+18083,suareeu01,1991,7,18,Bolivar,Venezuela,Bolivar,,,,,,,Eugenio,Suarez,Eugenio Alejandro,213,71,R,R,2014-06-04,suareeu01,,suare001
+18372,tayloch03,1990,8,29,Virginia Beach,USA,VA,,,,,,,Chris,Taylor,Christopher Armand,196,73,R,R,2014-07-24,tayloch03,,taylc001
+18759,torregl01,1996,12,13,Caracas,Venezuela,Distrito Capital,,,,,,,Gleyber,Torres,Gleyber David,205,73,R,R,2018-04-22,torregl01,,torrg001
+18842,trevijo01,1992,11,28,Corpus Christi,USA,TX,,,,,,,Jose,Trevino,Jose,215,70,R,R,2018-06-15,trevijo01,,trevj001
+19124,vargami01,1999,11,17,Havana,Cuba,La Habana,,,,,,,Miguel,Vargas,Miguel Antonio,205,75,R,R,2022-08-03,vargami01,,vargm001
+20299,wongko01,1990,10,10,Hilo,USA,HI,,,,,,,Kolten,Wong,Kolten Kaha,185,67,L,R,2013-08-16,wongko01,2023-10-01,wongk001
+20686,volpean01,2001,4,28,New York,USA,NY,,,,,,,Anthony,Volpe,Anthony Michael,180,69,R,R,2023-03-30,volpean01,,volpa001
+20712,cabaljo01,1996,8,30,Panama,Panama,Panama,,,,,,,José,Caballero,José Manuel Ortega,185,69,R,R,2023-04-15,cabaljo01,,cabaj001
+20831,canzodo01,1997,8,16,Cleveland,USA,OH,,,,,,,Dominic,Canzone,Dominic Gene,190,71,L,R,2023-07-08,canzodo01,,canzd001

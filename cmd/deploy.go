@@ -284,7 +284,7 @@ func runDeploy(cmd *cobra.Command, opts deployOptions) error {
 			if _, err := os.Stat(lahmanDir); err == nil {
 				echo.Infof("Would load Lahman data from: %s", lahmanDir)
 				if _, exists := refreshes["lahman"]; exists {
-					echo.Info("  → Would skip (already loaded - idempotent)")
+					echo.Info("  → Would skip (already loaded)")
 				} else {
 					echo.Info("  → Would load all Lahman tables")
 				}
@@ -345,19 +345,19 @@ func runDeploy(cmd *cobra.Command, opts deployOptions) error {
 								echo.Infof("  → Would load %d new years: %s", len(newYears), formatYearRange(newYears))
 							}
 							if len(skipYears) > 0 {
-								echo.Infof("  → Would skip %d existing years: %s (idempotent)", len(skipYears), formatYearRange(skipYears))
+								echo.Infof("  → Would skip %d existing years: %s", len(skipYears), formatYearRange(skipYears))
 							}
 							if len(newYears) == 0 && len(skipYears) == 0 {
 								echo.Info("  → No matching years found")
 							}
 						} else {
-							echo.Info("  → Idempotent: only loads missing years")
+							echo.Info("  → only loads missing years")
 						}
 					} else {
 						echo.Infof("  → Would load %d new years: %s", len(requestedYears), formatYearRange(requestedYears))
 					}
 				} else {
-					echo.Info("  → Idempotent: only loads missing years")
+					echo.Info("  → only loads missing years")
 				}
 			} else {
 				echo.Info("Would skip Retrosheet (data directory not found)")

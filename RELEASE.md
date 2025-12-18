@@ -170,8 +170,6 @@ docker-compose exec app baseball db populate --years 2020-2025
 baseball deploy --tag v1.0.0 --skip-build --skip-etl=false --years 2020-2025
 ```
 
-**Idempotency**: The ETL pipeline is idempotent:
-
 - Lahman data: Checks `dataset_refreshes` table and skips if already loaded
 - Retrosheet data: Checks per-year and per-dataset, only loads missing data
 
@@ -242,7 +240,7 @@ docker-compose exec app baseball db migrate
 # Fetch new data
 baseball etl fetch retrosheet --years 2026
 
-# Load incrementally (idempotent)
+# Load incrementally
 docker-compose exec app baseball db populate retrosheet --years 2026
 
 # Refresh materialized views
