@@ -17,13 +17,19 @@ func NewManagerRepository(db *sql.DB) *ManagerRepository {
 }
 
 // GetByID retrieves a manager by their manager ID (playerID).
+// Includes extended biographical data from Retrosheet when available.
 func (r *ManagerRepository) GetByID(ctx context.Context, id core.ManagerID) (*core.Manager, error) {
 	query := `
 		SELECT
 			p."playerID",
 			p."nameFirst",
-			p."nameLast"
+			p."nameLast",
+			pbe.debut_manager,
+			pbe.last_manager,
+			pbe.use_name,
+			pbe.full_name
 		FROM "People" p
+		LEFT JOIN player_bio_extended pbe ON pbe.retro_id = p."retroID"
 		WHERE p."playerID" = $1
 		  AND EXISTS (
 		    SELECT 1 FROM "Managers" m
@@ -32,10 +38,17 @@ func (r *ManagerRepository) GetByID(ctx context.Context, id core.ManagerID) (*co
 	`
 
 	var mgr core.Manager
+	var debutGame, lastGame sql.NullTime
+	var useName, fullName sql.NullString
+
 	err := r.db.QueryRowContext(ctx, query, string(id)).Scan(
 		&mgr.ID,
 		&mgr.FirstName,
 		&mgr.LastName,
+		&debutGame,
+		&lastGame,
+		&useName,
+		&fullName,
 	)
 
 	if err == sql.ErrNoRows {
@@ -45,25 +58,40 @@ func (r *ManagerRepository) GetByID(ctx context.Context, id core.ManagerID) (*co
 		return nil, fmt.Errorf("failed to get manager: %w", err)
 	}
 
-	var playerID string
-	checkPlayerQuery := `SELECT "playerID" FROM "People" WHERE "playerID" = $1`
-	if err := r.db.QueryRowContext(ctx, checkPlayerQuery, string(id)).Scan(&playerID); err == nil {
-		pid := core.PlayerID(playerID)
-		mgr.PlayerID = &pid
+	pid := core.PlayerID(mgr.ID)
+	mgr.PlayerID = &pid
+
+	if debutGame.Valid {
+		mgr.DebutGame = &debutGame.Time
+	}
+	if lastGame.Valid {
+		mgr.LastGame = &lastGame.Time
+	}
+	if useName.Valid {
+		mgr.UseName = &useName.String
+	}
+	if fullName.Valid {
+		mgr.FullName = &fullName.String
 	}
 
 	return &mgr, nil
 }
 
 // List retrieves all managers with pagination.
+// Includes extended biographical data from Retrosheet when available.
 func (r *ManagerRepository) List(ctx context.Context, p core.Pagination) ([]core.Manager, error) {
 	query := `
 		SELECT DISTINCT
 			p."playerID",
 			p."nameFirst",
-			p."nameLast"
+			p."nameLast",
+			pbe.debut_manager,
+			pbe.last_manager,
+			pbe.use_name,
+			pbe.full_name
 		FROM "People" p
 		INNER JOIN "Managers" m ON m."playerID" = p."playerID"
+		LEFT JOIN player_bio_extended pbe ON pbe.retro_id = p."retroID"
 		ORDER BY p."nameLast", p."nameFirst"
 	`
 
@@ -82,10 +110,17 @@ func (r *ManagerRepository) List(ctx context.Context, p core.Pagination) ([]core
 	var managers []core.Manager
 	for rows.Next() {
 		var mgr core.Manager
+		var debutGame, lastGame sql.NullTime
+		var useName, fullName sql.NullString
+
 		err := rows.Scan(
 			&mgr.ID,
 			&mgr.FirstName,
 			&mgr.LastName,
+			&debutGame,
+			&lastGame,
+			&useName,
+			&fullName,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan manager: %w", err)
@@ -93,6 +128,19 @@ func (r *ManagerRepository) List(ctx context.Context, p core.Pagination) ([]core
 
 		pid := core.PlayerID(mgr.ID)
 		mgr.PlayerID = &pid
+
+		if debutGame.Valid {
+			mgr.DebutGame = &debutGame.Time
+		}
+		if lastGame.Valid {
+			mgr.LastGame = &lastGame.Time
+		}
+		if useName.Valid {
+			mgr.UseName = &useName.String
+		}
+		if fullName.Valid {
+			mgr.FullName = &fullName.String
+		}
 
 		managers = append(managers, mgr)
 	}

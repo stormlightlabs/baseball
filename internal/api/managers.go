@@ -57,11 +57,11 @@ func (mr *ManagerRoutes) handleListManagers(w http.ResponseWriter, r *http.Reque
 
 // handleGetManager godoc
 // @Summary Get manager by ID
-// @Description Get detailed information about a specific manager
+// @Description Get detailed information about a specific manager including extended biodata from Retrosheet (debut/last game, full name, use name)
 // @Tags managers
 // @Accept json
 // @Produce json
-// @Param manager_id path string true "Manager ID (playerID)"
+// @Param manager_id path string true "Manager ID (playerID)" example(roberda07)
 // @Success 200 {object} core.Manager
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -81,11 +81,11 @@ func (mr *ManagerRoutes) handleGetManager(w http.ResponseWriter, r *http.Request
 
 // handleManagerSeasons godoc
 // @Summary Get manager season records
-// @Description Get all season records for a specific manager
+// @Description Get all season records for a specific manager including wins, losses, and team rank
 // @Tags managers
 // @Accept json
 // @Produce json
-// @Param manager_id path string true "Manager ID (playerID)"
+// @Param manager_id path string true "Manager ID (playerID)" example(roberda07)
 // @Success 200 {object} ManagerSeasonsResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse

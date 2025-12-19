@@ -526,12 +526,17 @@ type Park struct {
 	EndYear   *int   `json:"end_year,omitempty"`
 }
 
-// Manager (Lahman Managers).
+// Manager represents a person who has managed in baseball.
+// Includes extended biographical data from Retrosheet when available.
 type Manager struct {
-	ID        ManagerID `json:"id"`
-	PlayerID  *PlayerID `json:"player_id,omitempty"`
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
+	ID          ManagerID  `json:"id"`
+	PlayerID    *PlayerID  `json:"player_id,omitempty"`
+	FirstName   string     `json:"first_name"`
+	LastName    string     `json:"last_name"`
+	DebutGame   *time.Time `json:"debut_game,omitempty"`
+	LastGame    *time.Time `json:"last_game,omitempty"`
+	UseName     *string    `json:"use_name,omitempty"`
+	FullName    *string    `json:"full_name,omitempty"`
 }
 
 // ManagerSeasonRecord is a season-level line for a manager.
@@ -545,11 +550,33 @@ type ManagerSeasonRecord struct {
 	Rank      *int       `json:"rank,omitempty"`
 }
 
-// Umpire basic info.
+// Umpire biographical information from Retrosheet biodata.
 type Umpire struct {
-	ID        UmpireID `json:"id"`
-	FirstName string   `json:"first_name"`
-	LastName  string   `json:"last_name"`
+	ID        UmpireID    `json:"id"`
+	FirstName *string     `json:"first_name,omitempty"`
+	LastName  string      `json:"last_name"`
+	FirstGame *time.Time  `json:"first_game,omitempty"`
+	LastGame  *time.Time  `json:"last_game,omitempty"`
+}
+
+// Coach represents a person who has coached in baseball.
+// Data from Retrosheet coaches biodata joined with People table.
+type Coach struct {
+	ID        PlayerID       `json:"id"`
+	RetroID   *RetroPlayerID `json:"retro_id,omitempty"`
+	FirstName *string        `json:"first_name,omitempty"`
+	LastName  *string        `json:"last_name,omitempty"`
+}
+
+// CoachSeasonRecord represents a coaching stint for a specific team and year.
+type CoachSeasonRecord struct {
+	RetroID   RetroPlayerID `json:"retro_id"`
+	PlayerID  *PlayerID     `json:"player_id,omitempty"`
+	Year      SeasonYear    `json:"year"`
+	TeamID    TeamID        `json:"team_id"`
+	Role      *string       `json:"role,omitempty"`
+	FirstGame *time.Time    `json:"first_game,omitempty"`
+	LastGame  *time.Time    `json:"last_game,omitempty"`
 }
 
 // Award and award results from Lahman Awards*.

@@ -57,11 +57,11 @@ func (ur *UmpireRoutes) handleListUmpires(w http.ResponseWriter, r *http.Request
 
 // handleGetUmpire godoc
 // @Summary Get umpire by ID
-// @Description Get detailed information about a specific umpire
+// @Description Get detailed information about a specific umpire including career dates from Retrosheet biodata
 // @Tags umpires
 // @Accept json
 // @Produce json
-// @Param umpire_id path string true "Umpire ID"
+// @Param umpire_id path string true "Umpire ID (Retrosheet ID)" example(westj901)
 // @Success 200 {object} core.Umpire
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -85,8 +85,8 @@ func (ur *UmpireRoutes) handleGetUmpire(w http.ResponseWriter, r *http.Request) 
 // @Tags umpires, games
 // @Accept json
 // @Produce json
-// @Param umpire_id path string true "Umpire ID"
-// @Param season query integer false "Filter by season year"
+// @Param umpire_id path string true "Umpire ID (Retrosheet ID)" example(westj901)
+// @Param season query integer false "Filter by season year" example(2020)
 // @Param page query integer false "Page number" default(1)
 // @Param per_page query integer false "Results per page" default(50)
 // @Success 200 {object} PaginatedResponse

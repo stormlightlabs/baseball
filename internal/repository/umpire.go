@@ -1,4 +1,3 @@
-// TODO: Join to umpires table for first_name, last_name, first_game, last_game from Retrosheet biodata
 package repository
 
 import (
@@ -6,7 +5,6 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"strings"
 	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
@@ -29,15 +27,18 @@ func NewUmpireRepository(db *sql.DB) *UmpireRepository {
 	return &UmpireRepository{db: db}
 }
 
-// GetByID retrieves an umpire by their ID.
-// Since umpires don't have a dedicated table, we extract from games table.
+// GetByID retrieves an umpire by their ID from the umpires table.
 func (r *UmpireRepository) GetByID(ctx context.Context, id core.UmpireID) (*core.Umpire, error) {
 	var umpire core.Umpire
-	var fullName sql.NullString
+	var firstName sql.NullString
+	var firstGame, lastGame sql.NullTime
 
 	err := r.db.QueryRowContext(ctx, umpireGetByIDQuery, string(id)).Scan(
 		&umpire.ID,
-		&fullName,
+		&firstName,
+		&umpire.LastName,
+		&firstGame,
+		&lastGame,
 	)
 
 	if err == sql.ErrNoRows {
@@ -47,14 +48,20 @@ func (r *UmpireRepository) GetByID(ctx context.Context, id core.UmpireID) (*core
 		return nil, fmt.Errorf("failed to get umpire: %w", err)
 	}
 
-	if fullName.Valid {
-		umpire.FirstName, umpire.LastName = splitFullName(fullName.String)
+	if firstName.Valid {
+		umpire.FirstName = &firstName.String
+	}
+	if firstGame.Valid {
+		umpire.FirstGame = &firstGame.Time
+	}
+	if lastGame.Valid {
+		umpire.LastGame = &lastGame.Time
 	}
 
 	return &umpire, nil
 }
 
-// List retrieves all umpires with pagination.
+// List retrieves all umpires with pagination from the umpires table.
 func (r *UmpireRepository) List(ctx context.Context, p core.Pagination) ([]core.Umpire, error) {
 	query := umpireListQuery
 	args := []any{}
@@ -72,18 +79,28 @@ func (r *UmpireRepository) List(ctx context.Context, p core.Pagination) ([]core.
 	var umpires []core.Umpire
 	for rows.Next() {
 		var umpire core.Umpire
-		var fullName sql.NullString
+		var firstName sql.NullString
+		var firstGame, lastGame sql.NullTime
 
 		err := rows.Scan(
 			&umpire.ID,
-			&fullName,
+			&firstName,
+			&umpire.LastName,
+			&firstGame,
+			&lastGame,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan umpire: %w", err)
 		}
 
-		if fullName.Valid {
-			umpire.FirstName, umpire.LastName = splitFullName(fullName.String)
+		if firstName.Valid {
+			umpire.FirstName = &firstName.String
+		}
+		if firstGame.Valid {
+			umpire.FirstGame = &firstGame.Time
+		}
+		if lastGame.Valid {
+			umpire.LastGame = &lastGame.Time
 		}
 
 		umpires = append(umpires, umpire)
@@ -230,26 +247,4 @@ func (r *UmpireRepository) GamesForUmpire(ctx context.Context, id core.UmpireID,
 	}
 
 	return games, nil
-}
-
-// splitFullName splits a full name string into first and last names.
-// Handles formats like "John Doe", "John", "John Q. Public".
-// For multi-part names, treats everything before the last space as first name.
-func splitFullName(fullName string) (string, string) {
-	fullName = strings.TrimSpace(fullName)
-	if fullName == "" {
-		return "", ""
-	}
-
-	parts := strings.Fields(fullName)
-	if len(parts) == 0 {
-		return "", ""
-	}
-	if len(parts) == 1 {
-		return "", parts[0]
-	}
-
-	lastName := parts[len(parts)-1]
-	firstName := strings.Join(parts[:len(parts)-1], " ")
-	return firstName, lastName
 }

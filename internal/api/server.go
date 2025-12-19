@@ -75,6 +75,9 @@
 // @tag.name umpires
 // @tag.description MLB umpire data
 //
+// @tag.name coaches
+// @tag.description MLB coach data
+//
 // @tag.name seasons
 // @tag.description MLB season data
 //
@@ -127,6 +130,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 	managerRepo := repository.NewManagerRepository(db)
 	parkRepo := repository.NewParkRepository(db)
 	umpireRepo := repository.NewUmpireRepository(db)
+	coachRepo := repository.NewCoachRepository(db)
 	postseasonRepo := repository.NewPostseasonRepository(db)
 	ejectionRepo := repository.NewEjectionRepository(db)
 	derivedRepo := repository.NewDerivedStatsRepository(db)
@@ -158,6 +162,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewManagerRoutes(managerRepo),
 		NewParkRoutes(parkRepo),
 		NewUmpireRoutes(umpireRepo),
+		NewCoachRoutes(coachRepo),
 		NewPostseasonRoutes(postseasonRepo, gameRepo),
 		NewAllStarRoutes(awardRepo),
 		NewSearchRoutes(playerRepo, teamRepo, parkRepo, gameRepo),

@@ -130,6 +130,12 @@ type UmpireRepository interface {
 	GamesForUmpire(ctx context.Context, id UmpireID, filter GameFilter) ([]Game, error)
 }
 
+type CoachRepository interface {
+	GetByID(ctx context.Context, id PlayerID) (*Coach, error)
+	List(ctx context.Context, p Pagination) ([]Coach, error)
+	SeasonRecords(ctx context.Context, id PlayerID) ([]CoachSeasonRecord, error)
+}
+
 // AwardRepository for awards and Hall of Fame.
 type AwardRepository interface {
 	ListAwards(ctx context.Context) ([]Award, error)
