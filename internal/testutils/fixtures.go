@@ -23,6 +23,7 @@ func (c *PostgresContainer) LoadFixtures(ctx context.Context) error {
 		`"AwardsPlayers"`: "awards_players.csv",
 		`"HallOfFame"`:    "hall_of_fame.csv",
 		`"Salaries"`:      "salaries.csv",
+		`"AllstarFull"`:   "allstar_full.csv",
 		"games":           "games.csv",
 		"plays":           "plays.csv",
 	}

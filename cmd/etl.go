@@ -55,6 +55,7 @@ func EtlLoadCmd() *cobra.Command {
 	cmd.AddCommand(WeatherLoadCmd())
 	cmd.AddCommand(SalaryLoadCmd())
 	cmd.AddCommand(ParksLoadCmd())
+	cmd.AddCommand(AllStarLoadCmd())
 	return cmd
 }
 
@@ -170,6 +171,16 @@ func ParksLoadCmd() *cobra.Command {
 		Short: "Load missing parks data into database",
 		Long:  "Fills gaps in the Parks table for high-usage Negro Leagues parks and modern parks lacking metadata. Also refreshes the park_map materialized view.",
 		RunE:  loadParksData,
+	}
+}
+
+// AllStarLoadCmd creates the load allstar command
+func AllStarLoadCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "allstar",
+		Short: "Load all-star game data into database",
+		Long:  "Load all-star game metadata and play-by-play data from Retrosheet allstar.zip into the games and plays tables.",
+		RunE:  loadAllStar,
 	}
 }
 
@@ -474,12 +485,47 @@ func fetchRetrosheet(_ *cobra.Command, yearsFlag string, force bool) error {
 		}
 	}
 
+	allstarDir := filepath.Join(dataDir, "allstar")
+	if err := os.MkdirAll(allstarDir, 0755); err != nil {
+		return fmt.Errorf("error: failed to create allstar directory: %w", err)
+	}
+
+	echo.Info("")
+	echo.Info("Downloading all-star data...")
+	allstarURL := "https://www.retrosheet.org/downloads/allstar.zip"
+	echo.Infof("  Downloading allstar.zip...")
+
+	resp3, err := http.Get(allstarURL)
+	if err != nil {
+		echo.Infof("  ⚠ Failed to download allstar: %v", err)
+	} else {
+		defer resp3.Body.Close()
+
+		if resp3.StatusCode != http.StatusOK {
+			echo.Infof("  ⚠ allstar.zip not available (HTTP %d)", resp3.StatusCode)
+		} else {
+			outputPath := filepath.Join(allstarDir, "allstar.zip")
+			out, err := os.Create(outputPath)
+			if err != nil {
+				return fmt.Errorf("error: failed to create allstar.zip: %w", err)
+			}
+			defer out.Close()
+
+			if _, err = io.Copy(out, resp3.Body); err != nil {
+				return fmt.Errorf("error: failed to save allstar.zip: %w", err)
+			}
+
+			echo.Successf("  ✓ allstar.zip downloaded")
+		}
+	}
+
 	echo.Info("")
 	echo.Success("✓ Retrosheet data downloaded successfully")
 	echo.Infof("  Game logs: %s", gameLogsDir)
 	echo.Infof("  Play-by-play: %s", playsDir)
 	echo.Infof("  Ejections: %s", ejectionsDir)
 	echo.Infof("  Players: %s/allplayers.zip", dataDir)
+	echo.Infof("  All-Star: %s", allstarDir)
 	return nil
 }
 
@@ -997,5 +1043,101 @@ func loadParksData(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error: failed to record parks refresh: %w", err)
 	}
 
+	return nil
+}
+
+func loadAllStar(cmd *cobra.Command, args []string) error {
+	echo.Header("Loading All-Star Game Data")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	ctx := cmd.Context()
+	dataDir := "data/retrosheet/allstar"
+	zipFile := filepath.Join(dataDir, "allstar.zip")
+
+	if _, err := os.Stat(zipFile); os.IsNotExist(err) {
+		return fmt.Errorf(`error: allstar.zip not found at %s
+
+Run this command first to download the data:
+  ./tmp/baseball etl fetch retrosheet`, zipFile)
+	}
+
+	echo.Info("Extracting all-star data...")
+	r, err := zip.OpenReader(zipFile)
+	if err != nil {
+		return fmt.Errorf("error: failed to open allstar.zip: %w", err)
+	}
+	defer r.Close()
+
+	tmpDir, err := os.MkdirTemp("", "allstar-*")
+	if err != nil {
+		return fmt.Errorf("error: failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	for _, f := range r.File {
+		if f.Name == "gameinfo.csv" || f.Name == "plays.csv" {
+			rc, err := f.Open()
+			if err != nil {
+				return fmt.Errorf("error: failed to read %s from zip: %w", f.Name, err)
+			}
+
+			outPath := filepath.Join(tmpDir, f.Name)
+			out, err := os.Create(outPath)
+			if err != nil {
+				rc.Close()
+				return fmt.Errorf("error: failed to create %s: %w", f.Name, err)
+			}
+
+			_, err = io.Copy(out, rc)
+			out.Close()
+			rc.Close()
+
+			if err != nil {
+				return fmt.Errorf("error: failed to extract %s: %w", f.Name, err)
+			}
+
+			echo.Infof("  ✓ Extracted %s", f.Name)
+		}
+	}
+
+	gameinfoFile := filepath.Join(tmpDir, "gameinfo.csv")
+	playsFile := filepath.Join(tmpDir, "plays.csv")
+
+	echo.Info("")
+	echo.Info("Loading all-star games...")
+	gameRows, err := database.LoadAllStarGameInfo(ctx, gameinfoFile)
+	if err != nil {
+		return fmt.Errorf("error: failed to load gameinfo: %w", err)
+	}
+	echo.Successf("✓ Loaded all-star games (%d rows)", gameRows)
+
+	if err := database.RecordDatasetRefresh(ctx, "allstar_games", gameRows); err != nil {
+		return fmt.Errorf("error: failed to record all-star games refresh: %w", err)
+	}
+
+	echo.Info("")
+	echo.Info("Loading all-star plays...")
+	playRows, err := database.LoadAllStarPlays(ctx, playsFile)
+	if err != nil {
+		return fmt.Errorf("error: failed to load plays: %w", err)
+	}
+	echo.Successf("✓ Loaded all-star plays (%d rows)", playRows)
+
+	if err := database.RecordDatasetRefresh(ctx, "allstar_plays", playRows); err != nil {
+		return fmt.Errorf("error: failed to record all-star plays refresh: %w", err)
+	}
+
+	echo.Info("")
+	echo.Success("✓ All-star data loaded successfully")
+	echo.Infof("  Games: %d", gameRows)
+	echo.Infof("  Plays: %d", playRows)
 	return nil
 }

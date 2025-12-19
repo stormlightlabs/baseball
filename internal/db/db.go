@@ -1607,3 +1607,175 @@ func (db *DB) LoadMissingParks(ctx context.Context) (int64, error) {
 
 	return result.RowsAffected(), nil
 }
+
+// LoadAllStarGameInfo loads all-star game metadata from Retrosheet allstar gameinfo.csv
+func (db *DB) LoadAllStarGameInfo(ctx context.Context, csvPath string) (int64, error) {
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open gameinfo CSV: %w", err)
+	}
+	defer file.Close()
+
+	tmpDir, err := os.MkdirTemp("", "allstar-*")
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	tmpCSV := filepath.Join(tmpDir, "gameinfo_transformed.csv")
+	outFile, err := os.Create(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp CSV: %w", err)
+	}
+
+	headers := []string{
+		"date", "game_number", "home_team", "visiting_team", "park_id",
+		"day_night", "attendance", "game_time_minutes",
+		"visiting_score", "home_score",
+		"winning_pitcher_id", "losing_pitcher_id", "saving_pitcher_id",
+		"hp_ump_id", "b1_ump_id", "b2_ump_id", "b3_ump_id",
+		"lf_ump_id", "rf_ump_id",
+		"start_time", "temp_f", "wind_direction", "wind_speed_mph",
+		"sky", "precip", "field_condition", "used_dh",
+		"game_type",
+	}
+
+	csvWriter := csv.NewWriter(outFile)
+	if err := csvWriter.Write(headers); err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("failed to write headers: %w", err)
+	}
+
+	reader := csv.NewReader(file)
+	reader.LazyQuotes = true
+	reader.TrimLeadingSpace = true
+	_, err = reader.Read()
+	if err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("failed to read source header: %w", err)
+	}
+
+	cleanNumeric := func(val string) string {
+		if val == "" {
+			return ""
+		}
+		lowerVal := strings.ToLower(strings.TrimSpace(val))
+		if lowerVal == "true" || lowerVal == "false" || lowerVal == "t" || lowerVal == "f" || lowerVal == "unknown" {
+			return ""
+		}
+		return val
+	}
+
+	cleanBoolean := func(val string) string {
+		val = strings.ToLower(strings.TrimSpace(val))
+		if val == "true" || val == "t" || val == "1" {
+			return "true"
+		}
+		if val == "false" || val == "f" || val == "0" {
+			return "false"
+		}
+		return ""
+	}
+
+	rowCount := int64(0)
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			outFile.Close()
+			return 0, fmt.Errorf("failed to read CSV row: %w", err)
+		}
+
+		if len(record) < 35 {
+			continue
+		}
+
+		row := []string{
+			// date, game_number, home_team, visiting_team, park_id, day_night
+			record[4], record[5], record[2], record[1], record[3], record[7],
+			// attendance, game_time_minutes, visiting_score, home_score
+			cleanNumeric(record[13]), cleanNumeric(record[12]), cleanNumeric(record[33]), cleanNumeric(record[34]),
+			// winning_pitcher_id, losing_pitcher_id, saving_pitcher_id
+			record[29], record[30], record[31],
+			// hp_ump_id, b1_ump_id, b2_ump_id, b3_ump_id, lf_ump_id, rf_ump_id
+			record[23], record[24], record[25], record[26], record[27], record[28],
+			// start_time, temp_f, wind_direction, wind_speed_mph
+			record[6], cleanNumeric(record[17]), cleanNumeric(strings.ToLower(record[18])), cleanNumeric(record[19]),
+			// sky, field_condition, field_condition, used_dh, game_type
+			cleanNumeric(strings.ToLower(record[16])), cleanNumeric(strings.ToLower(record[15])), cleanNumeric(strings.ToLower(record[14])), cleanBoolean(record[10]), "allstar",
+		}
+
+		if err := csvWriter.Write(row); err != nil {
+			outFile.Close()
+			return 0, fmt.Errorf("failed to write row: %w", err)
+		}
+		rowCount++
+	}
+
+	csvWriter.Flush()
+	if err := csvWriter.Error(); err != nil {
+		outFile.Close()
+		return 0, fmt.Errorf("failed to flush CSV writer: %w", err)
+	}
+	outFile.Close()
+
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for COPY: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	csvFile, err := os.Open(tmpCSV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open CSV file: %w", err)
+	}
+	defer csvFile.Close()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		CREATE TEMP TABLE games_temp (LIKE games INCLUDING DEFAULTS)
+		ON COMMIT DROP
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp table: %w", err)
+	}
+
+	copySQL := fmt.Sprintf(`COPY games_temp (%s) FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '', QUOTE '"')`,
+		strings.Join(headers, ", "))
+
+	_, err = conn.PgConn().CopyFrom(ctx, csvFile, copySQL)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy data: %w", err)
+	}
+
+	columnList := strings.Join(headers, ", ")
+	result, err := tx.Exec(ctx, fmt.Sprintf(`
+		INSERT INTO games (%s)
+		SELECT DISTINCT ON (date, home_team, game_number) %s
+		FROM games_temp
+		ON CONFLICT (date, home_team, game_number)
+		DO UPDATE SET
+			game_type = EXCLUDED.game_type
+	`, columnList, columnList))
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// LoadAllStarPlays loads all-star play-by-play data from Retrosheet allstar plays.csv
+func (db *DB) LoadAllStarPlays(ctx context.Context, csvPath string) (int64, error) {
+	return db.LoadNegroLeaguesPlays(ctx, csvPath)
+}
