@@ -653,6 +653,87 @@ func (r *PlayerRepository) Salaries(ctx context.Context, id core.PlayerID) ([]co
 	return salaries, nil
 }
 
+// Relatives returns family relationships for a player
+func (r *PlayerRepository) Relatives(ctx context.Context, id core.PlayerID) ([]core.PlayerRelative, error) {
+	var retroID sql.NullString
+	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("player not found: %s", id)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch player retroID: %w", err)
+	}
+	if !retroID.Valid {
+		return []core.PlayerRelative{}, nil
+	}
+
+	query := `
+		WITH relatives_both_ways AS (
+			SELECT player_id_2 as related_retro_id, relation_type
+			FROM player_relatives
+			WHERE player_id_1 = $1
+			UNION
+			SELECT player_id_1 as related_retro_id, relation_type
+			FROM player_relatives
+			WHERE player_id_2 = $1
+		)
+		SELECT
+			r.related_retro_id,
+			r.relation_type,
+			p."playerID",
+			p."nameFirst",
+			p."nameLast",
+			CAST(SUBSTRING(p."debut" FROM 1 FOR 4) AS INTEGER) as debut_year,
+			CAST(SUBSTRING(p."finalGame" FROM 1 FOR 4) AS INTEGER) as final_year
+		FROM relatives_both_ways r
+		LEFT JOIN "People" p ON p."retroID" = r.related_retro_id
+		ORDER BY r.relation_type, p."nameLast", p."nameFirst"
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, retroID.String)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch relatives: %w", err)
+	}
+	defer rows.Close()
+
+	var relatives []core.PlayerRelative
+	for rows.Next() {
+		var rel core.PlayerRelative
+		var playerID, firstName, lastName sql.NullString
+		var debutYear, finalYear sql.NullInt64
+
+		if err := rows.Scan(&rel.RelatedRetroID, &rel.RelationType, &playerID, &firstName, &lastName, &debutYear, &finalYear); err != nil {
+			return nil, fmt.Errorf("failed to scan relative row: %w", err)
+		}
+
+		if playerID.Valid {
+			rel.RelatedPlayerID = core.PlayerID(playerID.String)
+		}
+		if firstName.Valid {
+			rel.RelatedFirstName = &firstName.String
+		}
+		if lastName.Valid {
+			rel.RelatedLastName = &lastName.String
+		}
+		if debutYear.Valid {
+			year := int(debutYear.Int64)
+			rel.RelatedDebutYear = &year
+		}
+		if finalYear.Valid {
+			year := int(finalYear.Int64)
+			rel.RelatedFinalYear = &year
+		}
+
+		relatives = append(relatives, rel)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate relatives: %w", err)
+	}
+
+	return relatives, nil
+}
+
 // BattingGameLogs returns per-game batting statistics for a player from the materialized view
 func (r *PlayerRepository) BattingGameLogs(ctx context.Context, id core.PlayerID, filter core.PlayerGameLogFilter) ([]core.PlayerGameBattingLog, error) {
 	var retroID sql.NullString

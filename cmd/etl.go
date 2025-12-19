@@ -56,6 +56,7 @@ func EtlLoadCmd() *cobra.Command {
 	cmd.AddCommand(SalaryLoadCmd())
 	cmd.AddCommand(ParksLoadCmd())
 	cmd.AddCommand(AllStarLoadCmd())
+	cmd.AddCommand(BiodataLoadCmd())
 	return cmd
 }
 
@@ -519,13 +520,41 @@ func fetchRetrosheet(_ *cobra.Command, yearsFlag string, force bool) error {
 		}
 	}
 
-	echo.Info("")
-	echo.Success("✓ Retrosheet data downloaded successfully")
+	echo.Info("\nDownloading biodata...")
+	biodataURL := "https://www.retrosheet.org/downloads/biodata.zip"
+	echo.Infof("  Downloading biodata.zip...")
+
+	resp4, err := http.Get(biodataURL)
+	if err != nil {
+		echo.Infof("  ⚠ Failed to download biodata: %v", err)
+	} else {
+		defer resp4.Body.Close()
+
+		if resp4.StatusCode != http.StatusOK {
+			echo.Infof("  ⚠ biodata.zip not available (HTTP %d)", resp4.StatusCode)
+		} else {
+			outputPath := filepath.Join(dataDir, "biodata.zip")
+			out, err := os.Create(outputPath)
+			if err != nil {
+				return fmt.Errorf("error: failed to create biodata.zip: %w", err)
+			}
+			defer out.Close()
+
+			if _, err = io.Copy(out, resp4.Body); err != nil {
+				return fmt.Errorf("error: failed to save biodata.zip: %w", err)
+			}
+
+			echo.Successf("  ✓ biodata.zip downloaded")
+		}
+	}
+
+	echo.Success("\n✓ Retrosheet data downloaded successfully")
 	echo.Infof("  Game logs: %s", gameLogsDir)
 	echo.Infof("  Play-by-play: %s", playsDir)
 	echo.Infof("  Ejections: %s", ejectionsDir)
 	echo.Infof("  Players: %s/allplayers.zip", dataDir)
 	echo.Infof("  All-Star: %s", allstarDir)
+	echo.Infof("  Biodata: %s/biodata.zip", dataDir)
 	return nil
 }
 
@@ -1139,5 +1168,88 @@ Run this command first to download the data:
 	echo.Success("✓ All-star data loaded successfully")
 	echo.Infof("  Games: %d", gameRows)
 	echo.Infof("  Plays: %d", playRows)
+	return nil
+}
+
+// BiodataLoadCmd creates the load biodata command
+func BiodataLoadCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "biodata",
+		Short: "Load Retrosheet biodata into database",
+		Long:  "Load Retrosheet biodata including player biographical info, relatives, coaches, and umpires.",
+		RunE:  loadBiodata,
+	}
+}
+
+func loadBiodata(cmd *cobra.Command, args []string) error {
+	echo.Header("Loading Retrosheet Biodata")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	ctx := cmd.Context()
+	dataDir := "data/retrosheet"
+
+	zipFile := filepath.Join(dataDir, "biodata.zip")
+	if _, err := os.Stat(zipFile); os.IsNotExist(err) {
+		return fmt.Errorf(`error: biodata.zip not found at %s
+
+Run this command first to download the data:
+  ./tmp/baseball etl fetch retrosheet`, zipFile)
+	}
+
+	echo.Info("Extracting biodata.zip...")
+	r, err := zip.OpenReader(zipFile)
+	if err != nil {
+		return fmt.Errorf("error: failed to open biodata.zip: %w", err)
+	}
+	defer r.Close()
+
+	tmpDir, err := os.MkdirTemp("", "biodata-*")
+	if err != nil {
+		return fmt.Errorf("error: failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	for _, f := range r.File {
+		if strings.HasSuffix(f.Name, ".csv") {
+			rc, err := f.Open()
+			if err != nil {
+				return fmt.Errorf("error: failed to read %s from zip: %w", f.Name, err)
+			}
+
+			outPath := filepath.Join(tmpDir, f.Name)
+			out, err := os.Create(outPath)
+			if err != nil {
+				rc.Close()
+				return fmt.Errorf("error: failed to create %s: %w", f.Name, err)
+			}
+
+			_, err = io.Copy(out, rc)
+			out.Close()
+			rc.Close()
+
+			if err != nil {
+				return fmt.Errorf("error: failed to extract %s: %w", f.Name, err)
+			}
+
+			echo.Infof("  ✓ Extracted %s", f.Name)
+		}
+	}
+
+	totalRows, err := seed.LoadBiodata(ctx, database, tmpDir)
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	echo.Info("")
+	echo.Success("✓ All biodata loaded successfully")
+	echo.Infof("  Total rows: %d", totalRows)
 	return nil
 }

@@ -457,6 +457,17 @@ type PlayerSalary struct {
 	Salary   int64      `json:"salary"`
 }
 
+// PlayerRelative represents a family relationship between two players.
+type PlayerRelative struct {
+	RelatedPlayerID  PlayerID `json:"related_player_id"`
+	RelatedRetroID   string   `json:"related_retro_id"`
+	RelationType     string   `json:"relation_type"`
+	RelatedFirstName *string  `json:"related_first_name,omitempty"`
+	RelatedLastName  *string  `json:"related_last_name,omitempty"`
+	RelatedDebutYear *int     `json:"related_debut_year,omitempty"`
+	RelatedFinalYear *int     `json:"related_final_year,omitempty"`
+}
+
 // Play represents a single play from Retrosheet play-by-play data.
 // This is the core model with essential fields for most use cases.
 type Play struct {

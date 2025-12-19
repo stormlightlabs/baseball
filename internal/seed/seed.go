@@ -877,3 +877,77 @@ func LoadSalaryData(ctx context.Context, database *db.DB, dataDir string) (int64
 
 	return totalRows, nil
 }
+
+// LoadBiodata loads Retrosheet biodata including player biographical info, relatives, coaches, and umpires.
+func LoadBiodata(ctx context.Context, database *db.DB, dataDir string) (int64, error) {
+	if dataDir == "" {
+		dataDir = "/tmp"
+	}
+
+	var totalRows int64
+
+	echo.Info("Loading player biographical data...")
+	bioFile := filepath.Join(dataDir, "biofile0.csv")
+	if _, err := os.Stat(bioFile); errors.Is(err, os.ErrNotExist) {
+		return 0, fmt.Errorf("error: biofile0.csv not found at %s", bioFile)
+	}
+
+	bioRows, err := database.LoadPlayerBioExtended(ctx, bioFile)
+	if err != nil {
+		return 0, fmt.Errorf("error: failed to load biographical data: %w", err)
+	}
+	totalRows += bioRows
+	echo.Successf("✓ Loaded player biographical data (%d rows)", bioRows)
+
+	echo.Info("")
+	echo.Info("Loading player relatives...")
+	relativesFile := filepath.Join(dataDir, "relatives.csv")
+	if _, err := os.Stat(relativesFile); errors.Is(err, os.ErrNotExist) {
+		echo.Info("  relatives.csv not found, skipping")
+	} else {
+		relativesRows, err := database.LoadPlayerRelatives(ctx, relativesFile)
+		if err != nil {
+			return totalRows, fmt.Errorf("error: failed to load relatives: %w", err)
+		}
+		totalRows += relativesRows
+		echo.Successf("✓ Loaded player relatives (%d relationships)", relativesRows)
+	}
+
+	echo.Info("")
+	echo.Info("Loading coaches data...")
+	coachesFile := filepath.Join(dataDir, "coaches0.csv")
+	if _, err := os.Stat(coachesFile); errors.Is(err, os.ErrNotExist) {
+		echo.Info("  coaches0.csv not found, skipping")
+	} else {
+		coachesRows, err := database.LoadCoaches(ctx, coachesFile)
+		if err != nil {
+			return totalRows, fmt.Errorf("error: failed to load coaches: %w", err)
+		}
+		totalRows += coachesRows
+		echo.Successf("✓ Loaded coaches data (%d rows)", coachesRows)
+	}
+
+	echo.Info("")
+	echo.Info("Loading umpires data...")
+	umpiresFile := filepath.Join(dataDir, "umpires0.csv")
+	if _, err := os.Stat(umpiresFile); errors.Is(err, os.ErrNotExist) {
+		echo.Info("  umpires0.csv not found, skipping")
+	} else {
+		umpiresRows, err := database.LoadUmpires(ctx, umpiresFile)
+		if err != nil {
+			return totalRows, fmt.Errorf("error: failed to load umpires: %w", err)
+		}
+		totalRows += umpiresRows
+		echo.Successf("✓ Loaded umpires data (%d rows)", umpiresRows)
+	}
+
+	echo.Info("")
+	echo.Success("✓ Biodata loaded successfully")
+	echo.Infof("  Total rows: %d", totalRows)
+
+	if err := database.RecordDatasetRefresh(ctx, "biodata", totalRows); err != nil {
+		return totalRows, fmt.Errorf("error: failed to record biodata refresh: %w", err)
+	}
+
+	return totalRows, nil
+}

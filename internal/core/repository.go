@@ -42,6 +42,9 @@ type PlayerRepository interface {
 
 	// Salary history (Lahman Salaries table)
 	Salaries(ctx context.Context, id PlayerID) ([]PlayerSalary, error)
+
+	// Relatives returns family relationships for a player
+	Relatives(ctx context.Context, id PlayerID) ([]PlayerRelative, error)
 }
 
 // TeamRepository handles team & franchise views.

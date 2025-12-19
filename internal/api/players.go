@@ -30,6 +30,7 @@ func (pr *PlayerRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/players/{id}/appearances", pr.handlePlayerAppearances)
 	mux.HandleFunc("GET /v1/players/{id}/teams", pr.handlePlayerTeams)
 	mux.HandleFunc("GET /v1/players/{id}/salaries", pr.handlePlayerSalaries)
+	mux.HandleFunc("GET /v1/players/{id}/relatives", pr.handlePlayerRelatives)
 }
 
 // handleGetPlayer godoc
@@ -498,6 +499,29 @@ func (pr *PlayerRoutes) handlePlayerSalaries(w http.ResponseWriter, r *http.Requ
 	}
 
 	writeJSON(w, http.StatusOK, salaries)
+}
+
+// handlePlayerRelatives godoc
+// @Summary Get player's family relatives
+// @Description Return family relationships for a player from Retrosheet biodata. Includes brothers, fathers, sons, uncles, cousins, and other family relationships. Returns empty array if player has no recorded relatives or no retrosheet ID. Examples: aaronha01 (Hank Aaron - brother Tommie), alomaro01 (Roberto Alomar - brother Sandy Jr, father Sandy Sr), ripkeca01 (Cal Ripken Jr - brother Billy, father Cal Sr)
+// @Tags players
+// @Accept json
+// @Produce json
+// @Param id path string true "Player ID" example(aaronha01)
+// @Success 200 {array} core.PlayerRelative
+// @Failure 500 {object} ErrorResponse
+// @Router /players/{id}/relatives [get]
+func (pr *PlayerRoutes) handlePlayerRelatives(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := core.PlayerID(r.PathValue("id"))
+
+	relatives, err := pr.repo.Relatives(ctx, id)
+	if err != nil {
+		writeInternalServerError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, relatives)
 }
 
 // handlePlayerBattingStats godoc

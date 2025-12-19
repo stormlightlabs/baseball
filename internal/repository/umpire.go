@@ -1,3 +1,4 @@
+// TODO: Join to umpires table for first_name, last_name, first_game, last_game from Retrosheet biodata
 package repository
 
 import (

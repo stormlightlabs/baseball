@@ -1779,3 +1779,317 @@ func (db *DB) LoadAllStarGameInfo(ctx context.Context, csvPath string) (int64, e
 func (db *DB) LoadAllStarPlays(ctx context.Context, csvPath string) (int64, error) {
 	return db.LoadNegroLeaguesPlays(ctx, csvPath)
 }
+
+// LoadPlayerBioExtended loads extended player biographical data from Retrosheet biofile0.csv
+func (db *DB) LoadPlayerBioExtended(ctx context.Context, csvPath string) (int64, error) {
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for COPY: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open CSV file: %w", err)
+	}
+	defer file.Close()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		CREATE TEMP TABLE bio_temp (
+			id VARCHAR(10),
+			lastname VARCHAR(100),
+			usename VARCHAR(100),
+			fullname VARCHAR(255),
+			birthdate VARCHAR(10),
+			birthcity VARCHAR(100),
+			birthstate VARCHAR(50),
+			birthcountry VARCHAR(50),
+			deathdate VARCHAR(10),
+			deathcity VARCHAR(100),
+			deathstate VARCHAR(50),
+			deathcountry VARCHAR(50),
+			cemetery VARCHAR(100),
+			cem_city VARCHAR(100),
+			cem_state VARCHAR(50),
+			cem_ctry VARCHAR(50),
+			cem_note TEXT,
+			birthname VARCHAR(255),
+			altname VARCHAR(255),
+			debut_p VARCHAR(10),
+			last_p VARCHAR(10),
+			debut_c VARCHAR(10),
+			last_c VARCHAR(10),
+			debut_m VARCHAR(10),
+			last_m VARCHAR(10),
+			debut_u VARCHAR(10),
+			last_u VARCHAR(10),
+			bats VARCHAR(1),
+			throws VARCHAR(1),
+			height VARCHAR(5),
+			weight VARCHAR(5),
+			hof VARCHAR(10)
+		)
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp table: %w", err)
+	}
+
+	copySQL := `COPY bio_temp FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '')`
+	_, err = conn.PgConn().CopyFrom(ctx, file, copySQL)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy data: %w", err)
+	}
+
+	result, err := tx.Exec(ctx, `
+		INSERT INTO player_bio_extended (
+			retro_id, use_name, full_name, birth_name, alt_name,
+			cemetery, cem_city, cem_state, cem_country, cem_note,
+			debut_coach, last_coach, debut_manager, last_manager, debut_umpire, last_umpire,
+			hof_retrosheet
+		)
+		SELECT
+			id,
+			NULLIF(usename, ''),
+			NULLIF(fullname, ''),
+			NULLIF(birthname, ''),
+			NULLIF(altname, ''),
+			NULLIF(cemetery, ''),
+			NULLIF(cem_city, ''),
+			NULLIF(cem_state, ''),
+			NULLIF(cem_ctry, ''),
+			NULLIF(cem_note, ''),
+			CASE WHEN debut_c ~ '^[0-9]{8}$' THEN TO_DATE(debut_c, 'YYYYMMDD') ELSE NULL END,
+			CASE WHEN last_c ~ '^[0-9]{8}$' THEN TO_DATE(last_c, 'YYYYMMDD') ELSE NULL END,
+			CASE WHEN debut_m ~ '^[0-9]{8}$' THEN TO_DATE(debut_m, 'YYYYMMDD') ELSE NULL END,
+			CASE WHEN last_m ~ '^[0-9]{8}$' THEN TO_DATE(last_m, 'YYYYMMDD') ELSE NULL END,
+			CASE WHEN debut_u ~ '^[0-9]{8}$' THEN TO_DATE(debut_u, 'YYYYMMDD') ELSE NULL END,
+			CASE WHEN last_u ~ '^[0-9]{8}$' THEN TO_DATE(last_u, 'YYYYMMDD') ELSE NULL END,
+			NULLIF(hof, '')
+		FROM bio_temp
+		WHERE id IS NOT NULL AND id != ''
+		ON CONFLICT (retro_id) DO UPDATE SET
+			use_name = EXCLUDED.use_name,
+			full_name = EXCLUDED.full_name,
+			birth_name = EXCLUDED.birth_name,
+			alt_name = EXCLUDED.alt_name,
+			cemetery = EXCLUDED.cemetery,
+			cem_city = EXCLUDED.cem_city,
+			cem_state = EXCLUDED.cem_state,
+			cem_country = EXCLUDED.cem_country,
+			cem_note = EXCLUDED.cem_note,
+			debut_coach = EXCLUDED.debut_coach,
+			last_coach = EXCLUDED.last_coach,
+			debut_manager = EXCLUDED.debut_manager,
+			last_manager = EXCLUDED.last_manager,
+			debut_umpire = EXCLUDED.debut_umpire,
+			last_umpire = EXCLUDED.last_umpire,
+			hof_retrosheet = EXCLUDED.hof_retrosheet,
+			updated_at = CURRENT_TIMESTAMP
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// LoadPlayerRelatives loads player family relationships from Retrosheet relatives.csv
+func (db *DB) LoadPlayerRelatives(ctx context.Context, csvPath string) (int64, error) {
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for COPY: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open CSV file: %w", err)
+	}
+	defer file.Close()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `TRUNCATE TABLE player_relatives`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to truncate table: %w", err)
+	}
+
+	_, err = tx.Exec(ctx, `
+		CREATE TEMP TABLE relatives_temp (
+			id1 VARCHAR(10),
+			relation VARCHAR(50),
+			id2 VARCHAR(10)
+		)
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp table: %w", err)
+	}
+
+	copySQL := `COPY relatives_temp FROM STDIN WITH (FORMAT CSV, HEADER true)`
+	_, err = conn.PgConn().CopyFrom(ctx, file, copySQL)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy data: %w", err)
+	}
+
+	result, err := tx.Exec(ctx, `
+		INSERT INTO player_relatives (player_id_1, relation_type, player_id_2)
+		SELECT DISTINCT id1, relation, id2
+		FROM relatives_temp
+		WHERE id1 IS NOT NULL AND id2 IS NOT NULL
+		ON CONFLICT (player_id_1, player_id_2, relation_type) DO NOTHING
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// LoadCoaches loads coaching records from Retrosheet coaches0.csv
+func (db *DB) LoadCoaches(ctx context.Context, csvPath string) (int64, error) {
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for COPY: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open CSV file: %w", err)
+	}
+	defer file.Close()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		CREATE TEMP TABLE coaches_temp (
+			id VARCHAR(10),
+			year INTEGER,
+			team VARCHAR(3),
+			role VARCHAR(50),
+			first_g VARCHAR(10),
+			last_g VARCHAR(10)
+		)
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp table: %w", err)
+	}
+
+	copySQL := `COPY coaches_temp FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '')`
+	_, err = conn.PgConn().CopyFrom(ctx, file, copySQL)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy data: %w", err)
+	}
+
+	result, err := tx.Exec(ctx, `
+		INSERT INTO coaches (retro_id, year, team_id, role, first_game, last_game)
+		SELECT DISTINCT
+			id,
+			year,
+			team,
+			NULLIF(role, ''),
+			CASE WHEN first_g ~ '^[0-9]{8}$' THEN TO_DATE(first_g, 'YYYYMMDD') ELSE NULL END,
+			CASE WHEN last_g ~ '^[0-9]{8}$' THEN TO_DATE(last_g, 'YYYYMMDD') ELSE NULL END
+		FROM coaches_temp
+		WHERE id IS NOT NULL AND id != ''
+		ON CONFLICT (retro_id, year, team_id) DO NOTHING
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// LoadUmpires loads umpire biographical data from Retrosheet umpires0.csv
+func (db *DB) LoadUmpires(ctx context.Context, csvPath string) (int64, error) {
+	conn, err := pgx.Connect(ctx, db.connStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect for COPY: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	file, err := os.Open(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open CSV file: %w", err)
+	}
+	defer file.Close()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		CREATE TEMP TABLE umpires_temp (
+			id VARCHAR(10),
+			lastname VARCHAR(100),
+			firstname VARCHAR(100),
+			first_g VARCHAR(10),
+			last_g VARCHAR(10)
+		)
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temp table: %w", err)
+	}
+
+	copySQL := `COPY umpires_temp FROM STDIN WITH (FORMAT CSV, HEADER true, NULL '')`
+	_, err = conn.PgConn().CopyFrom(ctx, file, copySQL)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy data: %w", err)
+	}
+
+	result, err := tx.Exec(ctx, `
+		INSERT INTO umpires (retro_id, last_name, first_name, first_game, last_game)
+		SELECT
+			id,
+			lastname,
+			NULLIF(firstname, ''),
+			CASE WHEN first_g ~ '^[0-9]{8}$' THEN TO_DATE(first_g, 'YYYYMMDD') ELSE NULL END,
+			CASE WHEN last_g ~ '^[0-9]{8}$' THEN TO_DATE(last_g, 'YYYYMMDD') ELSE NULL END
+		FROM umpires_temp
+		WHERE id IS NOT NULL AND id != ''
+		ON CONFLICT (retro_id) DO UPDATE SET
+			last_name = EXCLUDED.last_name,
+			first_name = EXCLUDED.first_name,
+			first_game = EXCLUDED.first_game,
+			last_game = EXCLUDED.last_game,
+			updated_at = CURRENT_TIMESTAMP
+	`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert from temp table: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
