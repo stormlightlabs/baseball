@@ -46,7 +46,7 @@ func (gr *GameRoutes) handleGetGame(w http.ResponseWriter, r *http.Request) {
 
 	game, err := gr.repo.GetByID(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, game)
@@ -69,7 +69,7 @@ func (gr *GameRoutes) handleGetBoxscore(w http.ResponseWriter, r *http.Request) 
 
 	boxscore, err := gr.repo.GetBoxscore(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, boxscore)
@@ -136,13 +136,13 @@ func (gr *GameRoutes) handleListGames(w http.ResponseWriter, r *http.Request) {
 
 	games, err := gr.repo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := gr.repo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -180,13 +180,13 @@ func (gr *GameRoutes) handleSeasonSchedule(w http.ResponseWriter, r *http.Reques
 
 	games, err := gr.repo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := gr.repo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -228,7 +228,7 @@ func (gr *GameRoutes) handleGamesByDate(w http.ResponseWriter, r *http.Request) 
 
 	games, err := gr.repo.ListByDate(ctx, targetDate)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -260,7 +260,7 @@ func (gr *GameRoutes) handleTeamGames(w http.ResponseWriter, r *http.Request) {
 
 	games, err := gr.repo.ListByTeamSeason(ctx, teamID, year, pagination)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -272,7 +272,7 @@ func (gr *GameRoutes) handleTeamGames(w http.ResponseWriter, r *http.Request) {
 
 	total, err := gr.repo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -315,13 +315,13 @@ func (gr *GameRoutes) handleParkGames(w http.ResponseWriter, r *http.Request) {
 
 	games, err := gr.repo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := gr.repo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -350,13 +350,13 @@ func (gr *GameRoutes) handleGetGameSummary(w http.ResponseWriter, r *http.Reques
 
 	game, err := gr.repo.GetByID(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	boxscore, err := gr.repo.GetBoxscore(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -399,7 +399,7 @@ func (gr *GameRoutes) handleGameEvents(w http.ResponseWriter, r *http.Request) {
 
 	plays, err := gr.playRepo.ListByGame(ctx, gameID, pagination)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -409,7 +409,7 @@ func (gr *GameRoutes) handleGameEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	total, err := gr.playRepo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -445,7 +445,7 @@ func (gr *GameRoutes) handleSingleEvent(w http.ResponseWriter, r *http.Request) 
 
 	plays, err := gr.playRepo.ListByGame(ctx, gameID, pagination)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"stormlightlabs.org/baseball/internal/core"
 )
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -33,6 +35,16 @@ func writeBadRequest(w http.ResponseWriter, err string) {
 
 func writeNotFound(w http.ResponseWriter, r string) {
 	writeJSON(w, http.StatusNotFound, ErrorResponse{Error: fmt.Sprintf("%v not found", r)})
+}
+
+// writeError writes an error response with the appropriate HTTP status code.
+// Returns 404 for NotFoundError, 500 for all other errors.
+func writeError(w http.ResponseWriter, err error) {
+	if core.IsNotFound(err) {
+		writeJSON(w, http.StatusNotFound, ErrorResponse{Error: err.Error()})
+		return
+	}
+	writeError(w, err)
 }
 
 func getIntQuery(r *http.Request, key string, defaultVal int) int {

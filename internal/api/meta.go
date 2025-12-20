@@ -52,19 +52,19 @@ func (mr *MetaRoutes) handleMeta(w http.ResponseWriter, r *http.Request) {
 
 	datasets, err := mr.repo.DatasetStatuses(ctx)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	minLahman, maxLahman, minRetro, maxRetro, err := mr.repo.SeasonCoverage(ctx)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	schemaHashes, err := mr.repo.SchemaHashes(ctx)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -95,7 +95,7 @@ func (mr *MetaRoutes) handleDatasetStatus(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 	datasets, err := mr.repo.DatasetStatuses(ctx)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, datasets)
@@ -137,7 +137,7 @@ func (mr *MetaRoutes) handleWOBAConstants(w http.ResponseWriter, r *http.Request
 
 	constants, err := mr.repo.WOBAConstants(ctx, season)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -174,7 +174,7 @@ func (mr *MetaRoutes) handleLeagueConstants(w http.ResponseWriter, r *http.Reque
 
 	constants, err := mr.repo.LeagueConstants(ctx, season, league)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -211,7 +211,7 @@ func (mr *MetaRoutes) handleParkFactors(w http.ResponseWriter, r *http.Request) 
 
 	factors, err := mr.repo.ParkFactors(ctx, season, teamID)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

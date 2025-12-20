@@ -32,7 +32,7 @@ func (sr *SalaryRoutes) handleListSalarySummary(w http.ResponseWriter, r *http.R
 	ctx := r.Context()
 	summaries, err := sr.repo.List(ctx)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -55,7 +55,7 @@ func (sr *SalaryRoutes) handleGetSalarySummary(w http.ResponseWriter, r *http.Re
 	year := core.SeasonYear(getIntPathValue(r, "year"))
 	summary, err := sr.repo.Get(ctx, year)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

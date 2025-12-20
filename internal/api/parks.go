@@ -43,7 +43,7 @@ func (pr *ParkRoutes) handleListParks(w http.ResponseWriter, r *http.Request) {
 
 	parks, err := pr.repo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -74,7 +74,7 @@ func (pr *ParkRoutes) handleGetPark(w http.ResponseWriter, r *http.Request) {
 
 	park, err := pr.repo.GetByID(ctx, parkID)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -112,7 +112,7 @@ func (pr *ParkRoutes) handleParkGames(w http.ResponseWriter, r *http.Request) {
 
 	games, err := pr.repo.GamesAtPark(ctx, parkID, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

@@ -85,3 +85,14 @@ See the dedicated Data Coverage docs for the newly completed endpoints:
 
 - **Filtered indexes** - Create partial indexes for specific league + date combinations if query patterns show benefit
 - **Composite partition key** - Repartition by (league, year) only if league-specific queries dominate and current performance is insufficient
+
+### 13.  Technical Debt
+
+- [ ] Custom error types: Replace `strings.Contains(err.Error(), "not found")` with typed errors
+- [ ] Remove global config state: `config.Get()` panics, refactor to dependency injection
+- [ ] Standardize cache integration: Measure and add caching to Stats/Awards/Manager repos
+- [ ] Standardize query building: Pick one pattern for dynamic WHERE clauses
+- [ ] Complete TODOs: cache/repository.go:121, core/mlb.go:164, api/plays_test.go:504, repository/computed.go:144
+- [ ] Improve godoc coverage: Document all exported functions
+- [ ] Extract filter parsing helpers: Reduce duplication in handler filter building
+- [ ] Add structured logging: Replace fmt.Printf with proper logger

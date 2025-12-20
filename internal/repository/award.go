@@ -381,7 +381,7 @@ func (r *AwardRepository) GetAllStarGame(ctx context.Context, gameID string) (*c
 		&duration,
 	)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("all-star game not found")
+		return nil, core.NewNotFoundError("all-star game", "")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all-star game: %w", err)

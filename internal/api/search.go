@@ -63,13 +63,13 @@ func (sr *SearchRoutes) handleSearchPlayers(w http.ResponseWriter, r *http.Reque
 
 	players, err := sr.playerRepo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := sr.playerRepo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -118,13 +118,13 @@ func (sr *SearchRoutes) handleSearchTeams(w http.ResponseWriter, r *http.Request
 
 	teams, err := sr.teamRepo.ListTeamSeasons(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := sr.teamRepo.CountTeamSeasons(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -161,13 +161,13 @@ func (sr *SearchRoutes) handleSearchParks(w http.ResponseWriter, r *http.Request
 
 	parks, err := sr.parkRepo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := sr.parkRepo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -212,7 +212,7 @@ func (sr *SearchRoutes) handleSearchGames(w http.ResponseWriter, r *http.Request
 
 	allGames, err := sr.gameRepo.SearchGamesNL(ctx, query, 1000)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

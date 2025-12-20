@@ -41,7 +41,7 @@ func (cr *CoachRoutes) handleListCoaches(w http.ResponseWriter, r *http.Request)
 
 	coaches, err := cr.repo.List(ctx, pagination)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (cr *CoachRoutes) handleGetCoach(w http.ResponseWriter, r *http.Request) {
 
 	coach, err := cr.repo.GetByID(ctx, coachID)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -96,7 +96,7 @@ func (cr *CoachRoutes) handleCoachSeasons(w http.ResponseWriter, r *http.Request
 
 	records, err := cr.repo.SeasonRecords(ctx, coachID)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -108,6 +108,6 @@ func (cr *CoachRoutes) handleCoachSeasons(w http.ResponseWriter, r *http.Request
 
 // CoachSeasonsResponse wraps coach season records
 type CoachSeasonsResponse struct {
-	CoachID core.PlayerID             `json:"coach_id"`
-	Seasons []core.CoachSeasonRecord  `json:"seasons"`
+	CoachID core.PlayerID            `json:"coach_id"`
+	Seasons []core.CoachSeasonRecord `json:"seasons"`
 }

@@ -71,13 +71,13 @@ func (flr *FederalLeagueRoutes) handleListGames(w http.ResponseWriter, r *http.R
 
 	games, err := flr.gameRepo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := flr.gameRepo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -120,13 +120,13 @@ func (flr *FederalLeagueRoutes) handleListTeams(w http.ResponseWriter, r *http.R
 
 	teams, err := flr.teamRepo.ListTeamSeasons(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := flr.teamRepo.CountTeamSeasons(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -191,13 +191,13 @@ func (flr *FederalLeagueRoutes) handleListPlays(w http.ResponseWriter, r *http.R
 
 	plays, err := flr.playRepo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := flr.playRepo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -237,13 +237,13 @@ func (flr *FederalLeagueRoutes) handleSeasonSchedule(w http.ResponseWriter, r *h
 
 	games, err := flr.gameRepo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := flr.gameRepo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -281,7 +281,7 @@ func (flr *FederalLeagueRoutes) handleTeamGames(w http.ResponseWriter, r *http.R
 
 	games, err := flr.gameRepo.ListByTeamSeason(ctx, teamID, year, pagination)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -294,7 +294,7 @@ func (flr *FederalLeagueRoutes) handleTeamGames(w http.ResponseWriter, r *http.R
 
 	total, err := flr.gameRepo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

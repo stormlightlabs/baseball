@@ -71,7 +71,7 @@ func (dr *DerivedRoutes) handlePlayerStreaks(w http.ResponseWriter, r *http.Requ
 
 	streaks, err := dr.repo.PlayerStreaks(ctx, playerID, kind, season, minLength)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -119,7 +119,7 @@ func (dr *DerivedRoutes) handleTeamRunDifferential(w http.ResponseWriter, r *htt
 
 	series, err := dr.repo.TeamRunDifferential(ctx, teamID, season, windows)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -143,7 +143,7 @@ func (dr *DerivedRoutes) handleGameWinProbability(w http.ResponseWriter, r *http
 
 	curve, err := dr.repo.GameWinProbability(ctx, gameID)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -198,7 +198,7 @@ func (dr *DerivedRoutes) handlePlayerSplits(w http.ResponseWriter, r *http.Reque
 
 	splits, err := dr.repo.PlayerSplits(ctx, playerID, dimension, season)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -303,7 +303,7 @@ func (dr *DerivedRoutes) handleListWinExpectancyEras(w http.ResponseWriter, r *h
 
 	eras, err := dr.weRepo.ListAvailableEras(ctx)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

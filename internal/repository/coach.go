@@ -40,7 +40,7 @@ func (r *CoachRepository) GetByID(ctx context.Context, id core.PlayerID) (*core.
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("coach not found: %s", id)
+		return nil, core.NewNotFoundError("coach", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get coach: %w", err)

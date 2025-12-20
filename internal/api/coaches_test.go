@@ -85,8 +85,8 @@ func TestCoachEndpoints(t *testing.T) {
 
 		testServer.ServeHTTP(w, req)
 
-		if w.Code != http.StatusInternalServerError {
-			t.Errorf("expected status 500, got %d", w.Code)
+		if w.Code != http.StatusNotFound {
+			t.Errorf("expected status 404, got %d", w.Code)
 		}
 	})
 }

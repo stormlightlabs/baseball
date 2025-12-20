@@ -72,7 +72,7 @@ func (r *TeamRepository) GetTeamSeason(ctx context.Context, teamID core.TeamID, 
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("team season not found")
+		return nil, core.NewNotFoundError("team season", "")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get team season: %w", err)
@@ -242,7 +242,7 @@ func (r *TeamRepository) GetFranchise(ctx context.Context, id core.FranchiseID) 
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("franchise not found")
+		return nil, core.NewNotFoundError("franchise", "")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get franchise: %w", err)
@@ -427,7 +427,7 @@ func (r *TeamRepository) BattingStats(ctx context.Context, year core.SeasonYear,
 		&stats.HR, &stats.RBI, &stats.SB, &stats.CS, &bb, &stats.SO, &hbp, &sf,
 	)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("no batting stats found for team %s in year %d", teamID, year)
+		return nil, core.NewNotFoundError("batting stats", "")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get team batting stats: %w", err)
@@ -508,7 +508,7 @@ func (r *TeamRepository) PitchingStats(ctx context.Context, year core.SeasonYear
 		&stats.IPOuts, &stats.H, &stats.ER, &stats.HR, &stats.BB, &stats.SO,
 	)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("no pitching stats found for team %s in year %d", teamID, year)
+		return nil, core.NewNotFoundError("pitching stats", "")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get team pitching stats: %w", err)
@@ -564,7 +564,7 @@ func (r *TeamRepository) FieldingStats(ctx context.Context, year core.SeasonYear
 		&stats.G, &stats.PO, &stats.A, &stats.E, &stats.DP, &stats.PB, &wp,
 	)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("no fielding stats found for team %s in year %d", teamID, year)
+		return nil, core.NewNotFoundError("fielding stats", "")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get team fielding stats: %w", err)

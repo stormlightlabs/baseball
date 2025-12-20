@@ -61,8 +61,7 @@ func (r *WinExpectancyRepository) GetWinExpectancy(ctx context.Context, state co
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("no win expectancy data for state (inning=%d, bottom=%v, outs=%d, runners=%s, diff=%d)",
-			inning, state.IsBottom, state.Outs, state.RunnersCode, scoreDiff)
+		return nil, core.NewNotFoundError("win expectancy data", "")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get win expectancy: %w", err)
@@ -113,7 +112,7 @@ func (r *WinExpectancyRepository) GetWinExpectancyForEra(ctx context.Context, st
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("no win expectancy data for state in era %v-%v", startYear, endYear)
+		return nil, core.NewNotFoundError("win expectancy data", "")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get win expectancy for era: %w", err)

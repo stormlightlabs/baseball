@@ -164,7 +164,7 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("game not found: %s", id)
+		return nil, core.NewNotFoundError("game", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get game: %w", err)
@@ -724,7 +724,7 @@ func (r *GameRepository) GetBoxscore(ctx context.Context, id core.GameID) (*core
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("game not found: %s", id)
+		return nil, core.NewNotFoundError("game", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get boxscore: %w", err)

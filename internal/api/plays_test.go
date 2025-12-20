@@ -335,9 +335,8 @@ func TestPlayerPlaysEndpoint(t *testing.T) {
 
 		testServer.ServeHTTP(w, req)
 
-		// Should return either 400 (bad request) or 500 (internal server error)
-		if w.Code != http.StatusBadRequest && w.Code != http.StatusInternalServerError {
-			t.Errorf("expected status 400 or 500, got %d", w.Code)
+		if w.Code != http.StatusNotFound {
+			t.Errorf("expected status 404, got %d", w.Code)
 		}
 	})
 }
@@ -514,8 +513,8 @@ func TestPlayerPlateAppearancesEndpoint(t *testing.T) {
 
 		testServer.ServeHTTP(w, req)
 
-		if w.Code != http.StatusBadRequest && w.Code != http.StatusInternalServerError {
-			t.Errorf("expected status 400 or 500, got %d", w.Code)
+		if w.Code != http.StatusNotFound {
+			t.Errorf("expected status 404, got %d", w.Code)
 		}
 	})
 }

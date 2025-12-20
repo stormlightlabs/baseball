@@ -47,7 +47,7 @@ func (r *ParkRepository) GetByID(ctx context.Context, id core.ParkID) (*core.Par
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("park not found: %s", id)
+		return nil, core.NewNotFoundError("park", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get park: %w", err)

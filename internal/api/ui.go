@@ -84,7 +84,7 @@ func (r *UIRoutes) renderTemplate(w http.ResponseWriter, name string, data any) 
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 	}
 }
 

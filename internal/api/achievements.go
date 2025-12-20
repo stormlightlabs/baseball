@@ -45,13 +45,13 @@ func (ar *AchievementRoutes) handleListNoHitters(w http.ResponseWriter, r *http.
 
 	noHitters, err := ar.repo.ListNoHitters(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := ar.repo.CountNoHitters(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -87,13 +87,13 @@ func (ar *AchievementRoutes) handleListCycles(w http.ResponseWriter, r *http.Req
 
 	cycles, err := ar.repo.ListCycles(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := ar.repo.CountCycles(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -136,13 +136,13 @@ func (ar *AchievementRoutes) handleListMultiHRGames(w http.ResponseWriter, r *ht
 
 	multiHRGames, err := ar.repo.ListMultiHRGames(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := ar.repo.CountMultiHRGames(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -177,13 +177,13 @@ func (ar *AchievementRoutes) handleListTriplePlays(w http.ResponseWriter, r *htt
 
 	triplePlays, err := ar.repo.ListTriplePlays(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := ar.repo.CountTriplePlays(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -225,13 +225,13 @@ func (ar *AchievementRoutes) handleListExtraInningGames(w http.ResponseWriter, r
 
 	extraInningGames, err := ar.repo.ListExtraInningGames(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := ar.repo.CountExtraInningGames(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

@@ -41,7 +41,7 @@ func (ur *UmpireRoutes) handleListUmpires(w http.ResponseWriter, r *http.Request
 
 	umpires, err := ur.repo.List(ctx, pagination)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (ur *UmpireRoutes) handleGetUmpire(w http.ResponseWriter, r *http.Request) 
 
 	umpire, err := ur.repo.GetByID(ctx, umpireID)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -110,7 +110,7 @@ func (ur *UmpireRoutes) handleUmpireGames(w http.ResponseWriter, r *http.Request
 
 	games, err := ur.repo.GamesForUmpire(ctx, umpireID, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

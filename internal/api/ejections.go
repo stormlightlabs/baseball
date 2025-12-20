@@ -71,13 +71,13 @@ func (er *EjectionRoutes) handleListEjections(w http.ResponseWriter, r *http.Req
 
 	ejections, err := er.repo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := er.repo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -117,13 +117,13 @@ func (er *EjectionRoutes) handleSeasonEjections(w http.ResponseWriter, r *http.R
 
 	ejections, err := er.repo.ListBySeason(ctx, core.SeasonYear(year), pagination)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := er.repo.CountBySeason(ctx, core.SeasonYear(year))
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

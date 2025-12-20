@@ -63,13 +63,13 @@ func (tr *TeamRoutes) handleListTeams(w http.ResponseWriter, r *http.Request) {
 
 	teams, err := tr.repo.ListTeamSeasons(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := tr.repo.CountTeamSeasons(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -95,7 +95,7 @@ func (tr *TeamRoutes) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 
 	team, err := tr.repo.GetTeamSeason(ctx, id, year)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -131,13 +131,13 @@ func (tr *TeamRoutes) handleSeasonTeams(w http.ResponseWriter, r *http.Request) 
 
 	teams, err := tr.repo.ListTeamSeasons(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := tr.repo.CountTeamSeasons(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -161,7 +161,7 @@ func (tr *TeamRoutes) handleListFranchises(w http.ResponseWriter, r *http.Reques
 
 	franchises, err := tr.repo.ListFranchises(ctx, onlyActive)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -185,7 +185,7 @@ func (tr *TeamRoutes) handleListSeasons(w http.ResponseWriter, r *http.Request) 
 
 	seasons, err := tr.repo.ListSeasons(ctx)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -211,7 +211,7 @@ func (tr *TeamRoutes) handleTeamRoster(w http.ResponseWriter, r *http.Request) {
 
 	roster, err := tr.repo.Roster(ctx, year, teamID)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -239,7 +239,7 @@ func (tr *TeamRoutes) handleTeamBatting(w http.ResponseWriter, r *http.Request) 
 
 	stats, err := tr.repo.BattingStats(ctx, year, teamID, includePlayers)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -267,7 +267,7 @@ func (tr *TeamRoutes) handleTeamPitching(w http.ResponseWriter, r *http.Request)
 
 	stats, err := tr.repo.PitchingStats(ctx, year, teamID, includePlayers)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -295,7 +295,7 @@ func (tr *TeamRoutes) handleTeamFielding(w http.ResponseWriter, r *http.Request)
 
 	stats, err := tr.repo.FieldingStats(ctx, year, teamID, includePlayers)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -319,7 +319,7 @@ func (tr *TeamRoutes) handleGetFranchise(w http.ResponseWriter, r *http.Request)
 
 	franchise, err := tr.repo.GetFranchise(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -358,7 +358,7 @@ func (tr *TeamRoutes) handleTeamSchedule(w http.ResponseWriter, r *http.Request)
 	homeFilter.HomeTeam = &teamID
 	homeGames, err := tr.gameRepo.List(ctx, homeFilter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -366,7 +366,7 @@ func (tr *TeamRoutes) handleTeamSchedule(w http.ResponseWriter, r *http.Request)
 	awayFilter.AwayTeam = &teamID
 	awayGames, err := tr.gameRepo.List(ctx, awayFilter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -374,13 +374,13 @@ func (tr *TeamRoutes) handleTeamSchedule(w http.ResponseWriter, r *http.Request)
 
 	homeCount, err := tr.gameRepo.Count(ctx, homeFilter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	awayCount, err := tr.gameRepo.Count(ctx, awayFilter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -411,7 +411,7 @@ func (tr *TeamRoutes) handleTeamDailyLogs(w http.ResponseWriter, r *http.Request
 	homeFilter.HomeTeam = &teamID
 	homeGames, err := tr.gameRepo.List(ctx, homeFilter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -419,7 +419,7 @@ func (tr *TeamRoutes) handleTeamDailyLogs(w http.ResponseWriter, r *http.Request
 	awayFilter.AwayTeam = &teamID
 	awayGames, err := tr.gameRepo.List(ctx, awayFilter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -545,13 +545,13 @@ func (tr *TeamRoutes) handleTeamDailyStats(w http.ResponseWriter, r *http.Reques
 
 	stats, err := tr.repo.DailyStats(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := tr.repo.CountDailyStats(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

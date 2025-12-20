@@ -38,7 +38,7 @@ func (pr *PostseasonRoutes) handleSeasonPostseasonSeries(w http.ResponseWriter, 
 
 	series, err := pr.repo.ListSeries(ctx, core.SeasonYear(year))
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -77,13 +77,13 @@ func (pr *PostseasonRoutes) handlePostseasonGames(w http.ResponseWriter, r *http
 
 	games, err := pr.gameRepo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := pr.gameRepo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

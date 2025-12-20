@@ -50,7 +50,7 @@ func (pr *PlayerRoutes) handleGetPlayer(w http.ResponseWriter, r *http.Request) 
 
 	player, err := pr.repo.GetByID(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, player)
@@ -87,13 +87,13 @@ func (pr *PlayerRoutes) handleListPlayers(w http.ResponseWriter, r *http.Request
 
 	players, err := pr.repo.List(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := pr.repo.Count(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -116,13 +116,13 @@ func (pr *PlayerRoutes) handlePlayerSeasons(w http.ResponseWriter, r *http.Reque
 
 	batting, err := pr.repo.BattingSeasons(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	pitching, err := pr.repo.PitchingSeasons(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -161,13 +161,13 @@ func (pr *PlayerRoutes) handlePlayerAwards(w http.ResponseWriter, r *http.Reques
 
 	awards, err := pr.awardRepo.ListAwardResults(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := pr.awardRepo.CountAwardResults(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -190,7 +190,7 @@ func (pr *PlayerRoutes) handlePlayerHallOfFame(w http.ResponseWriter, r *http.Re
 
 	records, err := pr.awardRepo.HallOfFameByPlayer(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -230,7 +230,7 @@ func (pr *PlayerRoutes) handlePlayerGameLogs(w http.ResponseWriter, r *http.Requ
 
 	games, err := pr.repo.GameLogs(ctx, id, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -299,13 +299,13 @@ func (pr *PlayerRoutes) handlePlayerBattingGameLogs(w http.ResponseWriter, r *ht
 
 	logs, err := pr.repo.BattingGameLogs(ctx, id, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := pr.repo.CountBattingGameLogs(ctx, id, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -362,13 +362,13 @@ func (pr *PlayerRoutes) handlePlayerPitchingGameLogs(w http.ResponseWriter, r *h
 
 	logs, err := pr.repo.PitchingGameLogs(ctx, id, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := pr.repo.CountPitchingGameLogs(ctx, id, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -419,13 +419,13 @@ func (pr *PlayerRoutes) handlePlayerFieldingGameLogs(w http.ResponseWriter, r *h
 
 	logs, err := pr.repo.FieldingGameLogs(ctx, id, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := pr.repo.CountFieldingGameLogs(ctx, id, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -448,7 +448,7 @@ func (pr *PlayerRoutes) handlePlayerAppearances(w http.ResponseWriter, r *http.R
 
 	appearances, err := pr.repo.Appearances(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -471,7 +471,7 @@ func (pr *PlayerRoutes) handlePlayerTeams(w http.ResponseWriter, r *http.Request
 
 	teams, err := pr.repo.Teams(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -494,7 +494,7 @@ func (pr *PlayerRoutes) handlePlayerSalaries(w http.ResponseWriter, r *http.Requ
 
 	salaries, err := pr.repo.Salaries(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -517,7 +517,7 @@ func (pr *PlayerRoutes) handlePlayerRelatives(w http.ResponseWriter, r *http.Req
 
 	relatives, err := pr.repo.Relatives(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -540,7 +540,7 @@ func (pr *PlayerRoutes) handlePlayerBattingStats(w http.ResponseWriter, r *http.
 
 	seasons, err := pr.repo.BattingSeasons(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -599,7 +599,7 @@ func (pr *PlayerRoutes) handlePlayerPitchingStats(w http.ResponseWriter, r *http
 
 	seasons, err := pr.repo.PitchingSeasons(ctx, id)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

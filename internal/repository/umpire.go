@@ -42,7 +42,7 @@ func (r *UmpireRepository) GetByID(ctx context.Context, id core.UmpireID) (*core
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("umpire not found: %s", id)
+		return nil, core.NewNotFoundError("umpire", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get umpire: %w", err)

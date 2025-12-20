@@ -79,13 +79,13 @@ func (nlr *NegroLeaguesRoutes) handleListGames(w http.ResponseWriter, r *http.Re
 
 	games, err := nlr.repo.ListGames(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := nlr.repo.CountGames(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -132,13 +132,13 @@ func (nlr *NegroLeaguesRoutes) handleListTeams(w http.ResponseWriter, r *http.Re
 
 	teams, err := nlr.repo.ListTeamSeasons(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := nlr.repo.CountTeamSeasons(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -207,13 +207,13 @@ func (nlr *NegroLeaguesRoutes) handleListPlays(w http.ResponseWriter, r *http.Re
 
 	plays, err := nlr.repo.ListPlays(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := nlr.repo.CountPlays(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -259,13 +259,13 @@ func (nlr *NegroLeaguesRoutes) handleSeasonSchedule(w http.ResponseWriter, r *ht
 
 	games, err := nlr.repo.GetSeasonSchedule(ctx, year, league, filter.Pagination)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
 	total, err := nlr.repo.CountGames(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -303,7 +303,7 @@ func (nlr *NegroLeaguesRoutes) handleTeamGames(w http.ResponseWriter, r *http.Re
 
 	games, err := nlr.repo.GetTeamGames(ctx, teamID, year, pagination)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -320,7 +320,7 @@ func (nlr *NegroLeaguesRoutes) handleTeamGames(w http.ResponseWriter, r *http.Re
 	filter.HomeTeam = &teamID
 	homeCount, err := nlr.repo.CountGames(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -328,7 +328,7 @@ func (nlr *NegroLeaguesRoutes) handleTeamGames(w http.ResponseWriter, r *http.Re
 	filter.AwayTeam = &teamID
 	awayCount, err := nlr.repo.CountGames(ctx, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 

@@ -61,7 +61,7 @@ func (r *PlayerRepository) GetByID(ctx context.Context, id core.PlayerID) (*core
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("player not found: %s", id)
+		return nil, core.NewNotFoundError("player", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get player: %w", err)
@@ -390,7 +390,7 @@ func (r *PlayerRepository) GameLogs(ctx context.Context, id core.PlayerID, filte
 	var retroID sql.NullString
 	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("player not found: %s", id)
+		return nil, core.NewNotFoundError("player", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get player retroID: %w", err)
@@ -658,7 +658,7 @@ func (r *PlayerRepository) Relatives(ctx context.Context, id core.PlayerID) ([]c
 	var retroID sql.NullString
 	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("player not found: %s", id)
+		return nil, core.NewNotFoundError("player", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch player retroID: %w", err)
@@ -739,7 +739,7 @@ func (r *PlayerRepository) BattingGameLogs(ctx context.Context, id core.PlayerID
 	var retroID sql.NullString
 	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("player not found: %s", id)
+		return nil, core.NewNotFoundError("player", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get player retroID: %w", err)
@@ -850,7 +850,7 @@ func (r *PlayerRepository) CountBattingGameLogs(ctx context.Context, id core.Pla
 	var retroID sql.NullString
 	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
 	if err == sql.ErrNoRows {
-		return 0, fmt.Errorf("player not found: %s", id)
+		return 0, core.NewNotFoundError("player", string(id))
 	}
 	if err != nil {
 		return 0, fmt.Errorf("failed to get player retroID: %w", err)
@@ -921,7 +921,7 @@ func (r *PlayerRepository) PitchingGameLogs(ctx context.Context, id core.PlayerI
 	var retroID sql.NullString
 	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("player not found: %s", id)
+		return nil, core.NewNotFoundError("player", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get player retroID: %w", err)
@@ -1018,7 +1018,7 @@ func (r *PlayerRepository) CountPitchingGameLogs(ctx context.Context, id core.Pl
 	var retroID sql.NullString
 	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
 	if err == sql.ErrNoRows {
-		return 0, fmt.Errorf("player not found: %s", id)
+		return 0, core.NewNotFoundError("player", string(id))
 	}
 	if err != nil {
 		return 0, fmt.Errorf("failed to get player retroID: %w", err)
@@ -1077,7 +1077,7 @@ func (r *PlayerRepository) FieldingGameLogs(ctx context.Context, id core.PlayerI
 	var retroID sql.NullString
 	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("player not found: %s", id)
+		return nil, core.NewNotFoundError("player", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get player retroID: %w", err)
@@ -1165,7 +1165,7 @@ func (r *PlayerRepository) CountFieldingGameLogs(ctx context.Context, id core.Pl
 	var retroID sql.NullString
 	err := r.db.QueryRowContext(ctx, `SELECT "retroID" FROM "People" WHERE "playerID" = $1`, string(id)).Scan(&retroID)
 	if err == sql.ErrNoRows {
-		return 0, fmt.Errorf("player not found: %s", id)
+		return 0, core.NewNotFoundError("player", string(id))
 	}
 	if err != nil {
 		return 0, fmt.Errorf("failed to get player retroID: %w", err)

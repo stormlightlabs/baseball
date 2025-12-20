@@ -52,7 +52,7 @@ func (r *ManagerRepository) GetByID(ctx context.Context, id core.ManagerID) (*co
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("manager not found: %s", id)
+		return nil, core.NewNotFoundError("manager", string(id))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get manager: %w", err)

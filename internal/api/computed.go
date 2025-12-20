@@ -67,7 +67,7 @@ func (cr *ComputedRoutes) handlePlayerAdvancedBatting(w http.ResponseWriter, r *
 
 	stats, err := cr.advancedRepo.PlayerAdvancedBatting(ctx, playerID, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -106,7 +106,7 @@ func (cr *ComputedRoutes) handlePlayerAdvancedPitching(w http.ResponseWriter, r 
 
 	stats, err := cr.advancedRepo.PlayerAdvancedPitching(ctx, playerID, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -141,7 +141,7 @@ func (cr *ComputedRoutes) handleGamePlateLeverages(w http.ResponseWriter, r *htt
 
 	leverages, err := cr.leverageRepo.GamePlateLeverages(ctx, gameID, minLI)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -172,7 +172,7 @@ func (cr *ComputedRoutes) handleParkFactor(w http.ResponseWriter, r *http.Reques
 	season := core.SeasonYear(getIntQuery(r, "season", 2024))
 	factor, err := cr.parkFactorRepo.ParkFactor(ctx, parkID, season)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, factor)
@@ -208,7 +208,7 @@ func (cr *ComputedRoutes) handleParkFactorSeries(w http.ResponseWriter, r *http.
 
 	factors, err := cr.parkFactorRepo.ParkFactorSeries(ctx, parkID, fromSeason, toSeason)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -242,7 +242,7 @@ func (cr *ComputedRoutes) handleSeasonParkFactors(w http.ResponseWriter, r *http
 
 	factors, err := cr.parkFactorRepo.SeasonParkFactors(ctx, core.SeasonYear(season), factorType)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -276,7 +276,7 @@ func (cr *ComputedRoutes) handlePlayerBaserunning(w http.ResponseWriter, r *http
 
 	stats, err := cr.advancedRepo.PlayerBaserunning(ctx, playerID, season, teamID)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -310,7 +310,7 @@ func (cr *ComputedRoutes) handlePlayerFielding(w http.ResponseWriter, r *http.Re
 
 	stats, err := cr.advancedRepo.PlayerFielding(ctx, playerID, season, teamID)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -347,7 +347,7 @@ func (cr *ComputedRoutes) handlePlayerWAR(w http.ResponseWriter, r *http.Request
 
 	war, err := cr.advancedRepo.PlayerWAR(ctx, playerID, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -402,7 +402,7 @@ func (cr *ComputedRoutes) handleSeasonBattingLeaders(w http.ResponseWriter, r *h
 
 	allLeaders, err := cr.advancedRepo.SeasonBattingLeaders(ctx, season, stat, 10000, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -472,7 +472,7 @@ func (cr *ComputedRoutes) handleSeasonPitchingLeaders(w http.ResponseWriter, r *
 
 	allLeaders, err := cr.advancedRepo.SeasonPitchingLeaders(ctx, season, stat, 10000, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -532,7 +532,7 @@ func (cr *ComputedRoutes) handleSeasonWARLeaders(w http.ResponseWriter, r *http.
 
 	allLeaders, err := cr.advancedRepo.SeasonWARLeaders(ctx, season, 10000, filter)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -575,7 +575,7 @@ func (cr *ComputedRoutes) handleGameWinProbabilitySummary(w http.ResponseWriter,
 	gameID := core.GameID(r.PathValue("game_id"))
 	summary, err := cr.leverageRepo.GameWinProbabilitySummary(ctx, gameID)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -611,7 +611,7 @@ func (cr *ComputedRoutes) handlePlayerHighLeveragePAs(w http.ResponseWriter, r *
 
 	leverages, err := cr.leverageRepo.PlayerHighLeveragePAs(ctx, playerID, season, minLI)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
@@ -639,7 +639,7 @@ func (cr *ComputedRoutes) handlePlayerLeverageSummary(w http.ResponseWriter, r *
 	role := r.URL.Query().Get("role")
 	summary, err := cr.leverageRepo.PlayerLeverageSummary(ctx, playerID, season, role)
 	if err != nil {
-		writeInternalServerError(w, err)
+		writeError(w, err)
 		return
 	}
 
