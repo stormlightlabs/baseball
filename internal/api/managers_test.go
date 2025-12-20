@@ -1,82 +1,21 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	_ "github.com/lib/pq"
 	"stormlightlabs.org/baseball/internal/core"
-	"stormlightlabs.org/baseball/internal/db"
-	"stormlightlabs.org/baseball/internal/testutils"
 )
 
-func setupManagerTestServer(t *testing.T) (*Server, func()) {
-	t.Helper()
-
-	ctx := context.Background()
-	projectRoot, err := testutils.GetProjectRoot()
-	if err != nil {
-		t.Fatalf("failed to get project root: %v", err)
-	}
-
-	originalDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("failed to get current directory: %v", err)
-	}
-
-	if err := os.Chdir(projectRoot); err != nil {
-		t.Fatalf("failed to change to project root: %v", err)
-	}
-
-	container, err := testutils.NewPostgresContainer(ctx)
-	if err != nil {
-		t.Fatalf("failed to create postgres container: %v", err)
-	}
-
-	cleanup := func() {
-		os.Chdir(originalDir)
-		if err := container.Terminate(ctx); err != nil {
-			t.Errorf("failed to terminate container: %v", err)
-		}
-	}
-
-	database, err := db.Connect(container.ConnStr)
-	if err != nil {
-		cleanup()
-		t.Fatalf("failed to connect to database: %v", err)
-	}
-
-	if err := database.Migrate(ctx); err != nil {
-		cleanup()
-		t.Fatalf("failed to run migrations: %v", err)
-	}
-
-	if err := container.LoadFixtures(ctx); err != nil {
-		cleanup()
-		t.Fatalf("failed to load manager fixtures: %v", err)
-	}
-
-	if _, err := database.RefreshMaterializedViews(ctx, []string{}); err != nil {
-		cleanup()
-		t.Fatalf("failed to refresh materialized views: %v", err)
-	}
-
-	return NewServer(database.DB, nil), cleanup
-}
-
 func TestManagerEndpoints(t *testing.T) {
-	server, cleanup := setupManagerTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/managers", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/managers", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -100,7 +39,7 @@ func TestManagerEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/managers?page=1&per_page=10", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -120,7 +59,7 @@ func TestManagerEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/managers/roberda07", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -144,7 +83,7 @@ func TestManagerEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/managers/roberda07", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -176,7 +115,7 @@ func TestManagerEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/managers/nonexistent", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusInternalServerError {
 			t.Errorf("expected status 500, got %d", w.Code)
@@ -185,14 +124,11 @@ func TestManagerEndpoints(t *testing.T) {
 }
 
 func TestManagerSeasonsEndpoint(t *testing.T) {
-	server, cleanup := setupManagerTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/managers/{manager_id}/seasons", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/managers/roberda07/seasons", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -216,7 +152,7 @@ func TestManagerSeasonsEndpoint(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/managers/roberda07/seasons", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -256,7 +192,7 @@ func TestManagerSeasonsEndpoint(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/managers/roberda07/seasons", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -276,7 +212,7 @@ func TestManagerSeasonsEndpoint(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/managers/roberda07/seasons", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -300,7 +236,7 @@ func TestManagerSeasonsEndpoint(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/managers/roberda07/seasons", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)

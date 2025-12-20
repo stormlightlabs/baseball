@@ -267,13 +267,8 @@ func (pr *PlayRoutes) handlePlayerPlateAppearances(w http.ResponseWriter, r *htt
 	}
 
 	filter := core.PlayFilter{
-		Batter: &retroID,
-		Pagination: core.Pagination{
-			Page:    getIntQuery(r, "page", 1),
-			PerPage: getIntQuery(r, "per_page", 50),
-		},
-		SortBy:    "date",
-		SortOrder: core.SortDesc,
+		Batter: &retroID, SortBy: "date", SortOrder: core.SortDesc,
+		Pagination: *core.NewPagination(getIntQuery(r, "page", 1), getIntQuery(r, "per_page", 50)),
 	}
 
 	if season := getIntQuery(r, "season", 0); season > 0 {

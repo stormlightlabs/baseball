@@ -1,77 +1,21 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	_ "github.com/lib/pq"
 	"stormlightlabs.org/baseball/internal/core"
-	"stormlightlabs.org/baseball/internal/db"
-	"stormlightlabs.org/baseball/internal/testutils"
 )
 
-func setupTestServer(t *testing.T) (*Server, func()) {
-	t.Helper()
-
-	ctx := context.Background()
-	projectRoot, err := testutils.GetProjectRoot()
-	if err != nil {
-		t.Fatalf("failed to get project root: %v", err)
-	}
-
-	originalDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("failed to get current directory: %v", err)
-	}
-
-	if err := os.Chdir(projectRoot); err != nil {
-		t.Fatalf("failed to change to project root: %v", err)
-	}
-
-	container, err := testutils.NewPostgresContainer(ctx)
-	if err != nil {
-		t.Fatalf("failed to create postgres container: %v", err)
-	}
-
-	cleanup := func() {
-		os.Chdir(originalDir)
-		if err := container.Terminate(ctx); err != nil {
-			t.Errorf("failed to terminate container: %v", err)
-		}
-	}
-
-	database, err := db.Connect(container.ConnStr)
-	if err != nil {
-		cleanup()
-		t.Fatalf("failed to connect to database: %v", err)
-	}
-
-	if err := database.Migrate(ctx); err != nil {
-		cleanup()
-		t.Fatalf("failed to run migrations: %v", err)
-	}
-
-	if err := container.SeedFromSQL(ctx, "woba_constants.sql", "league_constants.sql", "park_factors.sql"); err != nil {
-		cleanup()
-		t.Fatalf("failed to seed constants: %v", err)
-	}
-
-	return NewServer(database.DB, nil), cleanup
-}
-
 func TestMetaEndpoints(t *testing.T) {
-	server, cleanup := setupTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/meta", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/meta", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -107,7 +51,7 @@ func TestMetaEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/meta/datasets", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -127,7 +71,7 @@ func TestMetaEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/meta/constants/woba", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
 		}
@@ -155,7 +99,7 @@ func TestMetaEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/meta/constants/woba?season=2023", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -179,7 +123,7 @@ func TestMetaEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/meta/constants/league", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -208,7 +152,7 @@ func TestMetaEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/meta/constants/league?season=2024&league=AL", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -237,7 +181,7 @@ func TestMetaEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/meta/constants/park-factors", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
 		}
@@ -265,7 +209,7 @@ func TestMetaEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/meta/constants/park-factors?season=2023&team=BOS", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
 		}
@@ -291,14 +235,11 @@ func TestMetaEndpoints(t *testing.T) {
 }
 
 func TestHealthEndpoint(t *testing.T) {
-	server, cleanup := setupTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/health", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/health", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)

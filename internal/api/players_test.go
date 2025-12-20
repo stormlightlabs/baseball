@@ -1,82 +1,21 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	_ "github.com/lib/pq"
 	"stormlightlabs.org/baseball/internal/core"
-	"stormlightlabs.org/baseball/internal/db"
-	"stormlightlabs.org/baseball/internal/testutils"
 )
 
-func setupPlayerTestServer(t *testing.T) (*Server, func()) {
-	t.Helper()
-
-	ctx := context.Background()
-	projectRoot, err := testutils.GetProjectRoot()
-	if err != nil {
-		t.Fatalf("failed to get project root: %v", err)
-	}
-
-	originalDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("failed to get current directory: %v", err)
-	}
-
-	if err := os.Chdir(projectRoot); err != nil {
-		t.Fatalf("failed to change to project root: %v", err)
-	}
-
-	container, err := testutils.NewPostgresContainer(ctx)
-	if err != nil {
-		t.Fatalf("failed to create postgres container: %v", err)
-	}
-
-	cleanup := func() {
-		os.Chdir(originalDir)
-		if err := container.Terminate(ctx); err != nil {
-			t.Errorf("failed to terminate container: %v", err)
-		}
-	}
-
-	database, err := db.Connect(container.ConnStr)
-	if err != nil {
-		cleanup()
-		t.Fatalf("failed to connect to database: %v", err)
-	}
-
-	if err := database.Migrate(ctx); err != nil {
-		cleanup()
-		t.Fatalf("failed to run migrations: %v", err)
-	}
-
-	if err := container.LoadFixtures(ctx); err != nil {
-		cleanup()
-		t.Fatalf("failed to load player fixtures: %v", err)
-	}
-
-	if _, err := database.RefreshMaterializedViews(ctx, []string{}); err != nil {
-		cleanup()
-		t.Fatalf("failed to refresh materialized views: %v", err)
-	}
-
-	return NewServer(database.DB, nil), cleanup
-}
-
 func TestPlayerEndpoints(t *testing.T) {
-	server, cleanup := setupPlayerTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/players", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -100,7 +39,7 @@ func TestPlayerEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players?name=Judge", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -120,7 +59,7 @@ func TestPlayerEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players?debut_year=2023", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -140,7 +79,7 @@ func TestPlayerEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players?page=1&per_page=5", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -160,7 +99,7 @@ func TestPlayerEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -188,7 +127,7 @@ func TestPlayerEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/nonexistent", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusInternalServerError {
 			t.Errorf("expected status 500, got %d", w.Code)
@@ -197,14 +136,11 @@ func TestPlayerEndpoints(t *testing.T) {
 }
 
 func TestPlayerSeasonsEndpoint(t *testing.T) {
-	server, cleanup := setupPlayerTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/players/{id}/seasons", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/seasons", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -224,7 +160,7 @@ func TestPlayerSeasonsEndpoint(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/donaljo02/seasons", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -248,7 +184,7 @@ func TestPlayerSeasonsEndpoint(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/bettsmo01/seasons", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -272,7 +208,7 @@ func TestPlayerSeasonsEndpoint(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/colege01/seasons", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -294,14 +230,11 @@ func TestPlayerSeasonsEndpoint(t *testing.T) {
 }
 
 func TestPlayerStatsEndpoints(t *testing.T) {
-	server, cleanup := setupPlayerTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/players/{id}/stats/batting", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/stats/batting", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -325,7 +258,7 @@ func TestPlayerStatsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/stats/batting", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -349,7 +282,7 @@ func TestPlayerStatsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/bettsmo01/stats/batting", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -381,7 +314,7 @@ func TestPlayerStatsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/colege01/stats/pitching", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -405,7 +338,7 @@ func TestPlayerStatsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/colege01/stats/pitching", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -429,7 +362,7 @@ func TestPlayerStatsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/colege01/stats/pitching", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -455,14 +388,11 @@ func TestPlayerStatsEndpoints(t *testing.T) {
 }
 
 func TestPlayerAwardsEndpoints(t *testing.T) {
-	server, cleanup := setupPlayerTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/players/{id}/awards", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/bettsmo01/awards", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -482,7 +412,7 @@ func TestPlayerAwardsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/bettsmo01/awards?year=2018", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -502,7 +432,7 @@ func TestPlayerAwardsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/bettsmo01/awards?page=1&per_page=5", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -522,7 +452,7 @@ func TestPlayerAwardsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/bettsmo01/hall-of-fame", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -538,7 +468,7 @@ func TestPlayerAwardsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/ruthba01/hall-of-fame", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -558,7 +488,7 @@ func TestPlayerAwardsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/hall-of-fame", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -576,14 +506,11 @@ func TestPlayerAwardsEndpoints(t *testing.T) {
 }
 
 func TestPlayerGameLogsEndpoints(t *testing.T) {
-	server, cleanup := setupPlayerTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/players/{id}/game-logs", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/game-logs", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -594,7 +521,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/game-logs?season=2023", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -605,7 +532,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/game-logs?page=1&per_page=10", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -616,7 +543,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/game-logs/batting", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -627,7 +554,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/game-logs/batting?season=2023", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -638,7 +565,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/game-logs/batting?date_from=20230401&date_to=20230430", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -649,7 +576,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/game-logs/batting?min_hr=2", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -660,7 +587,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/game-logs/batting?min_hr=1&min_h=2", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -671,7 +598,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/colege01/game-logs/pitching", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -682,7 +609,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/colege01/game-logs/pitching?season=2023", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -693,7 +620,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/colege01/game-logs/pitching?min_so=5", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -704,7 +631,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/colege01/game-logs/pitching?min_ip=5", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -715,7 +642,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/game-logs/fielding", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -726,7 +653,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/game-logs/fielding?position=9", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -737,7 +664,7 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/game-logs/fielding?date_from=20230401&date_to=20230430", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -746,14 +673,11 @@ func TestPlayerGameLogsEndpoints(t *testing.T) {
 }
 
 func TestPlayerAppearancesEndpoint(t *testing.T) {
-	server, cleanup := setupPlayerTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/players/{id}/appearances", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/appearances", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -773,7 +697,7 @@ func TestPlayerAppearancesEndpoint(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/bettsmo01/appearances", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -791,14 +715,11 @@ func TestPlayerAppearancesEndpoint(t *testing.T) {
 }
 
 func TestPlayerTeamsEndpoint(t *testing.T) {
-	server, cleanup := setupPlayerTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/players/{id}/teams", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/teams", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -818,7 +739,7 @@ func TestPlayerTeamsEndpoint(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/donaljo02/teams", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -838,7 +759,7 @@ func TestPlayerTeamsEndpoint(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/rodriju01/teams", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -856,14 +777,11 @@ func TestPlayerTeamsEndpoint(t *testing.T) {
 }
 
 func TestPlayerSalariesEndpoint(t *testing.T) {
-	server, cleanup := setupPlayerTestServer(t)
-	defer cleanup()
-
 	t.Run("GET /v1/players/{id}/salaries", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/salaries", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
@@ -882,7 +800,7 @@ func TestPlayerSalariesEndpoint(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/players/aardsda01/salaries", nil)
 		w := httptest.NewRecorder()
 
-		server.ServeHTTP(w, req)
+		testServer.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
