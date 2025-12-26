@@ -5,20 +5,30 @@ import (
 	"database/sql"
 	"fmt"
 
+	"stormlightlabs.org/baseball/internal/cache"
 	"stormlightlabs.org/baseball/internal/core"
 )
 
 type ManagerRepository struct {
-	db *sql.DB
+	db    *sql.DB
+	cache *cache.CachedRepository
 }
 
-func NewManagerRepository(db *sql.DB) *ManagerRepository {
-	return &ManagerRepository{db: db}
+func NewManagerRepository(db *sql.DB, cacheClient *cache.Client) *ManagerRepository {
+	return &ManagerRepository{
+		db:    db,
+		cache: cache.NewCachedRepository(cacheClient, "manager"),
+	}
 }
 
 // GetByID retrieves a manager by their manager ID (playerID).
 // Includes extended biographical data from Retrosheet when available.
 func (r *ManagerRepository) GetByID(ctx context.Context, id core.ManagerID) (*core.Manager, error) {
+	var cached core.Manager
+	if r.cache.Entity.Get(ctx, string(id), &cached) {
+		return &cached, nil
+	}
+
 	query := `
 		SELECT
 			p."playerID",
@@ -74,6 +84,7 @@ func (r *ManagerRepository) GetByID(ctx context.Context, id core.ManagerID) (*co
 		mgr.FullName = &fullName.String
 	}
 
+	_ = r.cache.Entity.Set(ctx, string(id), &mgr)
 	return &mgr, nil
 }
 
@@ -154,6 +165,11 @@ func (r *ManagerRepository) List(ctx context.Context, p core.Pagination) ([]core
 
 // SeasonRecords retrieves all season records for a manager.
 func (r *ManagerRepository) SeasonRecords(ctx context.Context, id core.ManagerID) ([]core.ManagerSeasonRecord, error) {
+	var cached []core.ManagerSeasonRecord
+	if r.cache.Entity.Get(ctx, string(id)+":seasons", &cached) {
+		return cached, nil
+	}
+
 	query := `
 		SELECT
 			m."playerID",
@@ -204,5 +220,6 @@ func (r *ManagerRepository) SeasonRecords(ctx context.Context, id core.ManagerID
 		return nil, fmt.Errorf("failed to iterate manager records: %w", err)
 	}
 
+	_ = r.cache.Entity.Set(ctx, string(id)+":seasons", records)
 	return records, nil
 }

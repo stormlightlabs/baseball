@@ -4,20 +4,32 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 
+	"stormlightlabs.org/baseball/internal/cache"
 	"stormlightlabs.org/baseball/internal/core"
 )
 
 type StatsRepository struct {
-	db *sql.DB
+	db    *sql.DB
+	cache *cache.CachedRepository
 }
 
-func NewStatsRepository(db *sql.DB) *StatsRepository {
-	return &StatsRepository{db: db}
+func NewStatsRepository(db *sql.DB, cacheClient *cache.Client) *StatsRepository {
+	return &StatsRepository{
+		db:    db,
+		cache: cache.NewCachedRepository(cacheClient, "stats"),
+	}
 }
 
 // QueryBattingStats provides flexible batting stats querying with various filters.
 func (r *StatsRepository) QueryBattingStats(ctx context.Context, filter core.BattingStatsFilter) ([]core.PlayerBattingSeason, error) {
+	params := battingStatsFilterToParams(filter)
+	var cached []core.PlayerBattingSeason
+	if r.cache.List.Get(ctx, params, &cached) {
+		return cached, nil
+	}
+
 	query := `
 		SELECT
 			"playerID", "yearID", "teamID", "lgID",
@@ -156,6 +168,7 @@ func (r *StatsRepository) QueryBattingStats(ctx context.Context, filter core.Bat
 		stats = append(stats, s)
 	}
 
+	_ = r.cache.List.Set(ctx, params, stats)
 	return stats, nil
 }
 
@@ -219,6 +232,12 @@ func (r *StatsRepository) QueryBattingStatsCount(ctx context.Context, filter cor
 
 // QueryPitchingStats provides flexible pitching stats querying with various filters.
 func (r *StatsRepository) QueryPitchingStats(ctx context.Context, filter core.PitchingStatsFilter) ([]core.PlayerPitchingSeason, error) {
+	params := pitchingStatsFilterToParams(filter)
+	var cached []core.PlayerPitchingSeason
+	if r.cache.List.Get(ctx, params, &cached) {
+		return cached, nil
+	}
+
 	query := `
 		SELECT
 			"playerID", "yearID", "teamID", "lgID",
@@ -342,6 +361,7 @@ func (r *StatsRepository) QueryPitchingStats(ctx context.Context, filter core.Pi
 		stats = append(stats, s)
 	}
 
+	_ = r.cache.List.Set(ctx, params, stats)
 	return stats, nil
 }
 
@@ -412,6 +432,12 @@ func (r *StatsRepository) QueryPitchingStatsCount(ctx context.Context, filter co
 
 // QueryFieldingStats provides flexible fielding stats querying with various filters.
 func (r *StatsRepository) QueryFieldingStats(ctx context.Context, filter core.FieldingStatsFilter) ([]core.PlayerFieldingSeason, error) {
+	params := fieldingStatsFilterToParams(filter)
+	var cached []core.PlayerFieldingSeason
+	if r.cache.List.Get(ctx, params, &cached) {
+		return cached, nil
+	}
+
 	query := `
 		SELECT
 			"playerID", "yearID", "teamID", "lgID", "POS",
@@ -533,6 +559,7 @@ func (r *StatsRepository) QueryFieldingStats(ctx context.Context, filter core.Fi
 		stats = append(stats, s)
 	}
 
+	_ = r.cache.List.Set(ctx, params, stats)
 	return stats, nil
 }
 
@@ -598,4 +625,118 @@ func (r *StatsRepository) QueryFieldingStatsCount(ctx context.Context, filter co
 	}
 
 	return count, nil
+}
+
+// battingStatsFilterToParams converts BattingStatsFilter to cache param map
+func battingStatsFilterToParams(filter core.BattingStatsFilter) map[string]string {
+	params := make(map[string]string)
+
+	if filter.PlayerID != nil {
+		params["player_id"] = string(*filter.PlayerID)
+	}
+	if filter.TeamID != nil {
+		params["team_id"] = string(*filter.TeamID)
+	}
+	if filter.Season != nil {
+		params["season"] = strconv.Itoa(int(*filter.Season))
+	}
+	if filter.SeasonFrom != nil {
+		params["season_from"] = strconv.Itoa(int(*filter.SeasonFrom))
+	}
+	if filter.SeasonTo != nil {
+		params["season_to"] = strconv.Itoa(int(*filter.SeasonTo))
+	}
+	if filter.League != nil {
+		params["league"] = string(*filter.League)
+	}
+	if filter.MinAB != nil {
+		params["min_ab"] = strconv.Itoa(*filter.MinAB)
+	}
+	if filter.MinPA != nil {
+		params["min_pa"] = strconv.Itoa(*filter.MinPA)
+	}
+	if filter.SortBy != "" {
+		params["sort_by"] = filter.SortBy
+	}
+	params["sort_order"] = string(filter.SortOrder)
+	params["page"] = strconv.Itoa(filter.Pagination.Page)
+	params["per_page"] = strconv.Itoa(filter.Pagination.PerPage)
+
+	return params
+}
+
+// pitchingStatsFilterToParams converts PitchingStatsFilter to cache param map
+func pitchingStatsFilterToParams(filter core.PitchingStatsFilter) map[string]string {
+	params := make(map[string]string)
+
+	if filter.PlayerID != nil {
+		params["player_id"] = string(*filter.PlayerID)
+	}
+	if filter.TeamID != nil {
+		params["team_id"] = string(*filter.TeamID)
+	}
+	if filter.Season != nil {
+		params["season"] = strconv.Itoa(int(*filter.Season))
+	}
+	if filter.SeasonFrom != nil {
+		params["season_from"] = strconv.Itoa(int(*filter.SeasonFrom))
+	}
+	if filter.SeasonTo != nil {
+		params["season_to"] = strconv.Itoa(int(*filter.SeasonTo))
+	}
+	if filter.League != nil {
+		params["league"] = string(*filter.League)
+	}
+	if filter.MinIP != nil {
+		params["min_ip"] = fmt.Sprintf("%.1f", *filter.MinIP)
+	}
+	if filter.MinGS != nil {
+		params["min_gs"] = strconv.Itoa(*filter.MinGS)
+	}
+	if filter.SortBy != "" {
+		params["sort_by"] = filter.SortBy
+	}
+	params["sort_order"] = string(filter.SortOrder)
+	params["page"] = strconv.Itoa(filter.Pagination.Page)
+	params["per_page"] = strconv.Itoa(filter.Pagination.PerPage)
+
+	return params
+}
+
+// fieldingStatsFilterToParams converts FieldingStatsFilter to cache param map
+func fieldingStatsFilterToParams(filter core.FieldingStatsFilter) map[string]string {
+	params := make(map[string]string)
+
+	if filter.PlayerID != nil {
+		params["player_id"] = string(*filter.PlayerID)
+	}
+	if filter.TeamID != nil {
+		params["team_id"] = string(*filter.TeamID)
+	}
+	if filter.Season != nil {
+		params["season"] = strconv.Itoa(int(*filter.Season))
+	}
+	if filter.SeasonFrom != nil {
+		params["season_from"] = strconv.Itoa(int(*filter.SeasonFrom))
+	}
+	if filter.SeasonTo != nil {
+		params["season_to"] = strconv.Itoa(int(*filter.SeasonTo))
+	}
+	if filter.League != nil {
+		params["league"] = string(*filter.League)
+	}
+	if filter.Position != nil {
+		params["position"] = *filter.Position
+	}
+	if filter.MinG != nil {
+		params["min_g"] = strconv.Itoa(*filter.MinG)
+	}
+	if filter.SortBy != "" {
+		params["sort_by"] = filter.SortBy
+	}
+	params["sort_order"] = string(filter.SortOrder)
+	params["page"] = strconv.Itoa(filter.Pagination.Page)
+	params["per_page"] = strconv.Itoa(filter.Pagination.PerPage)
+
+	return params
 }

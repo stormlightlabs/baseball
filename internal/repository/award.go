@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"strconv"
 	"time"
 
+	"stormlightlabs.org/baseball/internal/cache"
 	"stormlightlabs.org/baseball/internal/core"
 )
 
@@ -20,11 +22,15 @@ var allstarGamesListQuery string
 var allstarGameGetQuery string
 
 type AwardRepository struct {
-	db *sql.DB
+	db    *sql.DB
+	cache *cache.CachedRepository
 }
 
-func NewAwardRepository(db *sql.DB) *AwardRepository {
-	return &AwardRepository{db: db}
+func NewAwardRepository(db *sql.DB, cacheClient *cache.Client) *AwardRepository {
+	return &AwardRepository{
+		db:    db,
+		cache: cache.NewCachedRepository(cacheClient, "award"),
+	}
 }
 
 func (r *AwardRepository) ListAwards(ctx context.Context) ([]core.Award, error) {
@@ -96,6 +102,12 @@ func (r *AwardRepository) ListAwards(ctx context.Context) ([]core.Award, error) 
 }
 
 func (r *AwardRepository) ListAwardResults(ctx context.Context, filter core.AwardFilter) ([]core.AwardResult, error) {
+	params := awardFilterToParams(filter)
+	var cached []core.AwardResult
+	if r.cache.List.Get(ctx, params, &cached) {
+		return cached, nil
+	}
+
 	query := awardResultsListQuery
 
 	args := []any{}
@@ -170,6 +182,7 @@ func (r *AwardRepository) ListAwardResults(ctx context.Context, filter core.Awar
 		results = append(results, ar)
 	}
 
+	_ = r.cache.List.Set(ctx, params, results)
 	return results, nil
 }
 
@@ -207,6 +220,11 @@ func (r *AwardRepository) CountAwardResults(ctx context.Context, filter core.Awa
 }
 
 func (r *AwardRepository) HallOfFameByPlayer(ctx context.Context, id core.PlayerID) ([]core.HallOfFameRecord, error) {
+	var cached []core.HallOfFameRecord
+	if r.cache.Entity.Get(ctx, string(id)+":hof", &cached) {
+		return cached, nil
+	}
+
 	query := `
 		SELECT
 			"playerID", "yearid", "votedBy", "ballots", "needed", "votes", "inducted"
@@ -257,6 +275,7 @@ func (r *AwardRepository) HallOfFameByPlayer(ctx context.Context, id core.Player
 		records = append(records, hof)
 	}
 
+	_ = r.cache.Entity.Set(ctx, string(id)+":hof", records)
 	return records, nil
 }
 
@@ -349,6 +368,11 @@ func (r *AwardRepository) ListAllStarGames(ctx context.Context, year *core.Seaso
 
 // GetAllStarGame returns details for a specific all-star game.
 func (r *AwardRepository) GetAllStarGame(ctx context.Context, gameID string) (*core.AllStarGame, error) {
+	var cached core.AllStarGame
+	if r.cache.Entity.Get(ctx, gameID, &cached) {
+		return &cached, nil
+	}
+
 	query := allstarGameGetQuery
 
 	var game core.AllStarGame
@@ -470,6 +494,7 @@ func (r *AwardRepository) GetAllStarGame(ctx context.Context, gameID string) (*c
 	}
 
 	game.Participants = participants
+	_ = r.cache.Entity.Set(ctx, gameID, &game)
 	return &game, nil
 }
 
@@ -549,4 +574,26 @@ func attachRetrosheetDataToAllStarGame(
 	game.RetrosheetGame = &retro
 
 	return nil
+}
+
+// awardFilterToParams converts AwardFilter to cache param map
+func awardFilterToParams(filter core.AwardFilter) map[string]string {
+	params := make(map[string]string)
+
+	if filter.PlayerID != nil {
+		params["player_id"] = string(*filter.PlayerID)
+	}
+	if filter.AwardID != nil {
+		params["award_id"] = string(*filter.AwardID)
+	}
+	if filter.Year != nil {
+		params["year"] = strconv.Itoa(int(*filter.Year))
+	}
+	if filter.League != nil {
+		params["league"] = string(*filter.League)
+	}
+	params["page"] = strconv.Itoa(filter.Pagination.Page)
+	params["per_page"] = strconv.Itoa(filter.Pagination.PerPage)
+
+	return params
 }
