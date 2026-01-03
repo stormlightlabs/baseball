@@ -2,43 +2,43 @@
 
 ## API Roadmap
 
-### 0. Meta / Utility ✓
+### 0. Meta / Utility ✓ (Completed: 2025-12-12)
 
 See [Meta & Utility Overview](./api-meta-utility.md) for summary tables and expanded details.
 
-### 1. Players (People & Careers) - **(L)** with optional **(R)** joins ✓
+### 1. Players (People & Careers) - **(L)** with optional **(R)** joins ✓ (Completed: 2025-12-12)
 
 See [Players Overview](./api-players.md) for the combined Lahman and Retrosheet endpoint tables and call notes.
 
-### 2. Teams, Franchises & Seasons - **(L)** + **(R)** ✓
+### 2. Teams, Franchises & Seasons - **(L)** + **(R)** ✓ (Completed: 2025-12-12)
 
 See [Teams, Franchises & Seasons Overview](./api-teams.md) for tables covering references, splits, and Retrosheet logs.
 
-### 3. Games & Schedules - **(R)** ✓
+### 3. Games & Schedules - **(R)** ✓ (Completed: 2025-12-12)
 
 See [Games & Schedules Overview](./api-games.md) for the endpoint summary and usage notes.
 
-### 4. Play-by-Play Events & Context - **(R)** ✓
+### 4. Play-by-Play Events & Context - **(R)** ✓ (Completed: 2025-12-12)
 
 See [Play-by-Play Events Overview](./api-play-by-play.md) for tables and deeper coverage of filters.
 
-### 5. Parks, Umpires, Managers & Other Entities - **(L+R)** ✓
+### 5. Parks, Umpires, Managers & Other Entities - **(L+R)** ✓ (Completed: 2025-12-12)
 
 See [Parks, Umpires, Managers & Entity Overview](./api-parks-umpires-managers.md) for reference tables.
 
-### 6. Stats & Leaderboards - **(L)** (with optional **(R)** joins) ✓
+### 6. Stats & Leaderboards - **(L)** (with optional **(R)** joins) ✓ (Completed: 2025-12-12)
 
 See [Stats & Leaderboards Overview](./api-stats.md) for the combined stats, leader, and team-level tables.
 
-### 7. Awards, All-Star Games, Postseason - **(L)** ✓
+### 7. Awards, All-Star Games, Postseason - **(L)** ✓ (Completed: 2025-12-12)
 
 See [Awards, All-Star & Postseason Overview](./api-awards-postseason.md) for the completed endpoint matrix.
 
-### 8. Search & Lookup Utilities - **(L+R)** ✓
+### 8. Search & Lookup Utilities - **(L+R)** ✓ (Completed: 2025-12-12)
 
 See [Search & Lookup Overview](./api-search.md) for the fuzzy lookup endpoint details.
 
-### 9. Derived & Advanced Endpoints ✓
+### 9. Derived & Advanced Endpoints ✓ (Completed: 2025-12-12)
 
 See [Derived & Advanced Endpoints Overview](./api-derived-advanced.md) for the analytics-heavy APIs and implementation details.
 
@@ -51,7 +51,7 @@ See [Derived & Advanced Endpoints Overview](./api-derived-advanced.md) for the a
 | Done        | Cache + rate limiting layer for public deployments.                                          |
 | Done        | Performance testing and observability hooks before GA release.                               |
 
-### 11. Data Coverage Expansion - **(R)** ✓
+### 11. Data Coverage Expansion - **(R)** ✓ (Completed: 2025-12-15)
 
 See the dedicated Data Coverage docs for the newly completed endpoints:
 
@@ -60,7 +60,7 @@ See the dedicated Data Coverage docs for the newly completed endpoints:
 - [League-specific Coverage](./api-league-coverage.md)
 - [Achievements & Event Feeds](./api-achievements.md)
 
-### 12. Optimizations ✓
+### 12. Optimizations ✓ (Completed: 2025-12-16)
 
 - Era-based partitioning (61 partitions)
     - Partitioned by year:
