@@ -8,6 +8,8 @@
   --accent: #f5f5f5;
   --danger: #ff4d4d;
   --success: #3ddc91;
+  --font-sans: "Google Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "Google Sans Code","JetBrains Mono", monospace;
 }
 
 *,
@@ -17,11 +19,13 @@
 }
 
 body {
-  font-family: "Space Grotesk", "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   background-color: var(--panel);
   color: var(--text);
   margin: 0;
   min-height: 100vh;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
   display: flex;
   flex-direction: column;
 }
@@ -235,7 +239,7 @@ textarea:focus {
 
 code,
 pre {
-  font-family: "JetBrains Mono", "Space Grotesk", monospace;
+  font-family: var(--font-mono);
   font-size: 0.85rem;
 }
 

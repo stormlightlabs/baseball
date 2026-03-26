@@ -1,21 +1,4 @@
-version: "3.9"
-
 services:
-  caddy:
-    image: caddy:2.9-alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./conf/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - app
-    restart: unless-stopped
-    networks:
-      - baseball-net
-
   app:
     build:
       context: ..
@@ -27,15 +10,12 @@ services:
       redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/baseball_dev?sslmode=disable
-      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
     expose:
       - "8080"
     command: ["server", "start"]
     restart: unless-stopped
-    networks:
-      - baseball-net
-    # NOTE: For production scaling, use docker-compose --scale app=3
     deploy:
       replicas: 1
       restart_policy:
@@ -46,33 +26,26 @@ services:
   postgres:
     image: postgres:17.5
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: baseball_dev
-      POSTGRES_SHARED_BUFFERS: 256MB
-      POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
-      POSTGRES_WORK_MEM: 16MB
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-baseball}
+      POSTGRES_SHARED_BUFFERS: 512MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 2GB
+      POSTGRES_WORK_MEM: 32MB
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # Expose for migrations/admin access
-    # TODO: consider removing in production
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    networks:
-      - baseball-net
 
   redis:
     image: redis:7.4
     command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
     volumes:
       - redis_data:/data
-    # Internal port only
     expose:
       - "6379"
     healthcheck:
@@ -81,19 +54,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    networks:
-      - baseball-net
 
 volumes:
   postgres_data:
-    driver: local
   redis_data:
-    driver: local
-  caddy_data:
-    driver: local
-  caddy_config:
-    driver: local
-
-networks:
-  baseball-net:
-    driver: bridge
