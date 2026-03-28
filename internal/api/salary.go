@@ -20,14 +20,15 @@ func (sr *SalaryRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleListSalarySummary godoc
-// @Summary List all salary summaries
-// @Description Get salary aggregates (total, average, median) for all years
-// @Tags salaries
-// @Accept json
-// @Produce json
-// @Success 200 {object} SalarySummaryResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /salaries/summary [get]
+//
+//	@Summary		List all salary summaries
+//	@Description	Get salary aggregates (total, average, median) for all years
+//	@Tags			salaries
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	SalarySummaryResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/salaries/summary [get]
 func (sr *SalaryRoutes) handleListSalarySummary(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	summaries, err := sr.repo.List(ctx)
@@ -40,16 +41,17 @@ func (sr *SalaryRoutes) handleListSalarySummary(w http.ResponseWriter, r *http.R
 }
 
 // handleGetSalarySummary godoc
-// @Summary Get salary summary for a specific year
-// @Description Get salary aggregates (total, average, median) for a specific season
-// @Tags salaries
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Success 200 {object} core.SalarySummary
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /salaries/summary/{year} [get]
+//
+//	@Summary		Get salary summary for a specific year
+//	@Description	Get salary aggregates (total, average, median) for a specific season
+//	@Tags			salaries
+//	@Accept			json
+//	@Produce		json
+//	@Param			year	path		integer	true	"Season year"
+//	@Success		200		{object}	core.SalarySummary
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/salaries/summary/{year} [get]
 func (sr *SalaryRoutes) handleGetSalarySummary(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))

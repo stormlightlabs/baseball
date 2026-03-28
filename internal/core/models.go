@@ -9,47 +9,58 @@ import (
 )
 
 // SeasonYear represents a baseball season year
-// @Description A baseball season year
+//
+//	@Description	A baseball season year
 type SeasonYear int
 
 // PlayerID is the Lahman player ID (e.g., "troutmi01")
-// @Description Lahman player identifier
+//
+//	@Description	Lahman player identifier
 type PlayerID string
 
 // RetroPlayerID is the Retrosheet player ID
-// @Description Retrosheet player identifier
+//
+//	@Description	Retrosheet player identifier
 type RetroPlayerID string
 
 // TeamID is the Lahman team ID (e.g., "LAA")
-// @Description Lahman team identifier
+//
+//	@Description	Lahman team identifier
 type TeamID string
 
 // FranchiseID is the Lahman franchise ID (e.g., "ANA")
-// @Description Lahman franchise identifier
+//
+//	@Description	Lahman franchise identifier
 type FranchiseID string
 
 // GameID is the Retrosheet game ID (e.g., "ANA201304010")
-// @Description Retrosheet game identifier
+//
+//	@Description	Retrosheet game identifier
 type GameID string
 
 // ParkID is the Retrosheet/Lahman park code
-// @Description Park identifier
+//
+//	@Description	Park identifier
 type ParkID string
 
 // ManagerID is the manager ID in Lahman/Retrosheet
-// @Description Manager identifier
+//
+//	@Description	Manager identifier
 type ManagerID string
 
 // UmpireID is the Retrosheet umpire ID
-// @Description Umpire identifier
+//
+//	@Description	Umpire identifier
 type UmpireID string
 
 // AwardID is the Lahman award ID
-// @Description Award identifier
+//
+//	@Description	Award identifier
 type AwardID string
 
 // LeagueID is the league identifier (e.g., "AL", "NL")
-// @Description League identifier (AL, NL, etc.)
+//
+//	@Description	League identifier (AL, NL, etc.)
 type LeagueID string
 
 // Player is a person row + a few commonly needed derived fields.
@@ -529,14 +540,14 @@ type Park struct {
 // Manager represents a person who has managed in baseball.
 // Includes extended biographical data from Retrosheet when available.
 type Manager struct {
-	ID          ManagerID  `json:"id"`
-	PlayerID    *PlayerID  `json:"player_id,omitempty"`
-	FirstName   string     `json:"first_name"`
-	LastName    string     `json:"last_name"`
-	DebutGame   *time.Time `json:"debut_game,omitempty"`
-	LastGame    *time.Time `json:"last_game,omitempty"`
-	UseName     *string    `json:"use_name,omitempty"`
-	FullName    *string    `json:"full_name,omitempty"`
+	ID        ManagerID  `json:"id"`
+	PlayerID  *PlayerID  `json:"player_id,omitempty"`
+	FirstName string     `json:"first_name"`
+	LastName  string     `json:"last_name"`
+	DebutGame *time.Time `json:"debut_game,omitempty"`
+	LastGame  *time.Time `json:"last_game,omitempty"`
+	UseName   *string    `json:"use_name,omitempty"`
+	FullName  *string    `json:"full_name,omitempty"`
 }
 
 // ManagerSeasonRecord is a season-level line for a manager.
@@ -552,11 +563,11 @@ type ManagerSeasonRecord struct {
 
 // Umpire biographical information from Retrosheet biodata.
 type Umpire struct {
-	ID        UmpireID    `json:"id"`
-	FirstName *string     `json:"first_name,omitempty"`
-	LastName  string      `json:"last_name"`
-	FirstGame *time.Time  `json:"first_game,omitempty"`
-	LastGame  *time.Time  `json:"last_game,omitempty"`
+	ID        UmpireID   `json:"id"`
+	FirstName *string    `json:"first_name,omitempty"`
+	LastName  string     `json:"last_name"`
+	FirstGame *time.Time `json:"first_game,omitempty"`
+	LastGame  *time.Time `json:"last_game,omitempty"`
 }
 
 // Coach represents a person who has coached in baseball.
@@ -649,11 +660,23 @@ type DatasetStatus struct {
 	ID           string           `json:"id"`
 	Name         string           `json:"name"`
 	Source       string           `json:"source"`
+	Required     bool             `json:"required"`
+	Healthy      bool             `json:"healthy"`
 	CoverageFrom *SeasonYear      `json:"coverage_from,omitempty"`
 	CoverageTo   *SeasonYear      `json:"coverage_to,omitempty"`
 	LastLoadedAt *time.Time       `json:"last_loaded_at,omitempty"`
 	RowCount     int64            `json:"row_count"`
 	Tables       map[string]int64 `json:"tables,omitempty"`
+}
+
+// ReadinessStatus summarizes whether the required datasets are loaded for the
+// core API surface.
+type ReadinessStatus struct {
+	Status    string          `json:"status"`
+	Ready     bool            `json:"ready"`
+	CheckedAt time.Time       `json:"checked_at"`
+	Datasets  []DatasetStatus `json:"datasets"`
+	Missing   []string        `json:"missing,omitempty"`
 }
 
 // Season represents summary information about a season

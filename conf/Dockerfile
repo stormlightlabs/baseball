@@ -19,6 +19,7 @@ RUN adduser --disabled-password --gecos "" app && \
 
 WORKDIR /home/app
 COPY --from=build /baseball /usr/local/bin/baseball
+COPY --from=build --chown=app:app /app/data /home/app/data
 
 USER app
 EXPOSE 8080

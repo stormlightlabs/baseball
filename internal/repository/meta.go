@@ -66,75 +66,219 @@ func (r *MetaRepository) DatasetStatuses(ctx context.Context) ([]core.DatasetSta
 		return nil, err
 	}
 
+	return r.buildDatasetStatuses(ctx, refreshes)
+}
+
+func (r *MetaRepository) Readiness(ctx context.Context) (core.ReadinessStatus, error) {
+	refreshes, err := r.loadRefreshes(ctx)
+	if err != nil {
+		return core.ReadinessStatus{}, err
+	}
+
+	statuses, err := r.buildDatasetStatuses(ctx, refreshes)
+	if err != nil {
+		return core.ReadinessStatus{}, err
+	}
+
+	required := make([]core.DatasetStatus, 0, len(statuses))
+	missing := make([]string, 0)
+	ready := true
+
+	for _, status := range statuses {
+		if !status.Required {
+			continue
+		}
+		required = append(required, status)
+		if !status.Healthy {
+			ready = false
+			missing = append(missing, status.ID)
+		}
+	}
+
+	state := "ready"
+	if !ready {
+		state = "degraded"
+	}
+
+	return core.ReadinessStatus{
+		Status:    state,
+		Ready:     ready,
+		CheckedAt: time.Now().UTC(),
+		Datasets:  required,
+		Missing:   missing,
+	}, nil
+}
+
+func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map[string]refreshRecord) ([]core.DatasetStatus, error) {
 	minLahman, maxLahman, minRetro, maxRetro, err := r.SeasonCoverage(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	lahmanTables := map[string]int64{
-		"people":      r.safeCount(ctx, `SELECT COUNT(*) FROM "People"`),
-		"teams":       r.safeCount(ctx, `SELECT COUNT(*) FROM "Teams"`),
-		"batting":     r.safeCount(ctx, `SELECT COUNT(*) FROM "Batting"`),
-		"pitching":    r.safeCount(ctx, `SELECT COUNT(*) FROM "Pitching"`),
-		"appearances": r.safeCount(ctx, `SELECT COUNT(*) FROM "Appearances"`),
-		"salaries":    r.safeCount(ctx, `SELECT COUNT(*) FROM "Salaries"`),
+	return []core.DatasetStatus{
+		r.datasetStatus(
+			"lahman",
+			"Lahman Baseball Database",
+			"https://sabr.org/lahman-database/",
+			true,
+			map[string]int64{
+				"people":      r.safeCount(ctx, `SELECT COUNT(*) FROM "People"`),
+				"teams":       r.safeCount(ctx, `SELECT COUNT(*) FROM "Teams"`),
+				"batting":     r.safeCount(ctx, `SELECT COUNT(*) FROM "Batting"`),
+				"pitching":    r.safeCount(ctx, `SELECT COUNT(*) FROM "Pitching"`),
+				"appearances": r.safeCount(ctx, `SELECT COUNT(*) FROM "Appearances"`),
+				"salaries":    r.safeCount(ctx, `SELECT COUNT(*) FROM "Salaries"`),
+			},
+			seasonPtr(minLahman),
+			seasonPtr(maxLahman),
+			refreshes,
+			[]string{"lahman"},
+		),
+		r.datasetStatus(
+			"retrosheet",
+			"Retrosheet Game Logs & Plays",
+			"https://www.retrosheet.org/",
+			true,
+			map[string]int64{
+				"games": r.safeCount(ctx, `SELECT COUNT(*) FROM games`),
+				"plays": r.safeCount(ctx, `SELECT COUNT(*) FROM plays`),
+			},
+			seasonPtr(minRetro),
+			seasonPtr(maxRetro),
+			refreshes,
+			[]string{"retrosheet_games", "retrosheet_plays"},
+		),
+		r.datasetStatus(
+			"fangraphs_constants",
+			"FanGraphs constants",
+			"https://www.fangraphs.com/tools/guts",
+			true,
+			map[string]int64{
+				"woba_constants":   r.safeCount(ctx, `SELECT COUNT(*) FROM woba_constants`),
+				"league_constants": r.safeCount(ctx, `SELECT COUNT(*) FROM league_constants`),
+				"park_factors":     r.safeCount(ctx, `SELECT COUNT(*) FROM park_factors`),
+			},
+			nil,
+			nil,
+			refreshes,
+			[]string{"fangraphs_constants"},
+		),
+		r.datasetStatus(
+			"retrosheet_players",
+			"Retrosheet player crosswalk",
+			"https://www.retrosheet.org/downloads/csvdownloads.html",
+			false,
+			map[string]int64{
+				"retrosheet_players": r.safeCount(ctx, `SELECT COUNT(*) FROM retrosheet_players`),
+			},
+			nil,
+			nil,
+			refreshes,
+			[]string{"retrosheet_players"},
+		),
+		r.datasetStatus(
+			"biodata",
+			"Retrosheet biodata",
+			"https://www.retrosheet.org/downloads/csvdownloads.html",
+			false,
+			map[string]int64{
+				"player_bio_extended": r.safeCount(ctx, `SELECT COUNT(*) FROM player_bio_extended`),
+				"player_relatives":    r.safeCount(ctx, `SELECT COUNT(*) FROM player_relatives`),
+				"coaches":             r.safeCount(ctx, `SELECT COUNT(*) FROM coaches`),
+				"umpires":             r.safeCount(ctx, `SELECT COUNT(*) FROM umpires`),
+			},
+			nil,
+			nil,
+			refreshes,
+			[]string{"biodata"},
+		),
+		r.datasetStatus(
+			"salary_summary",
+			"Salary summary",
+			"https://github.com/stormlightlabs/baseball",
+			false,
+			map[string]int64{
+				"salary_summary": r.safeCount(ctx, `SELECT COUNT(*) FROM salary_summary`),
+			},
+			nil,
+			nil,
+			refreshes,
+			[]string{"salaries"},
+		),
+	}, nil
+}
+
+func (r *MetaRepository) datasetStatus(id, name, source string, required bool, tables map[string]int64, coverageFrom, coverageTo *core.SeasonYear, refreshes map[string]refreshRecord, refreshKeys []string) core.DatasetStatus {
+	rowCount := sumCounts(tables)
+	if recorded := sumRefreshRows(refreshes, refreshKeys); recorded > 0 {
+		rowCount = recorded
 	}
 
-	var lahmanRowFallback int64
-	for _, count := range lahmanTables {
-		lahmanRowFallback += count
+	status := core.DatasetStatus{
+		ID:           id,
+		Name:         name,
+		Source:       source,
+		Required:     required,
+		Healthy:      datasetHealthy(id, tables),
+		CoverageFrom: coverageFrom,
+		CoverageTo:   coverageTo,
+		RowCount:     rowCount,
+		Tables:       tables,
 	}
 
-	lahmanStatus := core.DatasetStatus{
-		ID:           "lahman",
-		Name:         "Lahman Baseball Database",
-		Source:       "https://sabr.org/lahman-database/",
-		CoverageFrom: seasonPtr(minLahman),
-		CoverageTo:   seasonPtr(maxLahman),
-		RowCount:     lahmanRowFallback,
-		Tables:       lahmanTables,
+	if loaded := latestRefresh(refreshes, refreshKeys); !loaded.IsZero() {
+		ts := loaded
+		status.LastLoadedAt = &ts
 	}
-	if entry, ok := refreshes["lahman"]; ok {
-		if !entry.lastLoaded.IsZero() {
-			ts := entry.lastLoaded
-			lahmanStatus.LastLoadedAt = &ts
+
+	return status
+}
+
+func datasetHealthy(id string, tables map[string]int64) bool {
+	switch id {
+	case "lahman":
+		return tables["people"] > 0 && tables["teams"] > 0 && tables["batting"] > 0 && tables["pitching"] > 0
+	case "retrosheet":
+		return tables["games"] > 0 && tables["plays"] > 0
+	case "fangraphs_constants":
+		return tables["woba_constants"] > 0 && tables["league_constants"] > 0 && tables["park_factors"] > 0
+	case "retrosheet_players":
+		return tables["retrosheet_players"] > 0
+	case "biodata":
+		return tables["player_bio_extended"] > 0 || tables["player_relatives"] > 0 || tables["coaches"] > 0 || tables["umpires"] > 0
+	case "salary_summary":
+		return tables["salary_summary"] > 0
+	default:
+		return sumCounts(tables) > 0
+	}
+}
+
+func sumCounts(values map[string]int64) int64 {
+	var total int64
+	for _, count := range values {
+		total += count
+	}
+	return total
+}
+
+func latestRefresh(refreshes map[string]refreshRecord, keys []string) time.Time {
+	var latest time.Time
+	for _, key := range keys {
+		if entry, ok := refreshes[key]; ok && entry.lastLoaded.After(latest) {
+			latest = entry.lastLoaded
 		}
-		if entry.rowCount > 0 {
-			lahmanStatus.RowCount = entry.rowCount
-		}
 	}
+	return latest
+}
 
-	retroTables := map[string]int64{
-		"games": r.safeCount(ctx, `SELECT COUNT(*) FROM games`),
-		"plays": r.safeCount(ctx, `SELECT COUNT(*) FROM plays`),
-	}
-
-	retroRowFallback := retroTables["games"] + retroTables["plays"]
-	retroStatus := core.DatasetStatus{
-		ID:           "retrosheet",
-		Name:         "Retrosheet Game Logs & Plays",
-		Source:       "https://www.retrosheet.org/",
-		CoverageFrom: seasonPtr(minRetro),
-		CoverageTo:   seasonPtr(maxRetro),
-		RowCount:     retroRowFallback,
-		Tables:       retroTables,
-	}
-
-	var retroRecordedRows int64
-	for _, key := range []string{"retrosheet_games", "retrosheet_plays"} {
+func sumRefreshRows(refreshes map[string]refreshRecord, keys []string) int64 {
+	var total int64
+	for _, key := range keys {
 		if entry, ok := refreshes[key]; ok {
-			retroRecordedRows += entry.rowCount
-			if retroStatus.LastLoadedAt == nil || entry.lastLoaded.After(*retroStatus.LastLoadedAt) {
-				ts := entry.lastLoaded
-				retroStatus.LastLoadedAt = &ts
-			}
+			total += entry.rowCount
 		}
 	}
-	if retroRecordedRows > 0 {
-		retroStatus.RowCount = retroRecordedRows
-	}
-
-	return []core.DatasetStatus{lahmanStatus, retroStatus}, nil
+	return total
 }
 
 func (r *MetaRepository) SchemaHashes(ctx context.Context) (map[string]string, error) {

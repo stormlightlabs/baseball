@@ -56,6 +56,15 @@ definitions:
       total:
         type: integer
     type: object
+  api.CoachSeasonsResponse:
+    properties:
+      coach_id:
+        type: string
+      seasons:
+        items:
+          $ref: '#/definitions/core.CoachSeasonRecord'
+        type: array
+    type: object
   api.ErrorResponse:
     properties:
       error:
@@ -431,18 +440,50 @@ definitions:
       home_team:
         type: string
     type: object
+  core.Coach:
+    properties:
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      retro_id:
+        type: string
+    type: object
+  core.CoachSeasonRecord:
+    properties:
+      first_game:
+        type: string
+      last_game:
+        type: string
+      player_id:
+        type: string
+      retro_id:
+        type: string
+      role:
+        type: string
+      team_id:
+        type: string
+      year:
+        type: integer
+    type: object
   core.DatasetStatus:
     properties:
       coverage_from:
         type: integer
       coverage_to:
         type: integer
+      healthy:
+        type: boolean
       id:
         type: string
       last_loaded_at:
         type: string
       name:
         type: string
+      required:
+        type: boolean
       row_count:
         type: integer
       source:
@@ -1177,13 +1218,21 @@ definitions:
     type: object
   core.Manager:
     properties:
+      debut_game:
+        type: string
       first_name:
         type: string
+      full_name:
+        type: string
       id:
+        type: string
+      last_game:
         type: string
       last_name:
         type: string
       player_id:
+        type: string
+      use_name:
         type: string
     type: object
   core.ManagerSeasonRecord:
@@ -1731,6 +1780,23 @@ definitions:
       year:
         type: integer
     type: object
+  core.PlayerRelative:
+    properties:
+      related_debut_year:
+        type: integer
+      related_final_year:
+        type: integer
+      related_first_name:
+        type: string
+      related_last_name:
+        type: string
+      related_player_id:
+        type: string
+      related_retro_id:
+        type: string
+      relation_type:
+        type: string
+    type: object
   core.PlayerSalary:
     properties:
       league:
@@ -1809,6 +1875,23 @@ definitions:
         type: integer
       year:
         type: integer
+    type: object
+  core.ReadinessStatus:
+    properties:
+      checked_at:
+        type: string
+      datasets:
+        items:
+          $ref: '#/definitions/core.DatasetStatus'
+        type: array
+      missing:
+        items:
+          type: string
+        type: array
+      ready:
+        type: boolean
+      status:
+        type: string
     type: object
   core.RosterPlayer:
     properties:
@@ -2399,9 +2482,13 @@ definitions:
     type: object
   core.Umpire:
     properties:
+      first_game:
+        type: string
       first_name:
         type: string
       id:
+        type: string
+      last_game:
         type: string
       last_name:
         type: string
@@ -2958,6 +3045,100 @@ paths:
       summary: Get award details
       tags:
       - awards
+  /coaches:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of all coaches
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: List coaches
+      tags:
+      - coaches
+  /coaches/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 'Get detailed information about a specific coach. Note: A person
+        who later became a manager will appear in both the coaches and managers endpoints.'
+      parameters:
+      - description: Coach ID (playerID)
+        example: roberda07
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.Coach'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get coach by ID
+      tags:
+      - coaches
+  /coaches/{id}/seasons:
+    get:
+      consumes:
+      - application/json
+      description: 'Get all season coaching records for a specific coach including
+        team, role, and dates. Note: This endpoint returns only coaching seasons,
+        not managerial seasons. For managerial records, use the /managers/{id}/seasons
+        endpoint.'
+      parameters:
+      - description: Coach ID (playerID)
+        example: roberda07
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.CoachSeasonsResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get coach season records
+      tags:
+      - coaches
   /ejections:
     get:
       consumes:
@@ -3805,9 +3986,11 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get detailed information about a specific manager
+      description: Get detailed information about a specific manager including extended
+        biodata from Retrosheet (debut/last game, full name, use name)
       parameters:
       - description: Manager ID (playerID)
+        example: roberda07
         in: path
         name: manager_id
         required: true
@@ -3834,9 +4017,11 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get all season records for a specific manager
+      description: Get all season records for a specific manager including wins, losses,
+        and team rank
       parameters:
       - description: Manager ID (playerID)
+        example: roberda07
         in: path
         name: manager_id
         required: true
@@ -3985,6 +4170,27 @@ paths:
       summary: Dataset status
       tags:
       - meta
+  /meta/readiness:
+    get:
+      consumes:
+      - application/json
+      description: Returns whether the required datasets are loaded for the core API
+        routes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.ReadinessStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Dataset readiness
+      tags:
+      - meta
+      - health
   /mlb:
     get:
       description: Lists available MLB Stats API proxy routes surfaced under /v1/mlb.
@@ -4614,9 +4820,12 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get detailed information about a specific ballpark
+      description: 'Get detailed information about a specific ballpark. Examples:
+        LOS03 (Dodger Stadium), NWK04 (Ruppert Stadium - Negro Leagues), SAC01 (Sutter
+        Health Park - A''s 2025 temporary home)'
       parameters:
       - description: Park ID (park key)
+        example: LOS03
         in: path
         name: park_id
         required: true
@@ -4724,14 +4933,19 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get all games played at a specific ballpark
+      description: 'Get all games played at a specific ballpark. Returns games with
+        full details including scores, attendance, and umpires. Examples: LOS03 (Dodger
+        Stadium - 323 games 2022-2025), NWK04 (Ruppert Stadium - 324 Negro Leagues
+        games 1936-1949)'
       parameters:
       - description: Park ID (park key)
+        example: LOS03
         in: path
         name: park_id
         required: true
         type: string
       - description: Filter by season year
+        example: 2024
         in: query
         name: season
         type: integer
@@ -5323,6 +5537,39 @@ paths:
       summary: Get plays for a player
       tags:
       - plays
+      - players
+  /players/{id}/relatives:
+    get:
+      consumes:
+      - application/json
+      description: 'Return family relationships for a player from Retrosheet biodata.
+        Includes brothers, fathers, sons, uncles, cousins, and other family relationships.
+        Returns empty array if player has no recorded relatives or no retrosheet ID.
+        Examples: aaronha01 (Hank Aaron - brother Tommie), alomaro01 (Roberto Alomar
+        - brother Sandy Jr, father Sandy Sr), ripkeca01 (Cal Ripken Jr - brother Billy,
+        father Cal Sr)'
+      parameters:
+      - description: Player ID
+        example: aaronha01
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.PlayerRelative'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get player's family relatives
+      tags:
       - players
   /players/{id}/salaries:
     get:
@@ -5925,6 +6172,31 @@ paths:
       summary: List plays
       tags:
       - plays
+  /ready:
+    get:
+      consumes:
+      - application/json
+      description: Returns HTTP 200 when required datasets are loaded, or 503 when
+        the API is live but not fully ready
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.ReadinessStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/core.ReadinessStatus'
+      summary: Readiness check
+      tags:
+      - health
+      - meta
   /salaries/summary:
     get:
       consumes:
@@ -7578,9 +7850,11 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get detailed information about a specific umpire
+      description: Get detailed information about a specific umpire including career
+        dates from Retrosheet biodata
       parameters:
-      - description: Umpire ID
+      - description: Umpire ID (Retrosheet ID)
+        example: westj901
         in: path
         name: umpire_id
         required: true
@@ -7609,12 +7883,14 @@ paths:
       - application/json
       description: Get all games where the umpire officiated in any position
       parameters:
-      - description: Umpire ID
+      - description: Umpire ID (Retrosheet ID)
+        example: westj901
         in: path
         name: umpire_id
         required: true
         type: string
       - description: Filter by season year
+        example: 2020
         in: query
         name: season
         type: integer
@@ -7833,6 +8109,8 @@ tags:
   name: managers
 - description: MLB umpire data
   name: umpires
+- description: MLB coach data
+  name: coaches
 - description: MLB season data
   name: seasons
 - description: MLB postseason data

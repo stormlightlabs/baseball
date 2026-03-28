@@ -21,16 +21,17 @@ func (mr *ManagerRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleListManagers godoc
-// @Summary List managers
-// @Description Get a paginated list of all managers
-// @Tags managers
-// @Accept json
-// @Produce json
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /managers [get]
+//
+//	@Summary		List managers
+//	@Description	Get a paginated list of all managers
+//	@Tags			managers
+//	@Accept			json
+//	@Produce		json
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/managers [get]
 func (mr *ManagerRoutes) handleListManagers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -56,16 +57,17 @@ func (mr *ManagerRoutes) handleListManagers(w http.ResponseWriter, r *http.Reque
 }
 
 // handleGetManager godoc
-// @Summary Get manager by ID
-// @Description Get detailed information about a specific manager including extended biodata from Retrosheet (debut/last game, full name, use name)
-// @Tags managers
-// @Accept json
-// @Produce json
-// @Param manager_id path string true "Manager ID (playerID)" example(roberda07)
-// @Success 200 {object} core.Manager
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /managers/{manager_id} [get]
+//
+//	@Summary		Get manager by ID
+//	@Description	Get detailed information about a specific manager including extended biodata from Retrosheet (debut/last game, full name, use name)
+//	@Tags			managers
+//	@Accept			json
+//	@Produce		json
+//	@Param			manager_id	path		string	true	"Manager ID (playerID)"	example(roberda07)
+//	@Success		200			{object}	core.Manager
+//	@Failure		404			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/managers/{manager_id} [get]
 func (mr *ManagerRoutes) handleGetManager(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	managerID := core.ManagerID(r.PathValue("manager_id"))
@@ -80,16 +82,17 @@ func (mr *ManagerRoutes) handleGetManager(w http.ResponseWriter, r *http.Request
 }
 
 // handleManagerSeasons godoc
-// @Summary Get manager season records
-// @Description Get all season records for a specific manager including wins, losses, and team rank
-// @Tags managers
-// @Accept json
-// @Produce json
-// @Param manager_id path string true "Manager ID (playerID)" example(roberda07)
-// @Success 200 {object} ManagerSeasonsResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /managers/{manager_id}/seasons [get]
+//
+//	@Summary		Get manager season records
+//	@Description	Get all season records for a specific manager including wins, losses, and team rank
+//	@Tags			managers
+//	@Accept			json
+//	@Produce		json
+//	@Param			manager_id	path		string	true	"Manager ID (playerID)"	example(roberda07)
+//	@Success		200			{object}	ManagerSeasonsResponse
+//	@Failure		404			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/managers/{manager_id}/seasons [get]
 func (mr *ManagerRoutes) handleManagerSeasons(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	managerID := core.ManagerID(r.PathValue("manager_id"))

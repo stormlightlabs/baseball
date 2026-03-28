@@ -31,19 +31,20 @@ func (dr *DerivedRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handlePlayerStreaks godoc
-// @Summary Get player streaks
-// @Description Get hitting or scoreless innings streaks for a player
-// @Tags derived, players
-// @Accept json
-// @Produce json
-// @Param player_id path string true "Player ID"
-// @Param kind query string true "Streak kind: hitting or scoreless_innings"
-// @Param season query integer true "Season year"
-// @Param min_length query integer false "Minimum streak length" default(5)
-// @Success 200 {array} core.Streak
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{player_id}/streaks [get]
+//
+//	@Summary		Get player streaks
+//	@Description	Get hitting or scoreless innings streaks for a player
+//	@Tags			derived, players
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	path		string	true	"Player ID"
+//	@Param			kind		query		string	true	"Streak kind: hitting or scoreless_innings"
+//	@Param			season		query		integer	true	"Season year"
+//	@Param			min_length	query		integer	false	"Minimum streak length"	default(5)
+//	@Success		200			{array}		core.Streak
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{player_id}/streaks [get]
 func (dr *DerivedRoutes) handlePlayerStreaks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	playerID := core.PlayerID(r.PathValue("player_id"))
@@ -79,18 +80,19 @@ func (dr *DerivedRoutes) handlePlayerStreaks(w http.ResponseWriter, r *http.Requ
 }
 
 // handleTeamRunDifferential godoc
-// @Summary Get team run differential
-// @Description Get season run differential with rolling windows for a team
-// @Tags derived, teams
-// @Accept json
-// @Produce json
-// @Param team_id path string true "Team ID"
-// @Param season query integer true "Season year"
-// @Param windows query string false "Comma-separated rolling window sizes (e.g., 10,20,30)" default("10,20,30")
-// @Success 200 {object} core.RunDifferentialSeries
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /teams/{team_id}/run-differential [get]
+//
+//	@Summary		Get team run differential
+//	@Description	Get season run differential with rolling windows for a team
+//	@Tags			derived, teams
+//	@Accept			json
+//	@Produce		json
+//	@Param			team_id	path		string	true	"Team ID"
+//	@Param			season	query		integer	true	"Season year"
+//	@Param			windows	query		string	false	"Comma-separated rolling window sizes (e.g., 10,20,30)"	default("10,20,30")
+//	@Success		200		{object}	core.RunDifferentialSeries
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/teams/{team_id}/run-differential [get]
 func (dr *DerivedRoutes) handleTeamRunDifferential(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	teamID := core.TeamID(r.PathValue("team_id"))
@@ -127,16 +129,17 @@ func (dr *DerivedRoutes) handleTeamRunDifferential(w http.ResponseWriter, r *htt
 }
 
 // handleGameWinProbability godoc
-// @Summary Get game win probability curve
-// @Description Get play-by-play win probability for a game
-// @Tags derived, games
-// @Accept json
-// @Produce json
-// @Param game_id path string true "Game ID"
-// @Success 200 {object} core.WinProbabilityCurve
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /games/{game_id}/win-probability [get]
+//
+//	@Summary		Get game win probability curve
+//	@Description	Get play-by-play win probability for a game
+//	@Tags			derived, games
+//	@Accept			json
+//	@Produce		json
+//	@Param			game_id	path		string	true	"Game ID"
+//	@Success		200		{object}	core.WinProbabilityCurve
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/games/{game_id}/win-probability [get]
 func (dr *DerivedRoutes) handleGameWinProbability(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	gameID := core.GameID(r.PathValue("game_id"))
@@ -156,18 +159,19 @@ func (dr *DerivedRoutes) handleGameWinProbability(w http.ResponseWriter, r *http
 }
 
 // handlePlayerSplits godoc
-// @Summary Get player batting splits
-// @Description Get batting statistics split by dimension (home/away, vs handedness, month, etc.)
-// @Tags derived, players
-// @Accept json
-// @Produce json
-// @Param player_id path string true "Player ID"
-// @Param dimension query string true "Split dimension: home_away, pitcher_handed, or month"
-// @Param season query integer true "Season year"
-// @Success 200 {object} core.SplitResult
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{player_id}/splits [get]
+//
+//	@Summary		Get player batting splits
+//	@Description	Get batting statistics split by dimension (home/away, vs handedness, month, etc.)
+//	@Tags			derived, players
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	path		string	true	"Player ID"
+//	@Param			dimension	query		string	true	"Split dimension: home_away, pitcher_handed, or month"
+//	@Param			season		query		integer	true	"Season year"
+//	@Success		200			{object}	core.SplitResult
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{player_id}/splits [get]
 func (dr *DerivedRoutes) handlePlayerSplits(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	playerID := core.PlayerID(r.PathValue("player_id"))
@@ -206,23 +210,24 @@ func (dr *DerivedRoutes) handlePlayerSplits(w http.ResponseWriter, r *http.Reque
 }
 
 // handleGetWinExpectancy godoc
-// @Summary Get win expectancy for a game state
-// @Description Get the historical win probability for a specific game situation
-// @Tags derived, win-expectancy
-// @Accept json
-// @Produce json
-// @Param inning query integer true "Inning (1-9)"
-// @Param is_bottom query boolean true "Bottom of inning (true/false)"
-// @Param outs query integer true "Outs (0-2)"
-// @Param runners query string true "Runners state (e.g., ___, 1__, 12_, 123)"
-// @Param score_diff query integer true "Score differential from home team perspective (-11 to +11)"
-// @Param start_year query integer false "Start year for historical era filter"
-// @Param end_year query integer false "End year for historical era filter"
-// @Success 200 {object} core.WinExpectancy
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /win-expectancy [get]
+//
+//	@Summary		Get win expectancy for a game state
+//	@Description	Get the historical win probability for a specific game situation
+//	@Tags			derived, win-expectancy
+//	@Accept			json
+//	@Produce		json
+//	@Param			inning		query		integer	true	"Inning (1-9)"
+//	@Param			is_bottom	query		boolean	true	"Bottom of inning (true/false)"
+//	@Param			outs		query		integer	true	"Outs (0-2)"
+//	@Param			runners		query		string	true	"Runners state (e.g., ___, 1__, 12_, 123)"
+//	@Param			score_diff	query		integer	true	"Score differential from home team perspective (-11 to +11)"
+//	@Param			start_year	query		integer	false	"Start year for historical era filter"
+//	@Param			end_year	query		integer	false	"End year for historical era filter"
+//	@Success		200			{object}	core.WinExpectancy
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		404			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/win-expectancy [get]
 func (dr *DerivedRoutes) handleGetWinExpectancy(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	inning := getIntQuery(r, "inning", 0)
@@ -290,14 +295,15 @@ func (dr *DerivedRoutes) handleGetWinExpectancy(w http.ResponseWriter, r *http.R
 }
 
 // handleListWinExpectancyEras godoc
-// @Summary List available win expectancy eras
-// @Description Get all available historical eras in the win expectancy database
-// @Tags derived, win-expectancy
-// @Accept json
-// @Produce json
-// @Success 200 {array} core.WinExpectancyEra
-// @Failure 500 {object} ErrorResponse
-// @Router /win-expectancy/eras [get]
+//
+//	@Summary		List available win expectancy eras
+//	@Description	Get all available historical eras in the win expectancy database
+//	@Tags			derived, win-expectancy
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		core.WinExpectancyEra
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/win-expectancy/eras [get]
 func (dr *DerivedRoutes) handleListWinExpectancyEras(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

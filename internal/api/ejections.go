@@ -20,21 +20,22 @@ func (er *EjectionRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleListEjections godoc
-// @Summary List ejections
-// @Description Get ejections with optional filters for player, umpire, team, and role
-// @Tags ejections
-// @Accept json
-// @Produce json
-// @Param player_id query string false "Filter by ejected player ID"
-// @Param umpire_id query string false "Filter by umpire ID"
-// @Param team query string false "Filter by team"
-// @Param role query string false "Filter by role" Enums(P, M, C) "P=Player, M=Manager, C=Coach"
-// @Param season query integer false "Filter by season year"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /ejections [get]
+//
+//	@Summary		List ejections
+//	@Description	Get ejections with optional filters for player, umpire, team, and role
+//	@Tags			ejections
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	query		string	false	"Filter by ejected player ID"
+//	@Param			umpire_id	query		string	false	"Filter by umpire ID"
+//	@Param			team		query		string	false	"Filter by team"
+//	@Param			role		query		string	false	"Filter by role"	Enums(P, M, C)	"P=Player, M=Manager, C=Coach"
+//	@Param			season		query		integer	false	"Filter by season year"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/ejections [get]
 func (er *EjectionRoutes) handleListEjections(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -90,17 +91,18 @@ func (er *EjectionRoutes) handleListEjections(w http.ResponseWriter, r *http.Req
 }
 
 // handleSeasonEjections godoc
-// @Summary Get ejections for a specific season
-// @Description Get all ejections that occurred during a specific season
-// @Tags ejections, seasons
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/ejections [get]
+//
+//	@Summary		Get ejections for a specific season
+//	@Description	Get all ejections that occurred during a specific season
+//	@Tags			ejections, seasons
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{year}/ejections [get]
 func (er *EjectionRoutes) handleSeasonEjections(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

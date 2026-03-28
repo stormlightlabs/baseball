@@ -187,7 +187,7 @@ func fetchEndpoint(cmd *cobra.Command, args []string) error {
 func checkHealth(cmd *cobra.Command, args []string) error {
 	echo.Header("Health Check")
 
-	serverURL := "http://localhost:8080/v1/health"
+	serverURL := "http://localhost:8080/v1/ready"
 	echo.Infof("Checking: %s", serverURL)
 	echo.Info("")
 
@@ -197,18 +197,26 @@ func checkHealth(cmd *cobra.Command, args []string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
-		echo.Successf("✓ Server is healthy (Status: %s)", resp.Status)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error: failed to read response: %w", err)
+	}
 
-		body, err := io.ReadAll(resp.Body)
-		if err == nil && len(body) > 0 {
-			var prettyJSON bytes.Buffer
-			if err := json.Indent(&prettyJSON, body, "", "  "); err == nil {
-				echo.Info("")
-				echo.Info(prettyJSON.String())
-			}
+	if len(body) > 0 {
+		var prettyJSON bytes.Buffer
+		if err := json.Indent(&prettyJSON, body, "", "  "); err == nil {
+			echo.Info(prettyJSON.String())
+			echo.Info("")
 		}
+	}
+
+	if resp.StatusCode == http.StatusOK {
+		echo.Successf("✓ Server is ready (Status: %s)", resp.Status)
 		return nil
+	}
+
+	if resp.StatusCode == http.StatusServiceUnavailable {
+		return fmt.Errorf("error: server is live but not ready: %s", resp.Status)
 	}
 
 	return fmt.Errorf("error: server returned status: %s", resp.Status)

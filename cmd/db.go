@@ -367,7 +367,25 @@ func runPopulateAll(cmd *cobra.Command, csvDir, dataDir, yearsFlag string) error
 		return err
 	}
 
-	return repopulateRetrosheet(cmd, dataDir, "", yearsFlag, false)
+	if err := repopulateRetrosheet(cmd, dataDir, "", yearsFlag, false); err != nil {
+		return err
+	}
+
+	echo.Info("")
+	echo.Info("Refreshing materialized views...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	if _, err := database.RefreshMaterializedViews(cmd.Context(), nil); err != nil {
+		return fmt.Errorf("error: failed to refresh materialized views: %w", err)
+	}
+
+	echo.Success("✓ Materialized views refreshed")
+	return nil
 }
 
 // DbRefreshViewsCmd creates the refresh-views command

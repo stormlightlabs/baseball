@@ -30,16 +30,17 @@ func (gr *GameRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleGetGame godoc
-// @Summary Get game by ID
-// @Description Get detailed information for a specific game
-// @Tags games
-// @Accept json
-// @Produce json
-// @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
-// @Success 200 {object} core.Game
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /games/{id} [get]
+//
+//	@Summary		Get game by ID
+//	@Description	Get detailed information for a specific game
+//	@Tags			games
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Game ID (format: YYYYMMDD + game_number + home_team)"
+//	@Success		200	{object}	core.Game
+//	@Failure		404	{object}	ErrorResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/games/{id} [get]
 func (gr *GameRoutes) handleGetGame(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.GameID(r.PathValue("id"))
@@ -53,16 +54,17 @@ func (gr *GameRoutes) handleGetGame(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleGetBoxscore godoc
-// @Summary Get game boxscore
-// @Description Get detailed boxscore statistics for a specific game including team stats and lineups
-// @Tags games
-// @Accept json
-// @Produce json
-// @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
-// @Success 200 {object} core.Boxscore
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /games/{id}/boxscore [get]
+//
+//	@Summary		Get game boxscore
+//	@Description	Get detailed boxscore statistics for a specific game including team stats and lineups
+//	@Tags			games
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Game ID (format: YYYYMMDD + game_number + home_team)"
+//	@Success		200	{object}	core.Boxscore
+//	@Failure		404	{object}	ErrorResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/games/{id}/boxscore [get]
 func (gr *GameRoutes) handleGetBoxscore(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.GameID(r.PathValue("id"))
@@ -76,22 +78,23 @@ func (gr *GameRoutes) handleGetBoxscore(w http.ResponseWriter, r *http.Request) 
 }
 
 // handleListGames godoc
-// @Summary List games
-// @Description Search and browse games with optional filters and pagination
-// @Tags games
-// @Accept json
-// @Produce json
-// @Param season query integer false "Filter by season year"
-// @Param home_team query string false "Filter by home team ID"
-// @Param away_team query string false "Filter by away team ID"
-// @Param park_id query string false "Filter by park ID"
-// @Param date_from query string false "Start date (YYYY-MM-DD)"
-// @Param date_to query string false "End date (YYYY-MM-DD)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /games [get]
+//
+//	@Summary		List games
+//	@Description	Search and browse games with optional filters and pagination
+//	@Tags			games
+//	@Accept			json
+//	@Produce		json
+//	@Param			season		query		integer	false	"Filter by season year"
+//	@Param			home_team	query		string	false	"Filter by home team ID"
+//	@Param			away_team	query		string	false	"Filter by away team ID"
+//	@Param			park_id		query		string	false	"Filter by park ID"
+//	@Param			date_from	query		string	false	"Start date (YYYY-MM-DD)"
+//	@Param			date_to		query		string	false	"End date (YYYY-MM-DD)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/games [get]
 func (gr *GameRoutes) handleListGames(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -155,17 +158,18 @@ func (gr *GameRoutes) handleListGames(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleSeasonSchedule godoc
-// @Summary Get season schedule
-// @Description Get all games for a specific season
-// @Tags games
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(100)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/schedule [get]
+//
+//	@Summary		Get season schedule
+//	@Description	Get all games for a specific season
+//	@Tags			games
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(100)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{year}/schedule [get]
 func (gr *GameRoutes) handleSeasonSchedule(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))
@@ -199,17 +203,18 @@ func (gr *GameRoutes) handleSeasonSchedule(w http.ResponseWriter, r *http.Reques
 }
 
 // handleGamesByDate godoc
-// @Summary Get games by date
-// @Description Get all games played on a specific date
-// @Tags games
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param date path string true "Date (YYYY-MM-DD format)"
-// @Success 200 {array} core.Game
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/dates/{date}/games [get]
+//
+//	@Summary		Get games by date
+//	@Description	Get all games played on a specific date
+//	@Tags			games
+//	@Accept			json
+//	@Produce		json
+//	@Param			year	path		integer	true	"Season year"
+//	@Param			date	path		string	true	"Date (YYYY-MM-DD format)"
+//	@Success		200		{array}		core.Game
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/seasons/{year}/dates/{date}/games [get]
 func (gr *GameRoutes) handleGamesByDate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := getIntPathValue(r, "year")
@@ -236,18 +241,19 @@ func (gr *GameRoutes) handleGamesByDate(w http.ResponseWriter, r *http.Request) 
 }
 
 // handleTeamGames godoc
-// @Summary Get team games for a season
-// @Description Get all games for a specific team in a season
-// @Tags games
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param team_id path string true "Team ID"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(100)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/teams/{team_id}/games [get]
+//
+//	@Summary		Get team games for a season
+//	@Description	Get all games for a specific team in a season
+//	@Tags			games
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			team_id		path		string	true	"Team ID"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(100)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{year}/teams/{team_id}/games [get]
 func (gr *GameRoutes) handleTeamGames(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))
@@ -285,18 +291,19 @@ func (gr *GameRoutes) handleTeamGames(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleParkGames godoc
-// @Summary Get games at a park
-// @Description Get all games played at a specific ballpark in a season
-// @Tags games, parks
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param park_id path string true "Park ID"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(100)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/parks/{park_id}/games [get]
+//
+//	@Summary		Get games at a park
+//	@Description	Get all games played at a specific ballpark in a season
+//	@Tags			games, parks
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			park_id		path		string	true	"Park ID"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(100)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{year}/parks/{park_id}/games [get]
 func (gr *GameRoutes) handleParkGames(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))
@@ -334,16 +341,17 @@ func (gr *GameRoutes) handleParkGames(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleGetGameSummary godoc
-// @Summary Get game summary
-// @Description Get narrative summary for a game including winning pitcher, save, and key events
-// @Tags games
-// @Accept json
-// @Produce json
-// @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
-// @Success 200 {object} map[string]any
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /games/{id}/summary [get]
+//
+//	@Summary		Get game summary
+//	@Description	Get narrative summary for a game including winning pitcher, save, and key events
+//	@Tags			games
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Game ID (format: YYYYMMDD + game_number + home_team)"
+//	@Success		200	{object}	map[string]any
+//	@Failure		404	{object}	ErrorResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/games/{id}/summary [get]
 func (gr *GameRoutes) handleGetGameSummary(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.GameID(r.PathValue("id"))
@@ -377,17 +385,18 @@ func (gr *GameRoutes) handleGetGameSummary(w http.ResponseWriter, r *http.Reques
 }
 
 // handleGameEvents godoc
-// @Summary Get game events
-// @Description Get all play-by-play events for a game (alias for /games/{id}/plays)
-// @Tags games, plays
-// @Accept json
-// @Produce json
-// @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(200)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /games/{id}/events [get]
+//
+//	@Summary		Get game events
+//	@Description	Get all play-by-play events for a game (alias for /games/{id}/plays)
+//	@Tags			games, plays
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Game ID (format: YYYYMMDD + game_number + home_team)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(200)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/games/{id}/events [get]
 func (gr *GameRoutes) handleGameEvents(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	gameID := core.GameID(r.PathValue("id"))
@@ -422,17 +431,18 @@ func (gr *GameRoutes) handleGameEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleSingleEvent godoc
-// @Summary Get single event
-// @Description Get a single play/event by sequence number
-// @Tags games, plays
-// @Accept json
-// @Produce json
-// @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
-// @Param event_seq path integer true "Event sequence number (play number)"
-// @Success 200 {object} core.Play
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /games/{id}/events/{event_seq} [get]
+//
+//	@Summary		Get single event
+//	@Description	Get a single play/event by sequence number
+//	@Tags			games, plays
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Game ID (format: YYYYMMDD + game_number + home_team)"
+//	@Param			event_seq	path		integer	true	"Event sequence number (play number)"
+//	@Success		200			{object}	core.Play
+//	@Failure		404			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/games/{id}/events/{event_seq} [get]
 func (gr *GameRoutes) handleSingleEvent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	gameID := core.GameID(r.PathValue("id"))

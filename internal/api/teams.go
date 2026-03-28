@@ -32,18 +32,19 @@ func (tr *TeamRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleListTeams godoc
-// @Summary List team seasons
-// @Description List team seasons with optional year and league filters
-// @Tags teams
-// @Accept json
-// @Produce json
-// @Param year query integer false "Filter by year"
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /teams [get]
+//
+//	@Summary		List team seasons
+//	@Description	List team seasons with optional year and league filters
+//	@Tags			teams
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		query		integer	false	"Filter by year"
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/teams [get]
 func (tr *TeamRoutes) handleListTeams(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -77,17 +78,18 @@ func (tr *TeamRoutes) handleListTeams(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleGetTeam godoc
-// @Summary Get team season
-// @Description Get a single team-season record
-// @Tags teams
-// @Accept json
-// @Produce json
-// @Param id path string true "Team ID"
-// @Param year query integer false "Year" default(2024)
-// @Success 200 {object} core.TeamSeason
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /teams/{id} [get]
+//
+//	@Summary		Get team season
+//	@Description	Get a single team-season record
+//	@Tags			teams
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string	true	"Team ID"
+//	@Param			year	query		integer	false	"Year"	default(2024)
+//	@Success		200		{object}	core.TeamSeason
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/teams/{id} [get]
 func (tr *TeamRoutes) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.TeamID(r.PathValue("id"))
@@ -103,18 +105,19 @@ func (tr *TeamRoutes) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleSeasonTeams godoc
-// @Summary Get all teams for a season
-// @Description List all teams that played in a specific season
-// @Tags teams
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/teams [get]
+//
+//	@Summary		Get all teams for a season
+//	@Description	List all teams that played in a specific season
+//	@Tags			teams
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{year}/teams [get]
 func (tr *TeamRoutes) handleSeasonTeams(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntQuery(r, "year", 2024))
@@ -145,15 +148,16 @@ func (tr *TeamRoutes) handleSeasonTeams(w http.ResponseWriter, r *http.Request) 
 }
 
 // handleListFranchises godoc
-// @Summary List franchises
-// @Description List all baseball franchises with optional active filter
-// @Tags franchises
-// @Accept json
-// @Produce json
-// @Param active query boolean false "Filter to only active franchises"
-// @Success 200 {object} FranchisesResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /franchises [get]
+//
+//	@Summary		List franchises
+//	@Description	List all baseball franchises with optional active filter
+//	@Tags			franchises
+//	@Accept			json
+//	@Produce		json
+//	@Param			active	query		boolean	false	"Filter to only active franchises"
+//	@Success		200		{object}	FranchisesResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/franchises [get]
 func (tr *TeamRoutes) handleListFranchises(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -172,14 +176,15 @@ func (tr *TeamRoutes) handleListFranchises(w http.ResponseWriter, r *http.Reques
 }
 
 // handleListSeasons godoc
-// @Summary List all seasons
-// @Description Get summary of all available seasons with league and team counts
-// @Tags seasons
-// @Accept json
-// @Produce json
-// @Success 200 {array} core.Season
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons [get]
+//
+//	@Summary		List all seasons
+//	@Description	Get summary of all available seasons with league and team counts
+//	@Tags			seasons
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		core.Season
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/seasons [get]
 func (tr *TeamRoutes) handleListSeasons(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -193,17 +198,18 @@ func (tr *TeamRoutes) handleListSeasons(w http.ResponseWriter, r *http.Request) 
 }
 
 // handleTeamRoster godoc
-// @Summary Get team roster
-// @Description Get roster for a specific team and season with basic stats
-// @Tags teams
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param team_id path string true "Team ID"
-// @Success 200 {array} core.RosterPlayer
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/teams/{team_id}/roster [get]
+//
+//	@Summary		Get team roster
+//	@Description	Get roster for a specific team and season with basic stats
+//	@Tags			teams
+//	@Accept			json
+//	@Produce		json
+//	@Param			year	path		integer	true	"Season year"
+//	@Param			team_id	path		string	true	"Team ID"
+//	@Success		200		{array}		core.RosterPlayer
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/seasons/{year}/teams/{team_id}/roster [get]
 func (tr *TeamRoutes) handleTeamRoster(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))
@@ -219,18 +225,19 @@ func (tr *TeamRoutes) handleTeamRoster(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleTeamBatting godoc
-// @Summary Get team batting stats
-// @Description Get aggregated batting statistics for a team with optional per-player splits
-// @Tags teams
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param team_id path string true "Team ID"
-// @Param players query boolean false "Include per-player splits"
-// @Success 200 {object} core.TeamBattingStats
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/teams/{team_id}/batting [get]
+//
+//	@Summary		Get team batting stats
+//	@Description	Get aggregated batting statistics for a team with optional per-player splits
+//	@Tags			teams
+//	@Accept			json
+//	@Produce		json
+//	@Param			year	path		integer	true	"Season year"
+//	@Param			team_id	path		string	true	"Team ID"
+//	@Param			players	query		boolean	false	"Include per-player splits"
+//	@Success		200		{object}	core.TeamBattingStats
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/seasons/{year}/teams/{team_id}/batting [get]
 func (tr *TeamRoutes) handleTeamBatting(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))
@@ -247,18 +254,19 @@ func (tr *TeamRoutes) handleTeamBatting(w http.ResponseWriter, r *http.Request) 
 }
 
 // handleTeamPitching godoc
-// @Summary Get team pitching stats
-// @Description Get aggregated pitching statistics for a team with optional per-player splits
-// @Tags teams
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param team_id path string true "Team ID"
-// @Param players query boolean false "Include per-player splits"
-// @Success 200 {object} core.TeamPitchingStats
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/teams/{team_id}/pitching [get]
+//
+//	@Summary		Get team pitching stats
+//	@Description	Get aggregated pitching statistics for a team with optional per-player splits
+//	@Tags			teams
+//	@Accept			json
+//	@Produce		json
+//	@Param			year	path		integer	true	"Season year"
+//	@Param			team_id	path		string	true	"Team ID"
+//	@Param			players	query		boolean	false	"Include per-player splits"
+//	@Success		200		{object}	core.TeamPitchingStats
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/seasons/{year}/teams/{team_id}/pitching [get]
 func (tr *TeamRoutes) handleTeamPitching(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))
@@ -275,18 +283,19 @@ func (tr *TeamRoutes) handleTeamPitching(w http.ResponseWriter, r *http.Request)
 }
 
 // handleTeamFielding godoc
-// @Summary Get team fielding stats
-// @Description Get aggregated fielding statistics for a team with optional per-player/position splits
-// @Tags teams
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param team_id path string true "Team ID"
-// @Param players query boolean false "Include per-player splits"
-// @Success 200 {object} core.TeamFieldingStats
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/teams/{team_id}/fielding [get]
+//
+//	@Summary		Get team fielding stats
+//	@Description	Get aggregated fielding statistics for a team with optional per-player/position splits
+//	@Tags			teams
+//	@Accept			json
+//	@Produce		json
+//	@Param			year	path		integer	true	"Season year"
+//	@Param			team_id	path		string	true	"Team ID"
+//	@Param			players	query		boolean	false	"Include per-player splits"
+//	@Success		200		{object}	core.TeamFieldingStats
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/seasons/{year}/teams/{team_id}/fielding [get]
 func (tr *TeamRoutes) handleTeamFielding(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))
@@ -303,16 +312,17 @@ func (tr *TeamRoutes) handleTeamFielding(w http.ResponseWriter, r *http.Request)
 }
 
 // handleGetFranchise godoc
-// @Summary Get franchise
-// @Description Get details for a specific franchise
-// @Tags franchises
-// @Accept json
-// @Produce json
-// @Param id path string true "Franchise ID"
-// @Success 200 {object} core.Franchise
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /franchises/{id} [get]
+//
+//	@Summary		Get franchise
+//	@Description	Get details for a specific franchise
+//	@Tags			franchises
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Franchise ID"
+//	@Success		200	{object}	core.Franchise
+//	@Failure		404	{object}	ErrorResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/franchises/{id} [get]
 func (tr *TeamRoutes) handleGetFranchise(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.FranchiseID(r.PathValue("id"))
@@ -327,18 +337,19 @@ func (tr *TeamRoutes) handleGetFranchise(w http.ResponseWriter, r *http.Request)
 }
 
 // handleTeamSchedule godoc
-// @Summary Get team schedule
-// @Description Get the game schedule for a team in a season (alias for /seasons/{year}/teams/{team_id}/games)
-// @Tags teams, games
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param team_id path string true "Team ID"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(100)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/teams/{team_id}/schedule [get]
+//
+//	@Summary		Get team schedule
+//	@Description	Get the game schedule for a team in a season (alias for /seasons/{year}/teams/{team_id}/games)
+//	@Tags			teams, games
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			team_id		path		string	true	"Team ID"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(100)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{year}/teams/{team_id}/schedule [get]
 func (tr *TeamRoutes) handleTeamSchedule(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))
@@ -388,18 +399,19 @@ func (tr *TeamRoutes) handleTeamSchedule(w http.ResponseWriter, r *http.Request)
 }
 
 // handleTeamDailyLogs godoc
-// @Summary Get team daily logs
-// @Description Get team performance aggregated by date for a season
-// @Tags teams, games
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param team_id path string true "Team ID"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(100)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/teams/{team_id}/daily-logs [get]
+//
+//	@Summary		Get team daily logs
+//	@Description	Get team performance aggregated by date for a season
+//	@Tags			teams, games
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			team_id		path		string	true	"Team ID"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(100)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{year}/teams/{team_id}/daily-logs [get]
 func (tr *TeamRoutes) handleTeamDailyLogs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))
@@ -493,23 +505,24 @@ func (tr *TeamRoutes) handleTeamDailyLogs(w http.ResponseWriter, r *http.Request
 }
 
 // handleTeamDailyStats godoc
-// @Summary Get team daily statistics
-// @Description Get per-game team statistics for daily performance tracking and analysis
-// @Tags teams
-// @Accept json
-// @Produce json
-// @Param id path string true "Team ID"
-// @Param season query integer false "Filter by season year"
-// @Param date_from query string false "Filter by start date (YYYYMMDD)"
-// @Param date_to query string false "Filter by end date (YYYYMMDD)"
-// @Param result query string false "Filter by result (W, L, or T)"
-// @Param sort_by query string false "Sort by field (date, runs, runs_allowed)" default("date")
-// @Param sort_order query string false "Sort order (asc, desc)" default("desc")
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /v1/teams/{id}/daily-stats [get]
+//
+//	@Summary		Get team daily statistics
+//	@Description	Get per-game team statistics for daily performance tracking and analysis
+//	@Tags			teams
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Team ID"
+//	@Param			season		query		integer	false	"Filter by season year"
+//	@Param			date_from	query		string	false	"Filter by start date (YYYYMMDD)"
+//	@Param			date_to		query		string	false	"Filter by end date (YYYYMMDD)"
+//	@Param			result		query		string	false	"Filter by result (W, L, or T)"
+//	@Param			sort_by		query		string	false	"Sort by field (date, runs, runs_allowed)"	default("date")
+//	@Param			sort_order	query		string	false	"Sort order (asc, desc)"					default("desc")
+//	@Param			page		query		integer	false	"Page number"								default(1)
+//	@Param			per_page	query		integer	false	"Results per page"							default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/v1/teams/{id}/daily-stats [get]
 func (tr *TeamRoutes) handleTeamDailyStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	teamID := core.TeamID(r.PathValue("id"))

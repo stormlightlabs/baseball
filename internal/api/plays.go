@@ -27,27 +27,28 @@ func (pr *PlayRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleListPlays godoc
-// @Summary List plays
-// @Description Query plays with various filters
-// @Tags plays
-// @Accept json
-// @Produce json
-// @Param batter query string false "Batter Retrosheet ID"
-// @Param pitcher query string false "Pitcher Retrosheet ID"
-// @Param bat_team query string false "Batting team ID"
-// @Param pit_team query string false "Pitching team ID"
-// @Param date query string false "Game date (YYYYMMDD)"
-// @Param date_from query string false "Start date (YYYYMMDD)"
-// @Param date_to query string false "End date (YYYYMMDD)"
-// @Param inning query integer false "Filter by inning"
-// @Param home_runs query boolean false "Filter to only home runs"
-// @Param walks query boolean false "Filter to only walks"
-// @Param strikeouts query boolean false "Filter to only strikeouts"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /plays [get]
+//
+//	@Summary		List plays
+//	@Description	Query plays with various filters
+//	@Tags			plays
+//	@Accept			json
+//	@Produce		json
+//	@Param			batter		query		string	false	"Batter Retrosheet ID"
+//	@Param			pitcher		query		string	false	"Pitcher Retrosheet ID"
+//	@Param			bat_team	query		string	false	"Batting team ID"
+//	@Param			pit_team	query		string	false	"Pitching team ID"
+//	@Param			date		query		string	false	"Game date (YYYYMMDD)"
+//	@Param			date_from	query		string	false	"Start date (YYYYMMDD)"
+//	@Param			date_to		query		string	false	"End date (YYYYMMDD)"
+//	@Param			inning		query		integer	false	"Filter by inning"
+//	@Param			home_runs	query		boolean	false	"Filter to only home runs"
+//	@Param			walks		query		boolean	false	"Filter to only walks"
+//	@Param			strikeouts	query		boolean	false	"Filter to only strikeouts"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/plays [get]
 func (pr *PlayRoutes) handleListPlays(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -136,17 +137,18 @@ func (pr *PlayRoutes) handleListPlays(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleGamePlays godoc
-// @Summary Get plays for a game
-// @Description Get all plays for a specific game in chronological order
-// @Tags plays, games
-// @Accept json
-// @Produce json
-// @Param id path string true "Game ID (format: YYYYMMDD + game_number + home_team)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(200)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /games/{id}/plays [get]
+//
+//	@Summary		Get plays for a game
+//	@Description	Get all plays for a specific game in chronological order
+//	@Tags			plays, games
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Game ID (format: YYYYMMDD + game_number + home_team)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(200)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/games/{id}/plays [get]
 func (pr *PlayRoutes) handleGamePlays(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	gameID := core.GameID(r.PathValue("id"))
@@ -184,17 +186,18 @@ func (pr *PlayRoutes) handleGamePlays(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePlayerPlays godoc
-// @Summary Get plays for a player
-// @Description Get all plays involving a specific player (as batter or pitcher)
-// @Tags plays, players
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/plays [get]
+//
+//	@Summary		Get plays for a player
+//	@Description	Get all plays involving a specific player (as batter or pitcher)
+//	@Tags			plays, players
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Player ID"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{id}/plays [get]
 func (pr *PlayRoutes) handlePlayerPlays(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	playerID := core.PlayerID(r.PathValue("id"))
@@ -235,23 +238,24 @@ func (pr *PlayRoutes) handlePlayerPlays(w http.ResponseWriter, r *http.Request) 
 }
 
 // handlePlayerPlateAppearances godoc
-// @Summary Get plate appearances for a player
-// @Description Return plate appearances where the player is the batter with optional filters
-// @Tags plays, players
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Param season query integer false "Filter by season year"
-// @Param date_from query string false "Start date (YYYY-MM-DD)"
-// @Param date_to query string false "End date (YYYY-MM-DD)"
-// @Param game_id query string false "Retrosheet game ID"
-// @Param pitcher query string false "Filter by pitcher Retrosheet ID"
-// @Param vs_pitcher query string false "Filter by Lahman pitcher ID"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/plate-appearances [get]
+//
+//	@Summary		Get plate appearances for a player
+//	@Description	Return plate appearances where the player is the batter with optional filters
+//	@Tags			plays, players
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Filter by season year"
+//	@Param			date_from	query		string	false	"Start date (YYYY-MM-DD)"
+//	@Param			date_to		query		string	false	"End date (YYYY-MM-DD)"
+//	@Param			game_id		query		string	false	"Retrosheet game ID"
+//	@Param			pitcher		query		string	false	"Filter by pitcher Retrosheet ID"
+//	@Param			vs_pitcher	query		string	false	"Filter by Lahman pitcher ID"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{id}/plate-appearances [get]
 func (pr *PlayRoutes) handlePlayerPlateAppearances(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	playerID := core.PlayerID(r.PathValue("id"))

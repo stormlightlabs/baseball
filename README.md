@@ -285,7 +285,8 @@ Endpoints
 </summary>
 
 - **Authentication**: API keys (`Authorization: Bearer sk_...`) or dashboard-issued session tokens; start the server with `--debug` while iterating locally to skip auth.
-- **Health**: `GET /v1/health` exposes service/DB status; mirrors what `baseball server health` checks.
+- **Health**: `GET /v1/health` is a liveness probe, while `GET /v1/ready`
+  mirrors what `baseball server health` checks for dataset readiness.
 - **Primary resources**:
     - `/v1/players`
     - `/v1/teams`

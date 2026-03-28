@@ -36,19 +36,20 @@ func (cr *ComputedRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handlePlayerAdvancedBatting godoc
-// @Summary Get advanced batting stats
-// @Description Get wOBA, wRC+, ISO, BABIP, and other advanced batting stats for a player
-// @Tags computed, players, batting
-// @Accept json
-// @Produce json
-// @Param player_id path string true "Player ID"
-// @Param season query integer false "Season year" default(2024)
-// @Param team_id query string false "Team ID"
-// @Success 200 {object} core.AdvancedBattingStats
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{player_id}/stats/batting/advanced [get]
+//
+//	@Summary		Get advanced batting stats
+//	@Description	Get wOBA, wRC+, ISO, BABIP, and other advanced batting stats for a player
+//	@Tags			computed, players, batting
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Season year"	default(2024)
+//	@Param			team_id		query		string	false	"Team ID"
+//	@Success		200			{object}	core.AdvancedBattingStats
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		404			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{player_id}/stats/batting/advanced [get]
 func (cr *ComputedRoutes) handlePlayerAdvancedBatting(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	playerID := core.PlayerID(r.PathValue("player_id"))
@@ -75,19 +76,20 @@ func (cr *ComputedRoutes) handlePlayerAdvancedBatting(w http.ResponseWriter, r *
 }
 
 // handlePlayerAdvancedPitching godoc
-// @Summary Get advanced pitching stats
-// @Description Get FIP, xFIP, ERA+, and other advanced pitching stats for a player
-// @Tags computed, players, pitching
-// @Accept json
-// @Produce json
-// @Param player_id path string true "Player ID"
-// @Param season query integer false "Season year" default(2024)
-// @Param team_id query string false "Team ID"
-// @Success 200 {object} core.AdvancedPitchingStats
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{player_id}/stats/pitching/advanced [get]
+//
+//	@Summary		Get advanced pitching stats
+//	@Description	Get FIP, xFIP, ERA+, and other advanced pitching stats for a player
+//	@Tags			computed, players, pitching
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Season year"	default(2024)
+//	@Param			team_id		query		string	false	"Team ID"
+//	@Success		200			{object}	core.AdvancedPitchingStats
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		404			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{player_id}/stats/pitching/advanced [get]
 func (cr *ComputedRoutes) handlePlayerAdvancedPitching(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	playerID := core.PlayerID(r.PathValue("player_id"))
@@ -114,17 +116,18 @@ func (cr *ComputedRoutes) handlePlayerAdvancedPitching(w http.ResponseWriter, r 
 }
 
 // handleGamePlateLeverages godoc
-// @Summary Get plate appearance leverages
-// @Description Get leverage index for each plate appearance in a game
-// @Tags computed, games, leverage
-// @Accept json
-// @Produce json
-// @Param game_id path string true "Game ID"
-// @Param min_li query number false "Minimum leverage index" default(0.0)
-// @Success 200 {array} core.PlateAppearanceLeverage
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /games/{game_id}/plate-appearances/leverage [get]
+//
+//	@Summary		Get plate appearance leverages
+//	@Description	Get leverage index for each plate appearance in a game
+//	@Tags			computed, games, leverage
+//	@Accept			json
+//	@Produce		json
+//	@Param			game_id	path		string	true	"Game ID"
+//	@Param			min_li	query		number	false	"Minimum leverage index"	default(0.0)
+//	@Success		200		{array}		core.PlateAppearanceLeverage
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/games/{game_id}/plate-appearances/leverage [get]
 func (cr *ComputedRoutes) handleGamePlateLeverages(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	gameID := core.GameID(r.PathValue("game_id"))
@@ -149,18 +152,19 @@ func (cr *ComputedRoutes) handleGamePlateLeverages(w http.ResponseWriter, r *htt
 }
 
 // handleParkFactor godoc
-// @Summary Get park factor
-// @Description Get park factor for a specific park and season
-// @Tags computed, parks
-// @Accept json
-// @Produce json
-// @Param park_id path string true "Park ID"
-// @Param season query integer true "Season year"
-// @Success 200 {object} core.ParkFactor
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /parks/{park_id}/factors [get]
+//
+//	@Summary		Get park factor
+//	@Description	Get park factor for a specific park and season
+//	@Tags			computed, parks
+//	@Accept			json
+//	@Produce		json
+//	@Param			park_id	path		string	true	"Park ID"
+//	@Param			season	query		integer	true	"Season year"
+//	@Success		200		{object}	core.ParkFactor
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/parks/{park_id}/factors [get]
 func (cr *ComputedRoutes) handleParkFactor(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	parkID := core.ParkID(r.PathValue("park_id"))
@@ -179,18 +183,19 @@ func (cr *ComputedRoutes) handleParkFactor(w http.ResponseWriter, r *http.Reques
 }
 
 // handleParkFactorSeries godoc
-// @Summary Get park factor series
-// @Description Get park factors over a range of seasons
-// @Tags computed, parks
-// @Accept json
-// @Produce json
-// @Param park_id path string true "Park ID"
-// @Param from_season query integer true "Starting season"
-// @Param to_season query integer true "Ending season"
-// @Success 200 {array} core.ParkFactor
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /parks/{park_id}/factors/series [get]
+//
+//	@Summary		Get park factor series
+//	@Description	Get park factors over a range of seasons
+//	@Tags			computed, parks
+//	@Accept			json
+//	@Produce		json
+//	@Param			park_id		path		string	true	"Park ID"
+//	@Param			from_season	query		integer	true	"Starting season"
+//	@Param			to_season	query		integer	true	"Ending season"
+//	@Success		200			{array}		core.ParkFactor
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/parks/{park_id}/factors/series [get]
 func (cr *ComputedRoutes) handleParkFactorSeries(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	parkID := core.ParkID(r.PathValue("park_id"))
@@ -216,17 +221,18 @@ func (cr *ComputedRoutes) handleParkFactorSeries(w http.ResponseWriter, r *http.
 }
 
 // handleSeasonParkFactors godoc
-// @Summary Get all park factors for a season
-// @Description Get park factors for all parks in a given season
-// @Tags computed, parks
-// @Accept json
-// @Produce json
-// @Param season path integer true "Season year"
-// @Param type query string false "Factor type (runs, hr)"
-// @Success 200 {array} core.ParkFactor
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{season}/park-factors [get]
+//
+//	@Summary		Get all park factors for a season
+//	@Description	Get park factors for all parks in a given season
+//	@Tags			computed, parks
+//	@Accept			json
+//	@Produce		json
+//	@Param			season	path		integer	true	"Season year"
+//	@Param			type	query		string	false	"Factor type (runs, hr)"
+//	@Success		200		{array}		core.ParkFactor
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/seasons/{season}/park-factors [get]
 func (cr *ComputedRoutes) handleSeasonParkFactors(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	season := getIntPathValue(r, "season")
@@ -250,19 +256,20 @@ func (cr *ComputedRoutes) handleSeasonParkFactors(w http.ResponseWriter, r *http
 }
 
 // handlePlayerBaserunning godoc
-// @Summary Get baserunning stats
-// @Description Get baserunning value (wSB) for a player
-// @Tags computed, players
-// @Accept json
-// @Produce json
-// @Param player_id path string true "Player ID"
-// @Param season query integer false "Season year" default(2024)
-// @Param team_id query string false "Team ID"
-// @Success 200 {object} core.BaserunningStats
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{player_id}/stats/baserunning [get]
+//
+//	@Summary		Get baserunning stats
+//	@Description	Get baserunning value (wSB) for a player
+//	@Tags			computed, players
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Season year"	default(2024)
+//	@Param			team_id		query		string	false	"Team ID"
+//	@Success		200			{object}	core.BaserunningStats
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		404			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{player_id}/stats/baserunning [get]
 func (cr *ComputedRoutes) handlePlayerBaserunning(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	playerID := core.PlayerID(r.PathValue("player_id"))
@@ -284,19 +291,20 @@ func (cr *ComputedRoutes) handlePlayerBaserunning(w http.ResponseWriter, r *http
 }
 
 // handlePlayerFielding godoc
-// @Summary Get fielding stats
-// @Description Get fielding runs above average for a player
-// @Tags computed, players
-// @Accept json
-// @Produce json
-// @Param player_id path string true "Player ID"
-// @Param season query integer false "Season year" default(2024)
-// @Param team_id query string false "Team ID"
-// @Success 200 {object} core.FieldingStats
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{player_id}/stats/fielding [get]
+//
+//	@Summary		Get fielding stats
+//	@Description	Get fielding runs above average for a player
+//	@Tags			computed, players
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Season year"	default(2024)
+//	@Param			team_id		query		string	false	"Team ID"
+//	@Success		200			{object}	core.FieldingStats
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		404			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{player_id}/stats/fielding [get]
 func (cr *ComputedRoutes) handlePlayerFielding(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	playerID := core.PlayerID(r.PathValue("player_id"))
@@ -318,19 +326,20 @@ func (cr *ComputedRoutes) handlePlayerFielding(w http.ResponseWriter, r *http.Re
 }
 
 // handlePlayerWAR godoc
-// @Summary Get WAR
-// @Description Get Wins Above Replacement and component breakdown for a player
-// @Tags computed, players
-// @Accept json
-// @Produce json
-// @Param player_id path string true "Player ID"
-// @Param season query integer false "Season year" default(2024)
-// @Param team_id query string false "Team ID"
-// @Success 200 {object} core.PlayerWARSummary
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{player_id}/stats/war [get]
+//
+//	@Summary		Get WAR
+//	@Description	Get Wins Above Replacement and component breakdown for a player
+//	@Tags			computed, players
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Season year"	default(2024)
+//	@Param			team_id		query		string	false	"Team ID"
+//	@Success		200			{object}	core.PlayerWARSummary
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		404			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{player_id}/stats/war [get]
 func (cr *ComputedRoutes) handlePlayerWAR(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	playerID := core.PlayerID(r.PathValue("player_id"))
@@ -355,22 +364,23 @@ func (cr *ComputedRoutes) handlePlayerWAR(w http.ResponseWriter, r *http.Request
 }
 
 // handleSeasonBattingLeaders godoc
-// @Summary Get advanced batting leaders
-// @Description Get top players by advanced batting stats (wOBA, wRC+, ISO, BABIP, etc.)
-// @Tags computed, leaders, batting
-// @Accept json
-// @Produce json
-// @Param season path integer true "Season year"
-// @Param stat query string false "Statistic (WOBA, WRC_PLUS, ISO, BABIP, AVG, OBP, SLG, HR, BB, K_RATE, BB_RATE)" default("WRC_PLUS")
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(10)
-// @Param min_pa query integer false "Minimum plate appearances" default(502)
-// @Param team_id query string false "Filter by team ID"
-// @Param league query string false "Filter by league (AL, NL)"
-// @Success 200 {object} PaginatedResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{season}/leaders/batting/advanced [get]
+//
+//	@Summary		Get advanced batting leaders
+//	@Description	Get top players by advanced batting stats (wOBA, wRC+, ISO, BABIP, etc.)
+//	@Tags			computed, leaders, batting
+//	@Accept			json
+//	@Produce		json
+//	@Param			season		path		integer	true	"Season year"
+//	@Param			stat		query		string	false	"Statistic (WOBA, WRC_PLUS, ISO, BABIP, AVG, OBP, SLG, HR, BB, K_RATE, BB_RATE)"	default("WRC_PLUS")
+//	@Param			page		query		integer	false	"Page number"																		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"																	default(10)
+//	@Param			min_pa		query		integer	false	"Minimum plate appearances"															default(502)
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{season}/leaders/batting/advanced [get]
 func (cr *ComputedRoutes) handleSeasonBattingLeaders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	season := core.SeasonYear(getIntPathValue(r, "season"))
@@ -429,21 +439,22 @@ func (cr *ComputedRoutes) handleSeasonBattingLeaders(w http.ResponseWriter, r *h
 }
 
 // handleSeasonPitchingLeaders godoc
-// @Summary Get advanced pitching leaders
-// @Description Get top pitchers by advanced pitching stats (FIP, ERA, WHIP, K/9, etc.)
-// @Tags computed, leaders, pitching
-// @Accept json
-// @Produce json
-// @Param season path integer true "Season year"
-// @Param stat query string false "Statistic (FIP, ERA, WHIP, K_PER_9, BB_PER_9, HR_PER_9, SO)" default("FIP")
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(10)
-// @Param min_ip query number false "Minimum innings pitched" default(162)
-// @Param team_id query string false "Filter by team ID"
-// @Success 200 {object} PaginatedResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{season}/leaders/pitching/advanced [get]
+//
+//	@Summary		Get advanced pitching leaders
+//	@Description	Get top pitchers by advanced pitching stats (FIP, ERA, WHIP, K/9, etc.)
+//	@Tags			computed, leaders, pitching
+//	@Accept			json
+//	@Produce		json
+//	@Param			season		path		integer	true	"Season year"
+//	@Param			stat		query		string	false	"Statistic (FIP, ERA, WHIP, K_PER_9, BB_PER_9, HR_PER_9, SO)"	default("FIP")
+//	@Param			page		query		integer	false	"Page number"													default(1)
+//	@Param			per_page	query		integer	false	"Results per page"												default(10)
+//	@Param			min_ip		query		number	false	"Minimum innings pitched"										default(162)
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{season}/leaders/pitching/advanced [get]
 func (cr *ComputedRoutes) handleSeasonPitchingLeaders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	season := core.SeasonYear(getIntPathValue(r, "season"))
@@ -499,20 +510,21 @@ func (cr *ComputedRoutes) handleSeasonPitchingLeaders(w http.ResponseWriter, r *
 }
 
 // handleSeasonWARLeaders godoc
-// @Summary Get WAR leaders
-// @Description Get top players by Wins Above Replacement
-// @Tags computed, leaders, war
-// @Accept json
-// @Produce json
-// @Param season path integer true "Season year"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(10)
-// @Param min_pa query integer false "Minimum plate appearances" default(502)
-// @Param team_id query string false "Filter by team ID"
-// @Success 200 {object} PaginatedResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{season}/leaders/war [get]
+//
+//	@Summary		Get WAR leaders
+//	@Description	Get top players by Wins Above Replacement
+//	@Tags			computed, leaders, war
+//	@Accept			json
+//	@Produce		json
+//	@Param			season		path		integer	true	"Season year"
+//	@Param			page		query		integer	false	"Page number"				default(1)
+//	@Param			per_page	query		integer	false	"Results per page"			default(10)
+//	@Param			min_pa		query		integer	false	"Minimum plate appearances"	default(502)
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{season}/leaders/war [get]
 func (cr *ComputedRoutes) handleSeasonWARLeaders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	season := core.SeasonYear(getIntPathValue(r, "season"))
@@ -559,17 +571,18 @@ func (cr *ComputedRoutes) handleSeasonWARLeaders(w http.ResponseWriter, r *http.
 }
 
 // handleGameWinProbabilitySummary godoc
-// @Summary Get game win probability summary
-// @Description Get summary statistics for a game's win probability including biggest swings
-// @Tags computed, games, leverage
-// @Accept json
-// @Produce json
-// @Param game_id path string true "Game ID"
-// @Success 200 {object} core.GameWinProbabilitySummary
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /games/{game_id}/win-probability/summary [get]
+//
+//	@Summary		Get game win probability summary
+//	@Description	Get summary statistics for a game's win probability including biggest swings
+//	@Tags			computed, games, leverage
+//	@Accept			json
+//	@Produce		json
+//	@Param			game_id	path		string	true	"Game ID"
+//	@Success		200		{object}	core.GameWinProbabilitySummary
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/games/{game_id}/win-probability/summary [get]
 func (cr *ComputedRoutes) handleGameWinProbabilitySummary(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	gameID := core.GameID(r.PathValue("game_id"))
@@ -583,18 +596,19 @@ func (cr *ComputedRoutes) handleGameWinProbabilitySummary(w http.ResponseWriter,
 }
 
 // handlePlayerHighLeveragePAs godoc
-// @Summary Get high leverage plate appearances
-// @Description Get high-leverage plate appearances for a player in a season
-// @Tags computed, players, leverage
-// @Accept json
-// @Produce json
-// @Param player_id path string true "Player ID"
-// @Param season query integer false "Season year" default(2024)
-// @Param min_li query number false "Minimum leverage index" default(1.5)
-// @Success 200 {array} core.PlateAppearanceLeverage
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{player_id}/leverage/high [get]
+//
+//	@Summary		Get high leverage plate appearances
+//	@Description	Get high-leverage plate appearances for a player in a season
+//	@Tags			computed, players, leverage
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Season year"				default(2024)
+//	@Param			min_li		query		number	false	"Minimum leverage index"	default(1.5)
+//	@Success		200			{array}		core.PlateAppearanceLeverage
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{player_id}/leverage/high [get]
 func (cr *ComputedRoutes) handlePlayerHighLeveragePAs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	playerID := core.PlayerID(r.PathValue("player_id"))
@@ -619,19 +633,20 @@ func (cr *ComputedRoutes) handlePlayerHighLeveragePAs(w http.ResponseWriter, r *
 }
 
 // handlePlayerLeverageSummary godoc
-// @Summary Get player leverage summary
-// @Description Get aggregated leverage metrics for a player in a season
-// @Tags computed, players, leverage
-// @Accept json
-// @Produce json
-// @Param player_id path string true "Player ID"
-// @Param season query integer false "Season year" default(2024)
-// @Param role query string false "Role filter (batter, pitcher)" default("")
-// @Success 200 {object} core.PlayerLeverageSummary
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{player_id}/leverage/summary [get]
+//
+//	@Summary		Get player leverage summary
+//	@Description	Get aggregated leverage metrics for a player in a season
+//	@Tags			computed, players, leverage
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Season year"					default(2024)
+//	@Param			role		query		string	false	"Role filter (batter, pitcher)"	default("")
+//	@Success		200			{object}	core.PlayerLeverageSummary
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		404			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{player_id}/leverage/summary [get]
 func (cr *ComputedRoutes) handlePlayerLeverageSummary(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	playerID := core.PlayerID(r.PathValue("player_id"))

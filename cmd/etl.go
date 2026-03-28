@@ -486,6 +486,25 @@ func fetchRetrosheet(_ *cobra.Command, yearsFlag string, force bool) error {
 		}
 	}
 
+	echo.Info("")
+	echo.Info("Downloading game metadata...")
+	gameInfoZip := filepath.Join(dataDir, "gameinfo.zip")
+	gameInfoCSV := filepath.Join(dataDir, "gameinfo.csv")
+
+	if !force {
+		if _, err := os.Stat(gameInfoCSV); err == nil {
+			echo.Infof("  ✓ Using cached gameinfo.csv")
+		} else {
+			if err := downloadAndExtractGameInfo(gameInfoZip, gameInfoCSV); err != nil {
+				echo.Infof("  ⚠ Failed to download gameinfo.csv: %v", err)
+			}
+		}
+	} else {
+		if err := downloadAndExtractGameInfo(gameInfoZip, gameInfoCSV); err != nil {
+			echo.Infof("  ⚠ Failed to download gameinfo.csv: %v", err)
+		}
+	}
+
 	allstarDir := filepath.Join(dataDir, "allstar")
 	if err := os.MkdirAll(allstarDir, 0755); err != nil {
 		return fmt.Errorf("error: failed to create allstar directory: %w", err)
@@ -553,9 +572,74 @@ func fetchRetrosheet(_ *cobra.Command, yearsFlag string, force bool) error {
 	echo.Infof("  Play-by-play: %s", playsDir)
 	echo.Infof("  Ejections: %s", ejectionsDir)
 	echo.Infof("  Players: %s/allplayers.zip", dataDir)
+	echo.Infof("  Game metadata: %s/gameinfo.csv", dataDir)
 	echo.Infof("  All-Star: %s", allstarDir)
 	echo.Infof("  Biodata: %s/biodata.zip", dataDir)
 	return nil
+}
+
+func downloadAndExtractGameInfo(zipPath, csvPath string) error {
+	const gameInfoURL = "https://www.retrosheet.org/gameinfo.zip"
+
+	echo.Infof("  Downloading gameinfo.zip...")
+	resp, err := http.Get(gameInfoURL)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("gameinfo.zip not available (HTTP %d)", resp.StatusCode)
+	}
+
+	out, err := os.Create(zipPath)
+	if err != nil {
+		return fmt.Errorf("failed to create gameinfo.zip: %w", err)
+	}
+
+	if _, err = io.Copy(out, resp.Body); err != nil {
+		out.Close()
+		return fmt.Errorf("failed to save gameinfo.zip: %w", err)
+	}
+	out.Close()
+
+	if err := extractZipFile(zipPath, "gameinfo.csv", csvPath); err != nil {
+		return fmt.Errorf("failed to extract gameinfo.csv: %w", err)
+	}
+
+	echo.Successf("  ✓ gameinfo.csv downloaded")
+	return nil
+}
+
+func extractZipFile(zipPath, targetName, destPath string) error {
+	r, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	for _, f := range r.File {
+		if filepath.Base(f.Name) != targetName {
+			continue
+		}
+
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		defer rc.Close()
+
+		out, err := os.Create(destPath)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+
+		_, err = io.Copy(out, rc)
+		return err
+	}
+
+	return fmt.Errorf("%s not found in %s", targetName, zipPath)
 }
 
 func loadLahman(cmd *cobra.Command, args []string) error {
@@ -851,6 +935,11 @@ func loadFanGraphs(cmd *cobra.Command, args []string) error {
 	echo.Success("✓ All FanGraphs data loaded successfully")
 	echo.Infof("  wOBA constants: %d rows", wobaRows)
 	echo.Infof("  Park factors: %d rows", totalParkRows)
+
+	if err := database.RecordDatasetRefresh(ctx, "fangraphs_constants", wobaRows+totalParkRows); err != nil {
+		return fmt.Errorf("error: failed to record FanGraphs refresh: %w", err)
+	}
+
 	return nil
 }
 

@@ -28,19 +28,20 @@ func (sr *StatsRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleBattingLeaders godoc
-// @Summary Get batting leaders
-// @Description Get season batting leaders for a specific statistic
-// @Tags stats
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param stat query string false "Statistic (hr, avg, rbi, sb, h, r)" default("hr")
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(10)
-// @Success 200 {object} BattingLeadersResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/leaders/batting [get]
+//
+//	@Summary		Get batting leaders
+//	@Description	Get season batting leaders for a specific statistic
+//	@Tags			stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			stat		query		string	false	"Statistic (hr, avg, rbi, sb, h, r)"	default("hr")
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(10)
+//	@Success		200			{object}	BattingLeadersResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{year}/leaders/batting [get]
 func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -86,19 +87,20 @@ func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Reque
 }
 
 // handlePitchingLeaders godoc
-// @Summary Get pitching leaders
-// @Description Get season pitching leaders for a specific statistic
-// @Tags stats
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param stat query string false "Statistic (era, so, w, sv, ip)" default("era")
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(10)
-// @Success 200 {object} PitchingLeadersResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/leaders/pitching [get]
+//
+//	@Summary		Get pitching leaders
+//	@Description	Get season pitching leaders for a specific statistic
+//	@Tags			stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			stat		query		string	false	"Statistic (era, so, w, sv, ip)"	default("era")
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(10)
+//	@Success		200			{object}	PitchingLeadersResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{year}/leaders/pitching [get]
 func (sr *StatsRoutes) handlePitchingLeaders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -144,25 +146,26 @@ func (sr *StatsRoutes) handlePitchingLeaders(w http.ResponseWriter, r *http.Requ
 }
 
 // handleQueryBattingStats godoc
-// @Summary Query batting statistics
-// @Description Flexible batting stats query with multiple filter options
-// @Tags stats
-// @Accept json
-// @Produce json
-// @Param player_id query string false "Filter by player ID"
-// @Param team_id query string false "Filter by team ID"
-// @Param season query integer false "Filter by specific season"
-// @Param season_from query integer false "Filter by season range (start)"
-// @Param season_to query integer false "Filter by season range (end)"
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param min_ab query integer false "Minimum at-bats threshold" default(0)
-// @Param sort_by query string false "Sort by stat (avg, hr, rbi, sb, h, r)" default("h")
-// @Param sort_order query string false "Sort order (asc, desc)" default("desc")
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /stats/batting [get]
+//
+//	@Summary		Query batting statistics
+//	@Description	Flexible batting stats query with multiple filter options
+//	@Tags			stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	query		string	false	"Filter by player ID"
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			season		query		integer	false	"Filter by specific season"
+//	@Param			season_from	query		integer	false	"Filter by season range (start)"
+//	@Param			season_to	query		integer	false	"Filter by season range (end)"
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			min_ab		query		integer	false	"Minimum at-bats threshold"				default(0)
+//	@Param			sort_by		query		string	false	"Sort by stat (avg, hr, rbi, sb, h, r)"	default("h")
+//	@Param			sort_order	query		string	false	"Sort order (asc, desc)"				default("desc")
+//	@Param			page		query		integer	false	"Page number"							default(1)
+//	@Param			per_page	query		integer	false	"Results per page"						default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/stats/batting [get]
 func (sr *StatsRoutes) handleQueryBattingStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -236,26 +239,27 @@ func (sr *StatsRoutes) handleQueryBattingStats(w http.ResponseWriter, r *http.Re
 }
 
 // handleQueryPitchingStats godoc
-// @Summary Query pitching statistics
-// @Description Flexible pitching stats query with multiple filter options
-// @Tags stats
-// @Accept json
-// @Produce json
-// @Param player_id query string false "Filter by player ID"
-// @Param team_id query string false "Filter by team ID"
-// @Param season query integer false "Filter by specific season"
-// @Param season_from query integer false "Filter by season range (start)"
-// @Param season_to query integer false "Filter by season range (end)"
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param min_ip query number false "Minimum innings pitched threshold" default(0)
-// @Param min_gs query integer false "Minimum games started threshold" default(0)
-// @Param sort_by query string false "Sort by stat (era, w, so, sv, ip)" default("so")
-// @Param sort_order query string false "Sort order (asc, desc)" default("desc")
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /stats/pitching [get]
+//
+//	@Summary		Query pitching statistics
+//	@Description	Flexible pitching stats query with multiple filter options
+//	@Tags			stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	query		string	false	"Filter by player ID"
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			season		query		integer	false	"Filter by specific season"
+//	@Param			season_from	query		integer	false	"Filter by season range (start)"
+//	@Param			season_to	query		integer	false	"Filter by season range (end)"
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			min_ip		query		number	false	"Minimum innings pitched threshold"	default(0)
+//	@Param			min_gs		query		integer	false	"Minimum games started threshold"	default(0)
+//	@Param			sort_by		query		string	false	"Sort by stat (era, w, so, sv, ip)"	default("so")
+//	@Param			sort_order	query		string	false	"Sort order (asc, desc)"			default("desc")
+//	@Param			page		query		integer	false	"Page number"						default(1)
+//	@Param			per_page	query		integer	false	"Results per page"					default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/stats/pitching [get]
 func (sr *StatsRoutes) handleQueryPitchingStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -334,26 +338,27 @@ func (sr *StatsRoutes) handleQueryPitchingStats(w http.ResponseWriter, r *http.R
 }
 
 // handleQueryFieldingStats godoc
-// @Summary Query fielding statistics
-// @Description Flexible fielding stats query with multiple filter options
-// @Tags stats
-// @Accept json
-// @Produce json
-// @Param player_id query string false "Filter by player ID"
-// @Param team_id query string false "Filter by team ID"
-// @Param season query integer false "Filter by specific season"
-// @Param season_from query integer false "Filter by season range (start)"
-// @Param season_to query integer false "Filter by season range (end)"
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param position query string false "Filter by position (1B, 2B, 3B, SS, OF, C, P, DH)"
-// @Param min_g query integer false "Minimum games threshold" default(0)
-// @Param sort_by query string false "Sort by stat (po, a, e, dp, fpct)" default("po")
-// @Param sort_order query string false "Sort order (asc, desc)" default("desc")
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /stats/fielding [get]
+//
+//	@Summary		Query fielding statistics
+//	@Description	Flexible fielding stats query with multiple filter options
+//	@Tags			stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			player_id	query		string	false	"Filter by player ID"
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			season		query		integer	false	"Filter by specific season"
+//	@Param			season_from	query		integer	false	"Filter by season range (start)"
+//	@Param			season_to	query		integer	false	"Filter by season range (end)"
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			position	query		string	false	"Filter by position (1B, 2B, 3B, SS, OF, C, P, DH)"
+//	@Param			min_g		query		integer	false	"Minimum games threshold"			default(0)
+//	@Param			sort_by		query		string	false	"Sort by stat (po, a, e, dp, fpct)"	default("po")
+//	@Param			sort_order	query		string	false	"Sort order (asc, desc)"			default("desc")
+//	@Param			page		query		integer	false	"Page number"						default(1)
+//	@Param			per_page	query		integer	false	"Results per page"					default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/stats/fielding [get]
 func (sr *StatsRoutes) handleQueryFieldingStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -431,17 +436,18 @@ func (sr *StatsRoutes) handleQueryFieldingStats(w http.ResponseWriter, r *http.R
 }
 
 // handleCareerBattingLeaders godoc
-// @Summary Get career batting leaders
-// @Description Get all-time career batting leaders for a specific statistic
-// @Tags stats
-// @Accept json
-// @Produce json
-// @Param stat query string false "Statistic (hr, avg, rbi, sb, h, r, ops)" default("hr")
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(10)
-// @Success 200 {object} CareerBattingLeadersResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /leaders/batting/career [get]
+//
+//	@Summary		Get career batting leaders
+//	@Description	Get all-time career batting leaders for a specific statistic
+//	@Tags			stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			stat		query		string	false	"Statistic (hr, avg, rbi, sb, h, r, ops)"	default("hr")
+//	@Param			page		query		integer	false	"Page number"								default(1)
+//	@Param			per_page	query		integer	false	"Results per page"							default(10)
+//	@Success		200			{object}	CareerBattingLeadersResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/leaders/batting/career [get]
 func (sr *StatsRoutes) handleCareerBattingLeaders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -478,17 +484,18 @@ func (sr *StatsRoutes) handleCareerBattingLeaders(w http.ResponseWriter, r *http
 }
 
 // handleCareerPitchingLeaders godoc
-// @Summary Get career pitching leaders
-// @Description Get all-time career pitching leaders for a specific statistic
-// @Tags stats
-// @Accept json
-// @Produce json
-// @Param stat query string false "Statistic (era, so, w, sv, ip)" default("w")
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(10)
-// @Success 200 {object} CareerPitchingLeadersResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /leaders/pitching/career [get]
+//
+//	@Summary		Get career pitching leaders
+//	@Description	Get all-time career pitching leaders for a specific statistic
+//	@Tags			stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			stat		query		string	false	"Statistic (era, so, w, sv, ip)"	default("w")
+//	@Param			page		query		integer	false	"Page number"						default(1)
+//	@Param			per_page	query		integer	false	"Results per page"					default(10)
+//	@Success		200			{object}	CareerPitchingLeadersResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/leaders/pitching/career [get]
 func (sr *StatsRoutes) handleCareerPitchingLeaders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -525,23 +532,24 @@ func (sr *StatsRoutes) handleCareerPitchingLeaders(w http.ResponseWriter, r *htt
 }
 
 // handleTeamBattingStats godoc
-// @Summary Query team batting statistics
-// @Description Flexible team batting stats query with filters for team, season range, and league
-// @Tags stats
-// @Accept json
-// @Produce json
-// @Param team_id query string false "Filter by team ID"
-// @Param season query integer false "Filter by specific season"
-// @Param season_from query integer false "Filter by season range (start)"
-// @Param season_to query integer false "Filter by season range (end)"
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param sort_by query string false "Sort by stat (hr, avg, obp, slg, ops, h, r, rbi, sb)" default("hr")
-// @Param sort_order query string false "Sort order (asc, desc)" default("desc")
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /stats/teams/batting [get]
+//
+//	@Summary		Query team batting statistics
+//	@Description	Flexible team batting stats query with filters for team, season range, and league
+//	@Tags			stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			season		query		integer	false	"Filter by specific season"
+//	@Param			season_from	query		integer	false	"Filter by season range (start)"
+//	@Param			season_to	query		integer	false	"Filter by season range (end)"
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			sort_by		query		string	false	"Sort by stat (hr, avg, obp, slg, ops, h, r, rbi, sb)"	default("hr")
+//	@Param			sort_order	query		string	false	"Sort order (asc, desc)"								default("desc")
+//	@Param			page		query		integer	false	"Page number"											default(1)
+//	@Param			per_page	query		integer	false	"Results per page"										default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/stats/teams/batting [get]
 func (sr *StatsRoutes) handleTeamBattingStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -605,23 +613,24 @@ func (sr *StatsRoutes) handleTeamBattingStats(w http.ResponseWriter, r *http.Req
 }
 
 // handleTeamPitchingStats godoc
-// @Summary Query team pitching statistics
-// @Description Flexible team pitching stats query with filters for team, season range, and league
-// @Tags stats
-// @Accept json
-// @Produce json
-// @Param team_id query string false "Filter by team ID"
-// @Param season query integer false "Filter by specific season"
-// @Param season_from query integer false "Filter by season range (start)"
-// @Param season_to query integer false "Filter by season range (end)"
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param sort_by query string false "Sort by stat (era, whip, w, l, sv, so, ip, cg, sho)" default("era")
-// @Param sort_order query string false "Sort order (asc, desc)" default("desc")
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /stats/teams/pitching [get]
+//
+//	@Summary		Query team pitching statistics
+//	@Description	Flexible team pitching stats query with filters for team, season range, and league
+//	@Tags			stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			season		query		integer	false	"Filter by specific season"
+//	@Param			season_from	query		integer	false	"Filter by season range (start)"
+//	@Param			season_to	query		integer	false	"Filter by season range (end)"
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			sort_by		query		string	false	"Sort by stat (era, whip, w, l, sv, so, ip, cg, sho)"	default("era")
+//	@Param			sort_order	query		string	false	"Sort order (asc, desc)"								default("desc")
+//	@Param			page		query		integer	false	"Page number"											default(1)
+//	@Param			per_page	query		integer	false	"Results per page"										default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/stats/teams/pitching [get]
 func (sr *StatsRoutes) handleTeamPitchingStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -685,23 +694,24 @@ func (sr *StatsRoutes) handleTeamPitchingStats(w http.ResponseWriter, r *http.Re
 }
 
 // handleTeamFieldingStats godoc
-// @Summary Query team fielding statistics
-// @Description Flexible team fielding stats query with filters for team, season range, and league
-// @Tags stats
-// @Accept json
-// @Produce json
-// @Param team_id query string false "Filter by team ID"
-// @Param season query integer false "Filter by specific season"
-// @Param season_from query integer false "Filter by season range (start)"
-// @Param season_to query integer false "Filter by season range (end)"
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param sort_by query string false "Sort by stat (po, a, e, dp, pb, fpct)" default("po")
-// @Param sort_order query string false "Sort order (asc, desc)" default("desc")
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /stats/teams/fielding [get]
+//
+//	@Summary		Query team fielding statistics
+//	@Description	Flexible team fielding stats query with filters for team, season range, and league
+//	@Tags			stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			season		query		integer	false	"Filter by specific season"
+//	@Param			season_from	query		integer	false	"Filter by season range (start)"
+//	@Param			season_to	query		integer	false	"Filter by season range (end)"
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			sort_by		query		string	false	"Sort by stat (po, a, e, dp, pb, fpct)"	default("po")
+//	@Param			sort_order	query		string	false	"Sort order (asc, desc)"				default("desc")
+//	@Param			page		query		integer	false	"Page number"							default(1)
+//	@Param			per_page	query		integer	false	"Results per page"						default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/stats/teams/fielding [get]
 func (sr *StatsRoutes) handleTeamFieldingStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

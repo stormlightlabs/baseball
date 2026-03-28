@@ -196,6 +196,9 @@ type MetaRepository interface {
 	// DatasetStatuses surfaces ETL and coverage metadata per dataset.
 	DatasetStatuses(ctx context.Context) ([]DatasetStatus, error)
 
+	// Readiness summarizes whether required datasets are loaded.
+	Readiness(ctx context.Context) (ReadinessStatus, error)
+
 	// SchemaHashes returns hashes grouped by migration family/dataset.
 	SchemaHashes(ctx context.Context) (map[string]string, error)
 

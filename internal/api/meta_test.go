@@ -65,6 +65,34 @@ func TestMetaEndpoints(t *testing.T) {
 		if datasets == nil {
 			t.Error("expected datasets array, got nil")
 		}
+
+		if len(datasets) < 3 {
+			t.Errorf("expected supplemental dataset statuses, got %d", len(datasets))
+		}
+	})
+
+	t.Run("GET /v1/meta/readiness", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/meta/readiness", nil)
+		w := httptest.NewRecorder()
+
+		testServer.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status 200, got %d", w.Code)
+		}
+
+		var resp core.ReadinessStatus
+		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		if !resp.Ready {
+			t.Error("expected readiness to be true with test fixtures")
+		}
+
+		if len(resp.Datasets) == 0 {
+			t.Error("expected required datasets in readiness response")
+		}
 	})
 
 	t.Run("GET /v1/meta/constants/woba", func(t *testing.T) {
@@ -252,6 +280,26 @@ func TestHealthEndpoint(t *testing.T) {
 
 		if resp.Status != "ok" {
 			t.Errorf("expected status 'ok', got '%s'", resp.Status)
+		}
+	})
+
+	t.Run("GET /v1/ready", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/ready", nil)
+		w := httptest.NewRecorder()
+
+		testServer.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status 200, got %d", w.Code)
+		}
+
+		var resp core.ReadinessStatus
+		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		if !resp.Ready {
+			t.Error("expected ready=true")
 		}
 	})
 }

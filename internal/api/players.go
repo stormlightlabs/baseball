@@ -34,16 +34,17 @@ func (pr *PlayerRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleGetPlayer godoc
-// @Summary Get player by ID
-// @Description Get detailed biographical information for a specific player
-// @Tags players
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Success 200 {object} core.Player
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id} [get]
+//
+//	@Summary		Get player by ID
+//	@Description	Get detailed biographical information for a specific player
+//	@Tags			players
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Player ID"
+//	@Success		200	{object}	core.Player
+//	@Failure		404	{object}	ErrorResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/players/{id} [get]
 func (pr *PlayerRoutes) handleGetPlayer(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -57,18 +58,19 @@ func (pr *PlayerRoutes) handleGetPlayer(w http.ResponseWriter, r *http.Request) 
 }
 
 // handleListPlayers godoc
-// @Summary List players
-// @Description Search and browse players with optional name filter and pagination
-// @Tags players
-// @Accept json
-// @Produce json
-// @Param name query string false "Player name search query"
-// @Param debut_year query integer false "Filter by debut year"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players [get]
+//
+//	@Summary		List players
+//	@Description	Search and browse players with optional name filter and pagination
+//	@Tags			players
+//	@Accept			json
+//	@Produce		json
+//	@Param			name		query		string	false	"Player name search query"
+//	@Param			debut_year	query		integer	false	"Filter by debut year"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players [get]
 func (pr *PlayerRoutes) handleListPlayers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -101,15 +103,16 @@ func (pr *PlayerRoutes) handleListPlayers(w http.ResponseWriter, r *http.Request
 }
 
 // handlePlayerSeasons godoc
-// @Summary Get player season statistics
-// @Description Get season-by-season batting and pitching statistics for a player
-// @Tags players
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Success 200 {object} PlayerSeasonsResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/seasons [get]
+//
+//	@Summary		Get player season statistics
+//	@Description	Get season-by-season batting and pitching statistics for a player
+//	@Tags			players
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Player ID"
+//	@Success		200	{object}	PlayerSeasonsResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/players/{id}/seasons [get]
 func (pr *PlayerRoutes) handlePlayerSeasons(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -130,18 +133,19 @@ func (pr *PlayerRoutes) handlePlayerSeasons(w http.ResponseWriter, r *http.Reque
 }
 
 // handlePlayerAwards godoc
-// @Summary Get player awards
-// @Description Get all awards won by a player
-// @Tags players
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Param year query integer false "Filter by year"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/awards [get]
+//
+//	@Summary		Get player awards
+//	@Description	Get all awards won by a player
+//	@Tags			players
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Player ID"
+//	@Param			year		query		integer	false	"Filter by year"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{id}/awards [get]
 func (pr *PlayerRoutes) handlePlayerAwards(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -175,15 +179,16 @@ func (pr *PlayerRoutes) handlePlayerAwards(w http.ResponseWriter, r *http.Reques
 }
 
 // handlePlayerHallOfFame godoc
-// @Summary Get player Hall of Fame records
-// @Description Get Hall of Fame voting records for a player
-// @Tags players
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Success 200 {object} HallOfFameResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/hall-of-fame [get]
+//
+//	@Summary		Get player Hall of Fame records
+//	@Description	Get Hall of Fame voting records for a player
+//	@Tags			players
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Player ID"
+//	@Success		200	{object}	HallOfFameResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/players/{id}/hall-of-fame [get]
 func (pr *PlayerRoutes) handlePlayerHallOfFame(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -200,18 +205,19 @@ func (pr *PlayerRoutes) handlePlayerHallOfFame(w http.ResponseWriter, r *http.Re
 }
 
 // handlePlayerGameLogs godoc
-// @Summary Get player game logs
-// @Description Get list of games where the player appeared in the starting lineup
-// @Tags players
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Param season query integer false "Filter by season"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/game-logs [get]
+//
+//	@Summary		Get player game logs
+//	@Description	Get list of games where the player appeared in the starting lineup
+//	@Tags			players
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Filter by season"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{id}/game-logs [get]
 func (pr *PlayerRoutes) handlePlayerGameLogs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -238,24 +244,25 @@ func (pr *PlayerRoutes) handlePlayerGameLogs(w http.ResponseWriter, r *http.Requ
 }
 
 // handlePlayerBattingGameLogs godoc
-// @Summary Get player batting game logs
-// @Description Get per-game batting statistics for a player from the materialized view. Enables "game finder" queries with filters.
-// @Tags players, stats
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Param season query integer false "Filter by season"
-// @Param date_from query string false "Filter by date from (YYYYMMDD)"
-// @Param date_to query string false "Filter by date to (YYYYMMDD)"
-// @Param min_hr query integer false "Minimum home runs"
-// @Param min_h query integer false "Minimum hits"
-// @Param min_rbi query integer false "Minimum RBI"
-// @Param min_pa query integer false "Minimum plate appearances"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/game-logs/batting [get]
+//
+//	@Summary		Get player batting game logs
+//	@Description	Get per-game batting statistics for a player from the materialized view. Enables "game finder" queries with filters.
+//	@Tags			players, stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Filter by season"
+//	@Param			date_from	query		string	false	"Filter by date from (YYYYMMDD)"
+//	@Param			date_to		query		string	false	"Filter by date to (YYYYMMDD)"
+//	@Param			min_hr		query		integer	false	"Minimum home runs"
+//	@Param			min_h		query		integer	false	"Minimum hits"
+//	@Param			min_rbi		query		integer	false	"Minimum RBI"
+//	@Param			min_pa		query		integer	false	"Minimum plate appearances"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{id}/game-logs/batting [get]
 func (pr *PlayerRoutes) handlePlayerBattingGameLogs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -313,22 +320,23 @@ func (pr *PlayerRoutes) handlePlayerBattingGameLogs(w http.ResponseWriter, r *ht
 }
 
 // handlePlayerPitchingGameLogs godoc
-// @Summary Get player pitching game logs
-// @Description Get per-game pitching statistics for a player from the materialized view. Enables "game finder" queries with filters.
-// @Tags players, stats
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Param season query integer false "Filter by season"
-// @Param date_from query string false "Filter by date from (YYYYMMDD)"
-// @Param date_to query string false "Filter by date to (YYYYMMDD)"
-// @Param min_so query integer false "Minimum strikeouts"
-// @Param min_ip query number false "Minimum innings pitched"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/game-logs/pitching [get]
+//
+//	@Summary		Get player pitching game logs
+//	@Description	Get per-game pitching statistics for a player from the materialized view. Enables "game finder" queries with filters.
+//	@Tags			players, stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Filter by season"
+//	@Param			date_from	query		string	false	"Filter by date from (YYYYMMDD)"
+//	@Param			date_to		query		string	false	"Filter by date to (YYYYMMDD)"
+//	@Param			min_so		query		integer	false	"Minimum strikeouts"
+//	@Param			min_ip		query		number	false	"Minimum innings pitched"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{id}/game-logs/pitching [get]
 func (pr *PlayerRoutes) handlePlayerPitchingGameLogs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -376,21 +384,22 @@ func (pr *PlayerRoutes) handlePlayerPitchingGameLogs(w http.ResponseWriter, r *h
 }
 
 // handlePlayerFieldingGameLogs godoc
-// @Summary Get player fielding game logs
-// @Description Get per-game fielding statistics for a player from the materialized view. Each row represents performance at a specific position. Enables "game finder" queries with filters.
-// @Tags players, stats
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Param season query integer false "Filter by season"
-// @Param date_from query string false "Filter by date from (YYYYMMDD)"
-// @Param date_to query string false "Filter by date to (YYYYMMDD)"
-// @Param position query integer false "Filter by position (1=P, 2=C, 3=1B, 4=2B, 5=3B, 6=SS, 7=LF, 8=CF, 9=RF)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/game-logs/fielding [get]
+//
+//	@Summary		Get player fielding game logs
+//	@Description	Get per-game fielding statistics for a player from the materialized view. Each row represents performance at a specific position. Enables "game finder" queries with filters.
+//	@Tags			players, stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Player ID"
+//	@Param			season		query		integer	false	"Filter by season"
+//	@Param			date_from	query		string	false	"Filter by date from (YYYYMMDD)"
+//	@Param			date_to		query		string	false	"Filter by date to (YYYYMMDD)"
+//	@Param			position	query		integer	false	"Filter by position (1=P, 2=C, 3=1B, 4=2B, 5=3B, 6=SS, 7=LF, 8=CF, 9=RF)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/players/{id}/game-logs/fielding [get]
 func (pr *PlayerRoutes) handlePlayerFieldingGameLogs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -433,15 +442,16 @@ func (pr *PlayerRoutes) handlePlayerFieldingGameLogs(w http.ResponseWriter, r *h
 }
 
 // handlePlayerAppearances godoc
-// @Summary Get player appearances
-// @Description Get appearance records by position for a player across all seasons
-// @Tags players
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Success 200 {object} []core.PlayerAppearance
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/appearances [get]
+//
+//	@Summary		Get player appearances
+//	@Description	Get appearance records by position for a player across all seasons
+//	@Tags			players
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Player ID"
+//	@Success		200	{object}	[]core.PlayerAppearance
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/players/{id}/appearances [get]
 func (pr *PlayerRoutes) handlePlayerAppearances(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -456,15 +466,16 @@ func (pr *PlayerRoutes) handlePlayerAppearances(w http.ResponseWriter, r *http.R
 }
 
 // handlePlayerTeams godoc
-// @Summary Get player's team history
-// @Description List every season/team combination a player appeared in
-// @Tags players
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Success 200 {array} core.PlayerTeamSeason
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/teams [get]
+//
+//	@Summary		Get player's team history
+//	@Description	List every season/team combination a player appeared in
+//	@Tags			players
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Player ID"
+//	@Success		200	{array}		core.PlayerTeamSeason
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/players/{id}/teams [get]
 func (pr *PlayerRoutes) handlePlayerTeams(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -479,15 +490,16 @@ func (pr *PlayerRoutes) handlePlayerTeams(w http.ResponseWriter, r *http.Request
 }
 
 // handlePlayerSalaries godoc
-// @Summary Get player's salary history
-// @Description Return all salary records for a player from Lahman Salaries table
-// @Tags players
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Success 200 {array} core.PlayerSalary
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/salaries [get]
+//
+//	@Summary		Get player's salary history
+//	@Description	Return all salary records for a player from Lahman Salaries table
+//	@Tags			players
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Player ID"
+//	@Success		200	{array}		core.PlayerSalary
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/players/{id}/salaries [get]
 func (pr *PlayerRoutes) handlePlayerSalaries(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -502,15 +514,16 @@ func (pr *PlayerRoutes) handlePlayerSalaries(w http.ResponseWriter, r *http.Requ
 }
 
 // handlePlayerRelatives godoc
-// @Summary Get player's family relatives
-// @Description Return family relationships for a player from Retrosheet biodata. Includes brothers, fathers, sons, uncles, cousins, and other family relationships. Returns empty array if player has no recorded relatives or no retrosheet ID. Examples: aaronha01 (Hank Aaron - brother Tommie), alomaro01 (Roberto Alomar - brother Sandy Jr, father Sandy Sr), ripkeca01 (Cal Ripken Jr - brother Billy, father Cal Sr)
-// @Tags players
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID" example(aaronha01)
-// @Success 200 {array} core.PlayerRelative
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/relatives [get]
+//
+//	@Summary		Get player's family relatives
+//	@Description	Return family relationships for a player from Retrosheet biodata. Includes brothers, fathers, sons, uncles, cousins, and other family relationships. Returns empty array if player has no recorded relatives or no retrosheet ID. Examples: aaronha01 (Hank Aaron - brother Tommie), alomaro01 (Roberto Alomar - brother Sandy Jr, father Sandy Sr), ripkeca01 (Cal Ripken Jr - brother Billy, father Cal Sr)
+//	@Tags			players
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Player ID"	example(aaronha01)
+//	@Success		200	{array}		core.PlayerRelative
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/players/{id}/relatives [get]
 func (pr *PlayerRoutes) handlePlayerRelatives(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -525,15 +538,16 @@ func (pr *PlayerRoutes) handlePlayerRelatives(w http.ResponseWriter, r *http.Req
 }
 
 // handlePlayerBattingStats godoc
-// @Summary Get player's batting statistics
-// @Description Get comprehensive batting statistics for a player including career totals and season-by-season breakdowns
-// @Tags players, stats
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Success 200 {object} PlayerBattingStatsResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/stats/batting [get]
+//
+//	@Summary		Get player's batting statistics
+//	@Description	Get comprehensive batting statistics for a player including career totals and season-by-season breakdowns
+//	@Tags			players, stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Player ID"
+//	@Success		200	{object}	PlayerBattingStatsResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/players/{id}/stats/batting [get]
 func (pr *PlayerRoutes) handlePlayerBattingStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))
@@ -584,15 +598,16 @@ func (pr *PlayerRoutes) handlePlayerBattingStats(w http.ResponseWriter, r *http.
 }
 
 // handlePlayerPitchingStats godoc
-// @Summary Get player's pitching statistics
-// @Description Get comprehensive pitching statistics for a player including career totals and season-by-season breakdowns
-// @Tags players, stats
-// @Accept json
-// @Produce json
-// @Param id path string true "Player ID"
-// @Success 200 {object} PlayerPitchingStatsResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /players/{id}/stats/pitching [get]
+//
+//	@Summary		Get player's pitching statistics
+//	@Description	Get comprehensive pitching statistics for a player including career totals and season-by-season breakdowns
+//	@Tags			players, stats
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Player ID"
+//	@Success		200	{object}	PlayerPitchingStatsResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/players/{id}/stats/pitching [get]
 func (pr *PlayerRoutes) handlePlayerPitchingStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.PlayerID(r.PathValue("id"))

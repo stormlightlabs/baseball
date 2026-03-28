@@ -21,14 +21,15 @@ func (ar *AwardRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleListAwards godoc
-// @Summary List all awards
-// @Description Get a list of all baseball awards
-// @Tags awards
-// @Accept json
-// @Produce json
-// @Success 200 {object} AwardsListResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /awards [get]
+//
+//	@Summary		List all awards
+//	@Description	Get a list of all baseball awards
+//	@Tags			awards
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	AwardsListResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/awards [get]
 func (ar *AwardRoutes) handleListAwards(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -44,20 +45,21 @@ func (ar *AwardRoutes) handleListAwards(w http.ResponseWriter, r *http.Request) 
 }
 
 // handleGetAward godoc
-// @Summary Get award details
-// @Description Get detailed information about a specific award including winners
-// @Tags awards
-// @Accept json
-// @Produce json
-// @Param award_id path string true "Award ID"
-// @Param year query integer false "Filter by year"
-// @Param player_id query string false "Filter by player ID"
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /awards/{award_id} [get]
+//
+//	@Summary		Get award details
+//	@Description	Get detailed information about a specific award including winners
+//	@Tags			awards
+//	@Accept			json
+//	@Produce		json
+//	@Param			award_id	path		string	true	"Award ID"
+//	@Param			year		query		integer	false	"Filter by year"
+//	@Param			player_id	query		string	false	"Filter by player ID"
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/awards/{award_id} [get]
 func (ar *AwardRoutes) handleGetAward(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -107,20 +109,21 @@ func (ar *AwardRoutes) handleGetAward(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleSeasonAwards godoc
-// @Summary Get awards for a season
-// @Description Get all awards issued during a specific season
-// @Tags awards
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param award_id query string false "Filter by award ID"
-// @Param player_id query string false "Filter by player ID"
-// @Param league query string false "Filter by league (AL, NL)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/awards [get]
+//
+//	@Summary		Get awards for a season
+//	@Description	Get all awards issued during a specific season
+//	@Tags			awards
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			award_id	query		string	false	"Filter by award ID"
+//	@Param			player_id	query		string	false	"Filter by player ID"
+//	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{year}/awards [get]
 func (ar *AwardRoutes) handleSeasonAwards(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

@@ -21,16 +21,17 @@ func (pr *PostseasonRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleSeasonPostseasonSeries godoc
-// @Summary Get postseason series for a season
-// @Description Get all postseason series for a specific year
-// @Tags postseason
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Success 200 {object} PostseasonSeriesResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/postseason/series [get]
+//
+//	@Summary		Get postseason series for a season
+//	@Description	Get all postseason series for a specific year
+//	@Tags			postseason
+//	@Accept			json
+//	@Produce		json
+//	@Param			year	path		integer	true	"Season year"
+//	@Success		200		{object}	PostseasonSeriesResponse
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/seasons/{year}/postseason/series [get]
 func (pr *PostseasonRoutes) handleSeasonPostseasonSeries(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -49,18 +50,19 @@ func (pr *PostseasonRoutes) handleSeasonPostseasonSeries(w http.ResponseWriter, 
 }
 
 // handlePostseasonGames godoc
-// @Summary Get postseason games for a season
-// @Description Get all postseason games from Retrosheet data for a specific year
-// @Tags postseason, games
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(100)
-// @Success 200 {object} PaginatedResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /seasons/{year}/postseason/games [get]
+//
+//	@Summary		Get postseason games for a season
+//	@Description	Get all postseason games from Retrosheet data for a specific year
+//	@Tags			postseason, games
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(100)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/seasons/{year}/postseason/games [get]
 func (pr *PostseasonRoutes) handlePostseasonGames(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))

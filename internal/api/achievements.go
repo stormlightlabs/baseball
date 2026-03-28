@@ -23,21 +23,22 @@ func (ar *AchievementRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleListNoHitters godoc
-// @Summary List no-hitters
-// @Description Get all games where a team allowed zero hits to the opposing team
-// @Tags achievements
-// @Accept json
-// @Produce json
-// @Param season query integer false "Filter by season year"
-// @Param season_from query integer false "Filter from season (inclusive)"
-// @Param season_to query integer false "Filter to season (inclusive)"
-// @Param team_id query string false "Filter by team ID"
-// @Param park_id query string false "Filter by park ID"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /achievements/no-hitters [get]
+//
+//	@Summary		List no-hitters
+//	@Description	Get all games where a team allowed zero hits to the opposing team
+//	@Tags			achievements
+//	@Accept			json
+//	@Produce		json
+//	@Param			season		query		integer	false	"Filter by season year"
+//	@Param			season_from	query		integer	false	"Filter from season (inclusive)"
+//	@Param			season_to	query		integer	false	"Filter to season (inclusive)"
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			park_id		query		string	false	"Filter by park ID"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/achievements/no-hitters [get]
 func (ar *AchievementRoutes) handleListNoHitters(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -64,22 +65,23 @@ func (ar *AchievementRoutes) handleListNoHitters(w http.ResponseWriter, r *http.
 }
 
 // handleListCycles godoc
-// @Summary List hitting for the cycle achievements
-// @Description Get all games where a player hit a single, double, triple, and home run
-// @Tags achievements
-// @Accept json
-// @Produce json
-// @Param season query integer false "Filter by season year"
-// @Param season_from query integer false "Filter from season (inclusive)"
-// @Param season_to query integer false "Filter to season (inclusive)"
-// @Param team_id query string false "Filter by team ID"
-// @Param player_id query string false "Filter by player ID (Retrosheet format)"
-// @Param park_id query string false "Filter by park ID"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /achievements/cycles [get]
+//
+//	@Summary		List hitting for the cycle achievements
+//	@Description	Get all games where a player hit a single, double, triple, and home run
+//	@Tags			achievements
+//	@Accept			json
+//	@Produce		json
+//	@Param			season		query		integer	false	"Filter by season year"
+//	@Param			season_from	query		integer	false	"Filter from season (inclusive)"
+//	@Param			season_to	query		integer	false	"Filter to season (inclusive)"
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			player_id	query		string	false	"Filter by player ID (Retrosheet format)"
+//	@Param			park_id		query		string	false	"Filter by park ID"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/achievements/cycles [get]
 func (ar *AchievementRoutes) handleListCycles(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -106,23 +108,24 @@ func (ar *AchievementRoutes) handleListCycles(w http.ResponseWriter, r *http.Req
 }
 
 // handleListMultiHRGames godoc
-// @Summary List multiple home run games
-// @Description Get all games where a player hit 3 or more home runs
-// @Tags achievements
-// @Accept json
-// @Produce json
-// @Param season query integer false "Filter by season year"
-// @Param season_from query integer false "Filter from season (inclusive)"
-// @Param season_to query integer false "Filter to season (inclusive)"
-// @Param team_id query string false "Filter by team ID"
-// @Param player_id query string false "Filter by player ID (Retrosheet format)"
-// @Param park_id query string false "Filter by park ID"
-// @Param min_hr query integer false "Minimum home runs (default: 3)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /achievements/multi-hr-games [get]
+//
+//	@Summary		List multiple home run games
+//	@Description	Get all games where a player hit 3 or more home runs
+//	@Tags			achievements
+//	@Accept			json
+//	@Produce		json
+//	@Param			season		query		integer	false	"Filter by season year"
+//	@Param			season_from	query		integer	false	"Filter from season (inclusive)"
+//	@Param			season_to	query		integer	false	"Filter to season (inclusive)"
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			player_id	query		string	false	"Filter by player ID (Retrosheet format)"
+//	@Param			park_id		query		string	false	"Filter by park ID"
+//	@Param			min_hr		query		integer	false	"Minimum home runs (default: 3)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/achievements/multi-hr-games [get]
 func (ar *AchievementRoutes) handleListMultiHRGames(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -155,21 +158,22 @@ func (ar *AchievementRoutes) handleListMultiHRGames(w http.ResponseWriter, r *ht
 }
 
 // handleListTriplePlays godoc
-// @Summary List triple plays
-// @Description Get all games where a team recorded one or more triple plays
-// @Tags achievements
-// @Accept json
-// @Produce json
-// @Param season query integer false "Filter by season year"
-// @Param season_from query integer false "Filter from season (inclusive)"
-// @Param season_to query integer false "Filter to season (inclusive)"
-// @Param team_id query string false "Filter by team ID"
-// @Param park_id query string false "Filter by park ID"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /achievements/triple-plays [get]
+//
+//	@Summary		List triple plays
+//	@Description	Get all games where a team recorded one or more triple plays
+//	@Tags			achievements
+//	@Accept			json
+//	@Produce		json
+//	@Param			season		query		integer	false	"Filter by season year"
+//	@Param			season_from	query		integer	false	"Filter from season (inclusive)"
+//	@Param			season_to	query		integer	false	"Filter to season (inclusive)"
+//	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			park_id		query		string	false	"Filter by park ID"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/achievements/triple-plays [get]
 func (ar *AchievementRoutes) handleListTriplePlays(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -196,22 +200,23 @@ func (ar *AchievementRoutes) handleListTriplePlays(w http.ResponseWriter, r *htt
 }
 
 // handleListExtraInningGames godoc
-// @Summary List extra inning games
-// @Description Get all games that lasted 20 or more innings
-// @Tags achievements
-// @Accept json
-// @Produce json
-// @Param season query integer false "Filter by season year"
-// @Param season_from query integer false "Filter from season (inclusive)"
-// @Param season_to query integer false "Filter to season (inclusive)"
-// @Param team_id query string false "Filter by team ID (home or away)"
-// @Param park_id query string false "Filter by park ID"
-// @Param min_innings query integer false "Minimum innings (default: 20)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /achievements/extra-inning-games [get]
+//
+//	@Summary		List extra inning games
+//	@Description	Get all games that lasted 20 or more innings
+//	@Tags			achievements
+//	@Accept			json
+//	@Produce		json
+//	@Param			season		query		integer	false	"Filter by season year"
+//	@Param			season_from	query		integer	false	"Filter from season (inclusive)"
+//	@Param			season_to	query		integer	false	"Filter to season (inclusive)"
+//	@Param			team_id		query		string	false	"Filter by team ID (home or away)"
+//	@Param			park_id		query		string	false	"Filter by park ID"
+//	@Param			min_innings	query		integer	false	"Minimum innings (default: 20)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/achievements/extra-inning-games [get]
 func (ar *AchievementRoutes) handleListExtraInningGames(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

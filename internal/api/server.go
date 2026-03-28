@@ -1,103 +1,103 @@
 // Package api provides HTTP handlers for the Baseball API
 //
-// @title Baseball API
-// @description.markdown
-// @version 1.0
-// @BasePath /v1
+//	@title	Baseball API
+//	@description.markdown
+//	@version			1.0
+//	@BasePath			/v1
 //
-// @contact.name API Support
-// @contact.url https://github.com/stormlightlabs/baseball
-// @contact.email info@stormlightlabs.org
+//	@contact.name		API Support
+//	@contact.url		https://github.com/stormlightlabs/baseball
+//	@contact.email		info@stormlightlabs.org
 //
-// @license.name MPL-2.0
-// @license.url https://opensource.org/license/mpl-2-0
+//	@license.name		MPL-2.0
+//	@license.url		https://opensource.org/license/mpl-2-0
 //
-// @tag.name allstar
-// @tag.description MLB All-Star game data
+//	@tag.name			allstar
+//	@tag.description	MLB All-Star game data
 //
-// @tag.name games
-// @tag.description Game data
+//	@tag.name			games
+//	@tag.description	Game data
 //
-// @tag.name meta
-// @tag.description Metadata about the API
+//	@tag.name			meta
+//	@tag.description	Metadata about the API
 //
-// @tag.name computed
-// @tag.description Computed statistics
+//	@tag.name			computed
+//	@tag.description	Computed statistics
 //
-// @tag.name derived
-// @tag.description Derived statistics
+//	@tag.name			derived
+//	@tag.description	Derived statistics
 //
-// @tag.name leverage
-// @tag.description Leverage index data
+//	@tag.name			leverage
+//	@tag.description	Leverage index data
 //
-// @tag.name win-expectancy
-// @tag.description Win expectancy data
+//	@tag.name			win-expectancy
+//	@tag.description	Win expectancy data
 //
-// @tag.name leaders
-// @tag.description Leaderboard data
+//	@tag.name			leaders
+//	@tag.description	Leaderboard data
 //
-// @tag.name war
-// @tag.description Computed WAR
+//	@tag.name			war
+//	@tag.description	Computed WAR
 //
-// @tag.name mlb
-// @tag.description MLB Stats API endpoint proxies
+//	@tag.name			mlb
+//	@tag.description	MLB Stats API endpoint proxies
 //
-// @tag.name pitching
-// @tag.description MLB pitching statistics
+//	@tag.name			pitching
+//	@tag.description	MLB pitching statistics
 //
-// @tag.name search
-// @tag.description Searchable data
+//	@tag.name			search
+//	@tag.description	Searchable data
 //
-// @tag.name awards
-// @tag.description MLB awards data
+//	@tag.name			awards
+//	@tag.description	MLB awards data
 //
-// @tag.name players
-// @tag.description Player career data
+//	@tag.name			players
+//	@tag.description	Player career data
 //
-// @tag.name teams
-// @tag.description Team/franchise data
+//	@tag.name			teams
+//	@tag.description	Team/franchise data
 //
-// @tag.name stats
-// @tag.description MLB game statistics
+//	@tag.name			stats
+//	@tag.description	MLB game statistics
 //
-// @tag.name pitching
-// @tag.description MLB pitching statistics
+//	@tag.name			pitching
+//	@tag.description	MLB pitching statistics
 //
-// @tag.name batting
-// @tag.description MLB batting statistics
+//	@tag.name			batting
+//	@tag.description	MLB batting statistics
 //
-// @tag.name parks
-// @tag.description MLB park data
+//	@tag.name			parks
+//	@tag.description	MLB park data
 //
-// @tag.name managers
-// @tag.description MLB manager data
+//	@tag.name			managers
+//	@tag.description	MLB manager data
 //
-// @tag.name umpires
-// @tag.description MLB umpire data
+//	@tag.name			umpires
+//	@tag.description	MLB umpire data
 //
-// @tag.name coaches
-// @tag.description MLB coach data
+//	@tag.name			coaches
+//	@tag.description	MLB coach data
 //
-// @tag.name seasons
-// @tag.description MLB season data
+//	@tag.name			seasons
+//	@tag.description	MLB season data
 //
-// @tag.name postseason
-// @tag.description MLB postseason data
+//	@tag.name			postseason
+//	@tag.description	MLB postseason data
 //
-// @tag.name ejections
-// @tag.description MLB ejection data
+//	@tag.name			ejections
+//	@tag.description	MLB ejection data
 //
-// @tag.name win-expectancy
-// @tag.description Computed win expectancy data
+//	@tag.name			win-expectancy
+//	@tag.description	Computed win expectancy data
 //
-// @tag.name federalleague
-// @tag.description Federal League (1914-1915) data
+//	@tag.name			federalleague
+//	@tag.description	Federal League (1914-1915) data
 //
-// @tag.name achievements
-// @tag.description Baseball achievements and milestones
+//	@tag.name			achievements
+//	@tag.description	Baseball achievements and milestones
 //
-// @tag.name salaries
-// @tag.description Player salary data and trends
+//	@tag.name			salaries
+//	@tag.description	Player salary data and trends
 package api
 
 import (
@@ -190,13 +190,13 @@ func newServer(registrars ...Registrar) *Server {
 	}
 
 	// Health check endpoint
-	// @Summary Health check
-	// @Description Check if the API server is running
-	// @Tags health
-	// @Accept json
-	// @Produce json
-	// @Success 200 {object} HealthResponse
-	// @Router /health [get]
+	//	@Summary		Health check
+	//	@Description	Check if the API process is running
+	//	@Tags			health
+	//	@Accept			json
+	//	@Produce		json
+	//	@Success		200	{object}	HealthResponse
+	//	@Router			/health [get]
 	mux.HandleFunc("GET /v1/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, HealthResponse{Status: "ok"})
 	})

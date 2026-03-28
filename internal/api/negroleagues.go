@@ -33,20 +33,21 @@ func (nlr *NegroLeaguesRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleListGames godoc
-// @Summary List Negro Leagues games
-// @Description Get all games from the Negro Leagues (1935-1949)
-// @Tags negroleagues, games
-// @Accept json
-// @Produce json
-// @Param season query integer false "Filter by season year"
-// @Param home_team query string false "Filter by home team ID"
-// @Param away_team query string false "Filter by away team ID"
-// @Param league query string false "Filter by specific league code (NAL, NNL, etc.)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /negroleagues/games [get]
+//
+//	@Summary		List Negro Leagues games
+//	@Description	Get all games from the Negro Leagues (1935-1949)
+//	@Tags			negroleagues, games
+//	@Accept			json
+//	@Produce		json
+//	@Param			season		query		integer	false	"Filter by season year"
+//	@Param			home_team	query		string	false	"Filter by home team ID"
+//	@Param			away_team	query		string	false	"Filter by away team ID"
+//	@Param			league		query		string	false	"Filter by specific league code (NAL, NNL, etc.)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/negroleagues/games [get]
 func (nlr *NegroLeaguesRoutes) handleListGames(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -98,18 +99,19 @@ func (nlr *NegroLeaguesRoutes) handleListGames(w http.ResponseWriter, r *http.Re
 }
 
 // handleListTeams godoc
-// @Summary List Negro Leagues teams
-// @Description Get all teams that played in the Negro Leagues (1935-1949)
-// @Tags negroleagues, teams
-// @Accept json
-// @Produce json
-// @Param year query integer false "Filter by season year"
-// @Param league query string false "Filter by specific league code (NAL, NNL, etc.)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(50)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /negroleagues/teams [get]
+//
+//	@Summary		List Negro Leagues teams
+//	@Description	Get all teams that played in the Negro Leagues (1935-1949)
+//	@Tags			negroleagues, teams
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		query		integer	false	"Filter by season year"
+//	@Param			league		query		string	false	"Filter by specific league code (NAL, NNL, etc.)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(50)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/negroleagues/teams [get]
 func (nlr *NegroLeaguesRoutes) handleListTeams(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -151,22 +153,23 @@ func (nlr *NegroLeaguesRoutes) handleListTeams(w http.ResponseWriter, r *http.Re
 }
 
 // handleListPlays godoc
-// @Summary List Negro Leagues plays
-// @Description Get play-by-play data from Negro Leagues games
-// @Tags negroleagues, plays
-// @Accept json
-// @Produce json
-// @Param batter query string false "Filter by batter ID"
-// @Param pitcher query string false "Filter by pitcher ID"
-// @Param team query string false "Filter by team ID (batting team)"
-// @Param league query string false "Filter by specific league code (NAL, NNL, etc.)"
-// @Param date_from query string false "Start date (YYYYMMDD)"
-// @Param date_to query string false "End date (YYYYMMDD)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(100)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /negroleagues/plays [get]
+//
+//	@Summary		List Negro Leagues plays
+//	@Description	Get play-by-play data from Negro Leagues games
+//	@Tags			negroleagues, plays
+//	@Accept			json
+//	@Produce		json
+//	@Param			batter		query		string	false	"Filter by batter ID"
+//	@Param			pitcher		query		string	false	"Filter by pitcher ID"
+//	@Param			team		query		string	false	"Filter by team ID (batting team)"
+//	@Param			league		query		string	false	"Filter by specific league code (NAL, NNL, etc.)"
+//	@Param			date_from	query		string	false	"Start date (YYYYMMDD)"
+//	@Param			date_to		query		string	false	"End date (YYYYMMDD)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(100)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/negroleagues/plays [get]
 func (nlr *NegroLeaguesRoutes) handleListPlays(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -226,18 +229,19 @@ func (nlr *NegroLeaguesRoutes) handleListPlays(w http.ResponseWriter, r *http.Re
 }
 
 // handleSeasonSchedule godoc
-// @Summary Get Negro Leagues season schedule
-// @Description Get all games for a specific Negro Leagues season
-// @Tags negroleagues, games
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year (1935-1949)"
-// @Param league query string false "Filter by specific league code (NAL, NNL, etc.)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(100)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /negroleagues/seasons/{year}/schedule [get]
+//
+//	@Summary		Get Negro Leagues season schedule
+//	@Description	Get all games for a specific Negro Leagues season
+//	@Tags			negroleagues, games
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year (1935-1949)"
+//	@Param			league		query		string	false	"Filter by specific league code (NAL, NNL, etc.)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(100)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/negroleagues/seasons/{year}/schedule [get]
 func (nlr *NegroLeaguesRoutes) handleSeasonSchedule(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))
@@ -278,19 +282,20 @@ func (nlr *NegroLeaguesRoutes) handleSeasonSchedule(w http.ResponseWriter, r *ht
 }
 
 // handleTeamGames godoc
-// @Summary Get Negro Leagues team games for a season
-// @Description Get all games for a specific Negro Leagues team in a season
-// @Tags negroleagues, games, teams
-// @Accept json
-// @Produce json
-// @Param year path integer true "Season year"
-// @Param team_id path string true "Team ID"
-// @Param league query string false "Filter by specific league code (NAL, NNL, etc.)"
-// @Param page query integer false "Page number" default(1)
-// @Param per_page query integer false "Results per page" default(100)
-// @Success 200 {object} PaginatedResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /negroleagues/seasons/{year}/teams/{team_id}/games [get]
+//
+//	@Summary		Get Negro Leagues team games for a season
+//	@Description	Get all games for a specific Negro Leagues team in a season
+//	@Tags			negroleagues, games, teams
+//	@Accept			json
+//	@Produce		json
+//	@Param			year		path		integer	true	"Season year"
+//	@Param			team_id		path		string	true	"Team ID"
+//	@Param			league		query		string	false	"Filter by specific league code (NAL, NNL, etc.)"
+//	@Param			page		query		integer	false	"Page number"		default(1)
+//	@Param			per_page	query		integer	false	"Results per page"	default(100)
+//	@Success		200			{object}	PaginatedResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/negroleagues/seasons/{year}/teams/{team_id}/games [get]
 func (nlr *NegroLeaguesRoutes) handleTeamGames(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	year := core.SeasonYear(getIntPathValue(r, "year"))

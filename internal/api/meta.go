@@ -18,8 +18,10 @@ func NewMetaRoutes(repo core.MetaRepository) *MetaRoutes {
 }
 
 func (mr *MetaRoutes) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /v1/ready", mr.handleReady)
 	mux.HandleFunc("GET /v1/meta", mr.handleMeta)
 	mux.HandleFunc("GET /v1/meta/datasets", mr.handleDatasetStatus)
+	mux.HandleFunc("GET /v1/meta/readiness", mr.handleReadiness)
 	mux.HandleFunc("GET /v1/meta/constants/woba", mr.handleWOBAConstants)
 	mux.HandleFunc("GET /v1/meta/constants/league", mr.handleLeagueConstants)
 	mux.HandleFunc("GET /v1/meta/constants/park-factors", mr.handleParkFactors)
@@ -39,14 +41,15 @@ type datasetCoverage struct {
 }
 
 // handleMeta godoc
-// @Summary API metadata
-// @Description Returns API version, dataset freshness, coverage, and schema fingerprints
-// @Tags meta
-// @Accept json
-// @Produce json
-// @Success 200 {object} metaResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /meta [get]
+//
+//	@Summary		API metadata
+//	@Description	Returns API version, dataset freshness, coverage, and schema fingerprints
+//	@Tags			meta
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	metaResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/meta [get]
 func (mr *MetaRoutes) handleMeta(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -83,14 +86,15 @@ func (mr *MetaRoutes) handleMeta(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleDatasetStatus godoc
-// @Summary Dataset status
-// @Description Returns dataset ETL metadata and coverage
-// @Tags meta
-// @Accept json
-// @Produce json
-// @Success 200 {array} core.DatasetStatus
-// @Failure 500 {object} ErrorResponse
-// @Router /meta/datasets [get]
+//
+//	@Summary		Dataset status
+//	@Description	Returns dataset ETL metadata and coverage
+//	@Tags			meta
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		core.DatasetStatus
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/meta/datasets [get]
 func (mr *MetaRoutes) handleDatasetStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	datasets, err := mr.repo.DatasetStatuses(ctx)
@@ -99,6 +103,52 @@ func (mr *MetaRoutes) handleDatasetStatus(w http.ResponseWriter, r *http.Request
 		return
 	}
 	writeJSON(w, http.StatusOK, datasets)
+}
+
+// handleReadiness godoc
+//
+//	@Summary		Dataset readiness
+//	@Description	Returns whether the required datasets are loaded for the core API routes
+//	@Tags			meta, health
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	core.ReadinessStatus
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/meta/readiness [get]
+func (mr *MetaRoutes) handleReadiness(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	readiness, err := mr.repo.Readiness(ctx)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, readiness)
+}
+
+// handleReady godoc
+//
+//	@Summary		Readiness check
+//	@Description	Returns HTTP 200 when required datasets are loaded, or 503 when the API is live but not fully ready
+//	@Tags			health, meta
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	core.ReadinessStatus
+//	@Failure		503	{object}	core.ReadinessStatus
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/ready [get]
+func (mr *MetaRoutes) handleReady(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	readiness, err := mr.repo.Readiness(ctx)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	status := http.StatusOK
+	if !readiness.Ready {
+		status = http.StatusServiceUnavailable
+	}
+	writeJSON(w, status, readiness)
 }
 
 func makeCoverage(from, to core.SeasonYear) datasetCoverage {
@@ -115,15 +165,16 @@ func makeCoverage(from, to core.SeasonYear) datasetCoverage {
 }
 
 // handleWOBAConstants godoc
-// @Summary wOBA constants
-// @Description Returns season-specific wOBA calculation constants from FanGraphs
-// @Tags meta
-// @Accept json
-// @Produce json
-// @Param season query int false "Season year (returns all if omitted)"
-// @Success 200 {array} core.WOBAConstant
-// @Failure 500 {object} ErrorResponse
-// @Router /meta/constants/woba [get]
+//
+//	@Summary		wOBA constants
+//	@Description	Returns season-specific wOBA calculation constants from FanGraphs
+//	@Tags			meta
+//	@Accept			json
+//	@Produce		json
+//	@Param			season	query		int	false	"Season year (returns all if omitted)"
+//	@Success		200		{array}		core.WOBAConstant
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/meta/constants/woba [get]
 func (mr *MetaRoutes) handleWOBAConstants(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -145,16 +196,17 @@ func (mr *MetaRoutes) handleWOBAConstants(w http.ResponseWriter, r *http.Request
 }
 
 // handleLeagueConstants godoc
-// @Summary League constants
-// @Description Returns league-specific constants for wRC+ and WAR calculations
-// @Tags meta
-// @Accept json
-// @Produce json
-// @Param season query int false "Season year (returns all if omitted)"
-// @Param league query string false "League (AL or NL)"
-// @Success 200 {array} core.LeagueConstant
-// @Failure 500 {object} ErrorResponse
-// @Router /meta/constants/league [get]
+//
+//	@Summary		League constants
+//	@Description	Returns league-specific constants for wRC+ and WAR calculations
+//	@Tags			meta
+//	@Accept			json
+//	@Produce		json
+//	@Param			season	query		int		false	"Season year (returns all if omitted)"
+//	@Param			league	query		string	false	"League (AL or NL)"
+//	@Success		200		{array}		core.LeagueConstant
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/meta/constants/league [get]
 func (mr *MetaRoutes) handleLeagueConstants(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -182,16 +234,17 @@ func (mr *MetaRoutes) handleLeagueConstants(w http.ResponseWriter, r *http.Reque
 }
 
 // handleParkFactors godoc
-// @Summary Park factors
-// @Description Returns FanGraphs park factors for seasons
-// @Tags meta
-// @Accept json
-// @Produce json
-// @Param season query int false "Season year (returns all if omitted)"
-// @Param team query string false "Team ID filter"
-// @Success 200 {array} core.ParkFactorRow
-// @Failure 500 {object} ErrorResponse
-// @Router /meta/constants/park-factors [get]
+//
+//	@Summary		Park factors
+//	@Description	Returns FanGraphs park factors for seasons
+//	@Tags			meta
+//	@Accept			json
+//	@Produce		json
+//	@Param			season	query		int		false	"Season year (returns all if omitted)"
+//	@Param			team	query		string	false	"Team ID filter"
+//	@Success		200		{array}		core.ParkFactorRow
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/meta/constants/park-factors [get]
 func (mr *MetaRoutes) handleParkFactors(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

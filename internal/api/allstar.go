@@ -20,15 +20,16 @@ func (ar *AllStarRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleListAllStarGames godoc
-// @Summary List All-Star games
-// @Description Get All-Star Game history by joining Lahman participation data with Retrosheet game logs
-// @Tags allstar, games
-// @Accept json
-// @Produce json
-// @Param year query integer false "Filter by season year"
-// @Success 200 {array} core.AllStarGame
-// @Failure 500 {object} ErrorResponse
-// @Router /allstar/games [get]
+//
+//	@Summary		List All-Star games
+//	@Description	Get All-Star Game history by joining Lahman participation data with Retrosheet game logs
+//	@Tags			allstar, games
+//	@Accept			json
+//	@Produce		json
+//	@Param			year	query		integer	false	"Filter by season year"
+//	@Success		200		{array}		core.AllStarGame
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/allstar/games [get]
 func (ar *AllStarRoutes) handleListAllStarGames(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -48,16 +49,17 @@ func (ar *AllStarRoutes) handleListAllStarGames(w http.ResponseWriter, r *http.R
 }
 
 // handleGetAllStarGame godoc
-// @Summary Get All-Star game details
-// @Description Get detailed information and participant list for a specific All-Star game sourced from Retrosheet game logs
-// @Tags allstar, games
-// @Accept json
-// @Produce json
-// @Param id path string true "Game ID (e.g., ALS202407160)"
-// @Success 200 {object} core.AllStarGame
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /allstar/games/{id} [get]
+//
+//	@Summary		Get All-Star game details
+//	@Description	Get detailed information and participant list for a specific All-Star game sourced from Retrosheet game logs
+//	@Tags			allstar, games
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Game ID (e.g., ALS202407160)"
+//	@Success		200	{object}	core.AllStarGame
+//	@Failure		404	{object}	ErrorResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/allstar/games/{id} [get]
 func (ar *AllStarRoutes) handleGetAllStarGame(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := r.PathValue("id")

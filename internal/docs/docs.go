@@ -607,6 +607,141 @@ const docTemplate = `{
                 }
             }
         },
+        "/coaches": {
+            "get": {
+                "description": "Get a paginated list of all coaches",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "coaches"
+                ],
+                "summary": "List coaches",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/coaches/{id}": {
+            "get": {
+                "description": "Get detailed information about a specific coach. Note: A person who later became a manager will appear in both the coaches and managers endpoints.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "coaches"
+                ],
+                "summary": "Get coach by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "roberda07",
+                        "description": "Coach ID (playerID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.Coach"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/coaches/{id}/seasons": {
+            "get": {
+                "description": "Get all season coaching records for a specific coach including team, role, and dates. Note: This endpoint returns only coaching seasons, not managerial seasons. For managerial records, use the /managers/{id}/seasons endpoint.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "coaches"
+                ],
+                "summary": "Get coach season records",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "roberda07",
+                        "description": "Coach ID (playerID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.CoachSeasonsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/ejections": {
             "get": {
                 "description": "Get ejections with optional filters for player, umpire, team, and role",
@@ -1857,7 +1992,7 @@ const docTemplate = `{
         },
         "/managers/{manager_id}": {
             "get": {
-                "description": "Get detailed information about a specific manager",
+                "description": "Get detailed information about a specific manager including extended biodata from Retrosheet (debut/last game, full name, use name)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1871,6 +2006,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "roberda07",
                         "description": "Manager ID (playerID)",
                         "name": "manager_id",
                         "in": "path",
@@ -1901,7 +2037,7 @@ const docTemplate = `{
         },
         "/managers/{manager_id}/seasons": {
             "get": {
-                "description": "Get all season records for a specific manager",
+                "description": "Get all season records for a specific manager including wins, losses, and team rank",
                 "consumes": [
                     "application/json"
                 ],
@@ -1915,6 +2051,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "roberda07",
                         "description": "Manager ID (playerID)",
                         "name": "manager_id",
                         "in": "path",
@@ -2125,6 +2262,36 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/core.DatasetStatus"
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/meta/readiness": {
+            "get": {
+                "description": "Returns whether the required datasets are loaded for the core API routes",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meta",
+                    "health"
+                ],
+                "summary": "Dataset readiness",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.ReadinessStatus"
                         }
                     },
                     "500": {
@@ -3066,7 +3233,7 @@ const docTemplate = `{
         },
         "/parks/{park_id}": {
             "get": {
-                "description": "Get detailed information about a specific ballpark",
+                "description": "Get detailed information about a specific ballpark. Examples: LOS03 (Dodger Stadium), NWK04 (Ruppert Stadium - Negro Leagues), SAC01 (Sutter Health Park - A's 2025 temporary home)",
                 "consumes": [
                     "application/json"
                 ],
@@ -3080,6 +3247,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "LOS03",
                         "description": "Park ID (park key)",
                         "name": "park_id",
                         "in": "path",
@@ -3230,7 +3398,7 @@ const docTemplate = `{
         },
         "/parks/{park_id}/games": {
             "get": {
-                "description": "Get all games played at a specific ballpark",
+                "description": "Get all games played at a specific ballpark. Returns games with full details including scores, attendance, and umpires. Examples: LOS03 (Dodger Stadium - 323 games 2022-2025), NWK04 (Ruppert Stadium - 324 Negro Leagues games 1936-1949)",
                 "consumes": [
                     "application/json"
                 ],
@@ -3245,6 +3413,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "LOS03",
                         "description": "Park ID (park key)",
                         "name": "park_id",
                         "in": "path",
@@ -3252,6 +3421,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "example": 2024,
                         "description": "Filter by season year",
                         "name": "season",
                         "in": "query"
@@ -4108,6 +4278,48 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/api.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/players/{id}/relatives": {
+            "get": {
+                "description": "Return family relationships for a player from Retrosheet biodata. Includes brothers, fathers, sons, uncles, cousins, and other family relationships. Returns empty array if player has no recorded relatives or no retrosheet ID. Examples: aaronha01 (Hank Aaron - brother Tommie), alomaro01 (Roberto Alomar - brother Sandy Jr, father Sandy Sr), ripkeca01 (Cal Ripken Jr - brother Billy, father Cal Sr)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players"
+                ],
+                "summary": "Get player's family relatives",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "aaronha01",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.PlayerRelative"
+                            }
                         }
                     },
                     "500": {
@@ -5002,6 +5214,42 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ready": {
+            "get": {
+                "description": "Returns HTTP 200 when required datasets are loaded, or 503 when the API is live but not fully ready",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health",
+                    "meta"
+                ],
+                "summary": "Readiness check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.ReadinessStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/core.ReadinessStatus"
                         }
                     }
                 }
@@ -7440,7 +7688,7 @@ const docTemplate = `{
         },
         "/umpires/{umpire_id}": {
             "get": {
-                "description": "Get detailed information about a specific umpire",
+                "description": "Get detailed information about a specific umpire including career dates from Retrosheet biodata",
                 "consumes": [
                     "application/json"
                 ],
@@ -7454,7 +7702,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Umpire ID",
+                        "example": "westj901",
+                        "description": "Umpire ID (Retrosheet ID)",
                         "name": "umpire_id",
                         "in": "path",
                         "required": true
@@ -7499,13 +7748,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Umpire ID",
+                        "example": "westj901",
+                        "description": "Umpire ID (Retrosheet ID)",
                         "name": "umpire_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
+                        "example": 2020,
                         "description": "Filter by season year",
                         "name": "season",
                         "in": "query"
@@ -7840,6 +8091,20 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "api.CoachSeasonsResponse": {
+            "type": "object",
+            "properties": {
+                "coach_id": {
+                    "type": "string"
+                },
+                "seasons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.CoachSeasonRecord"
+                    }
                 }
             }
         },
@@ -8401,6 +8666,49 @@ const docTemplate = `{
                 }
             }
         },
+        "core.Coach": {
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "retro_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.CoachSeasonRecord": {
+            "type": "object",
+            "properties": {
+                "first_game": {
+                    "type": "string"
+                },
+                "last_game": {
+                    "type": "string"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "retro_id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "core.DatasetStatus": {
             "type": "object",
             "properties": {
@@ -8410,6 +8718,9 @@ const docTemplate = `{
                 "coverage_to": {
                     "type": "integer"
                 },
+                "healthy": {
+                    "type": "boolean"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -8418,6 +8729,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
                 },
                 "row_count": {
                     "type": "integer"
@@ -9528,16 +9842,28 @@ const docTemplate = `{
         "core.Manager": {
             "type": "object",
             "properties": {
+                "debut_game": {
+                    "type": "string"
+                },
                 "first_name": {
                     "type": "string"
                 },
+                "full_name": {
+                    "type": "string"
+                },
                 "id": {
+                    "type": "string"
+                },
+                "last_game": {
                     "type": "string"
                 },
                 "last_name": {
                     "type": "string"
                 },
                 "player_id": {
+                    "type": "string"
+                },
+                "use_name": {
                     "type": "string"
                 }
             }
@@ -10334,6 +10660,32 @@ const docTemplate = `{
                 }
             }
         },
+        "core.PlayerRelative": {
+            "type": "object",
+            "properties": {
+                "related_debut_year": {
+                    "type": "integer"
+                },
+                "related_final_year": {
+                    "type": "integer"
+                },
+                "related_first_name": {
+                    "type": "string"
+                },
+                "related_last_name": {
+                    "type": "string"
+                },
+                "related_player_id": {
+                    "type": "string"
+                },
+                "related_retro_id": {
+                    "type": "string"
+                },
+                "relation_type": {
+                    "type": "string"
+                }
+            }
+        },
         "core.PlayerSalary": {
             "type": "object",
             "properties": {
@@ -10450,6 +10802,32 @@ const docTemplate = `{
                 },
                 "year": {
                     "type": "integer"
+                }
+            }
+        },
+        "core.ReadinessStatus": {
+            "type": "object",
+            "properties": {
+                "checked_at": {
+                    "type": "string"
+                },
+                "datasets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.DatasetStatus"
+                    }
+                },
+                "missing": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ready": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },
@@ -11308,10 +11686,16 @@ const docTemplate = `{
         "core.Umpire": {
             "type": "object",
             "properties": {
+                "first_game": {
+                    "type": "string"
+                },
                 "first_name": {
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "last_game": {
                     "type": "string"
                 },
                 "last_name": {
@@ -11596,6 +11980,10 @@ const docTemplate = `{
         {
             "description": "MLB umpire data",
             "name": "umpires"
+        },
+        {
+            "description": "MLB coach data",
+            "name": "coaches"
         },
         {
             "description": "MLB season data",

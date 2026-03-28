@@ -30,10 +30,12 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
-
+AGENTS.md
 tmp/
 data/retrosheet/
 data/**/*.zip
 .task/
 sandbox/
 conf.toml
+.gomodcache/
+.gocache/

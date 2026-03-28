@@ -59,12 +59,13 @@ func (mr *MLBRoutes) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handleMLBOverview godoc
-// @Summary MLB Stats proxy catalog
-// @Description Lists available MLB Stats API proxy routes surfaced under /v1/mlb. All endpoints default to sportId=1 (Major League Baseball) unless specified.
-// @Tags mlb
-// @Produce json
-// @Success 200 {object} core.MLBOverviewResponse
-// @Router /mlb [get]
+//
+//	@Summary		MLB Stats proxy catalog
+//	@Description	Lists available MLB Stats API proxy routes surfaced under /v1/mlb. All endpoints default to sportId=1 (Major League Baseball) unless specified.
+//	@Tags			mlb
+//	@Produce		json
+//	@Success		200	{object}	core.MLBOverviewResponse
+//	@Router			/mlb [get]
 func (mr *MLBRoutes) handleMLBOverview(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"base_url": "/v1/mlb",
@@ -74,17 +75,18 @@ func (mr *MLBRoutes) handleMLBOverview(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleMLBPeople godoc
-// @Summary MLB people search
-// @Description Proxy to MLB Stats API /v1/people for live roster metadata. Defaults to sportId=1 (Major League Baseball) if not provided.
-// @Tags mlb
-// @Accept json
-// @Produce json
-// @Param personIds query string false "Comma-separated MLBAM personIds"
-// @Param sportId query string false "Filter by sportId (defaults to 1 for MLB)"
-// @Param hydrate query string false "Hydrate relationships"
-// @Success 200 {object} core.MLBPeopleResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /mlb/people [get]
+//
+//	@Summary		MLB people search
+//	@Description	Proxy to MLB Stats API /v1/people for live roster metadata. Defaults to sportId=1 (Major League Baseball) if not provided.
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			personIds	query		string	false	"Comma-separated MLBAM personIds"
+//	@Param			sportId		query		string	false	"Filter by sportId (defaults to 1 for MLB)"
+//	@Param			hydrate		query		string	false	"Hydrate relationships"
+//	@Success		200			{object}	core.MLBPeopleResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/mlb/people [get]
 func (mr *MLBRoutes) handleMLBPeople(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "people")
 	if err != nil {
@@ -109,16 +111,17 @@ func (mr *MLBRoutes) handleMLBPeople(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMLBPerson godoc
-// @Summary MLB person by ID
-// @Description Proxy to MLB Stats API /v1/people/{personId}
-// @Tags mlb
-// @Accept json
-// @Produce json
-// @Param id path string true "MLBAM personId"
-// @Param hydrate query string false "Hydrate relationships"
-// @Success 200 {object} core.MLBPeopleResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /mlb/people/{id} [get]
+//
+//	@Summary		MLB person by ID
+//	@Description	Proxy to MLB Stats API /v1/people/{personId}
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string	true	"MLBAM personId"
+//	@Param			hydrate	query		string	false	"Hydrate relationships"
+//	@Success		200		{object}	core.MLBPeopleResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/mlb/people/{id} [get]
 func (mr *MLBRoutes) handleMLBPerson(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "people", r.PathValue("id"))
 	if err != nil {
@@ -143,16 +146,17 @@ func (mr *MLBRoutes) handleMLBPerson(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMLBTeams godoc
-// @Summary MLB teams
-// @Description Proxy to MLB Stats API /v1/teams. Defaults to sportId=1 (Major League Baseball) if not provided.
-// @Tags mlb
-// @Accept json
-// @Produce json
-// @Param sportId query string false "Sport filter (defaults to 1 for MLB)"
-// @Param season query string false "Season year"
-// @Success 200 {object} core.MLBTeamsResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /mlb/teams [get]
+//
+//	@Summary		MLB teams
+//	@Description	Proxy to MLB Stats API /v1/teams. Defaults to sportId=1 (Major League Baseball) if not provided.
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			sportId	query		string	false	"Sport filter (defaults to 1 for MLB)"
+//	@Param			season	query		string	false	"Season year"
+//	@Success		200		{object}	core.MLBTeamsResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/mlb/teams [get]
 func (mr *MLBRoutes) handleMLBTeams(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "teams")
 	if err != nil {
@@ -177,16 +181,17 @@ func (mr *MLBRoutes) handleMLBTeams(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMLBTeam godoc
-// @Summary MLB team by ID
-// @Description Proxy to MLB Stats API /v1/teams/{teamId}
-// @Tags mlb
-// @Accept json
-// @Produce json
-// @Param id path string true "MLB teamId"
-// @Param season query string false "Season year"
-// @Success 200 {object} core.MLBTeamsResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /mlb/teams/{id} [get]
+//
+//	@Summary		MLB team by ID
+//	@Description	Proxy to MLB Stats API /v1/teams/{teamId}
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string	true	"MLB teamId"
+//	@Param			season	query		string	false	"Season year"
+//	@Success		200		{object}	core.MLBTeamsResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/mlb/teams/{id} [get]
 func (mr *MLBRoutes) handleMLBTeam(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "teams", r.PathValue("id"))
 	if err != nil {
@@ -211,18 +216,19 @@ func (mr *MLBRoutes) handleMLBTeam(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMLBSchedule godoc
-// @Summary MLB schedule
-// @Description Proxy to MLB Stats API /v1/schedule. Defaults to sportId=1 (Major League Baseball) if not provided.
-// @Tags mlb
-// @Accept json
-// @Produce json
-// @Param sportId query string false "Sport filter (defaults to 1 for MLB)"
-// @Param teamId query string false "Team filter"
-// @Param season query string false "Season year"
-// @Param date query string false "Specific date (YYYY-MM-DD)"
-// @Success 200 {object} core.MLBScheduleResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /mlb/schedule [get]
+//
+//	@Summary		MLB schedule
+//	@Description	Proxy to MLB Stats API /v1/schedule. Defaults to sportId=1 (Major League Baseball) if not provided.
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			sportId	query		string	false	"Sport filter (defaults to 1 for MLB)"
+//	@Param			teamId	query		string	false	"Team filter"
+//	@Param			season	query		string	false	"Season year"
+//	@Param			date	query		string	false	"Specific date (YYYY-MM-DD)"
+//	@Success		200		{object}	core.MLBScheduleResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/mlb/schedule [get]
 func (mr *MLBRoutes) handleMLBSchedule(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "schedule")
 	if err != nil {
@@ -247,16 +253,17 @@ func (mr *MLBRoutes) handleMLBSchedule(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMLBSeasons godoc
-// @Summary MLB seasons
-// @Description Proxy to MLB Stats API /v1/seasons. Defaults to sportId=1 (Major League Baseball) if not provided.
-// @Tags mlb
-// @Accept json
-// @Produce json
-// @Param sportId query string false "Sport filter (defaults to 1 for MLB)"
-// @Param season query string false "Season year"
-// @Success 200 {object} core.MLBSeasonsResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /mlb/seasons [get]
+//
+//	@Summary		MLB seasons
+//	@Description	Proxy to MLB Stats API /v1/seasons. Defaults to sportId=1 (Major League Baseball) if not provided.
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			sportId	query		string	false	"Sport filter (defaults to 1 for MLB)"
+//	@Param			season	query		string	false	"Season year"
+//	@Success		200		{object}	core.MLBSeasonsResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/mlb/seasons [get]
 func (mr *MLBRoutes) handleMLBSeasons(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "seasons")
 	if err != nil {
@@ -281,18 +288,19 @@ func (mr *MLBRoutes) handleMLBSeasons(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMLBStats godoc
-// @Summary MLB stats queries
-// @Description Proxy to MLB Stats API /v1/stats for ad-hoc stats lookups. Note: sportId defaults to 1 (Major League Baseball).
-// @Tags mlb
-// @Accept json
-// @Produce json
-// @Param stats query string true "Stat group(s) to query"
-// @Param group query string true "Grouping (e.g., hitting, pitching)"
-// @Param season query string false "Season year"
-// @Param gameType query string false "Game type (R, S, etc.)"
-// @Success 200 {object} map[string]any
-// @Failure 500 {object} ErrorResponse
-// @Router /mlb/stats [get]
+//
+//	@Summary		MLB stats queries
+//	@Description	Proxy to MLB Stats API /v1/stats for ad-hoc stats lookups. Note: sportId defaults to 1 (Major League Baseball).
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			stats		query		string	true	"Stat group(s) to query"
+//	@Param			group		query		string	true	"Grouping (e.g., hitting, pitching)"
+//	@Param			season		query		string	false	"Season year"
+//	@Param			gameType	query		string	false	"Game type (R, S, etc.)"
+//	@Success		200			{object}	map[string]any
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/mlb/stats [get]
 func (mr *MLBRoutes) handleMLBStats(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "stats")
 	if err != nil {
@@ -317,17 +325,18 @@ func (mr *MLBRoutes) handleMLBStats(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMLBStandings godoc
-// @Summary MLB standings
-// @Description Proxy to MLB Stats API /v1/standings. Note: sportId defaults to 1 (Major League Baseball).
-// @Tags mlb
-// @Accept json
-// @Produce json
-// @Param leagueId query string false "League filter"
-// @Param season query string false "Season year"
-// @Param standingsTypes query string false "Standings type (byLeague, etc.)"
-// @Success 200 {object} core.MLBStandingsResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /mlb/standings [get]
+//
+//	@Summary		MLB standings
+//	@Description	Proxy to MLB Stats API /v1/standings. Note: sportId defaults to 1 (Major League Baseball).
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			leagueId		query		string	false	"League filter"
+//	@Param			season			query		string	false	"Season year"
+//	@Param			standingsTypes	query		string	false	"Standings type (byLeague, etc.)"
+//	@Success		200				{object}	core.MLBStandingsResponse
+//	@Failure		500				{object}	ErrorResponse
+//	@Router			/mlb/standings [get]
 func (mr *MLBRoutes) handleMLBStandings(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "standings")
 	if err != nil {
@@ -352,16 +361,17 @@ func (mr *MLBRoutes) handleMLBStandings(w http.ResponseWriter, r *http.Request) 
 }
 
 // handleMLBAwards godoc
-// @Summary MLB awards catalog
-// @Description Proxy to MLB Stats API /v1/awards. Defaults to sportId=1 (Major League Baseball) if not provided.
-// @Tags mlb
-// @Accept json
-// @Produce json
-// @Param sportId query string false "Sport filter (defaults to 1 for MLB)"
-// @Param season query string false "Season year"
-// @Success 200 {object} core.MLBAwardsResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /mlb/awards [get]
+//
+//	@Summary		MLB awards catalog
+//	@Description	Proxy to MLB Stats API /v1/awards. Defaults to sportId=1 (Major League Baseball) if not provided.
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			sportId	query		string	false	"Sport filter (defaults to 1 for MLB)"
+//	@Param			season	query		string	false	"Season year"
+//	@Success		200		{object}	core.MLBAwardsResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/mlb/awards [get]
 func (mr *MLBRoutes) handleMLBAwards(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "awards")
 	if err != nil {
@@ -386,17 +396,18 @@ func (mr *MLBRoutes) handleMLBAwards(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMLBAward godoc
-// @Summary MLB award by ID
-// @Description Proxy to MLB Stats API /v1/awards/{awardId}
-// @Tags mlb
-// @Accept json
-// @Produce json
-// @Param id path string true "MLB awardId"
-// @Param season query string false "Season year"
-// @Param hydrate query string false "Hydrate relationships"
-// @Success 200 {object} core.MLBAwardsResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /mlb/awards/{id} [get]
+//
+//	@Summary		MLB award by ID
+//	@Description	Proxy to MLB Stats API /v1/awards/{awardId}
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string	true	"MLB awardId"
+//	@Param			season	query		string	false	"Season year"
+//	@Param			hydrate	query		string	false	"Hydrate relationships"
+//	@Success		200		{object}	core.MLBAwardsResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/mlb/awards/{id} [get]
 func (mr *MLBRoutes) handleMLBAward(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "awards", r.PathValue("id"))
 	if err != nil {
@@ -421,17 +432,18 @@ func (mr *MLBRoutes) handleMLBAward(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMLBVenues godoc
-// @Summary MLB venues directory
-// @Description Proxy to MLB Stats API /v1/venues. Defaults to sportId=1 (Major League Baseball) if not provided.
-// @Tags mlb
-// @Accept json
-// @Produce json
-// @Param venueIds query string false "Comma-separated venue IDs"
-// @Param season query string false "Season year"
-// @Param sportId query string false "Sport filter (defaults to 1 for MLB)"
-// @Success 200 {object} core.MLBVenuesResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /mlb/venues [get]
+//
+//	@Summary		MLB venues directory
+//	@Description	Proxy to MLB Stats API /v1/venues. Defaults to sportId=1 (Major League Baseball) if not provided.
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			venueIds	query		string	false	"Comma-separated venue IDs"
+//	@Param			season		query		string	false	"Season year"
+//	@Param			sportId		query		string	false	"Sport filter (defaults to 1 for MLB)"
+//	@Success		200			{object}	core.MLBVenuesResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/mlb/venues [get]
 func (mr *MLBRoutes) handleMLBVenues(w http.ResponseWriter, r *http.Request) {
 	target, err := url.JoinPath(mr.baseURL, "v1", "venues")
 	if err != nil {
