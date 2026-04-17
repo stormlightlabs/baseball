@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Player Explorer — Baseball API Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --bg:#0d0f13; --surface:#13161c; --surface2:#1a1e27; --border:#252934; --text:#e2e8f0; --muted:#6b7280; --accent:#3b82f6; --accent2:#10b981; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+    h1,h2,h3,h4{font-family:'Google Sans',sans-serif}
+    code,pre,.mono{font-family:'Google Sans Code',monospace}
+    .site-header{border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:56px;background:var(--surface)}
+    .logo{font-family:'Google Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none}
+    .badge{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);padding:2px 8px;border-radius:4px}
+    .nav-links{margin-left:auto;display:flex;gap:0.25rem}
+    .nav-links a{font-size:0.8rem;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:4px;transition:color 0.15s,background 0.15s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--border)}
+
+    .layout{display:grid;grid-template-columns:280px 1fr 320px;height:calc(100vh - 56px)}
+
+    /* Left sidebar */
+    .sidebar{border-right:1px solid var(--border);overflow-y:auto;padding:1.25rem}
+    .sidebar-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+    .search-mini{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:1rem}
+    .search-mini input{flex:1;background:transparent;border:none;outline:none;padding:0.5rem 0.75rem;color:var(--text);font-size:0.8rem}
+    .search-mini input::placeholder{color:var(--muted)}
+    .search-mini button{background:var(--border);border:none;color:var(--muted);padding:0 0.75rem;cursor:pointer;font-size:0.8rem}
+
+    /* Bio card */
+    .bio-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
+    .bio-avatar{width:48px;height:48px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.25rem;margin-bottom:0.75rem}
+    .bio-name{font-family:'Google Sans',sans-serif;font-size:1.05rem;font-weight:700;color:#f1f5f9;margin-bottom:2px}
+    .bio-meta{font-size:0.72rem;color:var(--muted);line-height:1.6}
+    .bio-row{display:flex;justify-content:space-between;font-size:0.72rem;margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid var(--border)}
+    .bio-stat{display:flex;flex-direction:column;align-items:center;gap:2px}
+    .bio-stat .bv{font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.9rem;color:#f1f5f9}
+    .bio-stat .bl{color:var(--muted);font-size:0.65rem}
+
+    .player-list{display:flex;flex-direction:column;gap:0.3rem}
+    .player-item{padding:0.5rem 0.75rem;border-radius:6px;cursor:pointer;transition:background 0.15s;font-size:0.8rem}
+    .player-item:hover,.player-item.active{background:var(--surface2)}
+    .player-item .pi-name{color:#f1f5f9;margin-bottom:1px}
+    .player-item .pi-meta{font-size:0.7rem;color:var(--muted);font-family:'Google Sans Code',monospace}
+
+    /* Center */
+    .center{overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem}
+    .section-header h3{font-size:0.95rem;font-weight:600;color:#f1f5f9}
+    .tab-row{display:flex;gap:0.25rem;margin-bottom:1rem}
+    .tab{font-size:0.78rem;padding:5px 12px;border-radius:4px;cursor:pointer;color:var(--muted);border:1px solid transparent;transition:all 0.15s;font-family:'Google Sans',sans-serif}
+    .tab.active{background:var(--surface2);color:var(--text);border-color:var(--border)}
+    .tab:hover:not(.active){color:var(--text)}
+
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
+    .panel-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+
+    /* Season table */
+    table{width:100%;border-collapse:collapse;font-size:0.75rem}
+    th{text-align:left;color:var(--muted);font-weight:500;padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);cursor:pointer;font-family:'Google Sans',sans-serif;font-size:0.72rem;white-space:nowrap}
+    th:hover{color:var(--text)}
+    td{padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);color:var(--text);font-family:'Google Sans Code',monospace;font-size:0.72rem}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--surface2)}
+    .team-badge{display:inline-block;background:var(--border);border-radius:3px;padding:1px 6px;font-size:0.65rem;color:var(--muted);font-family:'Google Sans Code',monospace}
+
+    /* Right: API panel */
+    .api-panel{border-left:1px solid var(--border);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem}
+    .api-panel .ap-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.5rem}
+    .api-url{font-family:'Google Sans Code',monospace;font-size:0.72rem;color:var(--accent);background:var(--surface2);padding:0.6rem 0.75rem;border-radius:6px;word-break:break-all;line-height:1.5}
+    .copy-btn{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);border:none;padding:4px 10px;border-radius:4px;cursor:pointer;width:100%;text-align:center;margin-top:0.35rem;transition:color 0.15s}
+    .copy-btn:hover{color:var(--text)}
+    .curl-block{background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;color:#a5b4fc;line-height:1.6;white-space:pre-wrap;word-break:break-all}
+    .json-preview{background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;color:#86efac;line-height:1.6;white-space:pre;overflow-x:auto;max-height:240px;overflow-y:auto}
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="index.html" class="logo">Baseball API</a>
+  <span class="badge">players</span>
+  <nav class="nav-links">
+    <a href="home.html">Home</a>
+    <a href="players.html" class="active">Players</a>
+    <a href="teams.html">Teams</a>
+    <a href="games.html">Games</a>
+    <a href="seasons.html">Seasons</a>
+    <a href="leaders.html">Leaders</a>
+    <a href="compare.html">Compare</a>
+    <a href="api-explorer.html">API</a>
+    <a href="data-sources.html">Data</a>
+  </nav>
+</header>
+
+<div class="layout">
+
+  <!-- Left sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Player search</div>
+    <div class="search-mini">
+      <input type="text" placeholder="Name, ID…" id="playerSearch" />
+      <button>→</button>
+    </div>
+
+    <div class="bio-card">
+      <div class="bio-avatar">◎</div>
+      <div class="bio-name">Willie Mays</div>
+      <div class="bio-meta">
+        B: May 6, 1931 · Westfield, AL<br>
+        Bats: R · Throws: R<br>
+        Debut: 1951 · Final: 1973
+      </div>
+      <div class="bio-row">
+        <div class="bio-stat"><div class="bv">660</div><div class="bl">HR</div></div>
+        <div class="bio-stat"><div class="bv">.302</div><div class="bl">AVG</div></div>
+        <div class="bio-stat"><div class="bv">1903</div><div class="bl">RBI</div></div>
+        <div class="bio-stat"><div class="bv">22</div><div class="bl">Seasons</div></div>
+      </div>
+    </div>
+
+    <div class="sidebar-label">Other players</div>
+    <div class="player-list">
+      <div class="player-item active">
+        <div class="pi-name">Willie Mays</div>
+        <div class="pi-meta">mayswi01 · OF · 1951–1973</div>
+      </div>
+      <div class="player-item">
+        <div class="pi-name">Babe Ruth</div>
+        <div class="pi-meta">ruthba01 · P/OF · 1914–1935</div>
+      </div>
+      <div class="player-item">
+        <div class="pi-name">Hank Aaron</div>
+        <div class="pi-meta">aaronha01 · OF · 1954–1976</div>
+      </div>
+      <div class="player-item">
+        <div class="pi-name">Ted Williams</div>
+        <div class="pi-meta">willite01 · OF · 1939–1960</div>
+      </div>
+      <div class="player-item">
+        <div class="pi-name">Lou Gehrig</div>
+        <div class="pi-meta">gehrilo01 · 1B · 1923–1939</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Center content -->
+  <main class="center">
+
+    <div>
+      <div class="tab-row">
+        <div class="tab active" onclick="switchTab('batting',this)">Batting</div>
+        <div class="tab" onclick="switchTab('pitching',this)">Pitching</div>
+        <div class="tab" onclick="switchTab('awards',this)">Awards</div>
+        <div class="tab" onclick="switchTab('hof',this)">Hall of Fame</div>
+      </div>
+    </div>
+
+    <!-- Batting chart -->
+    <div class="panel" id="tab-batting">
+      <div class="panel-label">Career batting — rate vs counting toggle</div>
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;align-items:center">
+        <label style="font-size:0.75rem;color:var(--muted)">Stat:</label>
+        <select id="statSelect" onchange="updateChart()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 8px;border-radius:4px;font-size:0.75rem;font-family:'Inter',sans-serif">
+          <option value="hr">Home Runs (HR)</option>
+          <option value="avg">Batting Avg (AVG)</option>
+          <option value="rbi">RBI</option>
+          <option value="sb">Stolen Bases</option>
+        </select>
+        <label style="font-size:0.75rem;color:var(--muted);margin-left:auto">Era context:</label>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.68rem;color:var(--accent)">1951–1973 · Integration era</span>
+      </div>
+      <canvas id="battingChart" height="120"></canvas>
+    </div>
+
+    <!-- Season table -->
+    <div class="panel" id="tab-batting-table">
+      <div class="panel-label">Season log</div>
+      <div style="overflow-x:auto">
+        <table id="seasonTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable(0)">Year ↕</th>
+              <th onclick="sortTable(1)">Team</th>
+              <th onclick="sortTable(2)">G ↕</th>
+              <th onclick="sortTable(3)">AB ↕</th>
+              <th onclick="sortTable(4)">H ↕</th>
+              <th onclick="sortTable(5)">HR ↕</th>
+              <th onclick="sortTable(6)">RBI ↕</th>
+              <th onclick="sortTable(7)">AVG ↕</th>
+              <th onclick="sortTable(8)">SB ↕</th>
+            </tr>
+          </thead>
+          <tbody id="seasonBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Awards -->
+    <div class="panel" id="tab-awards" style="display:none">
+      <div class="panel-label">Awards timeline</div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem" id="awardsBody"></div>
+    </div>
+
+    <!-- HOF -->
+    <div class="panel" id="tab-hof" style="display:none">
+      <div class="panel-label">Hall of Fame voting history</div>
+      <canvas id="hofChart" height="100"></canvas>
+    </div>
+
+  </main>
+
+  <!-- Right API panel -->
+  <aside class="api-panel">
+    <div>
+      <div class="ap-label">Endpoint</div>
+      <div class="api-url">/players/mayswi01/seasons</div>
+    </div>
+    <div>
+      <div class="ap-label">Generated URL</div>
+      <div class="api-url" id="generatedUrl">https://api.baseball.example/v1/players/mayswi01/seasons</div>
+      <button class="copy-btn" onclick="copyText('generatedUrl')">copy URL</button>
+    </div>
+    <div>
+      <div class="ap-label">curl</div>
+      <div class="curl-block">curl -s \
+  "https://api.baseball.example/v1/\
+players/mayswi01/seasons" \
+  | jq .</div>
+      <button class="copy-btn">copy curl</button>
+    </div>
+    <div>
+      <div class="ap-label">Sample response</div>
+      <div class="json-preview">{
+  "player_id": "mayswi01",
+  "name": "Willie Mays",
+  "seasons": [
+    {
+      "year": 1954,
+      "team": "NYG",
+      "g": 151,
+      "ab": 565,
+      "h": 195,
+      "hr": 41,
+      "rbi": 110,
+      "avg": 0.345,
+      "sb": 8
+    },
+    {
+      "year": 1955,
+      "team": "NYG",
+      "g": 152,
+      "ab": 580,
+      "h": 185,
+      "hr": 51,
+      "rbi": 127,
+      "avg": 0.319,
+      "sb": 24
+    }
+  ]
+}</div>
+    </div>
+  </aside>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+<script>
+  // Mock data
+  const seasons = [
+    {y:1951,t:'NYG',g:121,ab:464,h:127,hr:20,rbi:68,avg:.274,sb:7},
+    {y:1954,t:'NYG',g:151,ab:565,h:195,hr:41,rbi:110,avg:.345,sb:8},
+    {y:1955,t:'NYG',g:152,ab:580,h:185,hr:51,rbi:127,avg:.319,sb:24},
+    {y:1956,t:'NYG',g:152,ab:578,h:171,hr:36,rbi:84,avg:.296,sb:40},
+    {y:1957,t:'NYG',g:152,ab:585,h:195,hr:35,rbi:97,avg:.333,sb:38},
+    {y:1958,t:'SFG',g:152,ab:600,h:208,hr:29,rbi:96,avg:.347,sb:31},
+    {y:1962,t:'SFG',g:162,ab:621,h:189,hr:49,rbi:141,avg:.304,sb:18},
+    {y:1965,t:'SFG',g:157,ab:558,h:177,hr:52,rbi:112,avg:.317,sb:9},
+    {y:1973,t:'NYM',g:66,ab:209,h:44,hr:6,rbi:25,avg:.211,sb:1},
+  ];
+
+  const tbody = document.getElementById('seasonBody');
+  seasons.forEach(s => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${s.y}</td><td><span class="team-badge">${s.t}</span></td><td>${s.g}</td><td>${s.ab}</td><td>${s.h}</td><td>${s.hr}</td><td>${s.rbi}</td><td>${s.avg.toFixed(3)}</td><td>${s.sb}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Batting chart
+  const statData = {
+    hr: seasons.map(s=>s.hr),
+    avg: seasons.map(s=>Math.round(s.avg*1000)),
+    rbi: seasons.map(s=>s.rbi),
+    sb: seasons.map(s=>s.sb),
+  };
+  const labels = seasons.map(s=>s.y);
+
+  const ctx = document.getElementById('battingChart').getContext('2d');
+  let chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'HR', data: statData.hr,
+        borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+        pointRadius: 4, tension: 0.3, fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#6b7280', font:{family:'Inter',size:10} } } },
+      scales: {
+        x: { ticks:{color:'#6b7280',font:{size:9}}, grid:{color:'#252934'} },
+        y: { ticks:{color:'#6b7280',font:{size:9}}, grid:{color:'#252934'} }
+      }
+    }
+  });
+
+  function updateChart() {
+    const stat = document.getElementById('statSelect').value;
+    chart.data.datasets[0].data = statData[stat];
+    chart.data.datasets[0].label = stat.toUpperCase();
+    chart.update();
+  }
+
+  // Awards
+  const awards = [
+    {y:1954,a:'NL MVP'},{y:1954,a:'All-Star'},{y:1955,a:'All-Star'},
+    {y:1956,a:'All-Star'},{y:1965,a:'NL MVP'},{y:1979,a:'Hall of Fame'},
+  ];
+  const awardsBody = document.getElementById('awardsBody');
+  awards.forEach(aw => {
+    awardsBody.innerHTML += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:6px">
+      <span style="font-family:'Google Sans Code',monospace;font-size:0.72rem;color:var(--muted);min-width:36px">${aw.y}</span>
+      <span style="font-size:0.8rem;color:#f1f5f9">${aw.a}</span>
+    </div>`;
+  });
+
+  // HOF chart
+  const hofCtx = document.getElementById('hofChart').getContext('2d');
+  new Chart(hofCtx, {
+    type: 'bar',
+    data: {
+      labels: ['1979'],
+      datasets: [{label:'Vote %',data:[94.7],backgroundColor:'rgba(16,185,129,0.6)'}]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend:{labels:{color:'#6b7280',font:{size:10}}} },
+      scales: {
+        x:{ticks:{color:'#6b7280'},grid:{color:'#252934'}},
+        y:{min:0,max:100,ticks:{color:'#6b7280',callback:v=>v+'%'},grid:{color:'#252934'}}
+      }
+    }
+  });
+
+  function switchTab(tab, el) {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-batting').style.display = tab==='batting'?'block':'none';
+    document.getElementById('tab-batting-table').style.display = tab==='batting'?'block':'none';
+    document.getElementById('tab-awards').style.display = tab==='awards'?'block':'none';
+    document.getElementById('tab-hof').style.display = tab==='hof'?'block':'none';
+    if(tab==='pitching') {
+      document.getElementById('tab-batting').style.display='block';
+      document.getElementById('tab-batting').querySelector('.panel-label').textContent = 'Career pitching (no data — two-way player check)';
+    }
+  }
+
+  function copyText(id) {
+    navigator.clipboard.writeText(document.getElementById(id).textContent.trim());
+  }
+
+  function sortTable(col) { /* stub */ }
+</script>
+</body>
+</html>

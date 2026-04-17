@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stat Leaders — Baseball API Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{--bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+    h1,h2,h3{font-family:'Google Sans',sans-serif}
+    code,pre{font-family:'Google Sans Code',monospace}
+    .site-header{border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:56px;background:var(--surface)}
+    .logo{font-family:'Google Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none}
+    .badge{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);padding:2px 8px;border-radius:4px}
+    .nav-links{margin-left:auto;display:flex;gap:0.25rem}
+    .nav-links a{font-size:0.8rem;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:4px;transition:color 0.15s,background 0.15s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--border)}
+    .layout{display:grid;grid-template-columns:280px 1fr 300px;height:calc(100vh - 56px)}
+    .sidebar{border-right:1px solid var(--border);overflow-y:auto;padding:1.25rem}
+    .center{overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+    .api-panel{border-left:1px solid var(--border);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem}
+    .sidebar-label,.panel-label,.ap-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
+    label.fl{display:block;font-size:0.72rem;color:var(--muted);margin-bottom:4px}
+    select,input[type=text],input[type=number]{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:5px;font-size:0.78rem;font-family:'Inter',sans-serif;margin-bottom:0.75rem;outline:none}
+    .btn{background:var(--accent);color:#fff;border:none;padding:7px 16px;border-radius:5px;font-family:'Google Sans',sans-serif;font-size:0.82rem;cursor:pointer;width:100%;transition:opacity 0.15s}
+    .btn:hover{opacity:0.85}
+    .seg-ctrl{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:1rem;width:100%}
+    .seg-btn{font-size:0.78rem;padding:6px 14px;cursor:pointer;color:var(--muted);border:none;background:transparent;font-family:'Google Sans',sans-serif;transition:all 0.15s;flex:1;text-align:center}
+    .seg-btn.active{background:var(--border);color:var(--text)}
+    table{width:100%;border-collapse:collapse;font-size:0.75rem}
+    th{text-align:left;color:var(--muted);font-weight:500;padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);cursor:pointer;font-family:'Google Sans',sans-serif;font-size:0.72rem;white-space:nowrap}
+    th:hover{color:var(--text)}
+    td{padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);color:var(--text);font-family:'Google Sans Code',monospace;font-size:0.72rem}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--surface2)}
+    .rank-bar{height:6px;border-radius:3px;background:var(--accent);opacity:0.6;display:inline-block;vertical-align:middle;margin-left:6px}
+    .api-url{font-family:'Google Sans Code',monospace;font-size:0.72rem;color:var(--accent);background:var(--surface2);padding:0.6rem 0.75rem;border-radius:6px;word-break:break-all;line-height:1.5}
+    .copy-btn{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);border:none;padding:4px 10px;border-radius:4px;cursor:pointer;width:100%;text-align:center;margin-top:0.35rem;transition:color 0.15s}
+    .copy-btn:hover{color:var(--text)}
+    .curl-block{background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;color:#a5b4fc;line-height:1.6;white-space:pre-wrap;word-break:break-all}
+    .json-preview{background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;color:#86efac;line-height:1.6;white-space:pre;overflow-x:auto;max-height:200px;overflow-y:auto}
+    .tab-row{display:flex;gap:0.25rem;margin-bottom:1rem}
+    .tab{font-size:0.78rem;padding:5px 12px;border-radius:4px;cursor:pointer;color:var(--muted);border:1px solid transparent;transition:all 0.15s;font-family:'Google Sans',sans-serif}
+    .tab.active{background:var(--surface2);color:var(--text);border-color:var(--border)}
+    .tab:hover:not(.active){color:var(--text)}
+    .quick-stat{display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem}
+    .qs{font-size:0.7rem;padding:4px 12px;border-radius:99px;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'Google Sans Code',monospace;transition:all 0.15s}
+    .qs.active,.qs:hover{border-color:var(--accent);color:var(--accent)}
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <a href="index.html" class="logo">Baseball API</a>
+  <span class="badge">leaders</span>
+  <nav class="nav-links">
+    <a href="home.html">Home</a><a href="players.html">Players</a>
+    <a href="teams.html">Teams</a><a href="games.html">Games</a>
+    <a href="seasons.html">Seasons</a><a href="leaders.html" class="active">Leaders</a>
+    <a href="compare.html">Compare</a><a href="api-explorer.html">API</a>
+    <a href="data-sources.html">Data</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-label">Mode</div>
+    <div class="seg-ctrl">
+      <button class="seg-btn active" onclick="switchMode('predefined',this)">Quick leaders</button>
+      <button class="seg-btn" onclick="switchMode('lab',this)">Query lab</button>
+    </div>
+
+    <!-- Predefined mode -->
+    <div id="mode-predefined">
+      <div class="sidebar-label">Stat type</div>
+      <div class="seg-ctrl">
+        <button class="seg-btn active" onclick="switchBP('batting',this)">Batting</button>
+        <button class="seg-btn" onclick="switchBP('pitching',this)">Pitching</button>
+      </div>
+      <div class="sidebar-label">Quick stat</div>
+      <div class="quick-stat" id="quickStatPills">
+        <span class="qs active" onclick="setQuickStat('hr',this)">HR</span>
+        <span class="qs" onclick="setQuickStat('avg',this)">AVG</span>
+        <span class="qs" onclick="setQuickStat('rbi',this)">RBI</span>
+        <span class="qs" onclick="setQuickStat('sb',this)">SB</span>
+        <span class="qs" onclick="setQuickStat('so',this)">SO</span>
+      </div>
+      <label class="fl">Season</label>
+      <select id="qSeason"><option>1998</option><option>2001</option><option>1927</option><option>All time</option></select>
+      <label class="fl">League</label>
+      <select><option>Both</option><option>AL</option><option>NL</option></select>
+    </div>
+
+    <!-- Lab mode -->
+    <div id="mode-lab" style="display:none">
+      <label class="fl">Season from</label>
+      <input type="number" id="labFrom" value="1990" min="1871" max="2024" />
+      <label class="fl">Season to</label>
+      <input type="number" id="labTo" value="2000" min="1871" max="2024" />
+      <label class="fl">Min AB</label>
+      <input type="number" id="labMinAB" value="300" />
+      <label class="fl">Sort by</label>
+      <select id="labSort">
+        <option>hr</option><option>avg</option><option>rbi</option><option>obp</option><option>slg</option><option>ops</option>
+      </select>
+      <label class="fl">Order</label>
+      <select id="labOrder"><option>desc</option><option>asc</option></select>
+      <label class="fl">Page size</label>
+      <select><option>20</option><option>50</option><option>100</option></select>
+      <button class="btn" onclick="runLab()">Run query</button>
+    </div>
+  </aside>
+
+  <main class="center">
+    <div class="tab-row">
+      <div class="tab active" onclick="switchTab('table',this)">Table</div>
+      <div class="tab" onclick="switchTab('chart',this)">Bar chart</div>
+      <div class="tab" onclick="switchTab('trend',this)">Trend over seasons</div>
+    </div>
+
+    <!-- Table view -->
+    <div class="panel" id="tab-table">
+      <div class="panel-label" id="resultsLabel">HR leaders — 1998</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Player</th><th>Team</th><th>Yr</th><th id="statHeader">HR</th><th>AB</th><th>Pct</th>
+            </tr>
+          </thead>
+          <tbody id="leaderBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bar chart view -->
+    <div class="panel" id="tab-chart" style="display:none">
+      <div class="panel-label">HR leaders — ranked bar</div>
+      <canvas id="leaderBar" height="140"></canvas>
+    </div>
+
+    <!-- Trend view -->
+    <div class="panel" id="tab-trend" style="display:none">
+      <div class="panel-label">League HR leader by season — trend line</div>
+      <canvas id="trendChart" height="140"></canvas>
+    </div>
+  </main>
+
+  <aside class="api-panel">
+    <div><div class="ap-label">Endpoint</div><div class="api-url" id="endpointEl">/seasons/1998/leaders/batting?sort=hr&order=desc</div></div>
+    <div>
+      <div class="ap-label">Generated URL</div>
+      <div class="api-url" id="urlEl">https://api.baseball.example/v1/seasons/1998/leaders/batting?sort=hr&order=desc&limit=20</div>
+      <button class="copy-btn">copy URL</button>
+    </div>
+    <div>
+      <div class="ap-label">curl</div>
+      <div class="curl-block" id="curlEl">curl -s \
+  "https://api.baseball.example/v1/\
+seasons/1998/leaders/batting?\
+sort=hr&order=desc&limit=20" \
+  | jq .</div>
+      <button class="copy-btn">copy curl</button>
+    </div>
+    <div>
+      <div class="ap-label">Sample response</div>
+      <div class="json-preview">{
+  "season": 1998,
+  "stat": "hr",
+  "leaders": [
+    {
+      "rank": 1,
+      "player_id": "mcgwima01",
+      "name": "Mark McGwire",
+      "team": "SLN",
+      "hr": 70,
+      "ab": 509
+    },
+    {
+      "rank": 2,
+      "player_id": "sosasa01",
+      "name": "Sammy Sosa",
+      "team": "CHN",
+      "hr": 66,
+      "ab": 643
+    }
+  ]
+}</div>
+    </div>
+  </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+<script>
+  const data = {
+    hr: [{p:'Mark McGwire',t:'SLN',y:1998,v:70,ab:509},{p:'Sammy Sosa',t:'CHN',y:1998,v:66,ab:643},{p:'Ken Griffey Jr.',t:'SEA',y:1998,v:56,ab:633},{p:'Albert Belle',t:'CHA',y:1998,v:49,ab:609},{p:'Greg Vaughn',t:'SDN',y:1998,v:50,ab:573},{p:'Vinny Castilla',t:'COL',y:1998,v:46,ab:645}],
+    avg: [{p:'Larry Walker',t:'COL',y:1998,v:.363,ab:454},{p:'Bernie Williams',t:'NYA',y:1998,v:.339,ab:499},{p:'Mo Vaughn',t:'BOS',y:1998,v:.337,ab:609},{p:'Tony Gwynn',t:'SDN',y:1998,v:.321,ab:461},{p:'Jeff Cirillo',t:'MIL',y:1998,v:.321,ab:566}],
+    rbi: [{p:'Juan Gonzalez',t:'TEX',y:1998,v:157,ab:606},{p:'Sammy Sosa',t:'CHN',y:1998,v:158,ab:643},{p:'Ken Griffey Jr.',t:'SEA',y:1998,v:146,ab:633},{p:'Albert Belle',t:'CHA',y:1998,v:152,ab:609},{p:'Mark McGwire',t:'SLN',y:1998,v:147,ab:509}],
+    sb: [{p:'Rickey Henderson',t:'OAK',y:1998,v:66,ab:542},{p:'Kenny Lofton',t:'CLE',y:1998,v:54,ab:583},{p:'Tom Goodwin',t:'TEX',y:1998,v:38,ab:444},{p:'Alex Ochoa',t:'MIL',y:1998,v:30,ab:381},{p:'Orlando Hudson',t:'NYM',y:1998,v:28,ab:310}],
+    so: [{p:'Jose Hernandez',t:'CHN',y:1998,v:188,ab:444},{p:'Jim Thome',t:'CLE',y:1998,v:141,ab:440},{p:'Mark McGwire',t:'SLN',y:1998,v:155,ab:509},{p:'Mike Cameron',t:'CHA',y:1998,v:145,ab:485},{p:'Dean Palmer',t:'DET',y:1998,v:142,ab:499}],
+  };
+
+  let currentStat = 'hr';
+  let barChart = null, trendChart = null;
+
+  function renderTable(stat) {
+    const rows = (data[stat]||data.hr).sort((a,b)=>b.v-a.v);
+    const max = rows[0].v;
+    document.getElementById('statHeader').textContent = stat.toUpperCase();
+    const tb = document.getElementById('leaderBody');
+    tb.innerHTML = '';
+    rows.forEach((r,i)=>{
+      const pct = typeof r.v==='number'&&r.v<1?r.v.toFixed(3):r.v;
+      const barW = Math.round((r.v/max)*80);
+      tb.innerHTML+=`<tr>
+        <td>${i+1}</td>
+        <td>${r.p}</td>
+        <td style="font-family:'Google Sans Code',monospace">${r.t}</td>
+        <td>${r.y}</td>
+        <td><span>${pct}</span><span class="rank-bar" style="width:${barW}px"></span></td>
+        <td>${r.ab}</td>
+        <td style="color:var(--muted);font-size:0.65rem">${typeof r.v==='number'&&r.v>=1?(r.v/r.ab*100).toFixed(1)+'%':''}</td>
+      </tr>`;
+    });
+    document.getElementById('resultsLabel').textContent = `${stat.toUpperCase()} leaders — 1998`;
+  }
+  renderTable('hr');
+
+  function renderBar(stat) {
+    const rows = (data[stat]||data.hr).sort((a,b)=>b.v-a.v);
+    if (barChart) barChart.destroy();
+    const ctx = document.getElementById('leaderBar').getContext('2d');
+    barChart = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels:rows.map(r=>r.p.split(' ').pop()),
+        datasets:[{label:stat.toUpperCase(),data:rows.map(r=>r.v),backgroundColor:'rgba(59,130,246,0.7)'}]
+      },
+      options:{indexAxis:'y',responsive:true,plugins:{legend:{labels:{color:'#6b7280',font:{size:10}}}},scales:{x:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}},y:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}}}}
+    });
+  }
+
+  function renderTrend() {
+    if (trendChart) trendChart.destroy();
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    trendChart = new Chart(ctx, {
+      type:'line',
+      data:{
+        labels:['1920','1930','1940','1950','1960','1970','1980','1990','2000','2010','2020'],
+        datasets:[{label:'League HR leader',data:[54,60,58,52,61,49,54,61,70,58,62],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',fill:true,tension:0.3,pointRadius:4}]
+      },
+      options:{responsive:true,plugins:{legend:{labels:{color:'#6b7280',font:{size:10}}}},scales:{x:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}},y:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}}}}
+    });
+  }
+
+  function setQuickStat(stat,el) {
+    currentStat = stat;
+    document.querySelectorAll('.qs').forEach(q=>q.classList.remove('active'));
+    el.classList.add('active');
+    renderTable(stat);
+    if (document.getElementById('tab-chart').style.display!=='none') renderBar(stat);
+    document.getElementById('endpointEl').textContent=`/seasons/1998/leaders/batting?sort=${stat}&order=desc`;
+    document.getElementById('urlEl').textContent=`https://api.baseball.example/v1/seasons/1998/leaders/batting?sort=${stat}&order=desc&limit=20`;
+  }
+
+  function switchTab(tab,el) {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-table').style.display=tab==='table'?'block':'none';
+    document.getElementById('tab-chart').style.display=tab==='chart'?'block':'none';
+    document.getElementById('tab-trend').style.display=tab==='trend'?'block':'none';
+    if(tab==='chart') renderBar(currentStat);
+    if(tab==='trend') renderTrend();
+  }
+
+  function switchMode(mode, el) {
+    document.querySelectorAll('.seg-btn').forEach(b=>{if(b.parentElement.id===undefined||b.parentElement.className==='seg-ctrl'){}});
+    el.parentElement.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('mode-predefined').style.display=mode==='predefined'?'block':'none';
+    document.getElementById('mode-lab').style.display=mode==='lab'?'block':'none';
+  }
+
+  function switchBP(type,el) {
+    el.parentElement.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('endpointEl').textContent=`/seasons/1998/leaders/${type}?sort=${currentStat}&order=desc`;
+  }
+
+  function runLab() {
+    const from=document.getElementById('labFrom').value;
+    const to=document.getElementById('labTo').value;
+    const minAB=document.getElementById('labMinAB').value;
+    const sort=document.getElementById('labSort').value;
+    const order=document.getElementById('labOrder').value;
+    const url=`/stats/batting?season_from=${from}&season_to=${to}&min_ab=${minAB}&sort=${sort}&order=${order}&limit=20`;
+    document.getElementById('endpointEl').textContent=url;
+    document.getElementById('urlEl').textContent=`https://api.baseball.example/v1${url}`;
+    document.getElementById('curlEl').textContent=`curl -s \\\n  "https://api.baseball.example/v1${url}" \\\n  | jq .`;
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Season Hub — Baseball API Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{--bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+    h1,h2,h3{font-family:'Google Sans',sans-serif}
+    code,pre{font-family:'Google Sans Code',monospace}
+    .site-header{border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:56px;background:var(--surface)}
+    .logo{font-family:'Google Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none}
+    .badge{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);padding:2px 8px;border-radius:4px}
+    .nav-links{margin-left:auto;display:flex;gap:0.25rem}
+    .nav-links a{font-size:0.8rem;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:4px;transition:color 0.15s,background 0.15s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--border)}
+
+    .page-header{padding:2rem 2rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;gap:2rem}
+    .year-select-big{font-family:'Google Sans',sans-serif;font-size:2.5rem;font-weight:700;color:#f1f5f9;background:transparent;border:none;border-bottom:2px solid var(--accent);outline:none;cursor:pointer;padding:0 0.25rem}
+    .season-meta{font-size:0.8rem;color:var(--muted);line-height:1.7;padding-bottom:0.25rem}
+    .league-pills{display:flex;gap:0.35rem;margin-left:auto;padding-bottom:0.25rem}
+    .lpill{font-size:0.72rem;padding:4px 12px;border-radius:99px;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'Google Sans Code',monospace;transition:all 0.15s}
+    .lpill.active{border-color:var(--accent);color:var(--accent)}
+
+    .content{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-top:none}
+    .full-col{grid-column:span 2}
+    .panel{background:var(--surface);padding:1.25rem}
+    .panel-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+    table{width:100%;border-collapse:collapse;font-size:0.75rem}
+    th{text-align:left;color:var(--muted);font-weight:500;padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);font-family:'Google Sans',sans-serif;font-size:0.72rem;cursor:pointer;white-space:nowrap}
+    td{padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);color:var(--text);font-family:'Google Sans Code',monospace;font-size:0.72rem}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--surface2)}
+    .leader-row{display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0;border-bottom:1px solid var(--border)}
+    .leader-row:last-child{border-bottom:none}
+    .lr-rank{font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.8rem;color:var(--muted);min-width:20px}
+    .lr-name{font-size:0.8rem;color:#f1f5f9;flex:1}
+    .lr-team{font-family:'Google Sans Code',monospace;font-size:0.68rem;color:var(--muted)}
+    .lr-val{font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.9rem;color:#f1f5f9}
+
+    /* Calendar heatmap */
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:0.5rem}
+    .cal-day-label{font-size:0.6rem;color:var(--muted);text-align:center;padding:2px 0;font-family:'Google Sans Code',monospace}
+    .cal-day{height:16px;border-radius:2px;background:var(--border);cursor:pointer;transition:opacity 0.15s}
+    .cal-day:hover{opacity:0.7}
+    .cal-day.g0{background:var(--border)}
+    .cal-day.g1{background:#1e3a5f}
+    .cal-day.g2{background:#2563eb}
+    .cal-day.g3{background:#3b82f6}
+    .cal-day.g4{background:#60a5fa}
+
+    .notable-list{display:flex;flex-direction:column;gap:0.5rem}
+    .notable-item{background:var(--surface2);border-radius:6px;padding:0.6rem 0.75rem;font-size:0.78rem;cursor:pointer;transition:background 0.15s}
+    .notable-item:hover{background:var(--border)}
+    .ni-title{color:#f1f5f9;margin-bottom:2px}
+    .ni-ep{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--accent)}
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <a href="index.html" class="logo">Baseball API</a>
+  <span class="badge">seasons</span>
+  <nav class="nav-links">
+    <a href="home.html">Home</a><a href="players.html">Players</a>
+    <a href="teams.html">Teams</a><a href="games.html">Games</a>
+    <a href="seasons.html" class="active">Seasons</a><a href="leaders.html">Leaders</a>
+    <a href="compare.html">Compare</a><a href="api-explorer.html">API</a>
+    <a href="data-sources.html">Data</a>
+  </nav>
+</header>
+
+<div class="page-header">
+  <div>
+    <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.25rem">Season</div>
+    <select class="year-select-big" id="yearSelect" onchange="changeSeason()">
+      <option>1998</option><option>1927</option><option>1969</option><option>2001</option><option>1986</option><option>1955</option>
+    </select>
+  </div>
+  <div class="season-meta" id="seasonMeta">
+    AL + NL · 30 teams · 2,430 games<br>
+    Apr 1 – Oct 4, 1998
+  </div>
+  <div class="league-pills">
+    <span class="lpill active">Both</span>
+    <span class="lpill">AL</span>
+    <span class="lpill">NL</span>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- Teams table -->
+  <div class="panel">
+    <div class="panel-label">Teams — final standings (AL East sample)</div>
+    <table>
+      <thead><tr><th>Team</th><th>W</th><th>L</th><th>Pct</th><th>GB</th><th>RS</th><th>RA</th></tr></thead>
+      <tbody>
+        <tr><td>NYA</td><td>114</td><td>48</td><td>.704</td><td>—</td><td>965</td><td>656</td></tr>
+        <tr><td>BOS</td><td>92</td><td>70</td><td>.568</td><td>22</td><td>876</td><td>729</td></tr>
+        <tr><td>TOR</td><td>88</td><td>74</td><td>.543</td><td>26</td><td>816</td><td>768</td></tr>
+        <tr><td>BAL</td><td>79</td><td>83</td><td>.488</td><td>35</td><td>817</td><td>785</td></tr>
+        <tr><td>TBA</td><td>63</td><td>99</td><td>.389</td><td>51</td><td>620</td><td>751</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Batting leaders -->
+  <div class="panel">
+    <div class="panel-label">Batting leaders — 1998</div>
+    <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
+      <select id="batStat" onchange="renderBatLeaders()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 8px;border-radius:4px;font-size:0.75rem;font-family:'Inter',sans-serif">
+        <option value="hr">Home Runs</option>
+        <option value="avg">Batting Avg</option>
+        <option value="rbi">RBI</option>
+        <option value="sb">Stolen Bases</option>
+      </select>
+    </div>
+    <div id="batLeadersList"></div>
+  </div>
+
+  <!-- Schedule heatmap -->
+  <div class="panel full-col">
+    <div class="panel-label">Schedule heatmap — games per day (Apr–Oct 1998)</div>
+    <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;flex-wrap:wrap">
+      <span style="font-size:0.68rem;color:var(--muted)">Apr</span>
+      <span style="font-size:0.68rem;color:var(--muted);margin-left:auto">Oct</span>
+    </div>
+    <div class="calendar-grid" id="calGrid"></div>
+    <div style="display:flex;gap:1rem;margin-top:0.75rem;font-size:0.65rem;color:var(--muted);font-family:'Google Sans Code',monospace;align-items:center">
+      <span>Fewer games</span>
+      <div style="display:flex;gap:3px">
+        <div style="width:12px;height:12px;border-radius:2px;background:#1e3a5f"></div>
+        <div style="width:12px;height:12px;border-radius:2px;background:#2563eb"></div>
+        <div style="width:12px;height:12px;border-radius:2px;background:#3b82f6"></div>
+        <div style="width:12px;height:12px;border-radius:2px;background:#60a5fa"></div>
+      </div>
+      <span>More games</span>
+    </div>
+  </div>
+
+  <!-- Run environment chart -->
+  <div class="panel">
+    <div class="panel-label">Runs scored per game — by month</div>
+    <canvas id="runsChart" height="120"></canvas>
+  </div>
+
+  <!-- Notable queries -->
+  <div class="panel">
+    <div class="panel-label">Notable queries for 1998</div>
+    <div class="notable-list">
+      <div class="notable-item">
+        <div class="ni-title">Home run leaders — 1998</div>
+        <div class="ni-ep">/seasons/1998/leaders/batting?sort=hr</div>
+      </div>
+      <div class="notable-item">
+        <div class="ni-title">All extra-inning games</div>
+        <div class="ni-ep">/seasons/1998/games?min_innings=10</div>
+      </div>
+      <div class="notable-item">
+        <div class="ni-title">NYA full schedule</div>
+        <div class="ni-ep">/seasons/1998/teams/NYA/games</div>
+      </div>
+      <div class="notable-item">
+        <div class="ni-title">Games on September 8 (McGwire 62nd HR)</div>
+        <div class="ni-ep">/seasons/1998/dates/1998-09-08/games</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+<script>
+  // Batting leaders data
+  const leaders = {
+    hr: [{n:'Mark McGwire',t:'SLN',v:70},{n:'Sammy Sosa',t:'CHN',v:66},{n:'Greg Vaughn',t:'SDN',v:50},{n:'Ken Griffey Jr.',t:'SEA',v:56},{n:'Albert Belle',t:'CHA',v:49}],
+    avg: [{n:'Larry Walker',t:'COL',v:.363},{n:'Mo Vaughn',t:'BOS',v:.337},{n:'Bernie Williams',t:'NYA',v:.339},{n:'Tony Gwynn',t:'SDN',v:.321},{n:'Jeff Cirillo',t:'MIL',v:.321}],
+    rbi: [{n:'Juan Gonzalez',t:'TEX',v:157},{n:'Albert Belle',t:'CHA',v:152},{n:'Ken Griffey Jr.',t:'SEA',v:146},{n:'Sammy Sosa',t:'CHN',v:158},{n:'Vinny Castilla',t:'COL',v:144}],
+    sb: [{n:'Rickey Henderson',t:'OAK',v:66},{n:'Kenny Lofton',t:'CLE',v:54},{n:'Delino DeShields',t:'SLN',v:55},{n:'Alex Ochoa',t:'MIL',v:30},{n:'Tom Goodwin',t:'TEX',v:38}],
+  };
+  function renderBatLeaders() {
+    const stat = document.getElementById('batStat').value;
+    const list = leaders[stat];
+    const el = document.getElementById('batLeadersList');
+    el.innerHTML = '';
+    list.sort((a,b)=>b.v-a.v).forEach((p,i)=>{
+      el.innerHTML += `<div class="leader-row">
+        <span class="lr-rank">${i+1}</span>
+        <span class="lr-name">${p.n}</span>
+        <span class="lr-team">${p.t}</span>
+        <span class="lr-val">${typeof p.v==='number'&&p.v<1?p.v.toFixed(3):p.v}</span>
+      </div>`;
+    });
+  }
+  renderBatLeaders();
+
+  // Calendar heatmap
+  const cal = document.getElementById('calGrid');
+  // 7 day labels
+  ['S','M','T','W','T','F','S'].forEach(d=>{
+    const el=document.createElement('div');
+    el.className='cal-day-label';
+    el.textContent=d;
+    cal.appendChild(el);
+  });
+  // ~180 days Apr-Oct
+  for(let i=0;i<180;i++){
+    const d=document.createElement('div');
+    const games=Math.random();
+    const cls=games<0.15?'g0':games<0.4?'g1':games<0.65?'g2':games<0.85?'g3':'g4';
+    d.className=`cal-day ${cls}`;
+    d.title=`${Math.floor(games*15)} games`;
+    cal.appendChild(d);
+  }
+
+  // Runs chart
+  const runCtx=document.getElementById('runsChart').getContext('2d');
+  new Chart(runCtx,{
+    type:'bar',
+    data:{
+      labels:['Apr','May','Jun','Jul','Aug','Sep','Oct'],
+      datasets:[
+        {label:'AL avg R/G',data:[4.8,5.2,5.4,5.6,5.3,5.1,4.9],backgroundColor:'rgba(59,130,246,0.6)'},
+        {label:'NL avg R/G',data:[4.5,4.9,5.1,5.2,5.0,4.8,4.6],backgroundColor:'rgba(16,185,129,0.5)'}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{labels:{color:'#6b7280',font:{size:10}}}},scales:{x:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}},y:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}}}}
+  });
+
+  function changeSeason() {
+    const y=document.getElementById('yearSelect').value;
+    const meta={
+      '1998':'AL + NL · 30 teams · 2,430 games\nApr 1 – Oct 4, 1998',
+      '1927':'AL + NL · 16 teams · 1,232 games\nApr 12 – Oct 1, 1927',
+      '1969':'AL + NL · 24 teams · 1,944 games\nApr 7 – Oct 16, 1969',
+      '2001':'AL + NL · 30 teams · 2,430 games\nApr 2 – Nov 4, 2001',
+      '1986':'AL + NL · 26 teams · 2,106 games\nApr 7 – Oct 27, 1986',
+      '1955':'AL + NL · 16 teams · 1,232 games\nApr 13 – Sep 28, 1955',
+    };
+    document.getElementById('seasonMeta').innerHTML=meta[y]||'';
+  }
+
+  document.querySelectorAll('.lpill').forEach(p=>{
+    p.addEventListener('click',function(){document.querySelectorAll('.lpill').forEach(x=>x.classList.remove('active'));this.classList.add('active')});
+  });
+</script>
+</body>
+</html>

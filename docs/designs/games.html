@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Finder — Baseball API Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{--bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+    h1,h2,h3{font-family:'Google Sans',sans-serif}
+    code,pre{font-family:'Google Sans Code',monospace}
+    .site-header{border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:56px;background:var(--surface)}
+    .logo{font-family:'Google Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none}
+    .badge{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);padding:2px 8px;border-radius:4px}
+    .nav-links{margin-left:auto;display:flex;gap:0.25rem}
+    .nav-links a{font-size:0.8rem;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:4px;transition:color 0.15s,background 0.15s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--border)}
+    .layout{display:grid;grid-template-columns:280px 1fr 300px;height:calc(100vh - 56px)}
+    .sidebar{border-right:1px solid var(--border);overflow-y:auto;padding:1.25rem}
+    .center{overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+    .api-panel{border-left:1px solid var(--border);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem}
+    .sidebar-label,.panel-label,.ap-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
+    label.fl{display:block;font-size:0.72rem;color:var(--muted);margin-bottom:4px}
+    select,input[type=text],input[type=number]{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:5px;font-size:0.78rem;font-family:'Inter',sans-serif;margin-bottom:0.75rem;outline:none}
+    select:focus,input:focus{border-color:var(--accent)}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;font-size:0.78rem;color:var(--muted)}
+    input[type=checkbox]{accent-color:var(--accent)}
+    .btn{background:var(--accent);color:#fff;border:none;padding:7px 16px;border-radius:5px;font-family:'Google Sans',sans-serif;font-size:0.82rem;cursor:pointer;width:100%;transition:opacity 0.15s}
+    .btn:hover{opacity:0.85}
+    .quick-filter{display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.75rem}
+    .qf{font-size:0.7rem;padding:3px 10px;border-radius:99px;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'Google Sans Code',monospace;transition:all 0.15s}
+    .qf:hover{border-color:var(--accent);color:var(--accent)}
+    table{width:100%;border-collapse:collapse;font-size:0.75rem}
+    th{text-align:left;color:var(--muted);font-weight:500;padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);font-family:'Google Sans',sans-serif;font-size:0.72rem;white-space:nowrap;cursor:pointer}
+    th:hover{color:var(--text)}
+    td{padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);color:var(--text);font-family:'Google Sans Code',monospace;font-size:0.72rem}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--surface2)}
+    tr.selected td{background:rgba(59,130,246,0.08)}
+    .api-url{font-family:'Google Sans Code',monospace;font-size:0.72rem;color:var(--accent);background:var(--surface2);padding:0.6rem 0.75rem;border-radius:6px;word-break:break-all;line-height:1.5}
+    .copy-btn{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);border:none;padding:4px 10px;border-radius:4px;cursor:pointer;width:100%;text-align:center;margin-top:0.35rem;transition:color 0.15s}
+    .copy-btn:hover{color:var(--text)}
+    .curl-block{background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;color:#a5b4fc;line-height:1.6;white-space:pre-wrap;word-break:break-all}
+    .json-preview{background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;color:#86efac;line-height:1.6;white-space:pre;overflow-x:auto;max-height:220px;overflow-y:auto}
+    .game-detail{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem;display:none}
+    .game-detail.visible{display:block}
+    .score{display:flex;align-items:center;gap:1.5rem;margin-bottom:0.75rem}
+    .score-team{font-family:'Google Sans',sans-serif;font-size:1.05rem;font-weight:700;color:#f1f5f9}
+    .score-num{font-family:'Google Sans',sans-serif;font-size:1.75rem;font-weight:700;color:#f1f5f9}
+    .score-sep{color:var(--muted);font-size:1.25rem}
+    .meta-row{display:flex;flex-wrap:wrap;gap:1rem;font-size:0.72rem;color:var(--muted)}
+    .meta-item{display:flex;flex-direction:column;gap:2px}
+    .mi-val{color:#f1f5f9;font-family:'Google Sans Code',monospace;font-size:0.78rem}
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <a href="index.html" class="logo">Baseball API</a>
+  <span class="badge">games</span>
+  <nav class="nav-links">
+    <a href="home.html">Home</a><a href="players.html">Players</a>
+    <a href="teams.html">Teams</a><a href="games.html" class="active">Games</a>
+    <a href="seasons.html">Seasons</a><a href="leaders.html">Leaders</a>
+    <a href="compare.html">Compare</a><a href="api-explorer.html">API</a>
+    <a href="data-sources.html">Data</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-label">Filters</div>
+
+    <label class="fl">Season</label>
+    <select id="fSeason"><option>1998</option><option>2001</option><option>1927</option><option>1986</option><option>1969</option></select>
+
+    <label class="fl">Home team</label>
+    <select id="fHome"><option value="">Any</option><option>NYA</option><option>BOS</option><option>SFG</option><option>LAN</option></select>
+
+    <label class="fl">Away team</label>
+    <select id="fAway"><option value="">Any</option><option>NYA</option><option>BOS</option><option>SFG</option><option>LAN</option></select>
+
+    <label class="fl">Min innings</label>
+    <input type="number" id="fInnings" value="9" min="9" max="25" />
+
+    <label class="fl">Park / venue</label>
+    <input type="text" id="fPark" placeholder="Yankee Stadium…" />
+
+    <div class="toggle-row">
+      <span>Postseason only</span>
+      <input type="checkbox" id="fPostseason" />
+    </div>
+    <div class="toggle-row">
+      <span>Doubleheaders only</span>
+      <input type="checkbox" id="fDH" />
+    </div>
+
+    <div class="sidebar-label" style="margin-top:0.5rem">Quick filters</div>
+    <div class="quick-filter">
+      <span class="qf" onclick="applyQuick('extra-innings')">Extra innings</span>
+      <span class="qf" onclick="applyQuick('doubleheader')">Doubleheaders</span>
+      <span class="qf" onclick="applyQuick('postseason')">Postseason</span>
+      <span class="qf" onclick="applyQuick('shutout')">Shutouts</span>
+    </div>
+
+    <button class="btn" onclick="applyFilters()">Apply filters</button>
+  </aside>
+
+  <main class="center">
+
+    <!-- Duration trend chart -->
+    <div class="panel">
+      <div class="panel-label">Game duration trend (avg minutes by decade)</div>
+      <canvas id="durationChart" height="80"></canvas>
+    </div>
+
+    <!-- Game results table -->
+    <div class="panel">
+      <div class="panel-label" id="resultsLabel">Showing 6 games — 1998 season</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Date</th><th>Home</th><th>Away</th><th>Score</th><th>Inn</th><th>Park</th><th>Att</th><th>Duration</th>
+          </tr></thead>
+          <tbody id="gamesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Game detail card -->
+    <div class="game-detail" id="gameDetail">
+      <div class="panel-label">Game detail</div>
+      <div class="score" id="scoreRow"></div>
+      <div class="meta-row" id="metaRow"></div>
+    </div>
+
+  </main>
+
+  <aside class="api-panel">
+    <div><div class="ap-label">Endpoint</div><div class="api-url" id="endpointDisplay">/games?season=1998&limit=20</div></div>
+    <div>
+      <div class="ap-label">Generated URL</div>
+      <div class="api-url" id="urlDisplay">https://api.baseball.example/v1/games?season=1998&limit=20</div>
+      <button class="copy-btn">copy URL</button>
+    </div>
+    <div>
+      <div class="ap-label">curl</div>
+      <div class="curl-block" id="curlDisplay">curl -s \
+  "https://api.baseball.example/\
+v1/games?season=1998&limit=20" \
+  | jq .</div>
+      <button class="copy-btn">copy curl</button>
+    </div>
+    <div>
+      <div class="ap-label">Sample response</div>
+      <div class="json-preview">{
+  "total": 2430,
+  "page": 1,
+  "per_page": 20,
+  "games": [
+    {
+      "game_id": "NYA199804060",
+      "date": "1998-04-06",
+      "home_team": "NYA",
+      "away_team": "OAK",
+      "home_score": 17,
+      "away_score": 13,
+      "innings": 9,
+      "park": "Yankee Stadium",
+      "attendance": 56717,
+      "duration_min": 212
+    }
+  ]
+}</div>
+    </div>
+  </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+<script>
+  const games = [
+    {date:'1998-04-06',home:'NYA',away:'OAK',hs:17,as:13,inn:9,park:'Yankee Stadium',att:56717,dur:212},
+    {date:'1998-05-17',home:'NYA',away:'MIN',hs:8,as:0,inn:9,park:'Yankee Stadium',att:51901,dur:178},
+    {date:'1998-07-01',home:'BOS',away:'NYA',hs:3,as:10,inn:9,park:'Fenway Park',att:33483,dur:192},
+    {date:'1998-08-23',home:'CLE',away:'BOS',hs:5,as:4,inn:12,park:'Jacobs Field',att:41388,dur:248},
+    {date:'1998-09-27',home:'NYA',away:'BOS',hs:5,as:3,inn:9,park:'Yankee Stadium',att:57000,dur:195},
+    {date:'1998-10-07',home:'NYA',away:'TEX',hs:2,as:0,inn:9,park:'Yankee Stadium',att:57484,dur:168,ps:true},
+  ];
+
+  function renderGames(list) {
+    const tb = document.getElementById('gamesBody');
+    tb.innerHTML = '';
+    list.forEach((g,i) => {
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.innerHTML = `<td>${g.date}</td><td>${g.home}</td><td>${g.away}</td><td><b>${g.hs}–${g.as}</b></td><td>${g.inn}</td><td>${g.park}</td><td>${g.att.toLocaleString()}</td><td>${g.dur}m${g.ps?'  🏆':''}</td>`;
+      tr.onclick = () => showDetail(g, tr);
+      tb.appendChild(tr);
+    });
+  }
+  renderGames(games);
+
+  function showDetail(g, tr) {
+    document.querySelectorAll('tr.selected').forEach(r=>r.classList.remove('selected'));
+    tr.classList.add('selected');
+    document.getElementById('scoreRow').innerHTML = `
+      <span class="score-team">${g.away}</span>
+      <span class="score-num">${g.as}</span>
+      <span class="score-sep">@</span>
+      <span class="score-num">${g.hs}</span>
+      <span class="score-team">${g.home}</span>
+    `;
+    document.getElementById('metaRow').innerHTML = `
+      <div class="meta-item"><div class="mi-val">${g.date}</div><div>Date</div></div>
+      <div class="meta-item"><div class="mi-val">${g.park}</div><div>Park</div></div>
+      <div class="meta-item"><div class="mi-val">${g.att.toLocaleString()}</div><div>Attendance</div></div>
+      <div class="meta-item"><div class="mi-val">${g.dur} min</div><div>Duration</div></div>
+      <div class="meta-item"><div class="mi-val">${g.inn} innings</div><div>Innings</div></div>
+      ${g.ps?'<div class="meta-item"><div class="mi-val" style="color:#f59e0b">Yes</div><div>Postseason</div></div>':''}
+    `;
+    document.getElementById('gameDetail').classList.add('visible');
+    document.getElementById('endpointDisplay').textContent = `/games/${g.home}${g.date.replace(/-/g,'')}0`;
+    document.getElementById('urlDisplay').textContent = `https://api.baseball.example/v1/games/${g.home}${g.date.replace(/-/g,'')}0`;
+  }
+
+  function applyFilters() {
+    const season = document.getElementById('fSeason').value;
+    const min = parseInt(document.getElementById('fInnings').value)||9;
+    const filtered = games.filter(g=>g.inn>=min);
+    renderGames(filtered);
+    document.getElementById('resultsLabel').textContent = `Showing ${filtered.length} games — ${season} season`;
+    document.getElementById('endpointDisplay').textContent = `/games?season=${season}&min_innings=${min}&limit=20`;
+    document.getElementById('urlDisplay').textContent = `https://api.baseball.example/v1/games?season=${season}&min_innings=${min}&limit=20`;
+    document.getElementById('curlDisplay').textContent = `curl -s \\\n  "https://api.baseball.example/v1/games?season=${season}&min_innings=${min}&limit=20" \\\n  | jq .`;
+  }
+
+  function applyQuick(type) {
+    if(type==='extra-innings'){document.getElementById('fInnings').value=10;}
+    if(type==='postseason'){document.getElementById('fPostseason').checked=true;}
+    if(type==='doubleheader'){document.getElementById('fDH').checked=true;}
+    applyFilters();
+  }
+
+  // Duration trend
+  const durCtx = document.getElementById('durationChart').getContext('2d');
+  new Chart(durCtx,{
+    type:'line',
+    data:{
+      labels:['1900s','1920s','1940s','1960s','1980s','2000s','2020s'],
+      datasets:[{label:'Avg duration (min)',data:[112,122,130,145,162,175,187],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',fill:true,tension:0.4,pointRadius:4}]
+    },
+    options:{responsive:true,plugins:{legend:{labels:{color:'#6b7280',font:{size:10}}}},scales:{x:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}},y:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}}}}
+  });
+</script>
+</body>
+</html>

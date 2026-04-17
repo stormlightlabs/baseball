@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compare Mode — Baseball API Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{--bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981;--cA:#3b82f6;--cB:#f59e0b}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+    h1,h2,h3{font-family:'Google Sans',sans-serif}
+    code,pre{font-family:'Google Sans Code',monospace}
+    .site-header{border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:56px;background:var(--surface)}
+    .logo{font-family:'Google Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none}
+    .badge{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);padding:2px 8px;border-radius:4px}
+    .nav-links{margin-left:auto;display:flex;gap:0.25rem}
+    .nav-links a{font-size:0.8rem;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:4px;transition:color 0.15s,background 0.15s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--border)}
+
+    .compare-header{padding:1.5rem 2rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;background:var(--surface)}
+    .compare-slot{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem}
+    .slot-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.5rem}
+    .slot-name{font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9;margin-bottom:2px}
+    .slot-meta{font-size:0.72rem;color:var(--muted)}
+    .slot-A .slot-name{color:var(--cA)}
+    .slot-B .slot-name{color:var(--cB)}
+    .vs-badge{font-family:'Google Sans',sans-serif;font-weight:700;font-size:1.1rem;color:var(--muted);text-align:center}
+    .mode-pills{display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;padding:1rem 2rem;border-bottom:1px solid var(--border);background:var(--surface)}
+    .mpill{font-size:0.75rem;padding:5px 14px;border-radius:99px;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'Google Sans',sans-serif;transition:all 0.15s}
+    .mpill.active{border-color:var(--accent);color:var(--accent);background:rgba(59,130,246,0.08)}
+    .content{padding:1.5rem 2rem;display:flex;flex-direction:column;gap:1.5rem}
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
+    .panel-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+
+    /* Stat comparison table */
+    .stat-compare{width:100%;border-collapse:collapse}
+    .stat-compare td{padding:0.5rem 0.75rem;border-bottom:1px solid var(--border);font-size:0.82rem}
+    .stat-compare tr:last-child td{border-bottom:none}
+    .stat-compare .sc-label{color:var(--muted);font-size:0.72rem;width:120px}
+    .sc-a{text-align:right;font-family:'Google Sans',sans-serif;font-weight:700;color:var(--cA)}
+    .sc-b{text-align:left;font-family:'Google Sans',sans-serif;font-weight:700;color:var(--cB)}
+    .sc-bar-wrap{flex:1;display:flex;align-items:center;gap:4px;justify-content:center}
+    .bar-a{height:8px;border-radius:3px 0 0 3px;background:var(--cA)}
+    .bar-b{height:8px;border-radius:0 3px 3px 0;background:var(--cB)}
+
+    .example-comparisons{display:flex;flex-wrap:wrap;gap:0.5rem}
+    .ec{font-size:0.75rem;padding:5px 12px;border-radius:6px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.15s}
+    .ec:hover{border-color:var(--accent);color:var(--accent)}
+    select,input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:5px;font-size:0.78rem;font-family:'Inter',sans-serif;outline:none}
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <a href="index.html" class="logo">Baseball API</a>
+  <span class="badge">compare</span>
+  <nav class="nav-links">
+    <a href="home.html">Home</a><a href="players.html">Players</a>
+    <a href="teams.html">Teams</a><a href="games.html">Games</a>
+    <a href="seasons.html">Seasons</a><a href="leaders.html">Leaders</a>
+    <a href="compare.html" class="active">Compare</a><a href="api-explorer.html">API</a>
+    <a href="data-sources.html">Data</a>
+  </nav>
+</header>
+
+<div class="compare-header">
+  <div class="compare-slot slot-A">
+    <div class="slot-label">A</div>
+    <div class="slot-name" id="nameA">Willie Mays</div>
+    <div class="slot-meta" id="metaA">SF Giants · OF · 1951–1973</div>
+    <div style="margin-top:0.5rem;display:flex;gap:0.5rem">
+      <select id="selA" onchange="updateCompare()" style="font-size:0.72rem;padding:3px 8px">
+        <option>Willie Mays</option><option>Babe Ruth</option><option>Hank Aaron</option><option>Ted Williams</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="vs-badge">vs</div>
+
+  <div class="compare-slot slot-B">
+    <div class="slot-label">B</div>
+    <div class="slot-name" id="nameB">Hank Aaron</div>
+    <div class="slot-meta" id="metaB">Atlanta Braves · OF · 1954–1976</div>
+    <div style="margin-top:0.5rem;display:flex;gap:0.5rem">
+      <select id="selB" onchange="updateCompare()" style="font-size:0.72rem;padding:3px 8px">
+        <option>Hank Aaron</option><option>Willie Mays</option><option>Babe Ruth</option><option>Ted Williams</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="mode-pills">
+  <span class="mpill active" onclick="setMode('player-vs-player',this)">Player vs Player</span>
+  <span class="mpill" onclick="setMode('team-season',this)">Team-Season vs Team-Season</span>
+  <span class="mpill" onclick="setMode('season-vs-season',this)">Season vs Season</span>
+  <span class="mpill" onclick="setMode('franchise-era',this)">Franchise Era</span>
+</div>
+
+<div class="content">
+
+  <!-- Example comparisons -->
+  <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+    <span style="font-size:0.72rem;color:var(--muted)">Examples:</span>
+    <div class="example-comparisons">
+      <span class="ec" onclick="loadExample('ruth-aaron')">Ruth vs Aaron through age 30</span>
+      <span class="ec" onclick="loadExample('98-01')">1998 Yankees vs 2001 Mariners</span>
+      <span class="ec" onclick="loadExample('al-nl')">AL vs NL HR leaders</span>
+      <span class="ec" onclick="loadExample('best-seasons')">Best seasons by run diff</span>
+    </div>
+  </div>
+
+  <!-- Stat comparison -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-label">Career statistics — head to head</div>
+      <table class="stat-compare" id="statTable">
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Radar chart -->
+    <div class="panel">
+      <div class="panel-label">Comparative profile</div>
+      <canvas id="radarChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Line chart over career -->
+  <div class="panel">
+    <div class="panel-label">
+      Career HR trajectory —
+      <select id="trajStat" onchange="updateTraj()" style="font-size:0.72rem;padding:2px 8px;margin-left:0.25rem">
+        <option value="hr">HR</option>
+        <option value="avg">AVG</option>
+        <option value="rbi">RBI</option>
+      </select>
+    </div>
+    <canvas id="trajChart" height="100"></canvas>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+<script>
+  const players = {
+    'Willie Mays': { meta:'SF Giants · OF · 1951–1973', career:{hr:660,avg:.302,rbi:1903,sb:338,g:2992,h:3283,r:2062}, hrByAge:[20,36,51,49,35,29,41,34,18,52,47,38,49,47,36,52,37,28,22,13,6] },
+    'Hank Aaron': { meta:'Atlanta Braves · OF · 1954–1976', career:{hr:755,avg:.305,rbi:2297,sb:240,g:3298,h:3771,r:2174}, hrByAge:[13,27,26,44,30,39,40,34,45,44,24,32,44,38,47,34,40,29,20,12,10] },
+    'Babe Ruth': { meta:'New York Yankees · P/OF · 1914–1935', career:{hr:714,avg:.342,rbi:2213,sb:123,g:2503,h:2873,r:2174}, hrByAge:[0,4,3,11,29,54,59,35,41,46,60,54,46,41,34,22,6] },
+    'Ted Williams': { meta:'Boston Red Sox · OF · 1939–1960', career:{hr:521,avg:.406,rbi:1839,sb:24,g:2292,h:2654,r:1798}, hrByAge:[31,23,36,38,0,0,0,19,28,43,25,30,29,14,38,28,15] },
+  };
+
+  let radarChart = null, trajChart = null;
+
+  function getA(){ return document.getElementById('selA').value; }
+  function getB(){ return document.getElementById('selB').value; }
+
+  function updateCompare() {
+    const a = players[getA()], b = players[getB()];
+    document.getElementById('nameA').textContent = getA();
+    document.getElementById('nameB').textContent = getB();
+    document.getElementById('metaA').textContent = a.meta;
+    document.getElementById('metaB').textContent = b.meta;
+    renderStatTable(a.career, b.career);
+    renderRadar(a.career, b.career);
+    renderTraj();
+  }
+
+  function renderStatTable(a, b) {
+    const stats = [
+      {k:'hr',label:'Home Runs'},
+      {k:'avg',label:'Batting Avg'},
+      {k:'rbi',label:'RBI'},
+      {k:'sb',label:'Stolen Bases'},
+      {k:'h',label:'Hits'},
+      {k:'r',label:'Runs'},
+      {k:'g',label:'Games'},
+    ];
+    const tb = document.getElementById('statTable').querySelector('tbody');
+    tb.innerHTML='';
+    stats.forEach(s=>{
+      const aVal=a[s.k], bVal=b[s.k];
+      const max=Math.max(aVal,bVal);
+      const aw=Math.round((aVal/max)*60), bw=Math.round((bVal/max)*60);
+      const av=typeof aVal==='number'&&aVal<1?aVal.toFixed(3):aVal;
+      const bv=typeof bVal==='number'&&bVal<1?bVal.toFixed(3):bVal;
+      tb.innerHTML+=`<tr>
+        <td class="sc-a">${av}</td>
+        <td style="text-align:center;vertical-align:middle;padding:0 0.25rem">
+          <div style="display:flex;align-items:center;justify-content:center;gap:2px">
+            <div class="bar-a" style="width:${aw}px"></div>
+            <span style="font-size:0.62rem;color:var(--muted);white-space:nowrap;padding:0 4px">${s.label}</span>
+            <div class="bar-b" style="width:${bw}px"></div>
+          </div>
+        </td>
+        <td class="sc-b">${bv}</td>
+      </tr>`;
+    });
+  }
+
+  function renderRadar(a, b) {
+    if (radarChart) radarChart.destroy();
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    const norm = (v,max)=>Math.round((v/max)*100);
+    radarChart = new Chart(ctx, {
+      type:'radar',
+      data:{
+        labels:['HR','AVG','RBI','SB','Hits','Runs'],
+        datasets:[
+          {label:getA(),data:[norm(a.hr,800),norm(a.avg,0.5)*100,norm(a.rbi,2400),norm(a.sb,400),norm(a.h,4000),norm(a.r,2400)],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.15)',pointBackgroundColor:'#3b82f6'},
+          {label:getB(),data:[norm(b.hr,800),norm(b.avg,0.5)*100,norm(b.rbi,2400),norm(b.sb,400),norm(b.h,4000),norm(b.r,2400)],borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.15)',pointBackgroundColor:'#f59e0b'},
+        ]
+      },
+      options:{responsive:true,plugins:{legend:{labels:{color:'#6b7280',font:{size:10}}}},scales:{r:{ticks:{display:false},grid:{color:'#252934'},pointLabels:{color:'#6b7280',font:{size:10}}}}}
+    });
+  }
+
+  function renderTraj() {
+    if (trajChart) trajChart.destroy();
+    const a = players[getA()], b = players[getB()];
+    const ctx = document.getElementById('trajChart').getContext('2d');
+    const ages = Array.from({length:Math.max(a.hrByAge.length,b.hrByAge.length)},(_,i)=>20+i);
+    trajChart = new Chart(ctx, {
+      type:'line',
+      data:{
+        labels:ages,
+        datasets:[
+          {label:getA(),data:a.hrByAge,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',fill:false,tension:0.3,pointRadius:3},
+          {label:getB(),data:b.hrByAge,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.1)',fill:false,tension:0.3,pointRadius:3},
+        ]
+      },
+      options:{responsive:true,plugins:{legend:{labels:{color:'#6b7280',font:{size:10}}}},scales:{x:{title:{display:true,text:'Age',color:'#6b7280',font:{size:10}},ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}},y:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}}}}
+    });
+  }
+
+  function updateTraj() { renderTraj(); }
+
+  function setMode(mode,el) {
+    document.querySelectorAll('.mpill').forEach(p=>p.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function loadExample(ex) {
+    const map = {
+      'ruth-aaron': ['Babe Ruth','Hank Aaron'],
+      '98-01': ['Willie Mays','Hank Aaron'],
+      'al-nl': ['Willie Mays','Ted Williams'],
+      'best-seasons': ['Babe Ruth','Ted Williams'],
+    };
+    const [a,b] = map[ex];
+    document.getElementById('selA').value=a;
+    document.getElementById('selB').value=b;
+    updateCompare();
+  }
+
+  // Init
+  updateCompare();
+</script>
+</body>
+</html>

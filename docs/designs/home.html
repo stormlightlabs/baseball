@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home — Baseball API Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d0f13;
+      --surface: #13161c;
+      --surface2: #1a1e27;
+      --border: #252934;
+      --text: #e2e8f0;
+      --muted: #6b7280;
+      --accent: #3b82f6;
+      --accent2: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+    h1,h2,h3,h4 { font-family: 'Google Sans', sans-serif; }
+    code,pre,.mono { font-family: 'Google Sans Code', monospace; }
+
+    .site-header {
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; gap: 1rem;
+      height: 56px; background: var(--surface);
+    }
+    .logo { font-family: 'Google Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--text); text-decoration: none; }
+    .badge { font-family: 'Google Sans Code', monospace; font-size: 0.7rem; background: var(--border); color: var(--muted); padding: 2px 8px; border-radius: 4px; }
+    .nav-links { margin-left: auto; display: flex; gap: 0.25rem; }
+    .nav-links a { font-size: 0.8rem; color: var(--muted); text-decoration: none; padding: 4px 10px; border-radius: 4px; transition: color 0.15s, background 0.15s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--border); }
+
+    .main { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+
+    /* Search hero */
+    .search-hero { text-align: center; padding: 3rem 0 2.5rem; }
+    .search-hero h1 { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.03em; color: #f1f5f9; margin-bottom: 0.5rem; }
+    .search-hero p { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+
+    .search-box {
+      display: flex; max-width: 600px; margin: 0 auto;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+    }
+    .search-box input {
+      flex: 1; background: transparent; border: none; outline: none;
+      padding: 0.75rem 1rem; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.9rem;
+    }
+    .search-box input::placeholder { color: var(--muted); }
+    .search-box button {
+      background: var(--accent); color: #fff; border: none; padding: 0.75rem 1.25rem;
+      font-family: 'Google Sans', sans-serif; font-size: 0.85rem; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .search-box button:hover { opacity: 0.85; }
+
+    .search-pills { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+    .pill {
+      font-size: 0.75rem; padding: 4px 12px; border-radius: 99px;
+      border: 1px solid var(--border); color: var(--muted); cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      font-family: 'Google Sans Code', monospace;
+    }
+    .pill:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Grid layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: auto;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 1px;
+    }
+    .panel {
+      background: var(--surface);
+      padding: 1.25rem;
+    }
+    .panel-label {
+      font-family: 'Google Sans Code', monospace;
+      font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em;
+      text-transform: uppercase; margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+    }
+    .panel h3 { font-size: 0.95rem; font-weight: 600; color: #f1f5f9; margin-bottom: 0.75rem; }
+
+    /* Quick links */
+    .quick-links { display: flex; flex-direction: column; gap: 0.35rem; }
+    .quick-link {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.5rem 0.75rem; border-radius: 6px;
+      background: var(--surface2); text-decoration: none; color: var(--text);
+      font-size: 0.82rem; transition: background 0.15s;
+    }
+    .quick-link:hover { background: var(--border); }
+    .quick-link .ql-icon { color: var(--accent); font-family: 'Google Sans Code', monospace; font-size: 0.75rem; }
+    .quick-link .ql-arrow { color: var(--muted); font-size: 0.75rem; }
+
+    /* Featured queries */
+    .query-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .query-item {
+      padding: 0.6rem 0.75rem; background: var(--surface2); border-radius: 6px;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .query-item:hover { background: var(--border); }
+    .query-item .q-title { font-size: 0.8rem; color: #f1f5f9; margin-bottom: 2px; }
+    .query-item .q-endpoint { font-family: 'Google Sans Code', monospace; font-size: 0.65rem; color: var(--accent); }
+
+    /* Health panel */
+    .health-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .health-stat { background: var(--surface2); border-radius: 6px; padding: 0.6rem 0.75rem; }
+    .health-stat .hs-value { font-family: 'Google Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: #f1f5f9; }
+    .health-stat .hs-label { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+    .health-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); margin-right: 5px; }
+
+    /* Coverage chart */
+    .coverage-bar { margin-bottom: 0.5rem; }
+    .coverage-bar .cb-label { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+    .cb-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .cb-fill { height: 100%; border-radius: 3px; background: var(--accent); }
+    .cb-fill.green { background: var(--accent2); }
+
+    /* Span helpers */
+    .col-span-2 { grid-column: span 2; }
+    .col-span-3 { grid-column: span 3; }
+
+    /* API mirror strip */
+    .api-strip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex; align-items: center; gap: 1.5rem;
+      margin-top: 1px;
+      font-size: 0.8rem;
+    }
+    .api-strip .endpoint {
+      font-family: 'Google Sans Code', monospace; font-size: 0.75rem;
+      color: var(--accent); flex: 1;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .api-strip .copy-btn {
+      font-family: 'Google Sans Code', monospace; font-size: 0.7rem;
+      background: var(--border); color: var(--muted); border: none;
+      padding: 4px 10px; border-radius: 4px; cursor: pointer; transition: color 0.15s;
+    }
+    .api-strip .copy-btn:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <a href="index.html" class="logo">Baseball API</a>
+    <span class="badge">dashboard</span>
+    <nav class="nav-links">
+      <a href="home.html" class="active">Home</a>
+      <a href="players.html">Players</a>
+      <a href="teams.html">Teams</a>
+      <a href="games.html">Games</a>
+      <a href="seasons.html">Seasons</a>
+      <a href="leaders.html">Leaders</a>
+      <a href="compare.html">Compare</a>
+      <a href="api-explorer.html">API</a>
+      <a href="data-sources.html">Data</a>
+    </nav>
+  </header>
+
+  <div class="main">
+
+    <div class="search-hero">
+      <h1>What can I find?</h1>
+      <p>Search players, teams, franchises, games — 1871 to today</p>
+      <div class="search-box">
+        <input type="text" placeholder="Try &quot;Babe Ruth&quot;, &quot;1927 Yankees&quot;, &quot;extra innings 1998&quot;…" id="searchInput" />
+        <button onclick="handleSearch()">Search</button>
+      </div>
+      <div class="search-pills">
+        <span class="pill" onclick="setSearch('players')">Players</span>
+        <span class="pill" onclick="setSearch('teams')">Teams</span>
+        <span class="pill" onclick="setSearch('franchises')">Franchises</span>
+        <span class="pill" onclick="setSearch('games')">Games</span>
+        <span class="pill" onclick="setSearch('seasons')">Seasons</span>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+
+      <!-- Quick links -->
+      <div class="panel">
+        <div class="panel-label">Quick links</div>
+        <div class="quick-links">
+          <a href="players.html" class="quick-link">
+            <span>Player Lookup</span>
+            <span class="ql-icon">/players/{id} <span class="ql-arrow">→</span></span>
+          </a>
+          <a href="teams.html" class="quick-link">
+            <span>Team-Season Lookup</span>
+            <span class="ql-icon">/seasons/{year}/teams <span class="ql-arrow">→</span></span>
+          </a>
+          <a href="games.html" class="quick-link">
+            <span>Game Finder</span>
+            <span class="ql-icon">/games <span class="ql-arrow">→</span></span>
+          </a>
+          <a href="leaders.html" class="quick-link">
+            <span>Season Leaders</span>
+            <span class="ql-icon">/seasons/{year}/leaders <span class="ql-arrow">→</span></span>
+          </a>
+          <a href="seasons.html" class="quick-link">
+            <span>Date Explorer</span>
+            <span class="ql-icon">/seasons/{year}/dates <span class="ql-arrow">→</span></span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Featured queries -->
+      <div class="panel">
+        <div class="panel-label">Featured queries</div>
+        <div class="query-list">
+          <div class="query-item">
+            <div class="q-title">Top HR hitters, 1920–1960</div>
+            <div class="q-endpoint">/stats/batting?season_from=1920&season_to=1960&sort=hr&order=desc</div>
+          </div>
+          <div class="query-item">
+            <div class="q-title">Extra-inning games in 1986</div>
+            <div class="q-endpoint">/games?season=1986&min_innings=10</div>
+          </div>
+          <div class="query-item">
+            <div class="q-title">Perfect ERAs: min 200 IP</div>
+            <div class="q-endpoint">/stats/pitching?season=2000&min_ip=200&sort=era</div>
+          </div>
+          <div class="query-item">
+            <div class="q-title">Lahman Hall of Fame class 1936</div>
+            <div class="q-endpoint">/players/{id}/hall-of-fame?year=1936</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API health -->
+      <div class="panel">
+        <div class="panel-label">API health &amp; version</div>
+        <div class="health-grid">
+          <div class="health-stat">
+            <div class="hs-value"><span class="health-dot"></span>Online</div>
+            <div class="hs-label">Status</div>
+          </div>
+          <div class="health-stat">
+            <div class="hs-value">v1.0</div>
+            <div class="hs-label">Version</div>
+          </div>
+          <div class="health-stat">
+            <div class="hs-value">1871</div>
+            <div class="hs-label">Data from</div>
+          </div>
+          <div class="health-stat">
+            <div class="hs-value">2024</div>
+            <div class="hs-label">Data to</div>
+          </div>
+          <div class="health-stat">
+            <div class="hs-value">~12ms</div>
+            <div class="hs-label">Avg response</div>
+          </div>
+          <div class="health-stat">
+            <div class="hs-value">3</div>
+            <div class="hs-label">Sources</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coverage by source -->
+      <div class="panel col-span-2">
+        <div class="panel-label">Dataset coverage</div>
+        <div style="margin-bottom:0.6rem">
+          <div class="coverage-bar">
+            <div class="cb-label"><span>Lahman — batting, pitching, fielding, standings</span><span>1871–2024</span></div>
+            <div class="cb-track"><div class="cb-fill" style="width:98%"></div></div>
+          </div>
+          <div class="coverage-bar">
+            <div class="cb-label"><span>Retrosheet — game/event data, rosters</span><span>1918–2024</span></div>
+            <div class="cb-track"><div class="cb-fill green" style="width:85%"></div></div>
+          </div>
+          <div class="coverage-bar">
+            <div class="cb-label"><span>MLB StatsAPI — schedules, venues, transactions</span><span>2000–2024</span></div>
+            <div class="cb-track"><div class="cb-fill" style="width:40%; background:#f59e0b"></div></div>
+          </div>
+        </div>
+        <canvas id="coverageChart" height="80"></canvas>
+      </div>
+
+      <!-- Endpoints overview -->
+      <div class="panel">
+        <div class="panel-label">Endpoints</div>
+        <div style="display:flex;flex-direction:column;gap:0.3rem;font-family:'Google Sans Code',monospace;font-size:0.72rem;color:var(--muted)">
+          <span style="color:var(--accent)">/players</span>
+          <span style="color:var(--accent)">/teams</span>
+          <span style="color:var(--accent)">/franchises</span>
+          <span style="color:var(--accent)">/games</span>
+          <span style="color:var(--accent)">/seasons/{year}</span>
+          <span style="color:var(--accent)">/stats/batting</span>
+          <span style="color:var(--accent)">/stats/pitching</span>
+          <span style="color:var(--muted)">/seasons/{year}/leaders/batting</span>
+          <span style="color:var(--muted)">/seasons/{year}/leaders/pitching</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- API mirror strip -->
+    <div class="api-strip">
+      <span style="color:var(--muted);font-size:0.72rem;">GET</span>
+      <span class="endpoint" id="mirrorEndpoint">https://api.baseball.example/v1/players?limit=20</span>
+      <button class="copy-btn" onclick="copyEndpoint()">copy</button>
+      <button class="copy-btn" onclick="copyCurl()">copy curl</button>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+  <script>
+    function setSearch(type) {
+      document.getElementById('searchInput').value = type + ': ';
+      document.getElementById('searchInput').focus();
+    }
+    function handleSearch() {
+      const v = document.getElementById('searchInput').value.trim();
+      if (v) {
+        document.getElementById('mirrorEndpoint').textContent =
+          `https://api.baseball.example/v1/search?q=${encodeURIComponent(v)}&limit=20`;
+      }
+    }
+    document.getElementById('searchInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleSearch();
+    });
+    function copyEndpoint() {
+      navigator.clipboard.writeText(document.getElementById('mirrorEndpoint').textContent);
+    }
+    function copyCurl() {
+      const url = document.getElementById('mirrorEndpoint').textContent;
+      navigator.clipboard.writeText(`curl -s "${url}" | jq .`);
+    }
+
+    // Coverage chart
+    const ctx = document.getElementById('coverageChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['1871','1890','1910','1930','1950','1970','1990','2010','2024'],
+        datasets: [
+          { label: 'Lahman', data: [1,1,1,1,1,1,1,1,1], backgroundColor: 'rgba(59,130,246,0.5)' },
+          { label: 'Retrosheet', data: [0,0,0.5,1,1,1,1,1,1], backgroundColor: 'rgba(16,185,129,0.5)' },
+          { label: 'MLB StatsAPI', data: [0,0,0,0,0,0,0.2,1,1], backgroundColor: 'rgba(245,158,11,0.5)' },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#6b7280', font: { family: 'Inter', size: 10 } } } },
+        scales: {
+          x: { stacked: true, ticks: { color: '#6b7280', font: { size: 9 } }, grid: { color: '#252934' } },
+          y: { stacked: true, display: false }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
