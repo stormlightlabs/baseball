@@ -14,9 +14,9 @@
   - Fonts: `sans` → Inter (300–600), `heading` → Google Sans (400/500/700), `mono` → Google Sans Code.
   - Dark-only — no light mode toggle needed.
 - [x] Add Chart.js 4 as a dependency.
-- [ ] Create a thin `<Chart>` Svelte wrapper that handles canvas lifecycle (`onMount` / `onDestroy`) and reactive data updates.
+- [x] Create a thin `<Chart>` Svelte wrapper that handles canvas lifecycle (`onMount` / `onDestroy`) and reactive data updates.
 - [x] Add an OpenAPI/Swagger parser dependency (e.g. `swagger-parser` or a lightweight alternative) to power the API Explorer page.
-- [ ] Add a `task dash:dev` and `task dash:build` to `Taskfile.yml` (runs vite dev/build inside `web/`).
+- [x] Add a `task dash:dev` and `task dash:build` to `Taskfile.yml` (runs vite dev/build inside `web/`).
 - [x] Configure the dev server to proxy `/v1/*` to `localhost:8080` so the SPA can call the API without CORS during development.
 
 ## Shared Layout & Components
@@ -25,29 +25,29 @@ All pages share a header, optional sidebar, and a consistent panel/card system v
 
 ### Layout
 
-- [ ] `+layout.svelte` — sticky 56px header with logo ("Baseball API"), badge (current page context), and nav links: Home, Players, Teams, Games, Seasons, Leaders, Compare, Explorer, Data. Active link styling via `$page.url`. Account/key-management link in the right side of the header (authenticated area).
-- [ ] Define two layout snippet props: **single-column** (Home, Data Sources) and **three-column** (Players, Teams, Games, Seasons, Leaders, Compare, API Explorer).
+- [x] `+layout.svelte` — sticky 56px header with logo ("Baseball API"), badge (current page context), and nav links: Home, Players, Teams, Games, Seasons, Leaders, Compare, Explorer, Data. Active link styling via `$page.url`. Account/key-management link in the right side of the header (authenticated area).
+- [x] Define two layout snippet props: **single-column** (Home, Data Sources) and **three-column** (Players, Teams, Games, Seasons, Leaders, Compare, API Explorer).
   The three-column layout is `grid-template-columns: 280px 1fr 320px` with sidebar, center scroll area, and right API/context panel.
 
 ### Reusable Components
 
-- [ ] `Panel` — surface card with optional `label` prop (uppercase mono small text with border-bottom divider).
+- [x] `Panel` — surface card with optional `label` prop (uppercase mono small text with border-bottom divider).
   Used everywhere.
-- [ ] `TabRow` / `Tab` — horizontal tab strip. Active tab gets `surface2` bg + border.
+- [x] `TabRow` / `Tab` — horizontal tab strip. Active tab gets `surface2` bg + border.
   Supports keyboard nav.
-- [ ] `SegmentControl` — toggle buttons (e.g. Batting/Pitching, Quick leaders/Query lab).
+- [x] `SegmentControl` — toggle buttons (e.g. Batting/Pitching, Quick leaders/Query lab).
   Like tabs but inside sidebars.
-- [ ] `SortableTable` — props: `columns` (label, key, sortable, format), `rows`, `sort` bindable.
+- [x] `SortableTable` — props: `columns` (label, key, sortable, format), `rows`, `sort` bindable.
   Mono font cells, hover row highlight, rank-bar optional column renderer.
-- [ ] `Pill` / `Badge` — small rounded labels. Pills are clickable filters, badges are informational.
-- [ ] `SearchInput` — input with placeholder, optional submit button.
+- [x] `Pill` / `Badge` — small rounded labels. Pills are clickable filters, badges are informational.
+- [x] `SearchInput` — input with placeholder, optional submit button.
   Mini variant for sidebars, full variant for hero search.
-- [ ] `CopyButton` — copies text to clipboard, brief "Copied" feedback.
-- [ ] `ApiMirrorStrip` — bottom bar showing `GET`, endpoint URL, copy URL, copy curl.
+- [x] `CopyButton` — copies text to clipboard, brief "Copied" feedback.
+- [x] `ApiMirrorStrip` — bottom bar showing `GET`, endpoint URL, copy URL, copy curl.
   Displayed on entity pages outside the three-column layout.
-- [ ] `ApiPanel` — right-column panel used in the three-column layout. Shows: endpoint path, generated full URL, curl block, and a collapsible JSON preview. Reacts to the current page context (selected player, query params, etc.).
-- [ ] `Pagination` — page/per_page controls, total count display. Wired to URL search params.
-- [ ] `CoverageBar` — horizontal bar with label, range text, and filled track (percentage).
+- [x] `ApiPanel` — right-column panel used in the three-column layout. Shows: endpoint path, generated full URL, curl block, and a collapsible JSON preview. Reacts to the current page context (selected player, query params, etc.).
+- [x] `Pagination` — page/per_page controls, total count display. Wired to URL search params.
+- [x] `CoverageBar` — horizontal bar with label, range text, and filled track (percentage).
   Colored variants for each data source.
 
 ## 2. API Client & Stores

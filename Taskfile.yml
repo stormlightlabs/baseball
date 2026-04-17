@@ -80,3 +80,19 @@ tasks:
     desc: "Run tests matching a pattern (usage: task test:filter -- -run TestPattern)"
     cmds:
       - go test ./... -v {{.CLI_ARGS}}
+      - task: swagger:generate
+      - task: rebuild
+      - echo ""
+      - echo "Rebuild complete! Restart the server to pick up changes"
+
+  dash:dev:
+    desc: Start the dashboard dev server (proxies /v1 to localhost:8080)
+    dir: web
+    cmds:
+      - pnpm dev
+
+  dash:build:
+    desc: Build the dashboard as a static SPA
+    dir: web
+    cmds:
+      - pnpm build
