@@ -1,0 +1,20 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+
+@theme {
+  --font-display: 'Google Sans Variable', sans-serif;
+  --font-monospace: 'Google Sans Code Variable', monospace;
+  --font-body: 'Inter Variable', sans-serif;
+
+  /* - Colors: `--bg #0d0f13`, `--surface #13161c`, `--surface2 #1a1e27`, `--border #252934`, `--text #e2e8f0`, `--muted #6b7280`, `--accent #3b82f6`, `--accent2 #10b981`, `--warning #f59e0b`. */
+
+  --color-mantle: #0d0f13;
+  --color-crust: #13161c;
+  --color-surface: #1a1e27;
+  --color-outline: #252934;
+  --color-foreground: #e2e8f0;
+  --color-muted: #6b7280;
+  --color-primary: #3b82f6;
+  --color-secondary: #10b981;
+  --color-warning: #f59e0b;
+}

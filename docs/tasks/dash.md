@@ -7,38 +7,48 @@
 
 ## Scaffold & Tooling
 
-- [ ] Init SvelteKit project inside `web/` (or similar) with TypeScript, `adapter-static` (fallback `index.html` for SPA). Dashboard routes live at the root (`/`); `/api/` is reserved for the backend.
-- [ ] Install and configure Tailwind v4 (`@tailwindcss/vite`). Translate the design-system tokens from the wireframes into a Tailwind theme:
+- [x] Init SvelteKit project inside `web/` (or similar) with TypeScript, `adapter-static` (fallback `index.html` for SPA). Dashboard routes live at the root (`/`); `/api/` is reserved for the backend.
+- [x] Install and configure Tailwind v4 (`@tailwindcss/vite`). Translate the design-system tokens from the wireframes into a Tailwind theme:
   - Colors: `--bg #0d0f13`, `--surface #13161c`, `--surface2 #1a1e27`, `--border #252934`, `--text #e2e8f0`, `--muted #6b7280`, `--accent #3b82f6`, `--accent2 #10b981`, `--warning #f59e0b`.
+    Note: renamed to more semantic names
   - Fonts: `sans` → Inter (300–600), `heading` → Google Sans (400/500/700), `mono` → Google Sans Code.
   - Dark-only — no light mode toggle needed.
-- [ ] Add Chart.js 4 as a dependency. Create a thin `<Chart>` Svelte wrapper that handles canvas lifecycle (`onMount` / `onDestroy`) and reactive data updates.
-- [ ] Add an OpenAPI/Swagger parser dependency (e.g. `swagger-parser` or a lightweight alternative) to power the API Explorer page.
+- [x] Add Chart.js 4 as a dependency.
+- [ ] Create a thin `<Chart>` Svelte wrapper that handles canvas lifecycle (`onMount` / `onDestroy`) and reactive data updates.
+- [x] Add an OpenAPI/Swagger parser dependency (e.g. `swagger-parser` or a lightweight alternative) to power the API Explorer page.
 - [ ] Add a `task dash:dev` and `task dash:build` to `Taskfile.yml` (runs vite dev/build inside `web/`).
-- [ ] Configure the dev server to proxy `/v1/*` to `localhost:8080` so the SPA can call the API without CORS during development.
+- [x] Configure the dev server to proxy `/v1/*` to `localhost:8080` so the SPA can call the API without CORS during development.
 
-## 1. Shared Layout & Components
+## Shared Layout & Components
 
 All pages share a header, optional sidebar, and a consistent panel/card system visible in every wireframe.
 
 ### Layout
 
 - [ ] `+layout.svelte` — sticky 56px header with logo ("Baseball API"), badge (current page context), and nav links: Home, Players, Teams, Games, Seasons, Leaders, Compare, Explorer, Data. Active link styling via `$page.url`. Account/key-management link in the right side of the header (authenticated area).
-- [ ] Define two layout slots: **single-column** (Home, Data Sources) and **three-column** (Players, Teams, Games, Seasons, Leaders, Compare, API Explorer). The three-column layout is `grid-template-columns: 280px 1fr 320px` with sidebar, center scroll area, and right API/context panel.
+- [ ] Define two layout snippet props: **single-column** (Home, Data Sources) and **three-column** (Players, Teams, Games, Seasons, Leaders, Compare, API Explorer).
+  The three-column layout is `grid-template-columns: 280px 1fr 320px` with sidebar, center scroll area, and right API/context panel.
 
 ### Reusable Components
 
-- [ ] `Panel` — surface card with optional `label` prop (uppercase mono small text with border-bottom divider). Used everywhere.
-- [ ] `TabRow` / `Tab` — horizontal tab strip. Active tab gets `surface2` bg + border. Supports keyboard nav.
-- [ ] `SegmentControl` — toggle buttons (e.g. Batting/Pitching, Quick leaders/Query lab). Like tabs but inside sidebars.
-- [ ] `SortableTable` — props: `columns` (label, key, sortable, format), `rows`, `sort` bindable. Mono font cells, hover row highlight, rank-bar optional column renderer.
+- [ ] `Panel` — surface card with optional `label` prop (uppercase mono small text with border-bottom divider).
+  Used everywhere.
+- [ ] `TabRow` / `Tab` — horizontal tab strip. Active tab gets `surface2` bg + border.
+  Supports keyboard nav.
+- [ ] `SegmentControl` — toggle buttons (e.g. Batting/Pitching, Quick leaders/Query lab).
+  Like tabs but inside sidebars.
+- [ ] `SortableTable` — props: `columns` (label, key, sortable, format), `rows`, `sort` bindable.
+  Mono font cells, hover row highlight, rank-bar optional column renderer.
 - [ ] `Pill` / `Badge` — small rounded labels. Pills are clickable filters, badges are informational.
-- [ ] `SearchInput` — input with placeholder, optional submit button. Mini variant for sidebars, full variant for hero search.
+- [ ] `SearchInput` — input with placeholder, optional submit button.
+  Mini variant for sidebars, full variant for hero search.
 - [ ] `CopyButton` — copies text to clipboard, brief "Copied" feedback.
-- [ ] `ApiMirrorStrip` — bottom bar showing `GET`, endpoint URL, copy URL, copy curl. Displayed on entity pages outside the three-column layout.
+- [ ] `ApiMirrorStrip` — bottom bar showing `GET`, endpoint URL, copy URL, copy curl.
+  Displayed on entity pages outside the three-column layout.
 - [ ] `ApiPanel` — right-column panel used in the three-column layout. Shows: endpoint path, generated full URL, curl block, and a collapsible JSON preview. Reacts to the current page context (selected player, query params, etc.).
 - [ ] `Pagination` — page/per_page controls, total count display. Wired to URL search params.
-- [ ] `CoverageBar` — horizontal bar with label, range text, and filled track (percentage). Colored variants for each data source.
+- [ ] `CoverageBar` — horizontal bar with label, range text, and filled track (percentage).
+  Colored variants for each data source.
 
 ## 2. API Client & Stores
 
@@ -46,7 +56,7 @@ All pages share a header, optional sidebar, and a consistent panel/card system v
   - Reads base URL from an env var / SvelteKit `$env` (defaults to `/v1`).
   - Appends pagination params, returns typed `{ data, page, per_page, total }` envelopes.
   - Exposes per-request loading/error state.
-- [ ] Build a Svelte store or context for API health/meta (fetched once on app init from `/v1/meta`). Provides version, dataset date ranges, source coverage to the Home page and header badge.
+- [ ] Build a class encapsulating Svelte runes for API health/meta (fetched once on app init from `/v1/meta`). Provides version, dataset date ranges, source coverage to the Home page and header badge.
 - [ ] URL-driven state: every filter, search term, page number, and sort column should be reflected in `$page.url.searchParams` so that every dashboard state is shareable and deep-linkable.
 
 ## 3. Home Page (`/`)
@@ -188,7 +198,7 @@ Three-column layout. This page is the interactive API reference.
 
 ### Left Sidebar
 
-- [ ] Parse the OpenAPI spec (`swagger.yaml` bundled at build time or fetched from the API) and render a grouped endpoint list: Players, Teams & Franchises, Games, Seasons, Stats, Plays, Meta. Each item shows `GET` badge + path. Clicking selects it.
+- [ ] Parse the OpenAPI spec (`swagger.yaml` fetched from the API (& cached)) and render a grouped endpoint list: Players, Teams & Franchises, Games, Seasons, Stats, Plays, Meta. Each item shows `GET` badge + path. Clicking selects it.
 
 ### Center Content
 
