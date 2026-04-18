@@ -1,7 +1,7 @@
 {
 	admin off
 	auto_https off
-	# Set to "on" for production with baseball.stormlightlabs.org
+	# Set to "on" for production with bigfly.tech
 	# auto_https on
 }
 
@@ -41,7 +41,7 @@
 
 # Production HTTPS configuration
 #
-# baseball.stormlightlabs.org {
+# bigfly.tech {
 # 	handle /v1/* {
 # 		reverse_proxy app:8080 {
 # 			lb_policy round_robin
