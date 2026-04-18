@@ -17,6 +17,7 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import { page } from '$app/state';
+import type { Pathname } from '$app/types';
 import { SvelteURLSearchParams } from 'svelte/reactivity';
 
 export type ParamValue = string | number | null | undefined;
@@ -49,7 +50,7 @@ export async function setUrlParam(key: string, value: ParamValue): Promise<void>
   const qs = nextSearch({ [key]: value });
   const routeId = currentRouteId;
   if (!routeId) return;
-  let href = resolve(routeId);
+  let href = resolve(routeId as Pathname);
   if (qs) href += `?${qs}`;
   if (currentHash) href += currentHash;
   await goto(href, NAVIGATION_OPTS);
@@ -60,7 +61,7 @@ export async function setUrlParams(params: ParamOverrides): Promise<void> {
   const qs = nextSearch(params);
   const routeId = currentRouteId;
   if (!routeId) return;
-  let href = resolve(routeId);
+  let href = resolve(routeId as Pathname);
   if (qs) href += `?${qs}`;
   if (currentHash) href += currentHash;
   await goto(href, NAVIGATION_OPTS);
@@ -74,7 +75,7 @@ export function urlWith(overrides: ParamOverrides): string {
   const qs = nextSearch(overrides);
   const routeId = currentRouteId;
   if (!routeId) return `${page.url.pathname}${page.url.search}${page.url.hash}`;
-  let href = resolve(routeId);
+  let href = resolve(routeId as Pathname);
   if (qs) href += `?${qs}`;
   if (currentHash) href += currentHash;
   return href;

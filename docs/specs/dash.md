@@ -101,6 +101,33 @@ Should immediately answer: _what can this API do across eras?_
     - `/v1/players/{player_id}/splits`
     - `/v1/players/{player_id}/streaks`
 
+### Route and State Contract
+
+- Canonical UI URL shape is path-first: `/players/[id]/[tab]`.
+- `/players` is the search + empty-state entry route.
+- `/players/[id]` redirects to `/players/[id]/batting`.
+- Main tabs are nested route slugs:
+    - `batting`, `pitching`, `game-logs`, `awards`, `hof`, `teams`, `salaries`, `relatives`
+- Advanced tabs are always routable nested slugs:
+    - `batting-adv`, `pitching-adv`, `war`, `splits`, `streaks`
+- Advanced toggle only controls tab visibility in the nav; it does not gate route access.
+- Query params are limited to search + tab-local controls:
+    - shared/search: `q`
+    - pagination: `page`, `per_page`
+    - batting tab: `stat`
+    - game logs tab: `log`
+- Legacy query tab routing (`/players?id=...&tab=...`) is non-canonical and does not require compatibility redirects pre-release.
+
+### Implementation Pattern (Reference for Future Sections)
+
+- Parent layout owns persistent chrome (sidebar search/result list, selected-entity profile, API panel).
+- Child nested routes own center-pane data loading and rendering.
+- Data loading is route-driven (`onMount` + navigation hooks), not synchronized via cross-tab URL-state effects.
+- Internal navigation uses SvelteKit routing primitives:
+    - links via `href={resolve(...)}`
+    - imperative query updates via `goto(resolve(...), { replaceState: true, noScroll: true, keepFocus: true })`
+- Tab outlet transitions use Svelte built-ins (`crossfade` with subtle `fly` fallback) and must respect `prefers-reduced-motion`.
+
 ### Era-specific behavior
 
 - Season charts show shaded era bands.
@@ -250,15 +277,16 @@ Authenticated area behind `/account`.
 
 ## Page Architecture
 
-| Route       | Page         | Layout     | Auth | Notes                                  |
-| ----------- | ------------ | ---------- | ---- | -------------------------------------- |
-| `/`         | Home         | single-col | no   | search + meta + era jump               |
-| `/players`  | Players      | three-col  | no   | player profile + advanced/derived tabs |
-| `/teams`    | Teams        | three-col  | no   | franchise + team-season + era context  |
-| `/games`    | Games        | three-col  | no   | finder + game detail + event richness  |
-| `/seasons`  | Seasons      | three-col  | no   | season hub + awards/postseason         |
-| `/leaders`  | Leaders      | three-col  | no   | quick leaders + query lab + advanced   |
-| `/compare`  | Compare      | three-col  | no   | side-by-side + era normalization       |
-| `/explorer` | API Explorer | three-col  | no   | OpenAPI-driven endpoint explorer       |
-| `/data`     | Data Sources | single-col | no   | provenance + era matrix + caveats      |
-| `/account`  | Account      | single-col | yes  | API keys + usage                       |
+| Route       | Page         | Layout     | Auth | Notes                                          |
+| ----------- | ------------ | ---------- | ---- | ---------------------------------------------- |
+| `/`         | Home         | single-col | no   | search + meta + era jump                       |
+| `/players`  | Players      | three-col  | no   | search/empty route                             |
+|             |              |            |      | canonical deep links use `/players/[id]/[tab]` |
+| `/teams`    | Teams        | three-col  | no   | franchise + team-season + era context          |
+| `/games`    | Games        | three-col  | no   | finder + game detail + event richness          |
+| `/seasons`  | Seasons      | three-col  | no   | season hub + awards/postseason                 |
+| `/leaders`  | Leaders      | three-col  | no   | quick leaders + query lab + advanced           |
+| `/compare`  | Compare      | three-col  | no   | side-by-side + era normalization               |
+| `/explorer` | API Explorer | three-col  | no   | OpenAPI-driven endpoint explorer               |
+| `/data`     | Data Sources | single-col | no   | provenance + era matrix + caveats              |
+| `/account`  | Account      | single-col | yes  | API keys + usage                               |

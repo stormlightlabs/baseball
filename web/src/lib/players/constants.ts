@@ -40,7 +40,7 @@ export const ADV_TABS = [
   { id: 'war', label: 'WAR' },
   { id: 'splits', label: 'Splits' },
   { id: 'streaks', label: 'Streaks' }
-];
+] as const;
 
 export const MAIN_TABS = [
   { id: 'batting', label: 'Batting' },
@@ -51,4 +51,16 @@ export const MAIN_TABS = [
   { id: 'teams', label: 'Teams' },
   { id: 'salaries', label: 'Salaries' },
   { id: 'relatives', label: 'Relatives' }
-];
+] as const;
+
+export const ALL_PLAYER_TABS = [...MAIN_TABS, ...ADV_TABS] as const;
+
+export type PlayerTabId = (typeof ALL_PLAYER_TABS)[number]['id'];
+
+export const DEFAULT_PLAYER_TAB: PlayerTabId = 'batting';
+
+export const ADVANCED_TAB_IDS = new Set<string>(ADV_TABS.map((tab) => tab.id));
+
+export function isPlayerTabId(value: string): value is PlayerTabId {
+  return ALL_PLAYER_TABS.some((tab) => tab.id === value);
+}

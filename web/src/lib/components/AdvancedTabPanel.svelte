@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { afterNavigate } from '$app/navigation';
   import { apiFetch } from '$lib/api';
   import { AsyncListResource } from '$lib/players/resources.svelte';
   import { normalizeApiList, rowColumns, type ApiListPayload, type TableRow } from '$lib/players/types';
@@ -8,7 +9,7 @@
   let { endpoint, label }: { endpoint: string; label: string } = $props();
 
   const rows = new AsyncListResource<TableRow>();
-  let mounted = false;
+  let lastEndpoint = '';
 
   async function loadRows(ep: string): Promise<void> {
     await rows.load(
@@ -20,15 +21,24 @@
     );
   }
 
+  async function refresh(force = false): Promise<void> {
+    const ep = endpoint;
+    if (!ep) {
+      rows.clear();
+      lastEndpoint = '';
+      return;
+    }
+    if (!force && ep === lastEndpoint) return;
+    lastEndpoint = ep;
+    await loadRows(ep);
+  }
+
   onMount(() => {
-    mounted = true;
-    void loadRows(endpoint);
+    void refresh(true);
   });
 
-  $effect(() => {
-    const ep = endpoint;
-    if (!mounted) return;
-    void loadRows(ep);
+  afterNavigate(() => {
+    void refresh();
   });
 
   let columns = $derived(rowColumns(rows.items));

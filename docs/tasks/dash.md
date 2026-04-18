@@ -42,7 +42,7 @@
 
 - [x] Typed fetch wrapper that defaults base URL to `/v1`.
 - [x] Shared meta store for `/v1/meta`.
-- [x] URL-driven state for every filter/sort/page/tab.
+- [x] Route-first state architecture established for nested explorer flows (canonical state in path segments, tab-local controls in query params).
 - [x] Central endpoint-map constants derived from OpenAPI (avoid hardcoded stale params).
 
 ## Era Contracts ✓
@@ -93,6 +93,25 @@ Ref: `docs/designs/players.html`
     - `GET /v1/players/{player_id}/stats/war`
     - `GET /v1/players/{player_id}/splits`
     - `GET /v1/players/{player_id}/streaks`
+
+### Routing and Navigation Pattern ✓
+
+- [x] Adopt nested routes for tab state: `/players/[id]/[tab]` (no canonical `tab=` query state).
+- [x] Keep `/players` as search + empty state and redirect `/players/[id] -> /players/[id]/batting`.
+- [x] Restrict query params to `q`, `page`, `per_page`, and tab-local controls (`stat`, `log`).
+- [x] Keep advanced tabs always routable; toggle only affects tab visibility in navigation.
+- [x] Move persistent shell concerns (sidebar/profile/API panel) to `/players/+layout.svelte`.
+- [x] Move tab data ownership to child route pages under `/players/[id]/*`.
+- [x] Remove players URL-sync controller/effect loop pattern; use route-driven reloads (`onMount` + navigation hooks).
+- [x] Normalize internal navigation pattern:
+    - template-string route paths passed to `resolve(...)`
+    - `goto(resolve(...), { replaceState: true, noScroll: true, keepFocus: true })` for in-place query updates
+
+### Transitions and Motion Pattern ✓
+
+- [x] Add nested-outlet transition baseline using Svelte built-ins (`crossfade` + subtle `fly` fallback).
+- [x] Respect reduced-motion preferences (`prefers-reduced-motion`) when applying transitions.
+- [x] Keep sidebar and API panel stable while animating only center-pane route swaps.
 
 ### Era UX
 
