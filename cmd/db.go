@@ -54,7 +54,7 @@ func DbResetCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
-	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
+	cmd.Flags().StringVar(&yearsFlag, "years", "", fmt.Sprintf("Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all (defaults to %s)", defaultRetrosheetYears))
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
 	return cmd
 }
@@ -80,9 +80,13 @@ func DbRepopulateCmd() *cobra.Command {
 	var yearsFlag string
 	var dataDir string
 	cmd := &cobra.Command{
-		Use:   "populate",
-		Short: "Seed the database with Lahman and Retrosheet data",
-		Long:  "Seed the database with Lahman CSVs and Retrosheet zip files.",
+		Use:     "populate",
+		Aliases: []string{"repopulate"},
+		Short:   "Seed the database with Lahman and Retrosheet data",
+		Long: fmt.Sprintf(
+			"Seed the database with Lahman CSVs and Retrosheet zip files.\nIf --years is omitted, defaults to %s.",
+			defaultRetrosheetYears,
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runPopulateAll(cmd, csvDir, dataDir, yearsFlag)
 		},
@@ -91,7 +95,7 @@ func DbRepopulateCmd() *cobra.Command {
 	cmd.AddCommand(DbRepopulateRetrosheetCmd())
 	cmd.AddCommand(DbRepopulateAllCmd())
 	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
-	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
+	cmd.Flags().StringVar(&yearsFlag, "years", "", fmt.Sprintf("Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all (defaults to %s)", defaultRetrosheetYears))
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
 	return cmd
 }
@@ -139,12 +143,16 @@ func DbRepopulateRetrosheetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrosheet",
 		Short: "Seed Retrosheet data only",
+		Long: fmt.Sprintf(
+			"Seed Retrosheet data only. If both --era and --years are omitted, defaults to %s.",
+			defaultRetrosheetYears,
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return repopulateRetrosheet(cmd, dataDir, eraFlag, yearsFlag, force)
 		},
 	}
-	cmd.Flags().StringVar(&eraFlag, "era", "", "Load data for a specific era (federal, nlg, 1970s, 1980s, steroid, modern)")
-	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all")
+	cmd.Flags().StringVar(&eraFlag, "era", "", retrosheetEraHelp())
+	cmd.Flags().StringVar(&yearsFlag, "years", "", fmt.Sprintf("Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all (defaults to %s when --era is omitted)", defaultRetrosheetYears))
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
 	cmd.Flags().BoolVar(&force, "force", false, "Force reload even if data already exists")
 	return cmd
@@ -157,12 +165,16 @@ func DbRepopulateAllCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "all",
 		Short: "Seed both Lahman and Retrosheet data",
+		Long: fmt.Sprintf(
+			"Seed both Lahman and Retrosheet data. If --years is omitted, defaults to %s.",
+			defaultRetrosheetYears,
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runPopulateAll(cmd, csvDir, dataDir, yearsFlag)
 		},
 	}
 	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
-	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
+	cmd.Flags().StringVar(&yearsFlag, "years", "", fmt.Sprintf("Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all (defaults to %s)", defaultRetrosheetYears))
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
 	return cmd
 }
@@ -186,22 +198,15 @@ func repopulateLahman(cmd *cobra.Command, csvDir string) error {
 
 func repopulateRetrosheet(cmd *cobra.Command, dataDir, eraFlag, yearsFlag string, force bool) error {
 	echo.Header("Seeding Retrosheet Data")
-	echo.Info("Connecting to database...")
-
-	database, err := db.Connect("")
-	if err != nil {
-		return fmt.Errorf("error: %w", err)
-	}
-	defer database.Close()
-
-	echo.Success("✓ Connected to database")
 
 	var years []int
+	var err error
 	if eraFlag != "" {
+		eraFlag = normalizeEraFlag(eraFlag)
 		echo.Infof("Loading data for era: %s", eraFlag)
 		years = seed.GetYearsForEras([]string{eraFlag})
 		if len(years) == 0 {
-			return fmt.Errorf("unknown era: %s", eraFlag)
+			return unknownEraError(eraFlag)
 		}
 		era := seed.GetEra(eraFlag)
 		if era != nil {
@@ -213,6 +218,16 @@ func repopulateRetrosheet(cmd *cobra.Command, dataDir, eraFlag, yearsFlag string
 			return err
 		}
 	}
+
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
 
 	ctx := cmd.Context()
 	_, err = seed.LoadRetrosheet(ctx, database, seed.RetrosheetOptions{

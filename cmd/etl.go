@@ -77,12 +77,15 @@ func RetrosheetFetchCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrosheet",
 		Short: "Download Retrosheet data",
-		Long:  "Download Retrosheet game logs and event files.",
+		Long: fmt.Sprintf(
+			"Download Retrosheet game logs and event files.\nIf --years is omitted, defaults to %s.",
+			defaultRetrosheetYears,
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return fetchRetrosheet(cmd, yearsFlag, force)
 		},
 	}
-	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all")
+	cmd.Flags().StringVar(&yearsFlag, "years", "", fmt.Sprintf("Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all (defaults to %s)", defaultRetrosheetYears))
 	cmd.Flags().BoolVar(&force, "force", false, "Force redownload even if files exist")
 	return cmd
 }
@@ -91,8 +94,8 @@ func RetrosheetFetchCmd() *cobra.Command {
 func NegroLeaguesFetchCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "negroleagues",
-		Short: "Get instructions to download Negro Leagues data",
-		Long:  "Provides instructions for downloading Negro Leagues event files from Retrosheet.",
+		Short: "Download Negro Leagues data from Retrosheet",
+		Long:  "Download Negro Leagues event files from Retrosheet.",
 		RunE:  fetchNegroLeagues,
 	}
 }
@@ -114,13 +117,16 @@ func RetrosheetLoadCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrosheet",
 		Short: "Load Retrosheet data into database",
-		Long:  "Load Retrosheet CSV files into PostgreSQL database.",
+		Long: fmt.Sprintf(
+			"Load Retrosheet CSV files into PostgreSQL database.\nIf both --era and --years are omitted, defaults to %s.",
+			defaultRetrosheetYears,
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return loadRetrosheet(cmd, eraFlag, yearsFlag)
 		},
 	}
-	cmd.Flags().StringVar(&eraFlag, "era", "", "Load data for a specific era (federal, nlg, 1970s, 1980s, steroid, modern)")
-	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years or ranges, e.g. 2022,2023-2025")
+	cmd.Flags().StringVar(&eraFlag, "era", "", retrosheetEraHelp())
+	cmd.Flags().StringVar(&yearsFlag, "years", "", fmt.Sprintf("Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all (defaults to %s when --era is omitted)", defaultRetrosheetYears))
 	cmd.AddCommand(RetrosheetPlayersLoadCmd())
 	return cmd
 }
@@ -704,10 +710,11 @@ func loadRetrosheet(cmd *cobra.Command, eraFlag, yearsFlag string) error {
 	var err error
 
 	if eraFlag != "" {
+		eraFlag = normalizeEraFlag(eraFlag)
 		echo.Infof("Loading data for era: %s", eraFlag)
 		yearInts = seed.GetYearsForEras([]string{eraFlag})
 		if len(yearInts) == 0 {
-			return fmt.Errorf("unknown era: %s", eraFlag)
+			return unknownEraError(eraFlag)
 		}
 		era := seed.GetEra(eraFlag)
 		if era != nil {

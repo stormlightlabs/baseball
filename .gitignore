@@ -39,3 +39,4 @@ sandbox/
 conf.toml
 .gomodcache/
 .gocache/
+.sandbox/

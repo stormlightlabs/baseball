@@ -4,6 +4,10 @@
 
 Postgres is the target store with reusable DDLs checked in under `internal/db/sql` (Lahman schema, Retrosheet schema, and plays schema derived from [Baseball-PostgreSQL](https://github.com/davidbmitchell/Baseball-PostgreSQL)).
 
+## Data Loading Contract
+
+Use [Database Loading Contract (Complete Slice)](./data-loading.md) as the authoritative setup and ETL guide.
+
 ### Three-Layer Approach
 
 1. **Raw data → Postgres**: ETL pipelines for both the Lahman Baseball Database and Retrosheet archives.

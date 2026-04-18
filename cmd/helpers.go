@@ -8,7 +8,10 @@ import (
 	"time"
 
 	"stormlightlabs.org/baseball/internal/db"
+	"stormlightlabs.org/baseball/internal/seed"
 )
+
+const defaultRetrosheetYears = "2023-2025"
 
 // formatYearRange formats a slice of years into a compact string representation.
 // Examples: [2020, 2021, 2022] -> "2020-2022"
@@ -162,6 +165,34 @@ func parsePattern(pattern string) (method, path string) {
 		return parts[0], parts[1]
 	}
 	return "ALL", pattern
+}
+
+func retrosheetEraNames() []string {
+	eras := seed.GetAllEras()
+	names := make([]string, 0, len(eras))
+	for _, era := range eras {
+		names = append(names, era.ShortName)
+	}
+	return names
+}
+
+func retrosheetEraHelp() string {
+	return fmt.Sprintf(
+		"Load data for a specific era (%s)",
+		strings.Join(retrosheetEraNames(), ", "),
+	)
+}
+
+func unknownEraError(era string) error {
+	return fmt.Errorf(
+		"unknown era %q. Valid eras: %s",
+		era,
+		strings.Join(retrosheetEraNames(), ", "),
+	)
+}
+
+func normalizeEraFlag(raw string) string {
+	return strings.ToLower(strings.TrimSpace(raw))
 }
 
 func parseYearFlag(flagValue string) ([]int, error) {

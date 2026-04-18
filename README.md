@@ -35,217 +35,35 @@ task build
 ./tmp/baseball --help
 ```
 
-### ETL Commands
+### Complete Slice Loading
 
-**Understanding ETL vs DB Repopulate:**
+For the full non-optional loading contract, see [docs/data-loading.md](./docs/data-loading.md).
 
-- **`etl load`**: Direct database loading - fast, no cleanup, appends data
-- **`db repopulate`**: Full seeding workflow - truncates tables first, records refresh metadata, better for initial setup
-
-**Fetch (download only):**
+Quick local example for a complete slice (`2022-2025`):
 
 ```bash
-# Download Lahman data
-./tmp/baseball etl fetch lahman
-
-# Download Retrosheet data with flexible year specification
-./tmp/baseball etl fetch retrosheet --years=all           # All available (1910-2025)
-./tmp/baseball etl fetch retrosheet --years=1950-2000     # Year ranges
-./tmp/baseball etl fetch retrosheet --years=2023,2024     # Specific years
-./tmp/baseball etl fetch retrosheet --years=all --force   # Force redownload
-```
-
-**Load (direct loading, no cleanup):**
-
-```bash
-# Load Lahman data
-./tmp/baseball etl load lahman
-
-# Load Retrosheet data - year-based
-./tmp/baseball etl load retrosheet --years=2023-2025
-./tmp/baseball etl load retrosheet --years=all
-
-# Load Retrosheet data - era-based (phased loading)
-./tmp/baseball etl load retrosheet --era fed       # Federal League (1914-1915)
-./tmp/baseball etl load retrosheet --era nlg       # Negro Leagues (1935-1949)
-./tmp/baseball etl load retrosheet --era modern    # Modern era (2011-2025)
-```
-
-**Available Eras:**
-
-- `federal` - Federal League (1914-1915)
-- `negro` - Negro Leagues (1935-1949)
-- `1970s` - 1970-1979
-- `1980s` - 1980-1989
-- `steroid` - Steroid Era (1990-2010)
-- `modern` - Modern Era (2011-2025)
-
-### Database
-
-**Fresh setup**:
-
-1. Build the binary:
-
-   ```bash
-   task build
-   ```
-
-2. Create or update `conf.toml` with your desired `database.url`.
-3. Drop & recreate the database (terminates active sessions):
-
-   ```bash
-   ./tmp/baseball db recreate --config conf.toml
-   ```
-
-4. Apply migrations:
-
-   ```bash
-   ./tmp/baseball db migrate --config conf.toml
-   ```
-
-5. Fetch source data (if needed):
-
-   ```bash
-   ./tmp/baseball etl fetch lahman
-   ./tmp/baseball etl fetch retrosheet --years=all
-   ./tmp/baseball etl fetch negroleagues
-   ```
-
-6. Load / populate data:
-   - Direct loads:
-
-     ```bash
-     ./tmp/baseball etl load lahman
-     ./tmp/baseball etl load retrosheet --era nlg  # repeat for other eras/years
-     ./tmp/baseball etl load negroleagues          # Negro Leagues play-by-play
-     ./tmp/baseball etl load fangraphs             # wOBA constants, park factors (needed for advanced stats)
-     ./tmp/baseball etl load weather               # Weather metadata (optional)
-     ./tmp/baseball etl load parks                 # Fill missing park metadata (optional)
-     ./tmp/baseball etl load salary                # Enriches Salaries table with additional salary data (2000-2025)
-     ```
-
-   - or truncate + repopulate:
-
-     ```bash
-     ./tmp/baseball db repopulate lahman
-     ./tmp/baseball db repopulate retrosheet --years=all
-     ```
-
-7. Refresh materialized views (after initial data load):
-
-   ```bash
-   ./tmp/baseball db refresh-views
-   ```
-
-**Data Loading Strategies:**
-
-Choose between comprehensive historical coverage or a focused subset for faster setup and testing.
-
-<details>
-<summary>Option A: Comprehensive Setup (All Historical Data)</summary>
-
-Load complete Lahman database plus all available Retrosheet data (1910-2025):
-
-```bash
-# 1. Load Lahman (1871-2024 season stats)
-./tmp/baseball db repopulate lahman
-
-# 2. Load all Retrosheet data (game logs + play-by-play)
-./tmp/baseball db repopulate retrosheet --years=all
-
-# 3. Load FanGraphs constants (needed for advanced stats like wOBA, wRC+, FIP)
-./tmp/baseball etl load fangraphs
-
-# 4. Load Negro Leagues data
+cp conf/conf.example.toml conf.toml
+./tmp/baseball db recreate --config conf.toml
+./tmp/baseball db migrate --config conf.toml
+./tmp/baseball etl fetch retrosheet --years=2022-2025
+./tmp/baseball etl fetch negroleagues
+./tmp/baseball db populate all --years=2022-2025
 ./tmp/baseball etl load negroleagues
-
-# 5. Load weather data
-./tmp/baseball etl load weather
-
-# 6. Load parks data
-./tmp/baseball etl load parks
-
-# 7. Refresh materialized views
-./tmp/baseball db refresh-views
-```
-
-This gives you the full historical dataset but takes longer to load.
-
-</details>
-
-<details>
-<summary>Option B: Focused Subset (Recommended for Development)</summary>
-
-Load specific historical eras plus recent years for faster setup:
-
-```bash
-# 1. Load Lahman (covers all years 1871-2024)
-./tmp/baseball etl load lahman
-
-# 2. Load Federal League era (1914-1915)
-./tmp/baseball etl load retrosheet --era fed
-
-# 3. Load Negro Leagues era (1935-1949)
-./tmp/baseball etl load retrosheet --era nlg
-
-# 4. Load recent years (2022-2025)
-./tmp/baseball etl load retrosheet --years=2022-2025
-
-# 5. Load FanGraphs constants (needed for advanced stats)
 ./tmp/baseball etl load fangraphs
-
-# 6. Load Negro Leagues play-by-play
-./tmp/baseball etl load negroleagues
-
-# 7. Load weather data
+./tmp/baseball etl load salary
+./tmp/baseball etl load retrosheet players
+./tmp/baseball etl load biodata
 ./tmp/baseball etl load weather
-
-# 8. Load missing parks metadata
 ./tmp/baseball etl load parks
-
-# 9. Refresh materialized views
-./tmp/baseball db refresh-views
+./tmp/baseball etl load allstar
+./tmp/baseball etl status
 ```
 
-This provides historical context plus modern data while loading much faster (~5-10 minutes).
+`db populate` also accepts the compatibility alias `db repopulate`.
 
-</details>
+Retrosheet `--era` values: `fed`, `nlg`, `boomer`, `pitcher`, `turf`, `steroid`, `moneyball`, `statcast`, `modern`.
 
-**Adding More Years Incrementally:**
-
-After initial setup, add more data without reloading everything:
-
-```bash
-# Add specific years
-./tmp/baseball etl load retrosheet --years=1950,1975,2000
-
-# Add a range
-./tmp/baseball etl load retrosheet --years=1980-1989
-
-# Add an era
-./tmp/baseball etl load retrosheet --era steroid  # 1990-2010
-
-# Refresh views to include new data
-./tmp/baseball db refresh-views
-```
-
-**Note:** Use `etl load` (not `db repopulate`) when adding to existing data. The `repopulate` command truncates tables first.
-
-**Maintenance Commands:**
-
-```bash
-# Refresh all materialized views after loading new data
-./tmp/baseball db refresh-views
-
-# Refresh specific views
-./tmp/baseball db refresh-views season_batting_leaders season_pitching_leaders
-
-# Force reload specific years (truncates + reloads those years)
-./tmp/baseball db repopulate retrosheet --years=2024 --force
-
-# Reset everything and start over
-./tmp/baseball db reset --years=2023-2025
-```
+When `--years` is omitted for Retrosheet fetch/load/populate commands, the default slice is `2023-2025`.
 
 ### Server
 

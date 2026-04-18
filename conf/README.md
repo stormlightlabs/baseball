@@ -43,39 +43,32 @@ Optional: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `CODEBERG_CLIENT_ID`, `COD
 
 ## Data preparation and loading
 
-After the first deployment, exec into the app container via Coolify's terminal
-or SSH. A fresh clone now contains the checked-in Lahman, FanGraphs, and salary
-seed files in the runtime image, so you only need to fetch the Retrosheet
-archives from inside the container.
+Use one canonical complete-slice runbook for both local and Docker workflows:
+[docs/data-loading.md](../docs/data-loading.md).
+
+Quick Docker/Coolify example for a complete slice (`2022-2025`):
 
 ```bash
-# Run migrations
 docker compose exec app baseball db migrate
-
-# Download the Retrosheet archives needed for the seasons you want
-docker compose exec app baseball etl fetch retrosheet --years 2020-2025
-
-# Seed the core warehouse and refresh materialized views
-docker compose exec app baseball db populate all --years 2020-2025
-
-# Load supplemental datasets used by computed, salary, and bio endpoints
+docker compose exec app baseball etl fetch retrosheet --years 2022-2025
+docker compose exec app baseball etl fetch negroleagues
+docker compose exec app baseball db populate all --years 2022-2025
+docker compose exec app baseball etl load negroleagues
 docker compose exec app baseball etl load fangraphs
 docker compose exec app baseball etl load salary
 docker compose exec app baseball etl load retrosheet players
 docker compose exec app baseball etl load biodata
+docker compose exec app baseball etl load weather
+docker compose exec app baseball etl load parks
+docker compose exec app baseball etl load allstar
+docker compose exec app baseball etl status
 ```
 
-Optional:
+Readiness validation:
 
-- Run `docker compose exec app baseball etl load weather` after fetching
-  `gameinfo.csv`.
-- Run `docker compose exec app baseball etl fetch negroleagues` followed by
-  `docker compose exec app baseball etl load negroleagues` if you want Negro
-  Leagues game and play coverage.
-- Run `docker compose exec app baseball etl load parks` to backfill park
-  metadata used by park lookups and crosswalks.
-- Use `GET /v1/ready` for data readiness checks and `GET /v1/health` for a
-  simple liveness probe.
+- `GET /v1/ready` for probe-style readiness status.
+- `GET /v1/meta/datasets` for per-dataset health details.
+- `GET /v1/health` for process liveness.
 
 ## Updating
 
@@ -90,6 +83,7 @@ For new seasons:
 ```bash
 docker compose exec app baseball etl fetch retrosheet --years 2026
 docker compose exec app baseball db populate retrosheet --years 2026
+docker compose exec app baseball etl load weather
 docker compose exec app baseball db refresh-views
 ```
 
