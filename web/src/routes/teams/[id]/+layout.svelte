@@ -13,6 +13,7 @@
 
   let teamId = $derived(page.params.id ?? '');
   let q = $derived(page.url.searchParams.get('q') ?? '');
+  let franchiseId = $derived(page.url.searchParams.get('franchise_id') ?? '');
   let year = $derived(page.url.searchParams.get('year') ?? '');
 
   let activeTab = $derived.by((): TeamTabId => {
@@ -30,6 +31,7 @@
     const tab = activeTab;
     const keys = [`id=${teamId}`, `tab=${tab}`, `year=${year}`];
     if (q) keys.push(`q=${q}`);
+    if (franchiseId) keys.push(`franchise_id=${franchiseId}`);
     if (tab === 'schedule' || tab === 'daily-trends') {
       keys.push(`page=${intParam(params, 'page', 1)}`, `per_page=${intParam(params, 'per_page', 25)}`);
     }
@@ -62,6 +64,7 @@
     const overrides: Record<string, string> = {};
     if (q) overrides.q = q;
     if (year) overrides.year = year;
+    if (franchiseId) overrides.franchise_id = franchiseId;
     const qs = new URLSearchParams(overrides).toString();
     return qs ? `${base}?${qs}` : base;
   }

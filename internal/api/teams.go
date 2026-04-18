@@ -34,7 +34,7 @@ func (tr *TeamRoutes) RegisterRoutes(mux *http.ServeMux) {
 // handleListTeams godoc
 //
 //	@Summary		List team seasons
-//	@Description	List team seasons with optional year and league filters
+//	@Description	List team seasons with optional year and league filters. These records are keyed by team_id (Lahman teamID), which can differ from franchise_id.
 //	@Tags			teams
 //	@Accept			json
 //	@Produce		json
@@ -80,11 +80,11 @@ func (tr *TeamRoutes) handleListTeams(w http.ResponseWriter, r *http.Request) {
 // handleGetTeam godoc
 //
 //	@Summary		Get team season
-//	@Description	Get a single team-season record
+//	@Description	Get a single team-season record by team_id (Lahman teamID). team_id can differ from franchise_id (for example, NYA vs NYY).
 //	@Tags			teams
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string	true	"Team ID"
+//	@Param			id		path		string	true	"Team ID (team_id / Lahman teamID, e.g. NYA)"
 //	@Param			year	query		integer	false	"Year"	default(2024)
 //	@Success		200		{object}	core.TeamSeason
 //	@Failure		404		{object}	ErrorResponse
@@ -150,7 +150,7 @@ func (tr *TeamRoutes) handleSeasonTeams(w http.ResponseWriter, r *http.Request) 
 // handleListFranchises godoc
 //
 //	@Summary		List franchises
-//	@Description	List all baseball franchises with optional active filter
+//	@Description	List all baseball franchises with optional active filter. Franchise records are keyed by franchise_id (Lahman franchID), which can differ from team_id.
 //	@Tags			franchises
 //	@Accept			json
 //	@Produce		json
@@ -205,7 +205,7 @@ func (tr *TeamRoutes) handleListSeasons(w http.ResponseWriter, r *http.Request) 
 //	@Accept			json
 //	@Produce		json
 //	@Param			year	path		integer	true	"Season year"
-//	@Param			team_id	path		string	true	"Team ID"
+//	@Param			team_id	path		string	true	"Team ID (team_id / Lahman teamID, e.g. NYA)"
 //	@Success		200		{array}		core.RosterPlayer
 //	@Failure		404		{object}	ErrorResponse
 //	@Failure		500		{object}	ErrorResponse
@@ -232,7 +232,7 @@ func (tr *TeamRoutes) handleTeamRoster(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			year	path		integer	true	"Season year"
-//	@Param			team_id	path		string	true	"Team ID"
+//	@Param			team_id	path		string	true	"Team ID (team_id / Lahman teamID, e.g. NYA)"
 //	@Param			players	query		boolean	false	"Include per-player splits"
 //	@Success		200		{object}	core.TeamBattingStats
 //	@Failure		404		{object}	ErrorResponse
@@ -261,7 +261,7 @@ func (tr *TeamRoutes) handleTeamBatting(w http.ResponseWriter, r *http.Request) 
 //	@Accept			json
 //	@Produce		json
 //	@Param			year	path		integer	true	"Season year"
-//	@Param			team_id	path		string	true	"Team ID"
+//	@Param			team_id	path		string	true	"Team ID (team_id / Lahman teamID, e.g. NYA)"
 //	@Param			players	query		boolean	false	"Include per-player splits"
 //	@Success		200		{object}	core.TeamPitchingStats
 //	@Failure		404		{object}	ErrorResponse
@@ -290,7 +290,7 @@ func (tr *TeamRoutes) handleTeamPitching(w http.ResponseWriter, r *http.Request)
 //	@Accept			json
 //	@Produce		json
 //	@Param			year	path		integer	true	"Season year"
-//	@Param			team_id	path		string	true	"Team ID"
+//	@Param			team_id	path		string	true	"Team ID (team_id / Lahman teamID, e.g. NYA)"
 //	@Param			players	query		boolean	false	"Include per-player splits"
 //	@Success		200		{object}	core.TeamFieldingStats
 //	@Failure		404		{object}	ErrorResponse
@@ -314,11 +314,11 @@ func (tr *TeamRoutes) handleTeamFielding(w http.ResponseWriter, r *http.Request)
 // handleGetFranchise godoc
 //
 //	@Summary		Get franchise
-//	@Description	Get details for a specific franchise
+//	@Description	Get details for a specific franchise by franchise_id (Lahman franchID). Use this endpoint with franchise_id, not team_id.
 //	@Tags			franchises
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path		string	true	"Franchise ID"
+//	@Param			id	path		string	true	"Franchise ID (franchise_id / Lahman franchID, e.g. NYY)"
 //	@Success		200	{object}	core.Franchise
 //	@Failure		404	{object}	ErrorResponse
 //	@Failure		500	{object}	ErrorResponse
@@ -344,7 +344,7 @@ func (tr *TeamRoutes) handleGetFranchise(w http.ResponseWriter, r *http.Request)
 //	@Accept			json
 //	@Produce		json
 //	@Param			year		path		integer	true	"Season year"
-//	@Param			team_id		path		string	true	"Team ID"
+//	@Param			team_id		path		string	true	"Team ID (team_id / Lahman teamID, e.g. NYA)"
 //	@Param			page		query		integer	false	"Page number"		default(1)
 //	@Param			per_page	query		integer	false	"Results per page"	default(100)
 //	@Success		200			{object}	PaginatedResponse
@@ -406,7 +406,7 @@ func (tr *TeamRoutes) handleTeamSchedule(w http.ResponseWriter, r *http.Request)
 //	@Accept			json
 //	@Produce		json
 //	@Param			year		path		integer	true	"Season year"
-//	@Param			team_id		path		string	true	"Team ID"
+//	@Param			team_id		path		string	true	"Team ID (team_id / Lahman teamID, e.g. NYA)"
 //	@Param			page		query		integer	false	"Page number"		default(1)
 //	@Param			per_page	query		integer	false	"Results per page"	default(100)
 //	@Success		200			{object}	PaginatedResponse
@@ -511,7 +511,7 @@ func (tr *TeamRoutes) handleTeamDailyLogs(w http.ResponseWriter, r *http.Request
 //	@Tags			teams
 //	@Accept			json
 //	@Produce		json
-//	@Param			id			path		string	true	"Team ID"
+//	@Param			id			path		string	true	"Team ID (team_id / Lahman teamID, e.g. NYA)"
 //	@Param			season		query		integer	false	"Filter by season year"
 //	@Param			date_from	query		string	false	"Filter by start date (YYYYMMDD)"
 //	@Param			date_to		query		string	false	"Filter by end date (YYYYMMDD)"

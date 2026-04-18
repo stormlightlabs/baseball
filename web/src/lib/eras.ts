@@ -72,9 +72,11 @@ export function erasInRange(from: number, to: number): Era[] {
 /** Returns a short display label for a year range spanning multiple eras. */
 export function eraSpanLabel(from: number, to: number): string {
   const eras = erasInRange(from, to);
-  if (eras.length === 0) return '';
-  if (eras.length === 1) return eras[0].label;
-  return `${eras[0].label} → ${eras.at(-1).label}`;
+  const firstEra = eras[0];
+  if (!firstEra) return '';
+  if (eras.length === 1) return firstEra.label;
+  const lastEra = eras.at(-1);
+  return lastEra ? `${firstEra.label} → ${lastEra.label}` : firstEra.label;
 }
 
 export type WinExpEra = { era: string; label?: string; year_from: number; year_to: number };

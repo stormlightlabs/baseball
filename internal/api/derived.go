@@ -82,11 +82,11 @@ func (dr *DerivedRoutes) handlePlayerStreaks(w http.ResponseWriter, r *http.Requ
 // handleTeamRunDifferential godoc
 //
 //	@Summary		Get team run differential
-//	@Description	Get season run differential with rolling windows for a team
+//	@Description	Get season run differential with rolling windows for a team_id (Lahman teamID). This route uses team_id, not franchise_id.
 //	@Tags			derived, teams
 //	@Accept			json
 //	@Produce		json
-//	@Param			team_id	path		string	true	"Team ID"
+//	@Param			team_id	path		string	true	"Team ID (team_id / Lahman teamID, e.g. NYA)"
 //	@Param			season	query		integer	true	"Season year"
 //	@Param			windows	query		string	false	"Comma-separated rolling window sizes (e.g., 10,20,30)"	default("10,20,30")
 //	@Success		200		{object}	core.RunDifferentialSeries

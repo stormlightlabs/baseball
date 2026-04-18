@@ -1130,7 +1130,7 @@ const docTemplate = `{
         },
         "/franchises": {
             "get": {
-                "description": "List all baseball franchises with optional active filter",
+                "description": "List all baseball franchises with optional active filter. Franchise records are keyed by franchise_id (Lahman franchID), which can differ from team_id.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1167,7 +1167,7 @@ const docTemplate = `{
         },
         "/franchises/{id}": {
             "get": {
-                "description": "Get details for a specific franchise",
+                "description": "Get details for a specific franchise by franchise_id (Lahman franchID). Use this endpoint with franchise_id, not team_id.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1181,7 +1181,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Franchise ID",
+                        "description": "Franchise ID (franchise_id / Lahman franchID, e.g. NYY)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -5517,7 +5517,7 @@ const docTemplate = `{
         },
         "/search/teams": {
             "get": {
-                "description": "Search teams by name, city, or franchise",
+                "description": "Search team-season rows by name, city, team_id, or franchise_id. Results include both IDs; use team_id for /teams and season team routes, and franchise_id for /franchises routes.",
                 "consumes": [
                     "application/json"
                 ],
@@ -5532,7 +5532,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Search query (searches team name, team ID, and franchise ID)",
+                        "description": "Search query across team name, team_id (teamID), and franchise_id (franchID)",
                         "name": "q",
                         "in": "query"
                     },
@@ -6507,7 +6507,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Team ID",
+                        "description": "Team ID (team_id / Lahman teamID, e.g. NYA)",
                         "name": "team_id",
                         "in": "path",
                         "required": true
@@ -6565,7 +6565,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Team ID",
+                        "description": "Team ID (team_id / Lahman teamID, e.g. NYA)",
                         "name": "team_id",
                         "in": "path",
                         "required": true
@@ -6624,7 +6624,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Team ID",
+                        "description": "Team ID (team_id / Lahman teamID, e.g. NYA)",
                         "name": "team_id",
                         "in": "path",
                         "required": true
@@ -6660,7 +6660,7 @@ const docTemplate = `{
         },
         "/seasons/{year}/teams/{team_id}/games": {
             "get": {
-                "description": "Get all games for a specific team in a season",
+                "description": "Get all games for a specific team_id in a season. This route expects team_id (Lahman teamID), not franchise_id.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6681,7 +6681,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Team ID",
+                        "description": "Team ID (team_id / Lahman teamID, e.g. NYA)",
                         "name": "team_id",
                         "in": "path",
                         "required": true
@@ -6740,7 +6740,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Team ID",
+                        "description": "Team ID (team_id / Lahman teamID, e.g. NYA)",
                         "name": "team_id",
                         "in": "path",
                         "required": true
@@ -6797,7 +6797,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Team ID",
+                        "description": "Team ID (team_id / Lahman teamID, e.g. NYA)",
                         "name": "team_id",
                         "in": "path",
                         "required": true
@@ -6852,7 +6852,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Team ID",
+                        "description": "Team ID (team_id / Lahman teamID, e.g. NYA)",
                         "name": "team_id",
                         "in": "path",
                         "required": true
@@ -7476,7 +7476,7 @@ const docTemplate = `{
         },
         "/teams": {
             "get": {
-                "description": "List team seasons with optional year and league filters",
+                "description": "List team seasons with optional year and league filters. These records are keyed by team_id (Lahman teamID), which can differ from franchise_id.",
                 "consumes": [
                     "application/json"
                 ],
@@ -7533,7 +7533,7 @@ const docTemplate = `{
         },
         "/teams/{id}": {
             "get": {
-                "description": "Get a single team-season record",
+                "description": "Get a single team-season record by team_id (Lahman teamID). team_id can differ from franchise_id (for example, NYA vs NYY).",
                 "consumes": [
                     "application/json"
                 ],
@@ -7547,7 +7547,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Team ID",
+                        "description": "Team ID (team_id / Lahman teamID, e.g. NYA)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -7584,7 +7584,7 @@ const docTemplate = `{
         },
         "/teams/{team_id}/run-differential": {
             "get": {
-                "description": "Get season run differential with rolling windows for a team",
+                "description": "Get season run differential with rolling windows for a team_id (Lahman teamID). This route uses team_id, not franchise_id.",
                 "consumes": [
                     "application/json"
                 ],
@@ -7599,7 +7599,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Team ID",
+                        "description": "Team ID (team_id / Lahman teamID, e.g. NYA)",
                         "name": "team_id",
                         "in": "path",
                         "required": true
@@ -7808,7 +7808,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Team ID",
+                        "description": "Team ID (team_id / Lahman teamID, e.g. NYA)",
                         "name": "id",
                         "in": "path",
                         "required": true

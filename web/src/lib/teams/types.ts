@@ -1,5 +1,6 @@
 export type TeamResult = {
   id: string;
+  team_id?: string;
   name: string;
   franchise_id?: string;
   league?: string;
@@ -77,6 +78,7 @@ export type RunDifferentialSeries = {
 
 export type TeamSeasonProfile = {
   id: string;
+  franchise_id?: string;
   name?: string;
   year?: number;
   league?: string;

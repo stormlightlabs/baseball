@@ -6,7 +6,8 @@
 <div class="flex h-full flex-col items-center justify-center gap-3 text-center">
   <div class="font-display text-[1.1rem] text-muted">Team & Franchise Explorer</div>
   <p class="max-w-xs font-mono text-[0.78rem] text-muted/60">
-    Search for a team or select a franchise in the sidebar to explore season stats, rosters, schedules, and more.
+    Search for a team or select a franchise in the sidebar. <code>team_id</code> powers team/season endpoints;
+    <code>franchise_id</code> powers franchise history endpoints.
   </p>
   <div class="mt-2 flex flex-wrap justify-center gap-1.5">
     {#each STATIC_ERAS as era (era.code)}

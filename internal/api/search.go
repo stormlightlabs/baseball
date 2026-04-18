@@ -85,11 +85,11 @@ func (sr *SearchRoutes) handleSearchPlayers(w http.ResponseWriter, r *http.Reque
 // handleSearchTeams godoc
 //
 //	@Summary		Search teams
-//	@Description	Search teams by name, city, or franchise
+//	@Description	Search team-season rows by name, city, team_id, or franchise_id. Results include both IDs; use team_id for /teams and season team routes, and franchise_id for /franchises routes.
 //	@Tags			search, teams
 //	@Accept			json
 //	@Produce		json
-//	@Param			q			query		string	false	"Search query (searches team name, team ID, and franchise ID)"
+//	@Param			q			query		string	false	"Search query across team name, team_id (teamID), and franchise_id (franchID)"
 //	@Param			year		query		integer	false	"Filter by season year"
 //	@Param			league		query		string	false	"Filter by league (AL, NL)"
 //	@Param			page		query		integer	false	"Page number"		default(1)

@@ -21,6 +21,7 @@
 
   let q = $derived(page.url.searchParams.get('q') ?? '');
   let teamId = $derived(page.params.id ?? '');
+  let franchiseId = $derived(page.url.searchParams.get('franchise_id') ?? '');
   let year = $derived(page.url.searchParams.get('year') ?? '');
   let rawTab = $derived(page.url.pathname.split('/')[3] ?? '');
 
@@ -28,7 +29,8 @@
     const id = teamId;
     if (!id) return q.trim() ? EP.searchTeams : EP.franchises;
     const tab = isTeamTabId(rawTab) ? rawTab : DEFAULT_TEAM_TAB;
-    return endpointForTeamTab(id, tab, year || null);
+    const endpointId = tab === 'overview' && !year ? franchiseId || id : id;
+    return endpointForTeamTab(endpointId, tab, year || null);
   });
 
   let activeUrl = $derived.by(() => {
@@ -88,21 +90,23 @@
   }
 
   async function refreshProfile(force = false): Promise<void> {
-    const id = teamId;
-    if (!id) {
+    const selectedTeamId = teamId;
+    if (!selectedTeamId) {
       profileResource.clear();
       lastProfileKey = '';
       return;
     }
-    if (!force && id === lastProfileKey) return;
-    lastProfileKey = id;
+    const selectedFranchiseId = franchiseId || selectedTeamId;
+    const key = `${selectedTeamId}|${selectedFranchiseId}`;
+    if (!force && key === lastProfileKey) return;
+    lastProfileKey = key;
 
     await profileResource.load(async () => {
       try {
-        const payload = await apiFetch<Record<string, unknown>>(EP.franchise(id));
+        const payload = await apiFetch<Record<string, unknown>>(EP.franchise(selectedFranchiseId));
         return normalizeFranchiseProfile(payload);
       } catch {
-        const payload = await apiFetch<Record<string, unknown>>(EP.team(id));
+        const payload = await apiFetch<Record<string, unknown>>(EP.team(selectedTeamId));
         return normalizeFranchiseProfile(payload);
       }
     });
@@ -123,12 +127,23 @@
     void refreshProfile();
   });
 
-  function teamQuerySuffix(): string {
+  function teamQuerySuffix(nextFranchiseId?: string): string {
     const overrides: Record<string, string> = {};
     if (q.trim()) overrides.q = q.trim();
     if (year) overrides.year = year;
+    const franchiseLookupId = nextFranchiseId?.trim() || franchiseId.trim();
+    if (franchiseLookupId) overrides.franchise_id = franchiseLookupId;
     const qs = new URLSearchParams(overrides).toString();
     return qs ? `?${qs}` : '';
+  }
+
+  function teamResultIdSummary(result: TeamResult): string {
+    const teamCode = result.team_id?.trim();
+    const franchiseCode = result.franchise_id?.trim();
+    if (teamCode && franchiseCode && teamCode !== franchiseCode) {
+      return `team ${teamCode} · franchise ${franchiseCode}`;
+    }
+    return teamCode ?? franchiseCode ?? result.id;
   }
 
   function handleSearch(value = searchInput): void {
@@ -205,6 +220,9 @@
           <div class="mb-1 text-center font-display text-[0.95rem] font-medium text-foreground">
             {profileResource.value.name}
           </div>
+          <div class="mb-2 text-center font-mono text-[0.65rem] text-muted">
+            team: {teamId} · franchise: {franchiseId || profileResource.value.id}
+          </div>
           {#if profileResource.value.active_from}
             <div class="mb-3 text-center font-mono text-[0.68rem] text-muted">
               {profileResource.value.active_from}–{profileResource.value.active_to ?? 'pres.'}
@@ -249,14 +267,14 @@
         {#each searchResource.items as result (result.id)}
           <a
             href={resolve(
-              `/teams/${encodeURIComponent(result.id)}/overview${teamQuerySuffix()}` as `/teams/${string}/overview`
+              `/teams/${encodeURIComponent(result.id)}/overview${teamQuerySuffix(result.franchise_id)}` as `/teams/${string}/overview`
             )}
             class="rounded-md px-3 py-2 text-left no-underline transition-colors hover:bg-surface {teamId === result.id
               ? 'bg-surface'
               : ''}">
             <div class="font-display text-[0.8rem] text-foreground">{result.name}</div>
             <div class="font-mono text-[0.68rem] text-muted">
-              {result.id}{#if result.league}
+              {teamResultIdSummary(result)}{#if result.league}
                 · {result.league}{/if}{#if result.year}
                 · {result.year}{/if}
             </div>
@@ -274,7 +292,7 @@
           {#each franchisesResource.items as franchise (franchise.id)}
             <a
               href={resolve(
-                `/teams/${encodeURIComponent(franchise.id)}/overview${teamQuerySuffix()}` as `/teams/${string}/overview`
+                `/teams/${encodeURIComponent(franchise.id)}/overview${teamQuerySuffix(franchise.id)}` as `/teams/${string}/overview`
               )}
               class="rounded-md px-3 py-2 text-left no-underline transition-colors hover:bg-surface">
               <div class="font-display text-[0.8rem] text-foreground">{franchise.name}</div>

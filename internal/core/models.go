@@ -23,14 +23,14 @@ type PlayerID string
 //	@Description	Retrosheet player identifier
 type RetroPlayerID string
 
-// TeamID is the Lahman team ID (e.g., "LAA")
+// TeamID is the Lahman team ID (teamID, e.g., "NYA" for Yankees seasons)
 //
-//	@Description	Lahman team identifier
+//	@Description	Lahman team identifier (teamID). This can differ from franchiseID.
 type TeamID string
 
-// FranchiseID is the Lahman franchise ID (e.g., "ANA")
+// FranchiseID is the Lahman franchise ID (franchID, e.g., "NYY" for Yankees franchise)
 //
-//	@Description	Lahman franchise identifier
+//	@Description	Lahman franchise identifier (franchID). This can differ from teamID.
 type FranchiseID string
 
 // GameID is the Retrosheet game ID (e.g., "ANA201304010")

@@ -36,11 +36,14 @@ function toNum(v: unknown): number | undefined {
 }
 
 export function normalizeTeamResult(team: ApiTeamPayload): TeamResult {
-  const id = toStr(team.id) ?? toStr(team.team_id) ?? toStr(team.franchise_id) ?? '';
+  const teamId = toStr(team.team_id) ?? toStr(team.id);
+  const franchiseId = toStr(team.franchise_id) ?? toStr(team.id);
+  const id = teamId ?? franchiseId ?? '';
   return {
     id,
+    team_id: teamId,
     name: toTeamName(team),
-    franchise_id: toStr(team.franchise_id) ?? toStr(team.id),
+    franchise_id: franchiseId,
     league: toStr(team.league),
     division: toStr(team.division),
     year: toNum(team.year),
@@ -69,6 +72,7 @@ export function normalizeFranchiseProfile(team: ApiTeamPayload): FranchiseProfil
 export function normalizeTeamSeasonProfile(team: ApiTeamPayload): TeamSeasonProfile {
   return {
     id: toStr(team.team_id) ?? toStr(team.id) ?? '',
+    franchise_id: toStr(team.franchise_id),
     name: toStr(team.name),
     year: toNum(team.year),
     league: toStr(team.league),

@@ -243,12 +243,12 @@ func (gr *GameRoutes) handleGamesByDate(w http.ResponseWriter, r *http.Request) 
 // handleTeamGames godoc
 //
 //	@Summary		Get team games for a season
-//	@Description	Get all games for a specific team in a season
+//	@Description	Get all games for a specific team_id in a season. This route expects team_id (Lahman teamID), not franchise_id.
 //	@Tags			games
 //	@Accept			json
 //	@Produce		json
 //	@Param			year		path		integer	true	"Season year"
-//	@Param			team_id		path		string	true	"Team ID"
+//	@Param			team_id		path		string	true	"Team ID (team_id / Lahman teamID, e.g. NYA)"
 //	@Param			page		query		integer	false	"Page number"		default(1)
 //	@Param			per_page	query		integer	false	"Results per page"	default(100)
 //	@Success		200			{object}	PaginatedResponse

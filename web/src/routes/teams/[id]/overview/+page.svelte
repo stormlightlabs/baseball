@@ -13,6 +13,7 @@
   import { onMount } from 'svelte';
 
   let teamId = $derived(page.params.id ?? '');
+  let franchiseId = $derived(page.url.searchParams.get('franchise_id') ?? '');
   let year = $derived(page.url.searchParams.get('year') ?? '');
 
   const franchiseResource = new AsyncValueResource<FranchiseProfile>();
@@ -68,20 +69,22 @@
   });
 
   async function refreshFranchise(force = false): Promise<void> {
-    const id = teamId;
-    if (!id) {
+    const selectedTeamId = teamId;
+    if (!selectedTeamId) {
       franchiseResource.clear();
       return;
     }
-    if (!force && id === lastFranchiseKey) return;
-    lastFranchiseKey = id;
+    const selectedFranchiseId = franchiseId || selectedTeamId;
+    const key = `${selectedTeamId}|${selectedFranchiseId}`;
+    if (!force && key === lastFranchiseKey) return;
+    lastFranchiseKey = key;
 
     await franchiseResource.load(async () => {
       try {
-        const payload = await apiFetch<Record<string, unknown>>(EP.franchise(id));
+        const payload = await apiFetch<Record<string, unknown>>(EP.franchise(selectedFranchiseId));
         return normalizeFranchiseProfile(payload);
       } catch {
-        const payload = await apiFetch<Record<string, unknown>>(EP.team(id));
+        const payload = await apiFetch<Record<string, unknown>>(EP.team(selectedTeamId));
         return normalizeFranchiseProfile(payload);
       }
     });
@@ -149,6 +152,10 @@
         <div class="text-[0.65rem] tracking-wider text-muted uppercase">Name</div>
         <div class="text-foreground">{franchiseResource.value.name}</div>
       </div>
+      <div>
+        <div class="text-[0.65rem] tracking-wider text-muted uppercase">Franchise ID</div>
+        <div class="text-foreground">{franchiseResource.value.id}</div>
+      </div>
       {#if franchiseResource.value.league}
         <div>
           <div class="text-[0.65rem] tracking-wider text-muted uppercase">League</div>
@@ -202,6 +209,11 @@
         <EraDisclaimer eras={franchiseEras} message={comparisonGapMessage} />
       </div>
     {/if}
+
+    <p class="mt-4 border-t border-outline pt-3 font-mono text-[0.68rem] text-muted">
+      Use <code>franchise_id</code> for <code>/v1/franchises/{'{id}'}</code>; use <code>team_id</code> for
+      <code>/v1/teams/{'{id}'}</code> and <code>/v1/seasons/{'{year}'}/teams/{'{team_id}'}/…</code>.
+    </p>
   </div>
 
   {#if year}
@@ -217,6 +229,16 @@
         <p class="font-mono text-[0.78rem] text-warning">{seasonResource.error}</p>
       {:else if seasonResource.value}
         <div class="grid grid-cols-2 gap-x-6 gap-y-2 font-mono text-xs">
+          <div>
+            <div class="text-[0.65rem] tracking-wider text-muted uppercase">Team ID</div>
+            <div class="text-foreground">{seasonResource.value.id}</div>
+          </div>
+          {#if seasonResource.value.franchise_id}
+            <div>
+              <div class="text-[0.65rem] tracking-wider text-muted uppercase">Franchise ID</div>
+              <div class="text-foreground">{seasonResource.value.franchise_id}</div>
+            </div>
+          {/if}
           {#if seasonResource.value.name}
             <div>
               <div class="text-[0.65rem] tracking-wider text-muted uppercase">Team name</div>
