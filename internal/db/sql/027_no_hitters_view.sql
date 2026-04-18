@@ -4,7 +4,7 @@
 
 DROP MATERIALIZED VIEW IF EXISTS no_hitters CASCADE;
 
-CREATE MATERIALIZED VIEW no_hitters AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS no_hitters AS
 WITH game_hits AS (
     SELECT
         p.gid as game_id,
@@ -46,8 +46,8 @@ COMMENT ON MATERIALIZED VIEW no_hitters IS
 'No-hitter achievements: games where a team allowed zero hits. Includes game metadata and pitcher information.';
 
 -- Create indexes for no_hitters materialized view
-CREATE INDEX idx_no_hitters_game_id ON no_hitters(game_id);
-CREATE INDEX idx_no_hitters_team_id ON no_hitters(team_id);
-CREATE INDEX idx_no_hitters_season ON no_hitters(season);
-CREATE INDEX idx_no_hitters_date ON no_hitters(date);
-CREATE INDEX idx_no_hitters_pitcher ON no_hitters(winning_pitcher_id);
+CREATE INDEX IF NOT EXISTS idx_no_hitters_game_id ON no_hitters(game_id);
+CREATE INDEX IF NOT EXISTS idx_no_hitters_team_id ON no_hitters(team_id);
+CREATE INDEX IF NOT EXISTS idx_no_hitters_season ON no_hitters(season);
+CREATE INDEX IF NOT EXISTS idx_no_hitters_date ON no_hitters(date);
+CREATE INDEX IF NOT EXISTS idx_no_hitters_pitcher ON no_hitters(winning_pitcher_id);

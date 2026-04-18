@@ -164,4 +164,4 @@ CREATE TABLE games (
     game_id varchar(16) GENERATED ALWAYS AS (home_team || date || COALESCE(game_number::text, '0')) STORED
 );
 
-CREATE UNIQUE INDEX idx_games_game_id ON games(game_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_games_game_id ON games(game_id);

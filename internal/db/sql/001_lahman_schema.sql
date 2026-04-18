@@ -483,14 +483,14 @@ CREATE TABLE "TeamsHalf" (
 	"L" int4
 );
 
-CREATE INDEX "AllstarFull_playerID_idx" ON "AllstarFull" ("playerID");
-CREATE INDEX "AllstarFull_yearID_idx" ON "AllstarFull" ("yearID");
+CREATE INDEX IF NOT EXISTS "AllstarFull_playerID_idx" ON "AllstarFull" ("playerID");
+CREATE INDEX IF NOT EXISTS "AllstarFull_yearID_idx" ON "AllstarFull" ("yearID");
 ALTER TABLE "Appearances" ADD PRIMARY KEY ("yearID", "teamID", "playerID") NOT DEFERRABLE INITIALLY IMMEDIATE;
 ALTER TABLE "AwardsManagers" ADD PRIMARY KEY ("yearID", "awardID", "lgID", "playerID") NOT DEFERRABLE INITIALLY IMMEDIATE;
 
-CREATE INDEX "AwardsPlayers_playerID_idx" ON "AwardsPlayers" ("playerID");
-CREATE INDEX "AwardsPlayers_awardID_idx" ON "AwardsPlayers" ("awardID");
-CREATE INDEX "AwardsPlayers_yearID_idx" ON "AwardsPlayers" ("yearID");
+CREATE INDEX IF NOT EXISTS "AwardsPlayers_playerID_idx" ON "AwardsPlayers" ("playerID");
+CREATE INDEX IF NOT EXISTS "AwardsPlayers_awardID_idx" ON "AwardsPlayers" ("awardID");
+CREATE INDEX IF NOT EXISTS "AwardsPlayers_yearID_idx" ON "AwardsPlayers" ("yearID");
 ALTER TABLE "AwardsShareManagers" ADD PRIMARY KEY ("awardID", "yearID", "lgID", "playerID") NOT DEFERRABLE INITIALLY IMMEDIATE;
 ALTER TABLE "AwardsSharePlayers" ADD PRIMARY KEY ("awardID", "yearID", "lgID", "playerID") NOT DEFERRABLE INITIALLY IMMEDIATE;
 ALTER TABLE "Batting" ADD PRIMARY KEY ("playerID", "yearID", "stint") NOT DEFERRABLE INITIALLY IMMEDIATE;
@@ -504,7 +504,7 @@ ALTER TABLE "HallOfFame" ADD PRIMARY KEY ("playerID", "yearid", "votedBy") NOT D
 ALTER TABLE "Managers" ADD PRIMARY KEY ("yearID", "teamID", "inseason") NOT DEFERRABLE INITIALLY IMMEDIATE;
 ALTER TABLE "ManagersHalf" ADD PRIMARY KEY ("yearID", "teamID", "playerID", "half") NOT DEFERRABLE INITIALLY IMMEDIATE;
 
-CREATE INDEX "Parks_parkkey_idx" ON "Parks" ("parkkey");
+CREATE INDEX IF NOT EXISTS "Parks_parkkey_idx" ON "Parks" ("parkkey");
 ALTER TABLE "People" ADD PRIMARY KEY ("playerID") NOT DEFERRABLE INITIALLY IMMEDIATE;
 ALTER TABLE "Pitching" ADD PRIMARY KEY ("playerID", "yearID", "stint") NOT DEFERRABLE INITIALLY IMMEDIATE;
 ALTER TABLE "PitchingPost" ADD PRIMARY KEY ("playerID", "yearID", "round") NOT DEFERRABLE INITIALLY IMMEDIATE;

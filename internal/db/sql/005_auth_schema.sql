@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- API keys for programmatic access
 CREATE TABLE IF NOT EXISTS api_keys (
@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS api_keys (
     is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-CREATE INDEX idx_api_keys_user_id ON api_keys(user_id);
-CREATE INDEX idx_api_keys_key_hash ON api_keys(key_hash);
+CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON api_keys(user_id);
+CREATE INDEX IF NOT EXISTS idx_api_keys_key_hash ON api_keys(key_hash);
 
 -- OAuth2 tokens for session management
 CREATE TABLE IF NOT EXISTS oauth_tokens (
@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS oauth_tokens (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_oauth_tokens_user_id ON oauth_tokens(user_id);
-CREATE INDEX idx_oauth_tokens_access_token ON oauth_tokens(access_token);
+CREATE INDEX IF NOT EXISTS idx_oauth_tokens_user_id ON oauth_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_oauth_tokens_access_token ON oauth_tokens(access_token);
 
 -- Usage tracking for rate limiting and analytics
 CREATE TABLE IF NOT EXISTS api_usage (
@@ -54,6 +54,6 @@ CREATE TABLE IF NOT EXISTS api_usage (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_api_usage_user_id ON api_usage(user_id);
-CREATE INDEX idx_api_usage_api_key_id ON api_usage(api_key_id);
-CREATE INDEX idx_api_usage_created_at ON api_usage(created_at);
+CREATE INDEX IF NOT EXISTS idx_api_usage_user_id ON api_usage(user_id);
+CREATE INDEX IF NOT EXISTS idx_api_usage_api_key_id ON api_usage(api_key_id);
+CREATE INDEX IF NOT EXISTS idx_api_usage_created_at ON api_usage(created_at);

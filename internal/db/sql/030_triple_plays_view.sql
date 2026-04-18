@@ -1,7 +1,7 @@
 -- Create materialized view for triple play achievements
 DROP MATERIALIZED VIEW IF EXISTS triple_plays CASCADE;
 
-CREATE MATERIALIZED VIEW triple_plays AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS triple_plays AS
 WITH home_triple_plays AS (
     SELECT
         g.game_id,
@@ -44,7 +44,7 @@ ORDER BY date DESC;
 COMMENT ON MATERIALIZED VIEW triple_plays IS
 'Triple play achievements: games where a team recorded one or more triple plays.';
 
-CREATE INDEX idx_triple_plays_game_id ON triple_plays(game_id);
-CREATE INDEX idx_triple_plays_team_id ON triple_plays(team_id);
-CREATE INDEX idx_triple_plays_season ON triple_plays(season);
-CREATE INDEX idx_triple_plays_date ON triple_plays(date);
+CREATE INDEX IF NOT EXISTS idx_triple_plays_game_id ON triple_plays(game_id);
+CREATE INDEX IF NOT EXISTS idx_triple_plays_team_id ON triple_plays(team_id);
+CREATE INDEX IF NOT EXISTS idx_triple_plays_season ON triple_plays(season);
+CREATE INDEX IF NOT EXISTS idx_triple_plays_date ON triple_plays(date);

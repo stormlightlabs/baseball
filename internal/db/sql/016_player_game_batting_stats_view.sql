@@ -4,7 +4,7 @@
 
 DROP MATERIALIZED VIEW IF EXISTS player_game_batting_stats CASCADE;
 
-CREATE MATERIALIZED VIEW player_game_batting_stats AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS player_game_batting_stats AS
 SELECT
     p.batter as player_id,
     p.gid as game_id,

@@ -10,7 +10,7 @@ CREATE TABLE salary_summary (
     median NUMERIC(12, 2) NOT NULL
 );
 
-CREATE INDEX idx_salary_summary_year ON salary_summary(year);
+CREATE INDEX IF NOT EXISTS idx_salary_summary_year ON salary_summary(year);
 
 COMMENT ON TABLE salary_summary IS 'Yearly salary summary statistics (total, average, median)';
 COMMENT ON COLUMN salary_summary.year IS 'Season year';

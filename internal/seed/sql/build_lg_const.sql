@@ -1,6 +1,6 @@
 -- NOTE:
 -- This runtime ETL query mirrors the same league-constants derivation approach as
--- internal/db/sql/018_populate_league_constants.sql, but without a fixed season filter.
+-- internal/db/sql/014_populate_league_constants.sql, but without a fixed season filter.
 WITH league_stats AS (
     SELECT
         b."yearID" AS season,

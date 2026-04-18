@@ -5,7 +5,7 @@
 
 DROP MATERIALIZED VIEW IF EXISTS player_game_fielding_stats CASCADE;
 
-CREATE MATERIALIZED VIEW player_game_fielding_stats AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS player_game_fielding_stats AS
 WITH fielding_plays AS (
     -- Pitcher (position 1)
     SELECT

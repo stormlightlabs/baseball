@@ -10,10 +10,10 @@ SET
 FROM games g
 WHERE p.gid = g.game_id;
 
-CREATE INDEX idx_plays_home_team_league ON plays(home_team_league);
-CREATE INDEX idx_plays_visiting_team_league ON plays(visiting_team_league);
+CREATE INDEX IF NOT EXISTS idx_plays_home_team_league ON plays(home_team_league);
+CREATE INDEX IF NOT EXISTS idx_plays_visiting_team_league ON plays(visiting_team_league);
 
-CREATE INDEX idx_plays_home_league_date ON plays(home_team_league, date);
-CREATE INDEX idx_plays_visiting_league_date ON plays(visiting_team_league, date);
+CREATE INDEX IF NOT EXISTS idx_plays_home_league_date ON plays(home_team_league, date);
+CREATE INDEX IF NOT EXISTS idx_plays_visiting_league_date ON plays(visiting_team_league, date);
 
 ANALYZE plays;

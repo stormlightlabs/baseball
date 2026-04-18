@@ -4,7 +4,7 @@
 
 DROP MATERIALIZED VIEW IF EXISTS team_game_stats CASCADE;
 
-CREATE MATERIALIZED VIEW team_game_stats AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS team_game_stats AS
 WITH batting_stats AS (
     -- Aggregate offensive stats when team is batting
     SELECT

@@ -4,7 +4,7 @@
 
 DROP MATERIALIZED VIEW IF EXISTS cycles CASCADE;
 
-CREATE MATERIALIZED VIEW cycles AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS cycles AS
 WITH player_game_hits AS (
     SELECT
         p.gid as game_id,
@@ -51,8 +51,8 @@ COMMENT ON MATERIALIZED VIEW cycles IS
 'Hitting for the cycle achievements: games where a player hit a single, double, triple, and home run.';
 
 -- Create indexes for cycles materialized view
-CREATE INDEX idx_cycles_game_id ON cycles(game_id);
-CREATE INDEX idx_cycles_player_id ON cycles(player_id);
-CREATE INDEX idx_cycles_team_id ON cycles(team_id);
-CREATE INDEX idx_cycles_season ON cycles(season);
-CREATE INDEX idx_cycles_date ON cycles(date);
+CREATE INDEX IF NOT EXISTS idx_cycles_game_id ON cycles(game_id);
+CREATE INDEX IF NOT EXISTS idx_cycles_player_id ON cycles(player_id);
+CREATE INDEX IF NOT EXISTS idx_cycles_team_id ON cycles(team_id);
+CREATE INDEX IF NOT EXISTS idx_cycles_season ON cycles(season);
+CREATE INDEX IF NOT EXISTS idx_cycles_date ON cycles(date);

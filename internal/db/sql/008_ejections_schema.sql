@@ -26,9 +26,9 @@ CREATE TABLE ejections (
     CONSTRAINT ejections_game_ejectee_unique UNIQUE (game_id, ejectee_id)
 );
 
-CREATE INDEX idx_ejections_game_id ON ejections(game_id);
-CREATE INDEX idx_ejections_ejectee_id ON ejections(ejectee_id);
-CREATE INDEX idx_ejections_umpire_id ON ejections(umpire_id);
-CREATE INDEX idx_ejections_date ON ejections(date);
-CREATE INDEX idx_ejections_team ON ejections(team);
-CREATE INDEX idx_ejections_role ON ejections(role);
+CREATE INDEX IF NOT EXISTS idx_ejections_game_id ON ejections(game_id);
+CREATE INDEX IF NOT EXISTS idx_ejections_ejectee_id ON ejections(ejectee_id);
+CREATE INDEX IF NOT EXISTS idx_ejections_umpire_id ON ejections(umpire_id);
+CREATE INDEX IF NOT EXISTS idx_ejections_date ON ejections(date);
+CREATE INDEX IF NOT EXISTS idx_ejections_team ON ejections(team);
+CREATE INDEX IF NOT EXISTS idx_ejections_role ON ejections(role);

@@ -35,10 +35,10 @@ CREATE TABLE retrosheet_players (
     PRIMARY KEY (player_id, team_id, season)
 );
 
-CREATE INDEX idx_retrosheet_players_player ON retrosheet_players(player_id);
-CREATE INDEX idx_retrosheet_players_season ON retrosheet_players(season);
-CREATE INDEX idx_retrosheet_players_team_season ON retrosheet_players(team_id, season);
-CREATE INDEX idx_retrosheet_players_player_season ON retrosheet_players(player_id, season);
+CREATE INDEX IF NOT EXISTS idx_retrosheet_players_player ON retrosheet_players(player_id);
+CREATE INDEX IF NOT EXISTS idx_retrosheet_players_season ON retrosheet_players(season);
+CREATE INDEX IF NOT EXISTS idx_retrosheet_players_team_season ON retrosheet_players(team_id, season);
+CREATE INDEX IF NOT EXISTS idx_retrosheet_players_player_season ON retrosheet_players(player_id, season);
 
 COMMENT ON TABLE retrosheet_players IS 'Per-team-season player appearances from Retrosheet allplayers.csv. Provides granular positional data including pitcher roles (starter/reliever) and exact game date ranges.';
 COMMENT ON COLUMN retrosheet_players.games_sp IS 'Games as starting pitcher (first pitcher of game)';

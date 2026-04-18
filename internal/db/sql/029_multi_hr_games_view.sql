@@ -1,7 +1,7 @@
 -- Create materialized view for multiple home run game achievements
 DROP MATERIALIZED VIEW IF EXISTS multi_hr_games CASCADE;
 
-CREATE MATERIALIZED VIEW multi_hr_games AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS multi_hr_games AS
 WITH player_game_hrs AS (
     SELECT
         p.gid as game_id,
@@ -39,9 +39,9 @@ WHERE pgh.home_runs >= 3;
 COMMENT ON MATERIALIZED VIEW multi_hr_games IS
 'Multiple home run game achievements: games where a player hit 3 or more home runs.';
 
-CREATE INDEX idx_multi_hr_games_game_id ON multi_hr_games(game_id);
-CREATE INDEX idx_multi_hr_games_player_id ON multi_hr_games(player_id);
-CREATE INDEX idx_multi_hr_games_team_id ON multi_hr_games(team_id);
-CREATE INDEX idx_multi_hr_games_season ON multi_hr_games(season);
-CREATE INDEX idx_multi_hr_games_date ON multi_hr_games(date);
-CREATE INDEX idx_multi_hr_games_hr_count ON multi_hr_games(home_runs DESC);
+CREATE INDEX IF NOT EXISTS idx_multi_hr_games_game_id ON multi_hr_games(game_id);
+CREATE INDEX IF NOT EXISTS idx_multi_hr_games_player_id ON multi_hr_games(player_id);
+CREATE INDEX IF NOT EXISTS idx_multi_hr_games_team_id ON multi_hr_games(team_id);
+CREATE INDEX IF NOT EXISTS idx_multi_hr_games_season ON multi_hr_games(season);
+CREATE INDEX IF NOT EXISTS idx_multi_hr_games_date ON multi_hr_games(date);
+CREATE INDEX IF NOT EXISTS idx_multi_hr_games_hr_count ON multi_hr_games(home_runs DESC);

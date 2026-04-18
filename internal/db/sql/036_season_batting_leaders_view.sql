@@ -2,7 +2,7 @@
 -- Combines Retrosheet per-game stats (1903-2025) with Lahman pre-1903 data (1871-1902)
 -- Pre-aggregates all stats including advanced metrics (wOBA, wRC+)
 
-CREATE MATERIALIZED VIEW season_batting_leaders AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS season_batting_leaders AS
 WITH retrosheet_batting AS (
     SELECT
         player_id,
@@ -147,17 +147,17 @@ SELECT
     CASE WHEN obp IS NOT NULL AND slg IS NOT NULL THEN ROUND((obp + slg)::numeric, 3) ELSE NULL END as ops
 FROM stats_with_advanced;
 
-CREATE UNIQUE INDEX idx_season_batting_leaders_pk ON season_batting_leaders(player_id, season);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_season_batting_leaders_pk ON season_batting_leaders(player_id, season);
 
-CREATE INDEX idx_season_batting_leaders_hr ON season_batting_leaders(season, hr DESC, h DESC) WHERE ab >= 300;
-CREATE INDEX idx_season_batting_leaders_avg ON season_batting_leaders(season, avg DESC) WHERE ab >= 300;
-CREATE INDEX idx_season_batting_leaders_rbi ON season_batting_leaders(season, rbi DESC) WHERE ab >= 300;
-CREATE INDEX idx_season_batting_leaders_sb ON season_batting_leaders(season, sb DESC) WHERE ab >= 300;
-CREATE INDEX idx_season_batting_leaders_h ON season_batting_leaders(season, h DESC) WHERE ab >= 300;
-CREATE INDEX idx_season_batting_leaders_wrc_plus ON season_batting_leaders(season, wrc_plus DESC) WHERE pa >= 502;
-CREATE INDEX idx_season_batting_leaders_woba ON season_batting_leaders(season, woba DESC) WHERE pa >= 502;
-CREATE INDEX idx_season_batting_leaders_league_hr ON season_batting_leaders(season, league, hr DESC) WHERE ab >= 300;
-CREATE INDEX idx_season_batting_leaders_season ON season_batting_leaders(season);
-CREATE INDEX idx_season_batting_leaders_player ON season_batting_leaders(player_id, season DESC);
+CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_hr ON season_batting_leaders(season, hr DESC, h DESC) WHERE ab >= 300;
+CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_avg ON season_batting_leaders(season, avg DESC) WHERE ab >= 300;
+CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_rbi ON season_batting_leaders(season, rbi DESC) WHERE ab >= 300;
+CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_sb ON season_batting_leaders(season, sb DESC) WHERE ab >= 300;
+CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_h ON season_batting_leaders(season, h DESC) WHERE ab >= 300;
+CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_wrc_plus ON season_batting_leaders(season, wrc_plus DESC) WHERE pa >= 502;
+CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_woba ON season_batting_leaders(season, woba DESC) WHERE pa >= 502;
+CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_league_hr ON season_batting_leaders(season, league, hr DESC) WHERE ab >= 300;
+CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_season ON season_batting_leaders(season);
+CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_player ON season_batting_leaders(player_id, season DESC);
 
 ANALYZE season_batting_leaders;

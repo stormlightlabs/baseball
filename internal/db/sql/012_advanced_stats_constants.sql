@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS woba_constants (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_woba_constants_season ON woba_constants(season);
+CREATE INDEX IF NOT EXISTS idx_woba_constants_season ON woba_constants(season);
 
 COMMENT ON TABLE woba_constants IS 'Year-specific constants for wOBA, FIP, and related advanced metrics from FanGraphs';
 COMMENT ON COLUMN woba_constants.woba_scale IS 'Scaling factor to convert wOBA to runs above average';
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS league_constants (
     PRIMARY KEY (season, league)
 );
 
-CREATE INDEX idx_league_constants_season ON league_constants(season);
+CREATE INDEX IF NOT EXISTS idx_league_constants_season ON league_constants(season);
 
 COMMENT ON TABLE league_constants IS 'League-specific constants calculated annually for park/league adjustments';
 COMMENT ON COLUMN league_constants.wrc_per_pa IS 'League wRC/PA excluding pitchers for wRC+ denominator';
@@ -125,8 +125,8 @@ CREATE TABLE IF NOT EXISTS park_factors (
     PRIMARY KEY (park_id, season)
 );
 
-CREATE INDEX idx_park_factors_season ON park_factors(season);
-CREATE INDEX idx_park_factors_team ON park_factors(team_id, season);
+CREATE INDEX IF NOT EXISTS idx_park_factors_season ON park_factors(season);
+CREATE INDEX IF NOT EXISTS idx_park_factors_team ON park_factors(team_id, season);
 
 COMMENT ON TABLE park_factors IS 'Multi-year regressed park factors from FanGraphs (100 = neutral, >100 = hitter-friendly)';
 COMMENT ON COLUMN park_factors.basic_5yr IS 'Most stable 5-year regressed overall park factor';

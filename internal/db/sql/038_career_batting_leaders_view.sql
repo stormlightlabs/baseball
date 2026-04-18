@@ -2,7 +2,7 @@
 -- Aggregates from season_batting_leaders to get career totals
 -- Pre-calculates career rate stats
 
-CREATE MATERIALIZED VIEW career_batting_leaders AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS career_batting_leaders AS
 SELECT
     player_id,
     MAX(season) as last_season,
@@ -36,12 +36,12 @@ SELECT
 FROM season_batting_leaders
 GROUP BY player_id;
 
-CREATE UNIQUE INDEX idx_career_batting_leaders_pk ON career_batting_leaders(player_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_career_batting_leaders_pk ON career_batting_leaders(player_id);
 
-CREATE INDEX idx_career_batting_leaders_hr ON career_batting_leaders(total_hr DESC, total_h DESC) WHERE total_ab >= 1000;
-CREATE INDEX idx_career_batting_leaders_h ON career_batting_leaders(total_h DESC) WHERE total_ab >= 1000;
-CREATE INDEX idx_career_batting_leaders_rbi ON career_batting_leaders(total_rbi DESC) WHERE total_ab >= 1000;
-CREATE INDEX idx_career_batting_leaders_avg ON career_batting_leaders(career_avg DESC) WHERE total_ab >= 1000;
-CREATE INDEX idx_career_batting_leaders_ops ON career_batting_leaders(career_ops DESC) WHERE total_pa >= 3000;
+CREATE INDEX IF NOT EXISTS idx_career_batting_leaders_hr ON career_batting_leaders(total_hr DESC, total_h DESC) WHERE total_ab >= 1000;
+CREATE INDEX IF NOT EXISTS idx_career_batting_leaders_h ON career_batting_leaders(total_h DESC) WHERE total_ab >= 1000;
+CREATE INDEX IF NOT EXISTS idx_career_batting_leaders_rbi ON career_batting_leaders(total_rbi DESC) WHERE total_ab >= 1000;
+CREATE INDEX IF NOT EXISTS idx_career_batting_leaders_avg ON career_batting_leaders(career_avg DESC) WHERE total_ab >= 1000;
+CREATE INDEX IF NOT EXISTS idx_career_batting_leaders_ops ON career_batting_leaders(career_ops DESC) WHERE total_pa >= 3000;
 
 ANALYZE career_batting_leaders;

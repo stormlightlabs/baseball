@@ -230,9 +230,9 @@ CREATE TABLE plays (
     pbp varchar(10)                     -- Play-by-play type (deduced or full)
 );
 
-CREATE INDEX idx_plays_gid ON plays(gid);
-CREATE INDEX idx_plays_batter ON plays(batter);
-CREATE INDEX idx_plays_pitcher ON plays(pitcher);
-CREATE INDEX idx_plays_date ON plays(date);
-CREATE INDEX idx_plays_batteam ON plays(batteam);
-CREATE INDEX idx_plays_pitteam ON plays(pitteam);
+CREATE INDEX IF NOT EXISTS idx_plays_gid ON plays(gid);
+CREATE INDEX IF NOT EXISTS idx_plays_batter ON plays(batter);
+CREATE INDEX IF NOT EXISTS idx_plays_pitcher ON plays(pitcher);
+CREATE INDEX IF NOT EXISTS idx_plays_date ON plays(date);
+CREATE INDEX IF NOT EXISTS idx_plays_batteam ON plays(batteam);
+CREATE INDEX IF NOT EXISTS idx_plays_pitteam ON plays(pitteam);

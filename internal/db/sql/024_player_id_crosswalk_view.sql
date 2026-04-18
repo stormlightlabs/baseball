@@ -3,7 +3,7 @@
 
 DROP MATERIALIZED VIEW IF EXISTS player_id_map CASCADE;
 
-CREATE MATERIALIZED VIEW player_id_map AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS player_id_map AS
 WITH ranked_players AS (
     SELECT
         "playerID" as lahman_id,
@@ -39,8 +39,8 @@ FROM ranked_players
 WHERE rn = 1;
 
 -- Add indexes for fast bidirectional lookups
-CREATE INDEX idx_player_id_map_lahman ON player_id_map(lahman_id);
-CREATE UNIQUE INDEX idx_player_id_map_retro ON player_id_map(retro_id);
+CREATE INDEX IF NOT EXISTS idx_player_id_map_lahman ON player_id_map(lahman_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_player_id_map_retro ON player_id_map(retro_id);
 
 -- Create lookup functions for convenience
 CREATE OR REPLACE FUNCTION lahman_to_retro(lahman_player_id VARCHAR)

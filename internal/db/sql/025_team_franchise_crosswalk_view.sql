@@ -3,7 +3,7 @@
 
 DROP MATERIALIZED VIEW IF EXISTS team_franchise_map CASCADE;
 
-CREATE MATERIALIZED VIEW team_franchise_map AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS team_franchise_map AS
 SELECT DISTINCT
     t."teamID" as team_id,
     t."franchID" as franchise_id,
@@ -25,10 +25,10 @@ FROM "Teams" t
 LEFT JOIN "TeamsFranchises" tf ON t."franchID" = tf."franchID"
 WHERE t."teamID" IS NOT NULL;
 
-CREATE INDEX idx_team_franchise_map_team ON team_franchise_map(team_id);
-CREATE INDEX idx_team_franchise_map_franchise ON team_franchise_map(franchise_id);
-CREATE INDEX idx_team_franchise_map_season ON team_franchise_map(season);
-CREATE UNIQUE INDEX idx_team_franchise_map_unique ON team_franchise_map(team_id, season);
+CREATE INDEX IF NOT EXISTS idx_team_franchise_map_team ON team_franchise_map(team_id);
+CREATE INDEX IF NOT EXISTS idx_team_franchise_map_franchise ON team_franchise_map(franchise_id);
+CREATE INDEX IF NOT EXISTS idx_team_franchise_map_season ON team_franchise_map(season);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_team_franchise_map_unique ON team_franchise_map(team_id, season);
 
 CREATE OR REPLACE FUNCTION franchise_current_team(franchise VARCHAR)
 RETURNS VARCHAR AS $$

@@ -2,7 +2,7 @@
 -- Aggregates from season_pitching_leaders to get career totals
 -- Pre-calculates career rate stats
 
-CREATE MATERIALIZED VIEW career_pitching_leaders AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS career_pitching_leaders AS
 SELECT
     player_id,
     MAX(season) as last_season,
@@ -41,12 +41,12 @@ SELECT
 FROM season_pitching_leaders
 GROUP BY player_id;
 
-CREATE UNIQUE INDEX idx_career_pitching_leaders_pk ON career_pitching_leaders(player_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_career_pitching_leaders_pk ON career_pitching_leaders(player_id);
 
-CREATE INDEX idx_career_pitching_leaders_w ON career_pitching_leaders(total_w DESC) WHERE total_ipouts >= 1500;
-CREATE INDEX idx_career_pitching_leaders_so ON career_pitching_leaders(total_so DESC) WHERE total_ipouts >= 1500;
-CREATE INDEX idx_career_pitching_leaders_sv ON career_pitching_leaders(total_sv DESC) WHERE total_g >= 100;
-CREATE INDEX idx_career_pitching_leaders_era ON career_pitching_leaders(career_era ASC) WHERE total_ipouts >= 1500;
-CREATE INDEX idx_career_pitching_leaders_whip ON career_pitching_leaders(career_whip ASC) WHERE total_ipouts >= 1500;
+CREATE INDEX IF NOT EXISTS idx_career_pitching_leaders_w ON career_pitching_leaders(total_w DESC) WHERE total_ipouts >= 1500;
+CREATE INDEX IF NOT EXISTS idx_career_pitching_leaders_so ON career_pitching_leaders(total_so DESC) WHERE total_ipouts >= 1500;
+CREATE INDEX IF NOT EXISTS idx_career_pitching_leaders_sv ON career_pitching_leaders(total_sv DESC) WHERE total_g >= 100;
+CREATE INDEX IF NOT EXISTS idx_career_pitching_leaders_era ON career_pitching_leaders(career_era ASC) WHERE total_ipouts >= 1500;
+CREATE INDEX IF NOT EXISTS idx_career_pitching_leaders_whip ON career_pitching_leaders(career_whip ASC) WHERE total_ipouts >= 1500;
 
 ANALYZE career_pitching_leaders;

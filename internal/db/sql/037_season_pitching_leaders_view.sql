@@ -3,7 +3,7 @@
 -- Includes Lahman pre-1903 data (1871-1902)
 -- Pre-aggregates all stats including advanced metrics (FIP, WHIP, K/9)
 
-CREATE MATERIALIZED VIEW season_pitching_leaders AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS season_pitching_leaders AS
 WITH retrosheet_pitching AS (
     SELECT
         player_id,
@@ -168,16 +168,16 @@ SELECT
 FROM all_pitching ap
 LEFT JOIN woba_constants wc ON wc.season = ap.season;
 
-CREATE UNIQUE INDEX idx_season_pitching_leaders_pk ON season_pitching_leaders(player_id, season);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_season_pitching_leaders_pk ON season_pitching_leaders(player_id, season);
 
-CREATE INDEX idx_season_pitching_leaders_era ON season_pitching_leaders(season, era ASC) WHERE ipouts >= 450;
-CREATE INDEX idx_season_pitching_leaders_so ON season_pitching_leaders(season, so DESC) WHERE ipouts >= 450;
-CREATE INDEX idx_season_pitching_leaders_w ON season_pitching_leaders(season, w DESC) WHERE ipouts >= 450;
-CREATE INDEX idx_season_pitching_leaders_sv ON season_pitching_leaders(season, sv DESC) WHERE g >= 20;
-CREATE INDEX idx_season_pitching_leaders_fip ON season_pitching_leaders(season, fip ASC) WHERE ipouts >= 450;
-CREATE INDEX idx_season_pitching_leaders_whip ON season_pitching_leaders(season, whip ASC) WHERE ipouts >= 450;
-CREATE INDEX idx_season_pitching_leaders_league_era ON season_pitching_leaders(season, league, era ASC) WHERE ipouts >= 450;
-CREATE INDEX idx_season_pitching_leaders_season ON season_pitching_leaders(season);
-CREATE INDEX idx_season_pitching_leaders_player ON season_pitching_leaders(player_id, season DESC);
+CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_era ON season_pitching_leaders(season, era ASC) WHERE ipouts >= 450;
+CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_so ON season_pitching_leaders(season, so DESC) WHERE ipouts >= 450;
+CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_w ON season_pitching_leaders(season, w DESC) WHERE ipouts >= 450;
+CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_sv ON season_pitching_leaders(season, sv DESC) WHERE g >= 20;
+CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_fip ON season_pitching_leaders(season, fip ASC) WHERE ipouts >= 450;
+CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_whip ON season_pitching_leaders(season, whip ASC) WHERE ipouts >= 450;
+CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_league_era ON season_pitching_leaders(season, league, era ASC) WHERE ipouts >= 450;
+CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_season ON season_pitching_leaders(season);
+CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_player ON season_pitching_leaders(player_id, season DESC);
 
 ANALYZE season_pitching_leaders;

@@ -3,7 +3,7 @@
 
 DROP MATERIALIZED VIEW IF EXISTS extra_inning_games CASCADE;
 
-CREATE MATERIALIZED VIEW extra_inning_games AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS extra_inning_games AS
 SELECT
     g.game_id,
     g.date,
@@ -35,9 +35,9 @@ ORDER BY g.game_length_outs DESC, g.date DESC;
 COMMENT ON MATERIALIZED VIEW extra_inning_games IS
 'Extra inning game achievements: games that lasted 20 or more innings.';
 
-CREATE INDEX idx_extra_inning_games_game_id ON extra_inning_games(game_id);
-CREATE INDEX idx_extra_inning_games_season ON extra_inning_games(season);
-CREATE INDEX idx_extra_inning_games_date ON extra_inning_games(date);
-CREATE INDEX idx_extra_inning_games_innings ON extra_inning_games(innings DESC);
-CREATE INDEX idx_extra_inning_games_home_team ON extra_inning_games(home_team);
-CREATE INDEX idx_extra_inning_games_visiting_team ON extra_inning_games(visiting_team);
+CREATE INDEX IF NOT EXISTS idx_extra_inning_games_game_id ON extra_inning_games(game_id);
+CREATE INDEX IF NOT EXISTS idx_extra_inning_games_season ON extra_inning_games(season);
+CREATE INDEX IF NOT EXISTS idx_extra_inning_games_date ON extra_inning_games(date);
+CREATE INDEX IF NOT EXISTS idx_extra_inning_games_innings ON extra_inning_games(innings DESC);
+CREATE INDEX IF NOT EXISTS idx_extra_inning_games_home_team ON extra_inning_games(home_team);
+CREATE INDEX IF NOT EXISTS idx_extra_inning_games_visiting_team ON extra_inning_games(visiting_team);
