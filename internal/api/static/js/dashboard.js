@@ -7,7 +7,7 @@
       return;
     }
 
-    fetch("/v1/auth/keys")
+    fetch("/api/v1/auth/keys")
       .then((res) => res.json())
       .then((keys) => {
         if (!Array.isArray(keys) || keys.length === 0) {
@@ -71,7 +71,7 @@
       return;
     }
 
-    fetch(`/v1/auth/keys/${id}`, { method: "DELETE" })
+    fetch(`/api/v1/auth/keys/${id}`, { method: "DELETE" })
       .then((res) => res.json())
       .then(() => {
         loadAPIKeys();
@@ -88,7 +88,7 @@
     const name = nameInput ? nameInput.value || null : null;
     const resultDiv = document.getElementById("new-key-result");
 
-    fetch("/v1/auth/keys", {
+    fetch("/api/v1/auth/keys", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),

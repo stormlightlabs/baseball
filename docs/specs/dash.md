@@ -8,7 +8,7 @@ updated: 2026-04-18
 - **Framework**: SvelteKit 2 in SPA mode (`adapter-static`, fallback `index.html`), deployed to CDN
 - **Styling**: Tailwind CSS v4
 - **Charts**: Chart.js 4 via a thin Svelte wrapper
-- **API docs**: OpenAPI (`internal/docs/swagger.yaml`) for API Explorer schema + params
+- **API docs**: Existing Swagger docsite at `/api/v1/docs/` (source OpenAPI: `internal/docs/swagger.yaml`)
 - **Routing**:
     - Dashboard SPA at `/`
     - API namespace is `/v1/*` (current public API surface)
@@ -245,23 +245,10 @@ Should immediately answer: _what can this API do across eras?_
 - `/v1/win-expectancy`
 - `/v1/win-expectancy/eras`
 
-## API Explorer
+## API Documentation
 
-The explorer is the interactive API reference and must reflect the current OpenAPI document.
-
-### Required groups
-
-- meta/health
-- search
-- players
-- teams/franchises
-- games/plays/pitches
-- stats/leaders
-- computed/derived
-- achievements/awards/postseason/allstar/ejections/salaries
-- managers/umpires/coaches
-- league-specific (`federalleague`, `negroleagues`)
-- mlb proxy
+- The dashboard links out to the existing Swagger UI docsite at `/api/v1/docs/`.
+- The dashboard does not own a separate in-app API Explorer surface.
 
 ## Data Sources and Coverage Page
 
@@ -296,6 +283,6 @@ Authenticated area behind `/account`.
 | `/seasons`  | Seasons      | three-col  | no   | season hub + awards/postseason                 |
 | `/leaders`  | Leaders      | three-col  | no   | quick leaders + query lab + advanced           |
 | `/compare`  | Compare      | three-col  | no   | side-by-side + era normalization               |
-| `/explorer` | API Explorer | three-col  | no   | OpenAPI-driven endpoint explorer               |
+| `/api/v1/docs/` | API Docs (Swagger) | external | no | Existing Swagger UI docsite linked from app navigation |
 | `/data`     | Data Sources | single-col | no   | provenance + era matrix + caveats              |
 | `/account`  | Account      | single-col | yes  | API keys + usage                               |

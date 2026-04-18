@@ -286,7 +286,7 @@
 <div class="mt-4 rounded-lg border border-outline bg-crust p-4">
   <div class="panel-label mb-2">Leverage Table</div>
   <p class="mb-3 font-mono text-[0.68rem] text-muted">
-    Top leverage plate appearances from <code>/v1/games/{gameId}/plate-appearances/leverage</code>.
+    Top leverage plate appearances from <code>/api/v1/games/{gameId}/plate-appearances/leverage</code>.
   </p>
 
   {#if leverageResource.loading}

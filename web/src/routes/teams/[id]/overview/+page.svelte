@@ -211,8 +211,8 @@
     {/if}
 
     <p class="mt-4 border-t border-outline pt-3 font-mono text-[0.68rem] text-muted">
-      Use <code>franchise_id</code> for <code>/v1/franchises/{'{id}'}</code>; use <code>team_id</code> for
-      <code>/v1/teams/{'{id}'}</code> and <code>/v1/seasons/{'{year}'}/teams/{'{team_id}'}/…</code>.
+      Use <code>franchise_id</code> for <code>/api/v1/franchises/{'{id}'}</code>; use <code>team_id</code> for
+      <code>/api/v1/teams/{'{id}'}</code> and <code>/api/v1/seasons/{'{year}'}/teams/{'{team_id}'}/…</code>.
     </p>
   </div>
 

@@ -23,12 +23,14 @@
 
   onMount(() => meta.init());
 
+  const API_DOCS_ROUTE = '/explorer' as const;
+
   let searchQuery = $state('');
   let activeEntity = $state<string | null>(null);
 
   const activeApiEndpoint = $derived.by(() => {
     const entity = ENTITY_TYPES.find((e) => e.label === activeEntity);
-    return entity ? entity.apiEndpoint : '/v1/search/players';
+    return entity ? entity.apiEndpoint : '/api/v1/search/players';
   });
 
   function handleSearch() {
@@ -223,7 +225,9 @@
           {#each visibleQueries as q (q.endpoint)}
             <li>
               <a
-                href={resolve(`/explorer?endpoint=${encodeURIComponent(q.endpoint)}`)}
+                href={resolve(API_DOCS_ROUTE)}
+                target="_blank"
+                rel="noreferrer"
                 class="group block rounded-md px-2 py-2 no-underline transition-colors hover:bg-surface">
                 <div class="mb-0.5 text-[0.82rem] text-foreground transition-colors group-hover:text-primary">
                   {q.title}
@@ -320,7 +324,9 @@
           {#each ALL_ENDPOINTS as ep (ep)}
             <li>
               <a
-                href={resolve(`/explorer?endpoint=${encodeURIComponent(ep)}`)}
+                href={resolve(API_DOCS_ROUTE)}
+                target="_blank"
+                rel="noreferrer"
                 class="block font-mono text-[0.72rem] text-primary no-underline opacity-80 transition-opacity hover:opacity-100">
                 {ep}
               </a>
@@ -332,6 +338,6 @@
   </div>
 
   <div class="mx-auto max-w-6xl px-8 pb-8">
-    <ApiMirrorStrip url="/v1/meta" />
+    <ApiMirrorStrip url="/api/v1/meta" />
   </div>
 </main>

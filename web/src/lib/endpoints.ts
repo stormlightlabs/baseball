@@ -1,5 +1,5 @@
 /**
- * Central endpoint map — single source of truth for all /v1/* API paths and their
+ * Central endpoint map — single source of truth for all /api/v1/* API paths and their
  * canonical query parameters. Derived from internal/docs/swagger.yaml.
  *
  * Add new endpoints here rather than hardcoding strings in page components.
@@ -119,7 +119,7 @@ export const PARAMS = {
   /** Search endpoints */
   search: { q: 'q' } as const,
 
-  /** /v1/games query params */
+  /** /api/v1/games query params */
   games: {
     season: 'season',
     homeTeam: 'home_team',
@@ -132,7 +132,7 @@ export const PARAMS = {
     perPage: 'per_page'
   } as const,
 
-  /** /v1/stats/* query params */
+  /** /api/v1/stats/* query params */
   stats: {
     sortBy: 'sort_by',
     sortOrder: 'sort_order',
@@ -143,18 +143,18 @@ export const PARAMS = {
     perPage: 'per_page'
   } as const,
 
-  /** /v1/seasons/{year}/leaders/* */
+  /** /api/v1/seasons/{year}/leaders/* */
   leaders: { stat: 'stat', page: 'page', perPage: 'per_page' } as const,
 
-  /** /v1/teams/{id} */
+  /** /api/v1/teams/{id} */
   team: { year: 'year' } as const,
 
-  /** /v1/players/{id}/stats/* */
+  /** /api/v1/players/{id}/stats/* */
   playerStats: { season: 'season', page: 'page', perPage: 'per_page' } as const,
 
-  /** /v1/win-expectancy */
+  /** /api/v1/win-expectancy */
   winExpectancy: { inning: 'inning', outs: 'outs', runners: 'runners', era: 'era' } as const,
 
-  /** /v1/teams/{team_id}/run-differential */
+  /** /api/v1/teams/{team_id}/run-differential */
   runDifferential: { season: 'season' } as const
 } as const;

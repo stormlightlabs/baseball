@@ -301,7 +301,7 @@
         placeholder="e.g. yankees red sox 2004 alcs game 7"
         onsubmit={runNaturalSearch} />
       <p class="mt-2 font-mono text-[0.65rem] text-muted">
-        Uses <code>/v1/search/games</code> natural-language parsing.
+        Uses <code>/api/v1/search/games</code> natural-language parsing.
       </p>
     {:else}
       <div class="mb-2 grid grid-cols-3 gap-1.5">
@@ -474,6 +474,6 @@
   {/snippet}
 
   {#snippet panel()}
-    <ApiPanel endpoint={`/v1${activeEndpoint}`} url={activeUrl} />
+    <ApiPanel endpoint={`/api/v1${activeEndpoint}`} url={activeUrl} />
   {/snippet}
 </ThreeColLayout>

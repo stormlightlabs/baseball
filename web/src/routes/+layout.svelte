@@ -23,9 +23,10 @@
     { href: '/seasons', label: 'Seasons' },
     { href: '/leaders', label: 'Leaders' },
     { href: '/compare', label: 'Compare' },
-    { href: '/explorer', label: 'API' },
     { href: '/data', label: 'Data' }
   ] as const;
+
+  const API_DOCS_ROUTE = '/explorer' as const;
 
   const BADGES: Record<AppPath, string> = {
     '/': 'home',
@@ -35,7 +36,6 @@
     '/seasons': 'seasons',
     '/leaders': 'leaders',
     '/compare': 'compare',
-    '/explorer': 'api explorer',
     '/data': 'data sources',
     '/account': 'account'
   };
@@ -73,8 +73,15 @@
       </a>
     {/each}
     <a
+      href={resolve(API_DOCS_ROUTE)}
+      target="_blank"
+      rel="noreferrer"
+      class="ml-2 rounded px-2.5 py-1 text-[0.8rem] text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground">
+      API Docs
+    </a>
+    <a
       href={resolve('/account')}
-      class="ml-2 rounded px-2.5 py-1 text-[0.8rem] no-underline transition-colors duration-150 {pathname.startsWith(
+      class="rounded px-2.5 py-1 text-[0.8rem] no-underline transition-colors duration-150 {pathname.startsWith(
         '/account'
       )
         ? 'bg-outline text-foreground'

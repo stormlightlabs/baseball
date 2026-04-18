@@ -83,7 +83,7 @@ func Load(configPath string) (*Config, error) {
 
 	v.SetDefault("server.host", "localhost")
 	v.SetDefault("server.port", 8080)
-	v.SetDefault("server.base_url", "http://localhost:8080/v1/")
+	v.SetDefault("server.base_url", "http://localhost:8080/api/v1/")
 	v.SetDefault("server.debug_mode", false)
 	v.SetDefault("database.url", "postgres://postgres:postgres@localhost:5432/baseball_dev?sslmode=disable")
 	v.SetDefault("redis.url", "redis://localhost:6379/0")

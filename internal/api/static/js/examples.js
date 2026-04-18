@@ -130,7 +130,7 @@
       async loadPitchingLeaders() {
         this.pitchingRows = [];
         try {
-          let url = `/v1/seasons/${this.pitchingYear}/leaders/pitching?stat=so&limit=10`;
+          let url = `/api/v1/seasons/${this.pitchingYear}/leaders/pitching?stat=so&limit=10`;
           if (this.pitchingLeague) {
             url += `&league=${this.pitchingLeague}`;
           }
@@ -197,7 +197,7 @@
       async loadBattingLeaders() {
         this.leadersRows = [];
         try {
-          let url = `/v1/seasons/${this.leaderYear}/leaders/batting?stat=${this.leaderStat}&limit=10`;
+          let url = `/api/v1/seasons/${this.leaderYear}/leaders/batting?stat=${this.leaderStat}&limit=10`;
           if (this.league) {
             url += `&league=${this.league}`;
           }
@@ -270,7 +270,7 @@
         this.playerChart = null;
         try {
           const endpoint = this.playerStatType === "batting" ? "batting" : "pitching";
-          const url = `/v1/players/${this.playerId}/stats/${endpoint}`;
+          const url = `/api/v1/players/${this.playerId}/stats/${endpoint}`;
           this.playerEndpoint = url;
           const response = await fetch(url);
 
@@ -469,7 +469,7 @@
         this.playerAdvData = null;
         this.showPlayerAdvJSON = false;
         try {
-          const url = `/v1/players/${this.playerIdAdv}/stats/batting/advanced?season=${this.advSeasonPlayer}`;
+          const url = `/api/v1/players/${this.playerIdAdv}/stats/batting/advanced?season=${this.advSeasonPlayer}`;
           this.playerAdvEndpoint = url;
           const response = await fetch(url);
 
@@ -491,7 +491,7 @@
       async loadAdvancedStats() {
         this.advLeaderRows = [];
         try {
-          const url = `/v1/stats/batting?season=${this.advancedYear}&min_ab=${this.minPA}&sort_by=woba&sort_order=desc&per_page=10`;
+          const url = `/api/v1/stats/batting?season=${this.advancedYear}&min_ab=${this.minPA}&sort_by=woba&sort_order=desc&per_page=10`;
           this.advLeadersEndpoint = url;
           const response = await fetch(url);
           const result = await response.json();
@@ -576,7 +576,7 @@
         this.warData = null;
         this.showWARJSON = false;
         try {
-          const url = `/v1/players/${this.playerIdWAR}/stats/war?season=${this.warSeason}`;
+          const url = `/api/v1/players/${this.playerIdWAR}/stats/war?season=${this.warSeason}`;
           this.warEndpoint = url;
           const response = await fetch(url);
 

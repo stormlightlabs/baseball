@@ -1,5 +1,5 @@
-/** Base URL: set VITE_API_BASE_URL in .env.production for CDN deploys; defaults to /v1 (dev proxy) */
-const BASE: string = (import.meta.env.VITE_API_BASE_URL as string) || '/v1';
+/** Base URL: set VITE_API_BASE_URL in .env.production for CDN deploys; defaults to /api/v1 (dev proxy) */
+const BASE: string = (import.meta.env.VITE_API_BASE_URL as string) || '/api/v1';
 
 export type Params = Record<string, string | number | boolean | null | undefined>;
 

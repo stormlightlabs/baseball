@@ -12020,7 +12020,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "/v1",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Baseball API",
 	Description:      "<!-- markdownlint-disable -->\n\nA comprehensive REST API for baseball statistics serving data from the Lahman Baseball Database and Retrosheet\n\n## Attributions\n\n**[SABR Lahman Database](https://sabr.org/lahman-database/)**: The information used here was obtained free of charge from and is copyrighted by Sean Lahman.\n\n**[Retrosheet.org](https://www.retrosheet.org/)**: The information used here was obtained free of charge from and is copyrighted by Retrosheet.\n\nwOBA weights and seasonal constants from **[FanGraphs Guts!](https://www.fangraphs.com/tools/guts)**, used under FanGraphs’ published terms.\n",
