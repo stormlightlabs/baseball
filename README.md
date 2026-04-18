@@ -1,9 +1,9 @@
 <!-- markdownlint-disable MD033 -->
-# Big Fly
+# Big Fly monorepo
 
 ![API Banner](./docs/banner.png)
 
-A comprehensive REST API for baseball statistics built with Go, serving data from the Lahman Baseball Database and Retrosheet.
+A comprehensive platform for baseball statistics built with Go, Svelte & Flutter serving data from the Lahman Baseball Database and Retrosheet.
 
 ## Quick Start
 
