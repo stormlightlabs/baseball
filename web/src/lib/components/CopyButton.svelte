@@ -12,6 +12,6 @@
 
 <button
   onclick={copy}
-  class="rounded bg-outline px-2.5 py-1 font-monospace text-[0.7rem] text-muted transition-colors duration-150 hover:text-foreground">
+  class="rounded bg-outline px-2.5 py-1 font-mono text-[0.7rem] text-muted transition-colors duration-150 hover:text-foreground">
   {copied ? 'Copied!' : label}
 </button>

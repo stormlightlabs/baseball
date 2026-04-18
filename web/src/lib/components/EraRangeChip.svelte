@@ -19,7 +19,7 @@
     class="inline-flex items-center gap-1.5 rounded-full border border-outline bg-crust px-2.5 py-1 no-underline transition-colors hover:border-primary/50 hover:bg-surface"
     title={era.caveat}>
     <EraBadge {era} size="xs" />
-    <span class="font-monospace text-[0.7rem] text-muted">{era.from}–{era.to}</span>
+    <span class="font-mono text-[0.7rem] text-muted">{era.from}–{era.to}</span>
   </a>
 {:else}
   <button
@@ -27,6 +27,6 @@
     class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-outline bg-crust px-2.5 py-1 transition-colors hover:border-primary/50 hover:bg-surface"
     title={era.caveat}>
     <EraBadge {era} size="xs" />
-    <span class="font-monospace text-[0.7rem] text-muted">{era.from}–{era.to}</span>
+    <span class="font-mono text-[0.7rem] text-muted">{era.from}–{era.to}</span>
   </button>
 {/if}

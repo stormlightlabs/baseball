@@ -37,11 +37,11 @@
 <div class="rounded-lg border border-outline bg-crust p-4">
   <div class="panel-label mb-3">{label}</div>
   {#if rows.loading}
-    <p class="font-monospace text-xs text-muted">Loading…</p>
+    <p class="font-mono text-xs text-muted">Loading…</p>
   {:else if rows.error}
-    <p class="font-monospace text-xs text-warning">{rows.error}</p>
+    <p class="font-mono text-xs text-warning">{rows.error}</p>
   {:else if rows.items.length === 0}
-    <p class="font-monospace text-xs text-muted">No data on record.</p>
+    <p class="font-mono text-xs text-muted">No data on record.</p>
   {:else}
     <SortableTable {columns} rows={rows.items} />
   {/if}

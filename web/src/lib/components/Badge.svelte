@@ -16,6 +16,6 @@
   });
 </script>
 
-<span class="inline-block rounded px-1.5 py-0.5 font-monospace text-[0.65rem] {cls}">
+<span class="inline-block rounded px-1.5 py-0.5 font-mono text-[0.65rem] {cls}">
   {label}
 </span>

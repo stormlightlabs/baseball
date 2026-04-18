@@ -45,7 +45,7 @@
       <tr>
         {#each columns as col (col.label)}
           <th
-            class="border-b border-outline px-2 py-1.5 text-left font-body text-[0.72rem] font-medium whitespace-nowrap text-muted {col.sortable
+            class="border-b border-outline px-2 py-1.5 text-left font-sans text-[0.72rem] font-medium whitespace-nowrap text-muted {col.sortable
               ? 'cursor-pointer hover:text-foreground'
               : ''}"
             onclick={() => toggleSort(col)}>
@@ -65,7 +65,7 @@
       {#each sorted as row, i (i)}
         <tr class="border-b border-outline last:border-b-0 hover:[&>td]:bg-surface">
           {#each columns as col (col.label)}
-            <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">
+            <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">
               {#if col.rank}
                 {@const val = Number(row[col.key]) || 0}
                 {@const max = maxVal(col.key)}

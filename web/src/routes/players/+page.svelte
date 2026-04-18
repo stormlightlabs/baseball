@@ -14,6 +14,8 @@
   import { EP } from '$lib/endpoints';
   import { eraForYear, erasInRange, STATIC_ERAS } from '$lib/eras';
   import ThreeColLayout from '$lib/layouts/ThreeColLayout.svelte';
+  import { PlayersUiController } from '$lib/players.svelte';
+  import { AsyncListResource, AsyncPaginatedListResource, AsyncValueResource } from '$lib/players/resources.svelte';
   import {
     type ApiListPayload,
     type Award,
@@ -29,8 +31,6 @@
     normalizeApiList,
     rowColumns
   } from '$lib/players/types';
-  import { PlayersUiController } from '$lib/players.svelte';
-  import { AsyncListResource, AsyncPaginatedListResource, AsyncValueResource } from '$lib/players/resources.svelte';
   import { intParam, setUrlParams } from '$lib/url-state.svelte';
   import { type ChartConfiguration } from 'chart.js';
   import { onMount } from 'svelte';
@@ -432,33 +432,31 @@
 
 <ThreeColLayout>
   {#snippet sidebar()}
-    <!-- Search -->
     <div class="panel-label">Player search</div>
     <SearchInput mini bind:value={ui.search} placeholder="Name, ID…" onsubmit={handleSearch} />
 
-    <!-- Bio card when a player is selected -->
     {#if playerId}
       <div class="mt-4 rounded-lg border border-outline bg-surface p-4">
         {#if profileLoading}
-          <p class="font-monospace text-[0.72rem] text-muted">Loading…</p>
+          <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
         {:else if profileError}
-          <p class="font-monospace text-[0.72rem] text-warning">{profileError}</p>
+          <p class="font-mono text-[0.72rem] text-warning">{profileError}</p>
         {:else if profile}
-          <div class="mb-0.5 text-center font-monospace text-[0.6rem] tracking-wider text-muted uppercase">
+          <div class="mb-0.5 text-center font-mono text-[0.6rem] tracking-wider text-muted uppercase">
             {profile.primary_position ?? profile.positions?.[0] ?? ''}
           </div>
           <div class="mb-1 text-center font-display text-[0.95rem] font-medium text-foreground">
             {profile.name}
           </div>
           {#if profile.birth_date || profile.birth_city}
-            <div class="mb-1 text-center font-monospace text-[0.68rem] text-muted">
+            <div class="mb-1 text-center font-mono text-[0.68rem] text-muted">
               {profile.birth_date ?? ''}
               {#if profile.birth_city}
                 · {profile.birth_city}{#if profile.birth_state}, {profile.birth_state}{/if}{/if}
             </div>
           {/if}
           {#if profile.bats || profile.throws || profile.debut_year}
-            <div class="mb-3 text-center font-monospace text-[0.68rem] text-muted">
+            <div class="mb-3 text-center font-mono text-[0.68rem] text-muted">
               {#if profile.bats}Bats: {profile.bats}{/if}
               {#if profile.bats && profile.throws}
                 ·
@@ -468,13 +466,12 @@
                 · {profile.debut_year}–{profile.final_year ?? 'pres.'}{/if}
             </div>
           {/if}
-          <!-- Career quick stats -->
           {#if profile.career_hr != null || profile.career_avg != null || profile.career_rbi != null}
             <div class="mb-3 grid grid-cols-3 gap-1 text-center">
               {#if profile.career_hr != null}
                 <div>
                   <div class="font-display text-[0.95rem] font-semibold text-foreground">{profile.career_hr}</div>
-                  <div class="font-monospace text-[0.58rem] text-muted uppercase">HR</div>
+                  <div class="font-mono text-[0.58rem] text-muted uppercase">HR</div>
                 </div>
               {/if}
               {#if profile.career_avg != null}
@@ -482,21 +479,21 @@
                   <div class="font-display text-[0.95rem] font-semibold text-foreground">
                     {fmtAvg(profile.career_avg)}
                   </div>
-                  <div class="font-monospace text-[0.58rem] text-muted uppercase">AVG</div>
+                  <div class="font-mono text-[0.58rem] text-muted uppercase">AVG</div>
                 </div>
               {/if}
               {#if profile.career_rbi != null}
                 <div>
                   <div class="font-display text-[0.95rem] font-semibold text-foreground">{profile.career_rbi}</div>
-                  <div class="font-monospace text-[0.58rem] text-muted uppercase">RBI</div>
+                  <div class="font-mono text-[0.58rem] text-muted uppercase">RBI</div>
                 </div>
               {/if}
             </div>
           {/if}
-          <!-- Career era span -->
+
           {#if careerEras.length > 0}
             <div class="border-t border-outline pt-3">
-              <div class="mb-1.5 font-monospace text-[0.6rem] tracking-wider text-muted uppercase">Career eras</div>
+              <div class="mb-1.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">Career eras</div>
               <div class="flex flex-wrap gap-1">
                 {#each careerEras as era (era.code)}
                   <EraRangeChip {era} />
@@ -508,7 +505,6 @@
       </div>
     {/if}
 
-    <!-- Search results -->
     {#if searchResults.length > 0}
       <div class="mt-4 panel-label">Results</div>
       <div class="flex flex-col gap-0.5">
@@ -519,7 +515,7 @@
               ? 'bg-surface'
               : ''}">
             <div class="font-display text-[0.8rem] text-foreground">{result.name}</div>
-            <div class="font-monospace text-[0.68rem] text-muted">
+            <div class="font-mono text-[0.68rem] text-muted">
               {result.id}
               {#if result.primary_position ?? result.position}
                 · {result.primary_position ?? result.position}{/if}
@@ -530,55 +526,38 @@
         {/each}
       </div>
     {:else if searchLoading}
-      <p class="mt-3 font-monospace text-[0.72rem] text-muted">Searching…</p>
+      <p class="mt-3 font-mono text-[0.72rem] text-muted">Searching…</p>
     {:else if !q && !playerId}
-      <p class="mt-4 font-monospace text-[0.72rem] text-muted">Search for a player to begin.</p>
+      <p class="mt-4 font-mono text-[0.72rem] text-muted">Search for a player to begin.</p>
     {/if}
   {/snippet}
 
   {#snippet center()}
-    {#if !playerId}
-      <!-- Empty state -->
-      <div class="flex h-full flex-col items-center justify-center gap-3 text-center">
-        <div class="font-display text-[1.1rem] text-muted">Player Explorer</div>
-        <p class="max-w-xs font-monospace text-[0.78rem] text-muted/60">
-          Search for a player in the sidebar to explore career stats, awards, game logs, and more.
-        </p>
-        <div class="mt-2 flex flex-wrap justify-center gap-1.5">
-          {#each STATIC_ERAS as era (era.code)}
-            <EraRangeChip {era} />
-          {/each}
-        </div>
-      </div>
-    {:else}
-      <!-- Tab row + advanced toggle -->
+    {#if playerId}
       <div class="mb-1 flex flex-wrap items-center gap-2">
         <TabRow tabs={allTabs} bind:active={ui.tab} />
         <button
           onclick={() =>
             setUrlParams({ advanced: showAdvanced ? null : '1', tab: showAdvanced ? 'batting' : activeTab })}
-          class="ml-auto shrink-0 rounded border px-2.5 py-1 font-monospace text-[0.68rem] transition-colors {showAdvanced
+          class="ml-auto shrink-0 rounded border px-2.5 py-1 font-mono text-[0.68rem] transition-colors {showAdvanced
             ? 'border-primary/40 text-primary hover:border-primary'
             : 'border-outline text-muted hover:border-primary hover:text-foreground'}">
           {showAdvanced ? 'Hide advanced' : 'Show advanced'}
         </button>
       </div>
-
-      <!-- ── Batting ──────────────────────────────────────────────────────── -->
       {#if activeTab === 'batting'}
         {#if battingLoading}
-          <p class="mt-4 font-monospace text-[0.78rem] text-muted">Loading…</p>
+          <p class="mt-4 font-mono text-[0.78rem] text-muted">Loading…</p>
         {:else if battingSeasons.length === 0}
-          <p class="mt-4 font-monospace text-[0.78rem] text-muted">No batting data found for this player.</p>
+          <p class="mt-4 font-mono text-[0.78rem] text-muted">No batting data found for this player.</p>
         {:else}
-          <!-- Chart -->
           <div class="mb-4 rounded-lg border border-outline bg-crust p-4">
             <div class="mb-3 flex items-center gap-3">
               <span class="panel-label">Career batting</span>
               <select
                 value={batStat}
                 onchange={(e) => setUrlParams({ stat: (e.target as HTMLSelectElement).value })}
-                class="ml-auto rounded border border-outline bg-surface px-2 py-1 font-monospace text-[0.72rem] text-muted focus:outline-none">
+                class="ml-auto rounded border border-outline bg-surface px-2 py-1 font-mono text-[0.72rem] text-muted focus:outline-none">
                 {#each BATTING_STATS as s (s.value)}
                   <option value={s.value}>{s.label}</option>
                 {/each}
@@ -586,7 +565,6 @@
             </div>
             <Chart config={battingChartConfig} height={110} />
           </div>
-          <!-- Season table -->
           <div class="rounded-lg border border-outline bg-crust p-4">
             <div class="panel-label mb-3">Season log</div>
             <div class="overflow-x-auto">
@@ -595,7 +573,7 @@
                   <tr>
                     {#each ['Year', 'Team', 'Era', 'G', 'AB', 'H', 'HR', 'RBI', 'AVG', 'SB', 'OBP', 'SLG'] as col (col)}
                       <th
-                        class="border-b border-outline px-2 py-1.5 text-left font-body text-[0.72rem] font-medium whitespace-nowrap text-muted">
+                        class="border-b border-outline px-2 py-1.5 text-left font-sans text-[0.72rem] font-medium whitespace-nowrap text-muted">
                         {col}
                       </th>
                     {/each}
@@ -605,24 +583,24 @@
                   {#each battingRows as row (`${row.year}-${row.team}`)}
                     {@const era = eraForYear(row.year)}
                     <tr class="border-b border-outline last:border-b-0 hover:[&>td]:bg-surface">
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">
                         <a href={resolve(`/seasons?year=${row.year}`)} class="text-primary hover:underline">
                           {row.year}
                         </a>
                       </td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{row.team}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.team}</td>
                       <td class="px-2 py-1.5">
                         {#if era}<EraBadge {era} size="xs" />{:else}<span class="text-muted">—</span>{/if}
                       </td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{row.g}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{row.ab}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{row.h}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{row.hr}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{row.rbi}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{fmtAvg(row.avg)}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{fmtNum(row.sb)}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{fmtAvg(row.obp)}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{fmtAvg(row.slg)}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.g}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.ab}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.h}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.hr}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.rbi}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtAvg(row.avg)}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtNum(row.sb)}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtAvg(row.obp)}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtAvg(row.slg)}</td>
                     </tr>
                   {/each}
                 </tbody>
@@ -635,13 +613,11 @@
             {/if}
           </div>
         {/if}
-
-        <!-- ── Pitching ─────────────────────────────────────────────────────── -->
       {:else if activeTab === 'pitching'}
         {#if pitchingLoading}
-          <p class="mt-4 font-monospace text-[0.78rem] text-muted">Loading…</p>
+          <p class="mt-4 font-mono text-[0.78rem] text-muted">Loading…</p>
         {:else if pitchingSeasons.length === 0}
-          <p class="mt-4 font-monospace text-[0.78rem] text-muted">No pitching data found for this player.</p>
+          <p class="mt-4 font-mono text-[0.78rem] text-muted">No pitching data found for this player.</p>
         {:else}
           <div class="mb-4 rounded-lg border border-outline bg-crust p-4">
             <div class="panel-label mb-3">Career ERA</div>
@@ -655,7 +631,7 @@
                   <tr>
                     {#each ['Year', 'Team', 'Era', 'G', 'GS', 'W', 'L', 'SV', 'IP', 'SO', 'BB', 'ERA', 'WHIP'] as col (col)}
                       <th
-                        class="border-b border-outline px-2 py-1.5 text-left font-body text-[0.72rem] font-medium whitespace-nowrap text-muted">
+                        class="border-b border-outline px-2 py-1.5 text-left font-sans text-[0.72rem] font-medium whitespace-nowrap text-muted">
                         {col}
                       </th>
                     {/each}
@@ -665,26 +641,25 @@
                   {#each pitchingRows as row (`${row.year}-${row.team}`)}
                     {@const era = eraForYear(row.year)}
                     <tr class="border-b border-outline last:border-b-0 hover:[&>td]:bg-surface">
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">
                         <a href={resolve(`/seasons?year=${row.year}`)} class="text-primary hover:underline">
                           {row.year}
                         </a>
                       </td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{row.team}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.team}</td>
                       <td class="px-2 py-1.5">
                         {#if era}<EraBadge {era} size="xs" />{:else}<span class="text-muted">—</span>{/if}
                       </td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{row.g}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{fmtNum(row.gs)}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{row.w}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{row.l}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{fmtNum(row.sv)}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{row.ip}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{fmtNum(row.so)}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">{fmtNum(row.bb)}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground"
-                        >{Number(row.era).toFixed(2)}</td>
-                      <td class="px-2 py-1.5 font-monospace text-[0.72rem] text-foreground">
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.g}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtNum(row.gs)}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.w}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.l}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtNum(row.sv)}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.ip}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtNum(row.so)}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtNum(row.bb)}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{Number(row.era).toFixed(2)}</td>
+                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">
                         {row.whip != null ? Number(row.whip).toFixed(2) : '—'}
                       </td>
                     </tr>
@@ -699,10 +674,7 @@
             {/if}
           </div>
         {/if}
-
-        <!-- ── Game Logs ────────────────────────────────────────────────────── -->
       {:else if activeTab === 'game-logs'}
-        <!-- Sub-type selector -->
         <div class="mb-4 flex gap-1">
           {#each ['batting', 'pitching', 'fielding'] as type (type)}
             <button
@@ -716,9 +688,9 @@
         </div>
         <div class="rounded-lg border border-outline bg-crust p-4">
           {#if gameLogsLoading}
-            <p class="font-monospace text-[0.72rem] text-muted">Loading…</p>
+            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
           {:else if gameLogs.length === 0}
-            <p class="font-monospace text-[0.78rem] text-muted">No {gameLogType} game logs found.</p>
+            <p class="font-mono text-[0.78rem] text-muted">No {gameLogType} game logs found.</p>
           {:else}
             <div class="panel-label mb-3">
               {gameLogType.charAt(0).toUpperCase() + gameLogType.slice(1)} game logs
@@ -731,15 +703,13 @@
             {/if}
           {/if}
         </div>
-
-        <!-- ── Awards ──────────────────────────────────────────────────────── -->
       {:else if activeTab === 'awards'}
         <div class="rounded-lg border border-outline bg-crust p-4">
           <div class="panel-label mb-3">Awards timeline</div>
           {#if awardsLoading}
-            <p class="font-monospace text-[0.72rem] text-muted">Loading…</p>
+            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
           {:else if awards.length === 0}
-            <p class="font-monospace text-[0.78rem] text-muted">No awards on record.</p>
+            <p class="font-mono text-[0.78rem] text-muted">No awards on record.</p>
           {:else}
             <div class="flex flex-col gap-2">
               {#each awards as award (`${award.year}-${award.name ?? award.award_id}`)}
@@ -747,31 +717,29 @@
                 <div class="flex items-center gap-3 rounded-md bg-surface px-3 py-2.5">
                   <a
                     href={resolve(`/seasons?year=${award.year}`)}
-                    class="min-w-11 font-monospace text-[0.72rem] text-muted hover:text-primary">
+                    class="min-w-11 font-mono text-[0.72rem] text-muted hover:text-primary">
                     {award.year}
                   </a>
                   {#if era}<EraBadge {era} size="xs" />{/if}
                   <span class="font-display text-[0.82rem] text-foreground">{award.name ?? award.award_id}</span>
                   {#if award.league}
-                    <span class="ml-auto font-monospace text-[0.68rem] text-muted">{award.league}</span>
+                    <span class="ml-auto font-mono text-[0.68rem] text-muted">{award.league}</span>
                   {/if}
                   {#if award.notes}
-                    <span class="font-monospace text-[0.68rem] text-muted">{award.notes}</span>
+                    <span class="font-mono text-[0.68rem] text-muted">{award.notes}</span>
                   {/if}
                 </div>
               {/each}
             </div>
           {/if}
         </div>
-
-        <!-- ── Hall of Fame ────────────────────────────────────────────────── -->
       {:else if activeTab === 'hof'}
         <div class="rounded-lg border border-outline bg-crust p-4">
           <div class="panel-label mb-3">Hall of Fame voting history</div>
           {#if hofLoading}
-            <p class="font-monospace text-[0.72rem] text-muted">Loading…</p>
+            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
           {:else if hofEntries.length === 0}
-            <p class="font-monospace text-[0.78rem] text-muted">No Hall of Fame data on record.</p>
+            <p class="font-mono text-[0.78rem] text-muted">No Hall of Fame data on record.</p>
           {:else}
             {#if hofEntries.some((e) => e.pct != null)}
               <div class="mb-4">
@@ -795,45 +763,39 @@
               rows={hofEntries} />
           {/if}
         </div>
-
-        <!-- ── Teams ───────────────────────────────────────────────────────── -->
       {:else if activeTab === 'teams'}
         <div class="rounded-lg border border-outline bg-crust p-4">
           <div class="panel-label mb-3">Teams</div>
           {#if teamsLoading}
-            <p class="font-monospace text-[0.72rem] text-muted">Loading…</p>
+            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
           {:else if teams.length === 0}
-            <p class="font-monospace text-[0.78rem] text-muted">No team data on record.</p>
+            <p class="font-mono text-[0.78rem] text-muted">No team data on record.</p>
           {:else}
             <SortableTable
               columns={teamsColumns}
               rows={teams.map((t) => ({ ...t, team: t.team ?? t.team_id ?? '?' }))} />
           {/if}
         </div>
-
-        <!-- ── Salaries ────────────────────────────────────────────────────── -->
       {:else if activeTab === 'salaries'}
         <div class="rounded-lg border border-outline bg-crust p-4">
           <div class="panel-label mb-3">Salaries</div>
           {#if salariesLoading}
-            <p class="font-monospace text-[0.72rem] text-muted">Loading…</p>
+            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
           {:else if salaries.length === 0}
-            <p class="font-monospace text-[0.78rem] text-muted">No salary data on record.</p>
+            <p class="font-mono text-[0.78rem] text-muted">No salary data on record.</p>
           {:else}
             <SortableTable
               columns={salariesColumns}
               rows={salaries.map((s) => ({ ...s, team: s.team ?? s.team_id ?? '?' }))} />
           {/if}
         </div>
-
-        <!-- ── Relatives ───────────────────────────────────────────────────── -->
       {:else if activeTab === 'relatives'}
         <div class="rounded-lg border border-outline bg-crust p-4">
           <div class="panel-label mb-3">Relatives</div>
           {#if relativesLoading}
-            <p class="font-monospace text-[0.72rem] text-muted">Loading…</p>
+            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
           {:else if relatives.length === 0}
-            <p class="font-monospace text-[0.78rem] text-muted">No relatives on record.</p>
+            <p class="font-mono text-[0.78rem] text-muted">No relatives on record.</p>
           {:else}
             <div class="flex flex-col gap-2">
               {#each relatives as rel (rel.player_id ?? rel.name)}
@@ -848,15 +810,13 @@
                     <span class="font-display text-[0.82rem] text-foreground">{rel.name ?? '?'}</span>
                   {/if}
                   {#if rel.relationship}
-                    <span class="ml-auto font-monospace text-[0.68rem] text-muted">{rel.relationship}</span>
+                    <span class="ml-auto font-mono text-[0.68rem] text-muted">{rel.relationship}</span>
                   {/if}
                 </div>
               {/each}
             </div>
           {/if}
         </div>
-
-        <!-- ── Advanced tabs ───────────────────────────────────────────────── -->
       {:else if activeTab === 'batting-adv'}
         <AdvancedTabPanel endpoint={EP.playerStatsBattingAdv(playerId)} label="Advanced Batting" />
       {:else if activeTab === 'pitching-adv'}
@@ -868,6 +828,18 @@
       {:else if activeTab === 'streaks'}
         <AdvancedTabPanel endpoint={EP.playerStreaks(playerId)} label="Streaks" />
       {/if}
+    {:else}
+      <div class="flex h-full flex-col items-center justify-center gap-3 text-center">
+        <div class="font-display text-[1.1rem] text-muted">Player Explorer</div>
+        <p class="max-w-xs font-mono text-[0.78rem] text-muted/60">
+          Search for a player in the sidebar to explore career stats, awards, game logs, and more.
+        </p>
+        <div class="mt-2 flex flex-wrap justify-center gap-1.5">
+          {#each STATIC_ERAS as era (era.code)}
+            <EraRangeChip {era} />
+          {/each}
+        </div>
+      </div>
     {/if}
   {/snippet}
 

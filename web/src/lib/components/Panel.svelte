@@ -5,7 +5,7 @@
 
 <div class="rounded-lg border border-outline bg-crust p-5">
   {#if label}
-    <div class="mb-3 border-b border-outline pb-2 font-monospace text-[0.65rem] tracking-widest text-muted uppercase">
+    <div class="mb-3 border-b border-outline pb-2 font-mono text-[0.65rem] tracking-widest text-muted uppercase">
       {label}
     </div>
   {/if}

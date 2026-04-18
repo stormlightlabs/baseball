@@ -3,10 +3,9 @@
 
 @theme {
   --font-display: 'Google Sans Variable', sans-serif;
-  /* FIXME: this can be font-mono */
-  --font-monospace: 'Google Sans Code Variable', monospace;
+  --font-mono: 'Google Sans Code Variable', monospace;
   /* FIXME: this can be font-sans */
-  --font-body: 'Inter Variable', sans-serif;
+  --font-sans: 'Inter Variable', sans-serif;
 
   --color-mantle: #0d0f13;
   --color-crust: #13161c;
@@ -20,5 +19,5 @@
 }
 
 @utility panel-label {
-  @apply mb-2 border-b border-outline pb-1.5 font-monospace text-[0.65rem] tracking-[0.08em] text-muted uppercase;
+  @apply mb-2 border-b border-outline pb-1.5 font-mono text-[0.65rem] tracking-[0.08em] text-muted uppercase;
 }

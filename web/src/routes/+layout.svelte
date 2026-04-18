@@ -55,11 +55,11 @@
 
 <header class="sticky top-0 z-50 flex h-14 items-center gap-4 border-b border-outline bg-crust px-8">
   <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline"> Baseball API </a>
-  <span class="rounded bg-outline px-2 py-0.5 font-monospace text-[0.7rem] text-muted">
+  <span class="rounded bg-outline px-2 py-0.5 font-mono text-[0.7rem] text-muted">
     {badge}
   </span>
   {#if meta.data}
-    <span class="font-monospace text-[0.65rem] text-muted opacity-60">v{meta.version}</span>
+    <span class="font-mono text-[0.65rem] text-muted opacity-60">v{meta.version}</span>
   {/if}
   <nav class="ml-auto flex items-center gap-1">
     {#each LINKS as { href, label } (href)}

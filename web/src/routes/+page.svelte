@@ -68,7 +68,6 @@
   ] as const;
 
   const FEATURED_QUERIES: { title: string; endpoint: string; group?: string }[] = [
-    // Standard stats
     { title: 'HR leaders in 1927', endpoint: '/v1/seasons/1927/leaders/batting?stat=hr', group: 'standard' },
     {
       title: 'Career HR leaders (min 3000 AB)',
@@ -80,7 +79,6 @@
       endpoint: '/v1/seasons/1968/leaders/pitching?stat=era',
       group: 'standard'
     },
-    // Derived / computed
     {
       title: 'Win expectancy — bases loaded, 2 outs',
       endpoint: '/v1/win-expectancy?runners=7&outs=2',
@@ -92,10 +90,8 @@
       endpoint: '/v1/teams/NYA/run-differential?season=1998',
       group: 'derived'
     },
-    // League-specific historical
     { title: 'Federal League games (1914)', endpoint: '/v1/federalleague/games?season=1914', group: 'historical' },
     { title: 'Negro Leagues teams', endpoint: '/v1/negroleagues/teams', group: 'historical' },
-    // Advanced / computed
     { title: 'Extra-inning games in 2023', endpoint: '/v1/games?season=2023&min_innings=10', group: 'standard' },
     {
       title: 'Most saves in a season (all-time)',
@@ -214,7 +210,6 @@
 </script>
 
 <main class="min-h-[calc(100vh-3.5rem)] bg-mantle pb-0">
-  <!-- Search hero -->
   <section class="mx-auto max-w-3xl px-8 pt-14 pb-8 text-center">
     <h1 class="mb-3 font-display text-3xl font-bold text-foreground">Baseball API</h1>
     <p class="mb-8 text-[0.9rem] text-muted">
@@ -222,23 +217,22 @@
       <br />Lahman · Retrosheet · MLB StatsAPI
     </p>
     <SearchInput bind:value={searchQuery} placeholder="Search players, teams, games…" onsubmit={handleSearch} />
-    <!-- Entity type selector -->
+
     <div class="mt-3 flex flex-wrap justify-center gap-2">
       {#each ENTITY_TYPES as entity (entity.label)}
         <Pill label={entity.label} active={activeEntity === entity.label} onclick={() => handlePill(entity)} />
       {/each}
     </div>
-    <!-- Active API endpoint hint -->
+
     {#if searchQuery.trim() || activeEntity}
-      <div class="mt-2 font-monospace text-[0.65rem] text-muted">
+      <div class="mt-2 font-mono text-[0.65rem] text-muted">
         → {activeApiEndpoint}?q=…
       </div>
     {/if}
   </section>
 
-  <!-- Era quick-jump chips -->
   <section class="mx-auto max-w-3xl px-8 pb-8">
-    <div class="mb-2 text-center font-monospace text-[0.65rem] tracking-wider text-muted uppercase">Jump to era</div>
+    <div class="mb-2 text-center font-mono text-[0.65rem] tracking-wider text-muted uppercase">Jump to era</div>
     <div class="flex flex-wrap justify-center gap-2">
       {#each STATIC_ERAS as era (era.code)}
         <EraRangeChip {era} year={era.from} />
@@ -246,12 +240,8 @@
     </div>
   </section>
 
-  <!-- Dashboard grid -->
   <div class="mx-auto max-w-6xl px-8 pb-6">
     <div class="grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-outline">
-      <!-- Row 1 -->
-
-      <!-- Quick Links -->
       <div class="bg-crust p-5">
         <div class="panel-label">Quick links</div>
         <ul class="space-y-1">
@@ -264,7 +254,7 @@
                   <div class="text-[0.82rem] font-medium text-foreground transition-colors group-hover:text-primary">
                     {link.label}
                   </div>
-                  <div class="truncate font-monospace text-[0.65rem] text-muted">{link.hint}</div>
+                  <div class="truncate font-mono text-[0.65rem] text-muted">{link.hint}</div>
                 </div>
                 <span class="mt-0.5 text-muted transition-colors group-hover:text-primary">→</span>
               </a>
@@ -273,14 +263,12 @@
         </ul>
       </div>
 
-      <!-- Featured Queries -->
       <div class="bg-crust p-5">
         <div class="panel-label">Featured queries</div>
-        <!-- Group tabs -->
         <div class="mb-3 flex gap-1">
           {#each FEATURED_GROUPS as g (g.key)}
             <button
-              class="rounded px-2 py-0.5 font-monospace text-[0.63rem] transition-colors {featuredGroup === g.key
+              class="rounded px-2 py-0.5 font-mono text-[0.63rem] transition-colors {featuredGroup === g.key
                 ? 'bg-primary/20 text-primary'
                 : 'text-muted hover:text-foreground'}"
               onclick={() => (featuredGroup = g.key)}>
@@ -297,14 +285,13 @@
                 <div class="mb-0.5 text-[0.82rem] text-foreground transition-colors group-hover:text-primary">
                   {q.title}
                 </div>
-                <div class="truncate font-monospace text-[0.65rem] text-muted">{q.endpoint}</div>
+                <div class="truncate font-mono text-[0.65rem] text-muted">{q.endpoint}</div>
               </a>
             </li>
           {/each}
         </ul>
       </div>
 
-      <!-- API Health -->
       <div class="bg-crust p-5">
         <div class="panel-label">API health</div>
         {#if meta.loading}
@@ -317,15 +304,15 @@
             {/each}
           </div>
         {:else if meta.error}
-          <div class="rounded-md bg-surface px-3 py-2 font-monospace text-[0.72rem] text-warning">
+          <div class="rounded-md bg-surface px-3 py-2 font-mono text-[0.72rem] text-warning">
             {meta.error}
           </div>
         {:else}
           <div class="grid grid-cols-2 gap-x-4 gap-y-4">
             <div>
-              <div class="mb-0.5 font-monospace text-[0.6rem] tracking-wider text-muted uppercase">status</div>
+              <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">status</div>
               <div
-                class="font-monospace text-sm {meta.status === 'online'
+                class="font-mono text-sm {meta.status === 'online'
                   ? 'text-secondary'
                   : meta.status === 'degraded'
                     ? 'text-warning'
@@ -336,34 +323,31 @@
               </div>
             </div>
             <div>
-              <div class="mb-0.5 font-monospace text-[0.6rem] tracking-wider text-muted uppercase">version</div>
-              <div class="font-monospace text-sm text-foreground">{meta.version}</div>
+              <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">version</div>
+              <div class="font-mono text-sm text-foreground">{meta.version}</div>
             </div>
             <div>
-              <div class="mb-0.5 font-monospace text-[0.6rem] tracking-wider text-muted uppercase">data from</div>
-              <div class="font-monospace text-sm text-foreground">{meta.dataFrom}</div>
+              <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">data from</div>
+              <div class="font-mono text-sm text-foreground">{meta.dataFrom}</div>
             </div>
             <div>
-              <div class="mb-0.5 font-monospace text-[0.6rem] tracking-wider text-muted uppercase">data to</div>
-              <div class="font-monospace text-sm text-foreground">{meta.dataTo}</div>
+              <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">data to</div>
+              <div class="font-mono text-sm text-foreground">{meta.dataTo}</div>
             </div>
             <div>
-              <div class="mb-0.5 font-monospace text-[0.6rem] tracking-wider text-muted uppercase">sources</div>
-              <div class="font-monospace text-sm text-foreground">
+              <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">sources</div>
+              <div class="font-mono text-sm text-foreground">
                 {meta.healthyDatasetCount}/{meta.datasets.length || '—'} healthy
               </div>
             </div>
             <div>
-              <div class="mb-0.5 font-monospace text-[0.6rem] tracking-wider text-muted uppercase">generated</div>
-              <div class="font-monospace text-sm text-muted">{meta.generatedAt}</div>
+              <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">generated</div>
+              <div class="font-mono text-sm text-muted">{meta.generatedAt}</div>
             </div>
           </div>
         {/if}
       </div>
 
-      <!-- Row 2 -->
-
-      <!-- Dataset Coverage (col-span-2) -->
       <div class="col-span-2 bg-crust p-5">
         <div class="panel-label">Dataset coverage</div>
         <div class="mb-4 space-y-2">
@@ -376,7 +360,6 @@
         </div>
       </div>
 
-      <!-- Endpoints -->
       <div class="bg-crust p-5">
         <div class="panel-label">Endpoints</div>
         <ul class="space-y-1.5">
@@ -384,7 +367,7 @@
             <li>
               <a
                 href={resolve(`/explorer?endpoint=${encodeURIComponent(ep)}`)}
-                class="block font-monospace text-[0.72rem] text-primary no-underline opacity-80 transition-opacity hover:opacity-100">
+                class="block font-mono text-[0.72rem] text-primary no-underline opacity-80 transition-opacity hover:opacity-100">
                 {ep}
               </a>
             </li>
@@ -394,7 +377,6 @@
     </div>
   </div>
 
-  <!-- API Mirror Strip -->
   <div class="mx-auto max-w-6xl px-8 pb-8">
     <ApiMirrorStrip url="/v1/meta" />
   </div>

@@ -20,7 +20,7 @@
 </script>
 
 <span
-  class="inline-block rounded border font-monospace leading-none font-medium {colorCls} {sizeCls}"
+  class="inline-block rounded border font-mono leading-none font-medium {colorCls} {sizeCls}"
   title="{era.label} ({era.from}–{era.to}){era.caveat ? ' · ' + era.caveat : ''}">
   {era.code}
 </span>

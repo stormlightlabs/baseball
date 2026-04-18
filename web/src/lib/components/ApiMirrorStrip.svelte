@@ -7,8 +7,8 @@
 </script>
 
 <div class="mt-px flex items-center gap-6 rounded-lg border border-outline bg-crust px-5 py-4">
-  <span class="font-monospace text-[0.72rem] text-muted">{method}</span>
-  <span class="flex-1 overflow-hidden font-monospace text-xs text-ellipsis whitespace-nowrap text-primary">
+  <span class="font-mono text-[0.72rem] text-muted">{method}</span>
+  <span class="flex-1 overflow-hidden font-mono text-xs text-ellipsis whitespace-nowrap text-primary">
     {url}
   </span>
   <CopyButton text={url} label="copy URL" />

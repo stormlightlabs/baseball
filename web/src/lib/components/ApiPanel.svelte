@@ -10,14 +10,14 @@
 <div class="flex flex-col gap-4">
   <div>
     <div class="panel-label">Endpoint</div>
-    <div class="rounded-md bg-surface px-3 py-2.5 font-monospace text-[0.72rem] leading-relaxed break-all text-primary">
+    <div class="rounded-md bg-surface px-3 py-2.5 font-mono text-[0.72rem] leading-relaxed break-all text-primary">
       {endpoint}
     </div>
   </div>
 
   <div>
     <div class="panel-label">Generated URL</div>
-    <div class="rounded-md bg-surface px-3 py-2.5 font-monospace text-[0.72rem] leading-relaxed break-all text-primary">
+    <div class="rounded-md bg-surface px-3 py-2.5 font-mono text-[0.72rem] leading-relaxed break-all text-primary">
       {url}
     </div>
     <div class="mt-1.5 flex gap-1.5">
@@ -28,7 +28,7 @@
   <div>
     <div class="panel-label">curl</div>
     <pre
-      class="rounded-md bg-surface px-3 py-3 font-monospace text-[0.68rem] leading-relaxed break-all whitespace-pre-wrap text-[#a5b4fc]">{curlText}</pre>
+      class="rounded-md bg-surface px-3 py-3 font-mono text-[0.68rem] leading-relaxed break-all whitespace-pre-wrap text-[#a5b4fc]">{curlText}</pre>
     <div class="mt-1.5">
       <CopyButton text={curlText} label="copy curl" />
     </div>
@@ -43,7 +43,7 @@
       </button>
       {#if !jsonCollapsed}
         <pre
-          class="max-h-60 overflow-y-auto rounded-md bg-surface px-3 py-3 font-monospace text-[0.68rem] leading-relaxed text-[#86efac]">{sampleJson}</pre>
+          class="max-h-60 overflow-y-auto rounded-md bg-surface px-3 py-3 font-mono text-[0.68rem] leading-relaxed text-[#86efac]">{sampleJson}</pre>
       {/if}
     </div>
   {/if}
