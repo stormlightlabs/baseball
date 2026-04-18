@@ -83,7 +83,7 @@
     if (franchisesResource.items.length > 0) return;
     await franchisesResource.load(async () => {
       const payload = await apiFetch<{ franchises?: Record<string, unknown>[] }>(EP.franchises);
-      return (payload.franchises ?? []).map(normalizeTeamResult);
+      return (payload.franchises ?? []).map((r) => normalizeTeamResult(r));
     });
   }
 
@@ -149,30 +149,38 @@
     };
 
     switch (tab) {
-      case 'overview':
+      case 'overview': {
         gotoWithYear(`/teams/${encodedId}/overview`);
         return;
-      case 'roster':
+      }
+      case 'roster': {
         gotoWithYear(`/teams/${encodedId}/roster`);
         return;
-      case 'batting':
+      }
+      case 'batting': {
         gotoWithYear(`/teams/${encodedId}/batting`);
         return;
-      case 'pitching':
+      }
+      case 'pitching': {
         gotoWithYear(`/teams/${encodedId}/pitching`);
         return;
-      case 'fielding':
+      }
+      case 'fielding': {
         gotoWithYear(`/teams/${encodedId}/fielding`);
         return;
-      case 'schedule':
+      }
+      case 'schedule': {
         gotoWithYear(`/teams/${encodedId}/schedule`);
         return;
-      case 'daily-trends':
+      }
+      case 'daily-trends': {
         gotoWithYear(`/teams/${encodedId}/daily-trends`);
         return;
-      case 'run-diff':
+      }
+      case 'run-diff': {
         gotoWithYear(`/teams/${encodedId}/run-diff`);
         return;
+      }
     }
   }
 </script>

@@ -74,7 +74,7 @@ export function eraSpanLabel(from: number, to: number): string {
   const eras = erasInRange(from, to);
   if (eras.length === 0) return '';
   if (eras.length === 1) return eras[0].label;
-  return `${eras[0].label} → ${eras[eras.length - 1].label}`;
+  return `${eras[0].label} → ${eras.at(-1).label}`;
 }
 
 export type WinExpEra = { era: string; label?: string; year_from: number; year_to: number };

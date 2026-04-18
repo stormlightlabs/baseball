@@ -17,12 +17,15 @@
 
   const cls = $derived.by(() => {
     switch (variant) {
-      case 'primary':
+      case 'primary': {
         return 'bg-primary';
-      case 'secondary':
+      }
+      case 'secondary': {
         return 'bg-secondary';
-      case 'warning':
+      }
+      case 'warning': {
         return 'bg-warning';
+      }
     }
   });
 </script>

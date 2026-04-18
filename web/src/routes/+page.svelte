@@ -67,7 +67,7 @@
       })
     }));
 
-    if (!datasets.length) {
+    if (datasets.length === 0) {
       datasets.push(
         { label: 'Lahman', backgroundColor: '#3b82f6', borderRadius: 2, data: decades.map((d) => (d >= 1871 ? 1 : 0)) },
         {
@@ -116,26 +116,33 @@
     const coverageSpan = Math.max(1, coverageTo - coverageFrom);
 
     if (meta.datasets.length > 0) {
-      return meta.datasets.map((ds) => ({
-        id: ds.id,
-        label: ds.name,
-        range:
-          ds.coverage_from != null && ds.coverage_to != null
-            ? `${ds.coverage_from} – ${ds.coverage_to}`
-            : `${ds.row_count.toLocaleString()} rows`,
-        percent:
-          ds.coverage_from != null && ds.coverage_to != null
-            ? Math.round(((ds.coverage_to - ds.coverage_from) / coverageSpan) * 100)
-            : ds.row_count > 0
-              ? 100
-              : 0,
-        variant: (ds.healthy === false ? 'warning' : ds.id === 'lahman' ? 'primary' : 'secondary') as
-          | 'primary'
-          | 'secondary'
-          | 'warning',
-        href: DATASET_UI_HINTS[ds.id]?.href,
-        tooltip: DATASET_UI_HINTS[ds.id]?.tooltip
-      }));
+      return meta.datasets.map((ds) => {
+        let percent = 0;
+        if (ds.coverage_from != null && ds.coverage_to != null) {
+          const from = ds.coverage_from;
+          const to = ds.coverage_to;
+          percent = Math.round(((to - from) / coverageSpan) * 100);
+        } else if (ds.row_count > 0) {
+          percent = 100;
+        }
+
+        let variant: CoverageBarItem['variant'] = 'secondary';
+        if (ds.healthy === false) variant = 'warning';
+        else if (ds.id === 'lahman') variant = 'primary';
+
+        return {
+          id: ds.id,
+          label: ds.name,
+          range:
+            ds.coverage_from != null && ds.coverage_to != null
+              ? `${ds.coverage_from} – ${ds.coverage_to}`
+              : `${ds.row_count.toLocaleString()} rows`,
+          percent,
+          variant,
+          href: DATASET_UI_HINTS[ds.id]?.href,
+          tooltip: DATASET_UI_HINTS[ds.id]?.tooltip
+        };
+      });
     }
     return [
       { id: 'lahman', label: 'Lahman Database', range: '1871 – 2023', percent: 98, variant: 'primary' as const },
@@ -247,16 +254,15 @@
           <div class="grid grid-cols-2 gap-x-4 gap-y-4">
             <div>
               <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">status</div>
-              <div
-                class="font-mono text-sm {meta.status === 'online'
-                  ? 'text-secondary'
-                  : meta.status === 'degraded'
-                    ? 'text-warning'
-                    : meta.status === 'loading'
-                      ? 'text-warning'
-                      : 'text-red-400'}">
-                {meta.status}
-              </div>
+              {#if meta.status === 'online'}
+                <div class="font-mono text-sm text-secondary">Online</div>
+              {:else if meta.status === 'degraded'}
+                <div class="font-mono text-sm text-rose-500">Degraded</div>
+              {:else if meta.status === 'loading'}
+                <div class="font-mono text-sm text-warning">Loading</div>
+              {:else}
+                <div class="font-mono text-sm text-primary">{meta.status}</div>
+              {/if}
             </div>
             <div>
               <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">version</div>

@@ -24,14 +24,14 @@ class MetaStore {
     const years = Object.values(this.coverage)
       .map((c) => c.from)
       .filter((y): y is number => y !== undefined);
-    return years.length ? Math.min(...years) : null;
+    return years.length > 0 ? Math.min(...years) : null;
   });
 
   dataToYear = $derived.by(() => {
     const years = Object.values(this.coverage)
       .map((c) => c.to)
       .filter((y): y is number => y !== undefined);
-    return years.length ? Math.max(...years) : null;
+    return years.length > 0 ? Math.max(...years) : null;
   });
 
   dataFrom = $derived(this.dataFromYear != null ? String(this.dataFromYear) : '—');

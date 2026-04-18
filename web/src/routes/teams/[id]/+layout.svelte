@@ -1,8 +1,8 @@
 <script lang="ts">
   import { page } from '$app/state';
   import TabRow from '$lib/components/TabRow.svelte';
-  import { ALL_TEAM_TABS, DEFAULT_TEAM_TAB, type TeamTabId } from '$lib/teams/constants';
   import { intParam } from '$lib/players/routing';
+  import { ALL_TEAM_TABS, DEFAULT_TEAM_TAB, type TeamTabId } from '$lib/teams/constants';
   import { onMount, type Snippet } from 'svelte';
   import { cubicOut } from 'svelte/easing';
   import { crossfade, fly } from 'svelte/transition';
@@ -31,8 +31,7 @@
     const keys = [`id=${teamId}`, `tab=${tab}`, `year=${year}`];
     if (q) keys.push(`q=${q}`);
     if (tab === 'schedule' || tab === 'daily-trends') {
-      keys.push(`page=${intParam(params, 'page', 1)}`);
-      keys.push(`per_page=${intParam(params, 'per_page', 25)}`);
+      keys.push(`page=${intParam(params, 'page', 1)}`, `per_page=${intParam(params, 'per_page', 25)}`);
     }
     return keys.join('|');
   });
@@ -46,7 +45,7 @@
   });
 
   onMount(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const media = globalThis.matchMedia('(prefers-reduced-motion: reduce)');
     const sync = () => {
       prefersReducedMotion = media.matches;
     };

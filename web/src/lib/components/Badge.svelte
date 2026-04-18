@@ -4,14 +4,18 @@
 
   const cls = $derived.by(() => {
     switch (variant) {
-      case 'primary':
+      case 'primary': {
         return 'bg-primary/20 text-primary';
-      case 'secondary':
+      }
+      case 'secondary': {
         return 'bg-secondary/20 text-secondary';
-      case 'warning':
+      }
+      case 'warning': {
         return 'bg-warning/20 text-warning';
-      default:
+      }
+      default: {
         return 'bg-outline text-muted';
+      }
     }
   });
 </script>

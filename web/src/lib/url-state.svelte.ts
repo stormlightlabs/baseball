@@ -80,6 +80,6 @@ export function urlWith(overrides: ParamOverrides): string {
 export function intParam(params: URLSearchParams, key: string, defaultValue: number): number {
   const raw = params.get(key);
   if (raw === null) return defaultValue;
-  const n = parseInt(raw, 10);
-  return isNaN(n) ? defaultValue : n;
+  const n = Number.parseInt(raw, 10);
+  return Number.isNaN(n) ? defaultValue : n;
 }

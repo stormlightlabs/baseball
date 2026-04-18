@@ -43,8 +43,7 @@
     if (q) keys.push(`q=${q}`);
 
     if (tab === 'batting' || tab === 'pitching' || tab === 'game-logs') {
-      keys.push(`page=${intParam(params, 'page', 1)}`);
-      keys.push(`per_page=${intParam(params, 'per_page', 20)}`);
+      keys.push(`page=${intParam(params, 'page', 1)}`, `per_page=${intParam(params, 'per_page', 20)}`);
     }
 
     if (tab === 'batting') {
@@ -70,7 +69,7 @@
     const saved = localStorage.getItem(ADVANCED_TAB_STORAGE_KEY);
     if (saved === '1') showAdvanced = true;
 
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const media = globalThis.matchMedia('(prefers-reduced-motion: reduce)');
     const syncReducedMotion = () => {
       prefersReducedMotion = media.matches;
     };

@@ -71,7 +71,7 @@ export function normalizePlayerProfile(player: ApiPlayerPayload): PlayerProfile 
 export function normalizeSearchPlayersPage(
   payload: PaginatedResponse<ApiPlayerPayload>
 ): PaginatedResponse<PlayerResult> {
-  return { ...payload, data: payload.data.map(normalizePlayerResult) };
+  return { ...payload, data: payload.data.map((r) => normalizePlayerResult(r)) };
 }
 
 export function normalizePlayerStatsPage<T>(

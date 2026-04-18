@@ -20,10 +20,15 @@
 
   let sorted = $derived(
     sort.key
-      ? [...rows].sort((a, b) => {
+      ? [...rows].toSorted((a, b) => {
           const av = a[sort.key];
           const bv = b[sort.key];
-          const cmp = av! < bv! ? -1 : av! > bv! ? 1 : 0;
+          let cmp = 0;
+          if (av == null && bv == null) cmp = 0;
+          else if (av == null) cmp = -1;
+          else if (bv == null) cmp = 1;
+          else if (av < bv) cmp = -1;
+          else if (av > bv) cmp = 1;
           return sort.dir === 'asc' ? cmp : -cmp;
         })
       : rows

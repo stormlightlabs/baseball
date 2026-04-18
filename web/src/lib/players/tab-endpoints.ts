@@ -10,42 +10,58 @@ export function parseGameLogType(raw: string | null | undefined): GameLogType {
 
 export function gameLogEndpoint(kind: GameLogType, playerId: string): string {
   switch (kind) {
-    case 'pitching':
+    case 'pitching': {
       return EP.playerGameLogsPitching(playerId);
-    case 'fielding':
+    }
+    case 'fielding': {
       return EP.playerGameLogsFielding(playerId);
-    default:
+    }
+    default: {
       return EP.playerGameLogsBatting(playerId);
+    }
   }
 }
 
 export function endpointForPlayerTab(playerId: string, tabId: PlayerTabId, gameLogType: GameLogType): string {
   switch (tabId) {
-    case 'batting':
+    case 'batting': {
       return EP.playerStatsBatting(playerId);
-    case 'pitching':
+    }
+    case 'pitching': {
       return EP.playerStatsPitching(playerId);
-    case 'game-logs':
+    }
+    case 'game-logs': {
       return gameLogEndpoint(gameLogType, playerId);
-    case 'awards':
+    }
+    case 'awards': {
       return EP.playerAwards(playerId);
-    case 'hof':
+    }
+    case 'hof': {
       return EP.playerHallOfFame(playerId);
-    case 'teams':
+    }
+    case 'teams': {
       return EP.playerTeams(playerId);
-    case 'salaries':
+    }
+    case 'salaries': {
       return EP.playerSalaries(playerId);
-    case 'relatives':
+    }
+    case 'relatives': {
       return EP.playerRelatives(playerId);
-    case 'batting-adv':
+    }
+    case 'batting-adv': {
       return EP.playerStatsBattingAdv(playerId);
-    case 'pitching-adv':
+    }
+    case 'pitching-adv': {
       return EP.playerStatsPitchingAdv(playerId);
-    case 'war':
+    }
+    case 'war': {
       return EP.playerStatsWar(playerId);
-    case 'splits':
+    }
+    case 'splits': {
       return EP.playerSplits(playerId);
-    case 'streaks':
+    }
+    case 'streaks': {
       return EP.playerStreaks(playerId);
+    }
   }
 }

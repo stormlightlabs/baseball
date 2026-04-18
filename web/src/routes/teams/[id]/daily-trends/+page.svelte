@@ -25,9 +25,11 @@
   let lastKey = '';
 
   let dailyLogRows = $derived.by(() =>
-    [...dailyLogsResource.items].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))
+    [...dailyLogsResource.items].toSorted((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))
   );
-  let recentDailyLogRows = $derived.by(() => [...dailyLogRows].reverse().slice(0, 30));
+
+  let recentDailyLogRows = $derived.by(() => [...dailyLogRows].toReversed().slice(0, 30));
+
   let cumulativeDiffSeries = $derived.by(() => {
     let total = 0;
     return dailyLogRows.map((row) => {

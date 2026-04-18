@@ -50,7 +50,7 @@ export function normalizeTeamResult(team: ApiTeamPayload): TeamResult {
 }
 
 export function normalizeSearchTeamsPage(payload: PaginatedResponse<ApiTeamPayload>): PaginatedResponse<TeamResult> {
-  return { ...payload, data: payload.data.map(normalizeTeamResult) };
+  return { ...payload, data: payload.data.map((r) => normalizeTeamResult(r)) };
 }
 
 export function normalizeFranchiseProfile(team: ApiTeamPayload): FranchiseProfile {
@@ -178,11 +178,11 @@ export function normalizeTeamDailyLog(payload: ApiTeamPayload): TeamDailyLog {
 export function normalizeTeamDailyStatsPage(
   payload: PaginatedResponse<ApiTeamPayload>
 ): PaginatedResponse<TeamDailyStat> {
-  return { ...payload, data: payload.data.map(normalizeTeamDailyStat) };
+  return { ...payload, data: payload.data.map((r) => normalizeTeamDailyStat(r)) };
 }
 
 export function normalizeTeamDailyLogsPage(
   payload: PaginatedResponse<ApiTeamPayload>
 ): PaginatedResponse<TeamDailyLog> {
-  return { ...payload, data: payload.data.map(normalizeTeamDailyLog) };
+  return { ...payload, data: payload.data.map((r) => normalizeTeamDailyLog(r)) };
 }

@@ -121,14 +121,18 @@
 
   function timelineSegmentClass(color: Era['color']): string {
     switch (color) {
-      case 'warning':
+      case 'warning': {
         return 'bg-warning/25 border-warning/35';
-      case 'secondary':
+      }
+      case 'secondary': {
         return 'bg-secondary/25 border-secondary/35';
-      case 'primary':
+      }
+      case 'primary': {
         return 'bg-primary/25 border-primary/35';
-      default:
+      }
+      default: {
         return 'bg-surface border-outline';
+      }
     }
   }
 </script>

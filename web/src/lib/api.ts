@@ -31,7 +31,7 @@ export type MetaResponse = {
 };
 
 function buildUrl(path: string, params?: Params): string {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8080';
+  const origin = globalThis.window !== undefined ? globalThis.location.origin : 'http://localhost:8080';
   const base = BASE.startsWith('http') ? BASE : origin + BASE;
   const url = new URL(base + path);
   if (params) {

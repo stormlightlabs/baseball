@@ -5,14 +5,18 @@
 
   const colorCls = $derived.by(() => {
     switch (era.color) {
-      case 'primary':
+      case 'primary': {
         return 'bg-primary/15 text-primary border-primary/25';
-      case 'secondary':
+      }
+      case 'secondary': {
         return 'bg-secondary/15 text-secondary border-secondary/25';
-      case 'warning':
+      }
+      case 'warning': {
         return 'bg-warning/15 text-warning border-warning/25';
-      default:
+      }
+      default: {
         return 'bg-outline text-muted border-outline';
+      }
     }
   });
 
