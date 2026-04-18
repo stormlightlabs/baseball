@@ -3,5 +3,5 @@
 </script>
 
 <SingleColLayout>
-  <p class="text-muted text-sm">Data sources — coming soon</p>
+  <p class="text-sm text-muted">Data sources — coming soon</p>
 </SingleColLayout>

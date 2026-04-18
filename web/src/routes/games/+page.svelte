@@ -7,7 +7,7 @@
     <div class="panel-label">Games</div>
   {/snippet}
   {#snippet center()}
-    <p class="text-muted text-sm">Game finder — coming soon</p>
+    <p class="text-sm text-muted">Game finder — coming soon</p>
   {/snippet}
   {#snippet panel()}
     <div class="panel-label">API</div>

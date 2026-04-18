@@ -34,37 +34,37 @@
 - [x] `ApiPanel`
 - [x] `Pagination`
 - [x] `CoverageBar`
-- [ ] `EraBadge` (single era)
-- [ ] `EraRangeChip` (year range + era short code)
-- [ ] `EraLegend` (shared legend component with caveat tooltips)
+- [x] `EraBadge` (single era)
+- [x] `EraRangeChip` (year range + era short code)
+- [x] `EraLegend` (shared legend component with caveat tooltips)
 
 ## 2. API Client and State
 
 - [x] Typed fetch wrapper that defaults base URL to `/v1`.
 - [x] Shared meta store for `/v1/meta`.
-- [ ] URL-driven state for every filter/sort/page/tab.
-- [ ] Central endpoint-map constants derived from OpenAPI (avoid hardcoded stale params).
+- [x] URL-driven state for every filter/sort/page/tab.
+- [x] Central endpoint-map constants derived from OpenAPI (avoid hardcoded stale params).
 
 ## 3. Era Contracts
 
-- [ ] Create a shared static era catalog from `internal/seed/eras.go`:
+- [x] Create a shared static era catalog from `internal/seed/eras.go`:
     - `fed`, `nlg`, `boomer`, `pitcher`, `turf`, `steroid`, `moneyball`, `statcast`, `modern`
-- [ ] Fetch dynamic win-expectancy eras from `GET /v1/win-expectancy/eras`.
-- [ ] Implement helper: `year -> static era`, with fallback when out of configured range.
-- [ ] Add global era disclaimer component for sparse historical/event coverage.
+- [x] Fetch dynamic win-expectancy eras from `GET /v1/win-expectancy/eras`.
+- [x] Implement helper: `year -> static era`, with fallback when out of configured range.
+- [x] Add global era disclaimer component for sparse historical/event coverage.
 
 ## 4. Home Page (`/`)
 
 Ref: `docs/designs/home.html`
 
 - [x] Search hero and entity pills.
-- [ ] Route search to `/v1/search/*` endpoints (not generic `/search`).
+- [x] Route search to `/v1/search/*` endpoints (not generic `/search`).
 - [x] Quick links panel.
 - [x] Featured queries panel.
 - [x] API health panel from `/v1/meta`.
 - [x] Dataset coverage panel from `/v1/meta/datasets`.
-- [ ] Add era quick-jump chips (fed -> modern) and deep-link behavior.
-- [ ] Add featured queries for league-specific and derived/computed endpoints.
+- [x] Add era quick-jump chips (fed -> modern) and deep-link behavior.
+- [x] Add featured queries for league-specific and derived/computed endpoints.
 
 ## 5. Player Explorer (`/players`)
 

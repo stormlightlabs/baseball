@@ -7,7 +7,7 @@
     <div class="panel-label">Endpoints</div>
   {/snippet}
   {#snippet center()}
-    <p class="text-muted text-sm">API explorer — coming soon</p>
+    <p class="text-sm text-muted">API explorer — coming soon</p>
   {/snippet}
   {#snippet panel()}
     <div class="panel-label">Schema</div>

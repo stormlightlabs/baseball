@@ -1,7 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import { ApiMirrorStrip, Chart, CoverageBar, Pill, SearchInput } from '$lib';
+  import { ApiMirrorStrip, Chart, CoverageBar, EraRangeChip, Pill, SearchInput } from '$lib';
+  import { STATIC_ERAS } from '$lib/eras';
   import { meta } from '$lib/meta.svelte.js';
   import type { ChartConfiguration } from 'chart.js';
   import { onMount } from 'svelte';
@@ -11,27 +12,35 @@
   let searchQuery = $state('');
   let activeEntity = $state<string | null>(null);
 
-  const ENTITY_TYPES: { label: string; path: '/players' | '/teams' | '/games' | '/seasons' }[] = [
-    { label: 'Players', path: '/players' },
-    { label: 'Teams', path: '/teams' },
-    { label: 'Franchises', path: '/teams' },
-    { label: 'Games', path: '/games' },
-    { label: 'Seasons', path: '/seasons' }
+  type EntityType = { label: string; path: '/players' | '/teams' | '/games' | '/seasons'; apiEndpoint: string };
+
+  const ENTITY_TYPES: EntityType[] = [
+    { label: 'Players', path: '/players', apiEndpoint: '/v1/search/players' },
+    { label: 'Teams', path: '/teams', apiEndpoint: '/v1/search/teams' },
+    { label: 'Franchises', path: '/teams', apiEndpoint: '/v1/search/teams' },
+    { label: 'Games', path: '/games', apiEndpoint: '/v1/search/games' },
+    { label: 'Parks', path: '/seasons', apiEndpoint: '/v1/search/parks' }
   ];
+
+  const activeApiEndpoint = $derived.by(() => {
+    const entity = ENTITY_TYPES.find((e) => e.label === activeEntity);
+    return entity ? entity.apiEndpoint : '/v1/search/players';
+  });
 
   function handleSearch() {
     const q = searchQuery.trim();
     if (!q) return;
-    const path = ENTITY_TYPES.find((e) => e.label === activeEntity)?.path ?? '/players';
+    const entity = ENTITY_TYPES.find((e) => e.label === activeEntity);
+    const path = entity?.path ?? '/players';
     goto(resolve(`${path}?q=${encodeURIComponent(q)}`));
   }
 
-  function handlePill(label: string, path: '/players' | '/teams' | '/games' | '/seasons') {
+  function handlePill(entity: EntityType) {
     const q = searchQuery.trim();
     if (q) {
-      goto(resolve(`${path}?q=${encodeURIComponent(q)}`));
+      goto(resolve(`${entity.path}?q=${encodeURIComponent(q)}`));
     } else {
-      activeEntity = activeEntity === label ? null : label;
+      activeEntity = activeEntity === entity.label ? null : entity.label;
     }
   }
 
@@ -53,14 +62,54 @@
     }
   ] as const;
 
-  const FEATURED_QUERIES: { title: string; endpoint: string }[] = [
-    { title: 'HR leaders in 1927', endpoint: '/v1/seasons/1927/leaders/batting?stat=hr' },
-    { title: 'Career HR leaders (min 3000 AB)', endpoint: '/v1/stats/batting?sort_by=hr&min_ab=3000' },
-    { title: 'Extra-inning games in 2023', endpoint: '/v1/games?season=2023&min_innings=10' },
-    { title: '1998 New York Yankees season', endpoint: '/v1/teams/NYA?year=1998' },
-    { title: 'ERA leaders — Year of the Pitcher (1968)', endpoint: '/v1/seasons/1968/leaders/pitching?stat=era' },
-    { title: 'Most saves in a season (all-time)', endpoint: '/v1/stats/pitching?sort_by=sv&sort_order=desc&min_ip=1' }
+  const FEATURED_QUERIES: { title: string; endpoint: string; group?: string }[] = [
+    // Standard stats
+    { title: 'HR leaders in 1927', endpoint: '/v1/seasons/1927/leaders/batting?stat=hr', group: 'standard' },
+    {
+      title: 'Career HR leaders (min 3000 AB)',
+      endpoint: '/v1/stats/batting?sort_by=hr&min_ab=3000',
+      group: 'standard'
+    },
+    {
+      title: 'ERA leaders — Year of the Pitcher (1968)',
+      endpoint: '/v1/seasons/1968/leaders/pitching?stat=era',
+      group: 'standard'
+    },
+    // Derived / computed
+    {
+      title: 'Win expectancy — bases loaded, 2 outs',
+      endpoint: '/v1/win-expectancy?runners=7&outs=2',
+      group: 'derived'
+    },
+    { title: 'WAR leaders by season (Statcast era)', endpoint: '/v1/seasons/2019/leaders/war', group: 'derived' },
+    {
+      title: 'Run differential — 1998 Yankees',
+      endpoint: '/v1/teams/NYA/run-differential?season=1998',
+      group: 'derived'
+    },
+    // League-specific historical
+    { title: 'Federal League games (1914)', endpoint: '/v1/federalleague/games?season=1914', group: 'historical' },
+    { title: 'Negro Leagues teams', endpoint: '/v1/negroleagues/teams', group: 'historical' },
+    // Advanced / computed
+    { title: 'Extra-inning games in 2023', endpoint: '/v1/games?season=2023&min_innings=10', group: 'standard' },
+    {
+      title: 'Most saves in a season (all-time)',
+      endpoint: '/v1/stats/pitching?sort_by=sv&sort_order=desc&min_ip=1',
+      group: 'standard'
+    },
+    { title: 'Batting advanced stats — 2016', endpoint: '/v1/seasons/2016/leaders/batting/advanced', group: 'derived' },
+    { title: 'Win expectancy eras (dynamic)', endpoint: '/v1/win-expectancy/eras', group: 'derived' }
   ];
+
+  const FEATURED_GROUPS = [
+    { key: 'standard', label: 'Standard stats' },
+    { key: 'derived', label: 'Derived / computed' },
+    { key: 'historical', label: 'Historical leagues' }
+  ];
+
+  let featuredGroup = $state<string>('standard');
+
+  const visibleQueries = $derived(FEATURED_QUERIES.filter((q) => q.group === featuredGroup));
 
   const ALL_ENDPOINTS = [
     '/v1/players',
@@ -73,6 +122,9 @@
     '/v1/seasons/{year}/leaders/{type}',
     '/v1/stats/batting',
     '/v1/stats/pitching',
+    '/v1/win-expectancy',
+    '/v1/federalleague/games',
+    '/v1/negroleagues/games',
     '/v1/meta'
   ] as const;
 
@@ -151,16 +203,33 @@
 
 <main class="min-h-[calc(100vh-3.5rem)] bg-mantle pb-0">
   <!-- Search hero -->
-  <section class="mx-auto max-w-3xl px-8 pt-14 pb-10 text-center">
+  <section class="mx-auto max-w-3xl px-8 pt-14 pb-8 text-center">
     <h1 class="mb-3 font-display text-3xl font-bold text-foreground">Baseball API</h1>
     <p class="mb-8 text-[0.9rem] text-muted">
       Historical baseball data from 1871 to present — players, teams, games, and stats.
       <br />Lahman · Retrosheet · MLB StatsAPI
     </p>
     <SearchInput bind:value={searchQuery} placeholder="Search players, teams, games…" onsubmit={handleSearch} />
-    <div class="mt-4 flex flex-wrap justify-center gap-2">
-      {#each ENTITY_TYPES as { label, path } (label)}
-        <Pill {label} active={activeEntity === label} onclick={() => handlePill(label, path)} />
+    <!-- Entity type selector -->
+    <div class="mt-3 flex flex-wrap justify-center gap-2">
+      {#each ENTITY_TYPES as entity (entity.label)}
+        <Pill label={entity.label} active={activeEntity === entity.label} onclick={() => handlePill(entity)} />
+      {/each}
+    </div>
+    <!-- Active API endpoint hint -->
+    {#if searchQuery.trim() || activeEntity}
+      <div class="mt-2 font-monospace text-[0.65rem] text-muted">
+        → {activeApiEndpoint}?q=…
+      </div>
+    {/if}
+  </section>
+
+  <!-- Era quick-jump chips -->
+  <section class="mx-auto max-w-3xl px-8 pb-8">
+    <div class="mb-2 text-center font-monospace text-[0.65rem] tracking-wider text-muted uppercase">Jump to era</div>
+    <div class="flex flex-wrap justify-center gap-2">
+      {#each STATIC_ERAS as era (era.code)}
+        <EraRangeChip {era} href={resolve(`/seasons?year=${era.from}`)} />
       {/each}
     </div>
   </section>
@@ -195,8 +264,20 @@
       <!-- Featured Queries -->
       <div class="bg-crust p-5">
         <div class="panel-label">Featured queries</div>
+        <!-- Group tabs -->
+        <div class="mb-3 flex gap-1">
+          {#each FEATURED_GROUPS as g (g.key)}
+            <button
+              class="rounded px-2 py-0.5 font-monospace text-[0.63rem] transition-colors {featuredGroup === g.key
+                ? 'bg-primary/20 text-primary'
+                : 'text-muted hover:text-foreground'}"
+              onclick={() => (featuredGroup = g.key)}>
+              {g.label}
+            </button>
+          {/each}
+        </div>
         <ul class="space-y-1">
-          {#each FEATURED_QUERIES as q (q.title)}
+          {#each visibleQueries as q (q.endpoint)}
             <li>
               <a
                 href={resolve(`/explorer?endpoint=${encodeURIComponent(q.endpoint)}`)}
