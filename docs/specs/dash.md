@@ -1,403 +1,264 @@
 ---
 title: Data Dashboard
-updated: 2026-04-17
+updated: 2026-04-18
 ---
 
 ## Stack
 
 - **Framework**: SvelteKit 2 in SPA mode (`adapter-static`, fallback `index.html`), deployed to CDN
-- **Styling**: Tailwind CSS v4 — dark-only theme derived from the wireframe design tokens
-- **Charts**: Chart.js 4 via a thin Svelte canvas wrapper
-- **API docs**: OpenAPI spec (`swagger.yaml`) parsed client-side for the API Explorer
-- **Routing**: dashboard lives at the root (`/`); `/api/` is reserved for the backend API
+- **Styling**: Tailwind CSS v4
+- **Charts**: Chart.js 4 via a thin Svelte wrapper
+- **API docs**: OpenAPI (`internal/docs/swagger.yaml`) for API Explorer schema + params
+- **Routing**:
+    - Dashboard SPA at `/`
+    - API namespace is `/v1/*` (current public API surface)
 
-## Search and discovery home
+## API Compatibility Baseline
 
-Should immediately answer: _what can this API do?_
+The dashboard spec must track the API that is currently registered in `internal/api/*`.
+
+### Core API families to expose
+
+- **Meta/health**: `/v1/health`, `/v1/ready`, `/v1/meta`, `/v1/meta/datasets`, `/v1/meta/readiness`
+- **Search**: `/v1/search/players`, `/v1/search/teams`, `/v1/search/parks`, `/v1/search/games`
+- **Players**: `/v1/players/*` including `seasons`, `stats/*`, `game-logs/*`, `awards`, `hall-of-fame`, `teams`, `salaries`, `relatives`
+- **Teams/franchises**: `/v1/teams/*`, `/v1/franchises/*`, `/v1/seasons/{year}/teams/*`
+- **Games/events**: `/v1/games`, `/v1/games/{id}`, `/v1/games/{id}/boxscore`, `/v1/games/{id}/summary`, `/v1/games/{id}/events`, `/v1/games/{id}/plays`, `/v1/games/{id}/pitches`
+- **Stats/leaders**: `/v1/stats/*`, `/v1/seasons/{year}/leaders/*`, `/v1/leaders/*/career`, `/v1/stats/teams/*`
+- **Advanced/computed**: `/v1/players/{player_id}/stats/*/advanced`, `/v1/players/{player_id}/stats/war`, leverage + park-factor endpoints
+- **Derived**: streaks, splits, run-differential, game win-probability, `/v1/win-expectancy`, `/v1/win-expectancy/eras`
+- **League-specific historical slices**: `/v1/federalleague/*`, `/v1/negroleagues/*`
+- **Awards/postseason/all-star/ejections/achievements/salaries/managers/umpires/coaches**
+- **MLB proxy**: `/v1/mlb/*`
+
+## Era Model (Must Be First-Class in UI)
+
+The dashboard should expose two complementary era systems.
+
+### A) Retrosheet load eras (static, from `internal/seed/eras.go`)
+
+| Era                | Short code  | Years     |
+| ------------------ | ----------- | --------- |
+| Federal League Era | `fed`       | 1914-1915 |
+| Negro Leagues Era  | `nlg`       | 1935-1949 |
+| Baby Boomer Era    | `boomer`    | 1950-1962 |
+| Pitcher Era        | `pitcher`   | 1963-1968 |
+| Turf Time          | `turf`      | 1969-1993 |
+| Steroid Era        | `steroid`   | 1994-2004 |
+| Moneyball Era      | `moneyball` | 2005-2012 |
+| Statcast Era       | `statcast`  | 2013-2019 |
+| Modern Era         | `modern`    | 2020-2025 |
+
+### B) Win expectancy eras (dynamic, from API)
+
+- Source endpoint: `GET /v1/win-expectancy/eras`
+- This returns era ranges based on sampled historical tables, so labels/ranges are data-driven.
+
+### Era UX rules
+
+- Every page that has a season or range control should show the active era badge.
+- Compare mode must show both selected eras side-by-side.
+- Cross-era comparisons should display source caveats (especially Federal League / Negro Leagues and pre-1918 play-event density).
+- Data Source page should include an era matrix and coverage caveats, not just raw year bars.
+
+## Search and Discovery Home
+
+Should immediately answer: _what can this API do across eras?_
 
 ### Features
 
-- universal search for **players, teams, franchises, games**
-- quick links for:
-  - player lookup
-  - team-season lookup
-  - game finder
-  - season leaders
-  - today-in-history or date explorer
-- a “featured queries” panel with prebuilt examples
-- API health / version / dataset coverage block
+- universal search dispatcher that routes to:
+    - `/v1/search/players`
+    - `/v1/search/teams`
+    - `/v1/search/games`
+    - `/v1/search/parks`
+- featured queries panel that includes at least one query from:
+    - standard stats
+    - derived/computed
+    - league-specific historical routes
+- API health + dataset coverage block sourced from meta endpoints
+- era quick-jump chips (fed, nlg, boomer, pitcher, turf, steroid, moneyball, statcast, modern)
 
-### Why
-
-Your sources are historical and broad. Lahman covers major-league batting, pitching, fielding, standings, team stats, managerial records, postseason data, and more back to 1871, while Retrosheet provides detailed game/event data and annual rosters across a very large historical range.
-The home page should immediately show that this is not just a toy wrapper over one endpoint.
-
-## Player explorer
+## Player Explorer
 
 ### Endpoints
 
-- `/players`
-- `/players/{id}`
-- `/players/{id}/seasons`
-- `/players/{id}/teams`
-- `/players/{id}/awards`
-- `/players/{id}/hall-of-fame`
-- `/players/{id}/salaries`
-- `/players/{id}/game-logs`
-- `/players/{id}/appearances`
-- `/players/{id}/plays`
-- `/players/{id}/plate-appearances`
+- `/v1/search/players`
+- `/v1/players/{id}`
+- `/v1/players/{id}/seasons`
+- `/v1/players/{id}/stats/batting`
+- `/v1/players/{id}/stats/pitching`
+- `/v1/players/{id}/game-logs/*`
+- `/v1/players/{id}/awards`
+- `/v1/players/{id}/hall-of-fame`
+- `/v1/players/{id}/teams`
+- `/v1/players/{id}/salaries`
+- `/v1/players/{id}/relatives`
+- Optional advanced tabs:
+    - `/v1/players/{player_id}/stats/batting/advanced`
+    - `/v1/players/{player_id}/stats/pitching/advanced`
+    - `/v1/players/{player_id}/stats/war`
+    - `/v1/players/{player_id}/splits`
+    - `/v1/players/{player_id}/streaks`
 
-### Features
+### Era-specific behavior
 
-- bio card
-- handedness / debut / final game / birthplace
-- batting career timeline
-- pitching career timeline
-- awards timeline
-- Hall of Fame voting history
-- team-by-team career path
-- rate-stat vs counting-stat toggle
-- era-context note when comparing across decades
+- Season charts show shaded era bands.
+- Player timeline cards show "career spans X eras" with linked era chips.
 
-### Critical UI elements
-
-- season table with sortable columns
-- line chart of season totals or rates
-- team badges by season
-- split batting and pitching tabs
-- direct deep link to the API endpoint and raw JSON
-
-### Why
-
-This page proves your API is not just “lookup”; it is **narrative and historical**.
-The fact that your player season response includes both batting and pitching arrays is especially strong because it supports two-way players and mixed-role careers naturally.
-
-## Team and franchise explorer
-
-Your spec supports:
-
-- `/franchises`
-- `/franchises/{id}`
-- `/teams`
-- `/teams/{id}`
-- `/seasons/{year}/teams`
-- `/seasons/{year}/teams/{team_id}/games`
-
-### Franchise page
-
-- franchise identity and active years
-- franchise timeline
-- team-name / era continuity
-- all seasons summary
-- cumulative wins/losses
-- best and worst seasons
-- postseason presence count if available later
-
-### Team-season page
-
-- wins/losses/ties
-- runs scored / runs allowed
-- run differential
-- attendance
-- division / league
-- season schedule summary
-- team game log
-- top batting and pitching contributors for that season
-
-### Strong additions
-
-- franchise history view as a timeline
-- compare two franchises or two team-seasons
-- scatterplot: runs scored vs runs allowed for a season
-- attendance vs wins
-
-### Why
-
-Lahman is particularly strong for team-season and historical franchise work.
-A franchise explorer gives your API its own identity rather than looking like a partial clone of MLB.com.
-
-## Game finder and game detail
+## Team and Franchise Explorer
 
 ### Endpoints
 
-- `/games`
-- `/games/{id}`
-- `/games/{id}/boxscore`
-- `/games/{id}/plays`
-- `/seasons/{year}/schedule`
-- `/seasons/{year}/dates/{date}/games`
-- `/seasons/{year}/teams/{team_id}/games`
+- `/v1/franchises`
+- `/v1/franchises/{id}`
+- `/v1/search/teams`
+- `/v1/teams/{id}`
+- `/v1/teams/{id}/daily-stats`
+- `/v1/teams/{team_id}/run-differential`
+- `/v1/seasons/{year}/teams`
+- `/v1/seasons/{year}/teams/{team_id}/roster`
+- `/v1/seasons/{year}/teams/{team_id}/batting`
+- `/v1/seasons/{year}/teams/{team_id}/pitching`
+- `/v1/seasons/{year}/teams/{team_id}/fielding`
+- `/v1/seasons/{year}/teams/{team_id}/games`
+- `/v1/seasons/{year}/teams/{team_id}/schedule`
+- `/v1/seasons/{year}/teams/{team_id}/daily-logs`
 
-### Game finder should include
+### Era-specific behavior
 
-- filters for season, date range, home team, away team, park
-- postseason toggle
-- innings filter
-- attendance / duration filters
-- one-click “doubleheaders on this date” or “extra-inning games”
+- Franchise view uses era segmentation for name/identity continuity.
+- Team season cards show context chips (e.g., `pitcher`, `steroid`, `statcast`).
 
-### Game detail should include
-
-- scoreline
-- date / day / venue
-- attendance
-- duration
-- umpire crew
-- season and series context
-- boxscore with lineups (from `/games/{id}/boxscore`)
-- play-by-play feed (from `/games/{id}/plays`)
-- links to both participating teams and season pages
-
-### What would make it excellent
-
-- schedule heatmap by month
-- team schedule calendar
-- game duration trends over time
-- park lookup and park-centric game browsing
-
-### Why
-
-Retrosheet’s event/game files are built around rich historical game descriptions and team-home-game files, which makes game-centric exploration a natural strength for your API.
-
-## Stat leaderboard center
+## Game Finder and Game Detail
 
 ### Endpoints
 
-- `/stats/batting`
-- `/stats/pitching`
-- `/seasons/{year}/leaders/batting`
-- `/seasons/{year}/leaders/pitching`
+- `/v1/games`
+- `/v1/games/{id}`
+- `/v1/games/{id}/summary`
+- `/v1/games/{id}/boxscore`
+- `/v1/games/{id}/events`
+- `/v1/games/{id}/events/{event_seq}`
+- `/v1/games/{id}/plays`
+- `/v1/games/{id}/pitches`
+- `/v1/games/{game_id}/win-probability`
+- `/v1/games/{game_id}/win-probability/summary`
+- `/v1/games/{game_id}/plate-appearances/leverage`
+- `/v1/seasons/{year}/schedule`
+- `/v1/seasons/{year}/dates/{date}/games`
+- `/v1/seasons/{year}/teams/{team_id}/games`
+- `/v1/seasons/{year}/parks/{park_id}/games`
 
-### Build two modes
+### Era-specific behavior
 
-### A. Predefined leaders
+- Filters include era chips in addition to year/date range.
+- Detail page flags whether event richness is dense/partial for the selected era.
 
-For quick exploration:
+## Stat Leaderboard Center
 
-- HR leaders
-- AVG leaders
-- RBI leaders
-- SB leaders
-- SO leaders
-- ERA leaders
-- saves leaders
-- innings leaders
+### Endpoints
 
-### B. Query lab
+- `/v1/stats/batting`
+- `/v1/stats/pitching`
+- `/v1/stats/fielding`
+- `/v1/stats/teams/batting`
+- `/v1/stats/teams/pitching`
+- `/v1/stats/teams/fielding`
+- `/v1/seasons/{year}/leaders/batting`
+- `/v1/seasons/{year}/leaders/pitching`
+- `/v1/leaders/batting/career`
+- `/v1/leaders/pitching/career`
+- Advanced leaderboards:
+    - `/v1/seasons/{season}/leaders/batting/advanced`
+    - `/v1/seasons/{season}/leaders/pitching/advanced`
+    - `/v1/seasons/{season}/leaders/war`
 
-For power users:
+### Era-specific behavior
 
-- season or season range
-- player filter
-- team filter
-- league filter
-- thresholds like `min_ab`, `min_ip`, `min_gs`
-- sort by stat
-- sort order
-- pagination controls
-- generated request preview
+- Trend view should support both continuous year view and era-bucket view.
 
-### Best visualizations
+## Season Hub
 
-- ranked tables
-- percentile bands
-- trend line across seasons
-- league split toggle
-- compare top N across time
+### Endpoints
 
-### Why
+- `/v1/seasons`
+- `/v1/seasons/{year}/teams`
+- `/v1/seasons/{year}/leaders/batting`
+- `/v1/seasons/{year}/leaders/pitching`
+- `/v1/seasons/{year}/schedule`
+- `/v1/seasons/{year}/dates/{date}/games`
+- `/v1/seasons/{year}/awards`
+- `/v1/seasons/{year}/postseason/series`
+- `/v1/seasons/{year}/postseason/games`
+- `/v1/seasons/{season}/park-factors`
 
-This is where your API most clearly demonstrates “programmable research.”
-The presence of season range filters plus thresholds and sort controls is exactly what should be turned into a visible query builder.
+## Compare Mode
 
-## Season hub
-
-You already have all the primitives for a strong season-centric view:
-
-- season schedule
-- season teams
-- games by date
-- batting leaders
-- pitching leaders
-
-### Season hub should include
-
-- season overview
-- team table
-- leaderboards
-- schedule calendar
-- league filters
-- date explorer
-- notable queries for that year
-
-### This page should answer
-
-- Who led the league?
-- Which teams played?
-- What did the season calendar look like?
-- What games happened on a given date?
-- How can I query this season through the API?
-
-## Compare mode
-
-This is the feature that would make the dashboard memorable.
-
-### Include
+### Comparisons
 
 - player vs player
 - team-season vs team-season
 - season vs season
-- league split comparison
 - franchise-era comparison
+- win expectancy state comparison across era ranges
 
-### Example comparisons
+### Endpoints
 
-- Ruth vs Aaron through age-30
-- 1998 Yankees vs 2001 Mariners
-- AL vs NL HR leaders in a season
-- franchise best seasons by run differential
+- all relevant player/team/season endpoints above
+- `/v1/win-expectancy`
+- `/v1/win-expectancy/eras`
 
-### Why
+## API Explorer
 
-The underlying API is historical and normalized enough to support comparison as a first-class experience. This makes the dashboard a resource, not just an endpoint browser.
+The explorer is the interactive API reference and must reflect the current OpenAPI document.
 
-## Query builder and API mirror panel
+### Required groups
 
-This is essential.
+- meta/health
+- search
+- players
+- teams/franchises
+- games/plays/pitches
+- stats/leaders
+- computed/derived
+- achievements/awards/postseason/allstar/ejections/salaries
+- managers/umpires/coaches
+- league-specific (`federalleague`, `negroleagues`)
+- mlb proxy
 
-Every page should have a panel that shows:
+## Data Sources and Coverage Page
 
-- endpoint path
-- current query params
-- generated URL
-- example `curl`
-- sample JSON response
-- copy buttons
+### Must include
 
-### Why this matters
+- source cards: Lahman, Retrosheet, MLB StatsAPI
+- historical coverage + known caveats
+- explicit era matrix (the 9 seed eras + dynamic WE eras)
+- crosswalk strategy for Lahman IDs, Retrosheet IDs, MLB IDs
+- league-specific caveats for Federal League and Negro Leagues endpoints
 
-The best pattern is: **visual controls on the left, results in the center, request/response on the right**
+## Account and Key Management
 
-This turns the dashboard into both:
+Authenticated area behind `/account`.
 
-- a usable baseball research tool
-- an interactive API tutorial
+### API hooks
 
-## Data provenance and coverage page
-
-Because your API combines Lahman, Retrosheet, and MLB StatsAPI, you need a page that explains:
-
-- which data comes from which source
-- historical coverage
-- update cadence
-- where live/current-season enrichment comes from
-- known gaps / caveats
-- ID mapping strategy between datasets
-
-This is important because Lahman is a structured historical database with broad statistical coverage, while Retrosheet is especially valuable for game/event history, and MLB StatsAPI exposes much richer contemporary operational data such as schedules, teams, people, leaders, standings, transactions, and metadata categories.
-
-### Features
-
-- source badges on records
-- “last updated” timestamps
-- coverage by season
-- notes on missing or partial historical data
-- explanation of IDs like Lahman player IDs vs Retrosheet IDs vs MLB person/team/game IDs
-
-## Account and key management
-
-The only authenticated area of the dashboard. All other pages are public.
-
-### Features
-
-- sign-in / sign-up (email + password; OAuth provider TBD)
-- API key list: name, masked prefix, created date, last-used timestamp, active/revoked status
-- key creation: name, optional expiry, optional scope — full key shown once on creation with copy button
-- key revocation
-- usage dashboard: request count by day/week/month, current rate-limit tier, quota remaining
-- account settings: email, password change, account deletion
-
-### Why
-
-Self-service key management is table stakes for any public API. Putting it behind auth keeps keys secure while keeping the rest of the dashboard open for discovery. The usage dashboard gives developers confidence about their quota before they hit limits in production.
-
-## Performance and reliability demo panel
-
-- response time
-- cache status
-- pagination totals
-- current filters
-- record count
-- request history
-
-## Core UX
-
-- global search
-- advanced filters
-- shareable URLs for every state
-- sortable tables
-- pagination controls
-- raw JSON viewer
-- copy as curl
-- deep linking to entities
-
-## Resource value
-
-- saved queries
-- featured research queries
-- compare mode
-- season hubs
-- provenance notes
-- glossary for baseball stats and abbreviations
-
-## Developer value
-
-- endpoint mirror panel
-- schema snippets
-- parameter docs inline
-- sample requests and responses
-- error examples
-- rate-limit and cache visibility if applicable
-
-## Expansion
-
-### High value additions (not yet implemented in the API)
-
-- standings endpoint
-- team batting/pitching season stats endpoint
-- park / venue endpoint
-- splits endpoint
-- postseason series endpoint
-- franchise season history endpoint
-- search autocomplete endpoint
-- bulk compare endpoint
-
-### Modern/current-season additions from MLB StatsAPI side
-
-MLB StatsAPI exposes broader current-era concepts such as standings, team stats, rosters, transactions, venues, and richer schedule/team/person data than what is currently visible in your spec.
-
-The dashboard would benefit a lot from eventually exposing:
-
-- standings
-- rosters
-- venues
-- transactions
-- team leaders
-- team stats
-- live or near-live game context
+- `/v1/auth/me`
+- `/v1/auth/keys`
+- `/v1/auth/keys/{id}` (delete/revoke)
+- OAuth entrypoints exist for GitHub/Codeberg callback flow
 
 ## Page Architecture
 
-| Route       | Page         | Layout     | Auth | Notes                                        |
-| ----------- | ------------ | ---------- | ---- | -------------------------------------------- |
-| `/`         | Home         | single-col | no   | search hero + dashboard grid                 |
-| `/players`  | Players      | three-col  | no   | sidebar search, center stats, right API      |
-| `/teams`    | Teams        | three-col  | no   | franchise + team-season combined in one page |
-| `/games`    | Games        | three-col  | no   | finder filters + game detail                 |
-| `/seasons`  | Seasons      | three-col  | no   | season picker, teams, leaders, schedule      |
-| `/leaders`  | Leaders      | three-col  | no   | quick mode + query lab                       |
-| `/compare`  | Compare      | three-col  | no   | side-by-side entity comparison               |
-| `/explorer` | API Explorer | three-col  | no   | endpoint list, param builder, live response  |
-| `/data`     | Data Sources | single-col | no   | provenance, coverage, ID mappings            |
-| `/account`  | Account      | single-col | yes  | sign-in, API key management, usage, settings |
+| Route       | Page         | Layout     | Auth | Notes                                  |
+| ----------- | ------------ | ---------- | ---- | -------------------------------------- |
+| `/`         | Home         | single-col | no   | search + meta + era jump               |
+| `/players`  | Players      | three-col  | no   | player profile + advanced/derived tabs |
+| `/teams`    | Teams        | three-col  | no   | franchise + team-season + era context  |
+| `/games`    | Games        | three-col  | no   | finder + game detail + event richness  |
+| `/seasons`  | Seasons      | three-col  | no   | season hub + awards/postseason         |
+| `/leaders`  | Leaders      | three-col  | no   | quick leaders + query lab + advanced   |
+| `/compare`  | Compare      | three-col  | no   | side-by-side + era normalization       |
+| `/explorer` | API Explorer | three-col  | no   | OpenAPI-driven endpoint explorer       |
+| `/data`     | Data Sources | single-col | no   | provenance + era matrix + caveats      |
+| `/account`  | Account      | single-col | yes  | API keys + usage                       |

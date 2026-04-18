@@ -8,227 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #0d0f13;
-      --surface: #13161c;
-      --surface2: #1a1e27;
-      --border: #252934;
-      --text: #e2e8f0;
-      --muted: #6b7280;
-      --accent: #3b82f6;
-      --accent2: #10b981;
-    }
-    * { box-sizing: border-box; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      min-height: 100vh;
-    }
-    h1, h2, h3, h4, .heading {
-      font-family: 'Google Sans', sans-serif;
-    }
-    code, pre, .mono {
-      font-family: 'Google Sans Code', monospace;
-    }
-
-    /* Layout */
-    .site-header {
-      border-bottom: 1px solid var(--border);
-      padding: 0 2rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      height: 56px;
-      background: var(--surface);
-    }
-    .site-header .logo {
-      font-family: 'Google Sans', sans-serif;
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text);
-      text-decoration: none;
-      letter-spacing: -0.01em;
-    }
-    .site-header .badge {
-      font-family: 'Google Sans Code', monospace;
-      font-size: 0.7rem;
-      background: var(--border);
-      color: var(--muted);
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
-    .site-header .nav-links {
-      margin-left: auto;
-      display: flex;
-      gap: 0.25rem;
-    }
-    .site-header .nav-links a {
-      font-size: 0.8rem;
-      color: var(--muted);
-      text-decoration: none;
-      padding: 4px 10px;
-      border-radius: 4px;
-      transition: color 0.15s, background 0.15s;
-    }
-    .site-header .nav-links a:hover {
-      color: var(--text);
-      background: var(--border);
-    }
-
-    .hero {
-      padding: 5rem 2rem 4rem;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .hero-label {
-      font-family: 'Google Sans Code', monospace;
-      font-size: 0.75rem;
-      color: var(--accent);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-    }
-    .hero h1 {
-      font-size: 2.75rem;
-      font-weight: 700;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-      margin: 0 0 1rem;
-      color: #f1f5f9;
-    }
-    .hero p {
-      font-size: 1rem;
-      color: var(--muted);
-      line-height: 1.7;
-      margin: 0;
-      max-width: 560px;
-    }
-
-    .grid-section {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 2rem 5rem;
-    }
-    .section-label {
-      font-family: 'Google Sans Code', monospace;
-      font-size: 0.7rem;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-      margin-bottom: 3rem;
-    }
-    .page-card {
-      background: var(--surface);
-      padding: 1.5rem;
-      text-decoration: none;
-      color: inherit;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      transition: background 0.15s;
-      position: relative;
-    }
-    .page-card:hover {
-      background: var(--surface2);
-    }
-    .page-card:hover .card-arrow {
-      transform: translate(2px, -2px);
-    }
-    .card-icon {
-      font-size: 1.25rem;
-      margin-bottom: 0.25rem;
-    }
-    .card-title {
-      font-family: 'Google Sans', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #f1f5f9;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .card-arrow {
-      color: var(--muted);
-      font-size: 0.9rem;
-      transition: transform 0.15s;
-    }
-    .card-desc {
-      font-size: 0.8rem;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-    .card-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-      margin-top: 0.5rem;
-    }
-    .tag {
-      font-family: 'Google Sans Code', monospace;
-      font-size: 0.65rem;
-      color: var(--muted);
-      background: var(--border);
-      padding: 2px 7px;
-      border-radius: 3px;
-    }
-    .tag.accent {
-      color: var(--accent);
-      background: rgba(59,130,246,0.1);
-    }
-    .tag.green {
-      color: var(--accent2);
-      background: rgba(16,185,129,0.1);
-    }
-
-    .status-bar {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 2rem 2rem;
-      display: flex;
-      gap: 2rem;
-      align-items: center;
-    }
-    .stat-item {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .stat-value {
-      font-family: 'Google Sans', sans-serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #f1f5f9;
-    }
-    .stat-label {
-      font-size: 0.7rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .divider {
-      width: 1px;
-      height: 32px;
-      background: var(--border);
-    }
-  </style>
-</head>
-<body>
+  <link rel="stylesheet" href="styles.css" />
+  </head>
+<body class="page-index">
 
   <header class="site-header">
     <a href="index.html" class="logo">Baseball API</a>
@@ -249,7 +31,7 @@
   <div class="hero">
     <div class="hero-label">Design Wireframes</div>
     <h1>Dashboard Design Hub</h1>
-    <p>Interactive wireframe implementations for the Baseball API data dashboard. Each screen demonstrates the proposed UI patterns, data hierarchy, and component behavior described in the spec.</p>
+    <p>Interactive wireframe implementations for the `/v1` Baseball API dashboard. Screens now include current endpoint families, league-specific slices, and explicit era-aware UX patterns.</p>
   </div>
 
   <div class="grid-section">
@@ -261,9 +43,9 @@
       <a href="home.html" class="page-card">
         <div class="card-icon">⌂</div>
         <div class="card-title">Home <span class="card-arrow">↗</span></div>
-        <div class="card-desc">Universal search, quick links, featured queries, API health and dataset coverage overview.</div>
+        <div class="card-desc">Search dispatcher for `/v1/search/*`, quick links, featured endpoint recipes, health/readiness, and era jump chips.</div>
         <div class="card-tags">
-          <span class="tag">search</span>
+          <span class="tag">/search/*</span>
           <span class="tag">featured queries</span>
           <span class="tag accent">landing</span>
         </div>
@@ -272,10 +54,10 @@
       <a href="players.html" class="page-card">
         <div class="card-icon">◎</div>
         <div class="card-title">Player Explorer <span class="card-arrow">↗</span></div>
-        <div class="card-desc">Bio card, career timelines for batting and pitching, awards, Hall of Fame history, team path.</div>
+        <div class="card-desc">Career timelines with era overlays, game-log drilldowns, awards/HOF, relatives, salaries, and advanced stat modules.</div>
         <div class="card-tags">
           <span class="tag">/players/{id}</span>
-          <span class="tag">/players/{id}/seasons</span>
+          <span class="tag">/players/{id}/game-logs/*</span>
           <span class="tag green">charts</span>
         </div>
       </a>
@@ -283,10 +65,10 @@
       <a href="teams.html" class="page-card">
         <div class="card-icon">◈</div>
         <div class="card-title">Teams &amp; Franchises <span class="card-arrow">↗</span></div>
-        <div class="card-desc">Franchise identity, team-season records, run differential, attendance, schedule summary.</div>
+        <div class="card-desc">Franchise identity with era continuity, team-season records, run differential, daily stats, roster, and schedule modules.</div>
         <div class="card-tags">
           <span class="tag">/franchises/{id}</span>
-          <span class="tag">/teams/{id}</span>
+          <span class="tag">/teams/{id}/daily-stats</span>
           <span class="tag green">charts</span>
         </div>
       </a>
@@ -294,32 +76,32 @@
       <a href="games.html" class="page-card">
         <div class="card-icon">◷</div>
         <div class="card-title">Game Finder <span class="card-arrow">↗</span></div>
-        <div class="card-desc">Filter by season, date range, teams, park. Game detail with scoreline, venue, umpires, duration.</div>
+        <div class="card-desc">Season/date/team/park filters, natural-language search, and game detail with events, plays, pitches, and win-probability context.</div>
         <div class="card-tags">
           <span class="tag">/games</span>
-          <span class="tag">/games/{id}</span>
-          <span class="tag">schedule</span>
+          <span class="tag">/games/{id}/events</span>
+          <span class="tag">/search/games</span>
         </div>
       </a>
 
       <a href="seasons.html" class="page-card">
         <div class="card-icon">◫</div>
         <div class="card-title">Season Hub <span class="card-arrow">↗</span></div>
-        <div class="card-desc">Season overview, team table, schedule calendar, leaderboards, date explorer, notable queries.</div>
+        <div class="card-desc">Season overview, teams, schedule/date explorer, leaders, awards, postseason modules, and era-specific summary context.</div>
         <div class="card-tags">
-          <span class="tag">/seasons/{year}</span>
+          <span class="tag">/seasons/{year}/teams</span>
           <span class="tag green">charts</span>
-          <span class="tag">calendar</span>
+          <span class="tag">/seasons/{year}/postseason/*</span>
         </div>
       </a>
 
       <a href="leaders.html" class="page-card">
         <div class="card-icon">◉</div>
         <div class="card-title">Stat Leaders <span class="card-arrow">↗</span></div>
-        <div class="card-desc">Predefined leader boards plus a query lab with thresholds, sort controls, and request preview.</div>
+        <div class="card-desc">Season/career leaders, query lab for `/stats/*`, advanced leaderboards, and era-bucket trend views.</div>
         <div class="card-tags">
           <span class="tag">/stats/batting</span>
-          <span class="tag">/stats/pitching</span>
+          <span class="tag">/leaders/*/career</span>
           <span class="tag green">charts</span>
         </div>
       </a>
@@ -327,9 +109,10 @@
       <a href="compare.html" class="page-card">
         <div class="card-icon">⇄</div>
         <div class="card-title">Compare Mode <span class="card-arrow">↗</span></div>
-        <div class="card-desc">Player vs player, team-season vs team-season, season vs season, franchise-era comparison.</div>
+        <div class="card-desc">Player/team/season comparison with explicit era normalization and win-expectancy era cross-checks.</div>
         <div class="card-tags">
           <span class="tag accent">featured</span>
+          <span class="tag">/win-expectancy/eras</span>
           <span class="tag green">charts</span>
           <span class="tag">side-by-side</span>
         </div>
@@ -338,9 +121,10 @@
       <a href="api-explorer.html" class="page-card">
         <div class="card-icon">{ }</div>
         <div class="card-title">API Explorer <span class="card-arrow">↗</span></div>
-        <div class="card-desc">Query builder, endpoint mirror, generated URL, curl preview, sample JSON response, copy buttons.</div>
+        <div class="card-desc">OpenAPI-driven endpoint tree for the current `/v1` surface with real params, URL builder, and curl/schema history panel.</div>
         <div class="card-tags">
           <span class="tag accent">developer</span>
+          <span class="tag">openapi</span>
           <span class="tag">curl</span>
           <span class="tag">JSON</span>
         </div>
@@ -349,7 +133,7 @@
       <a href="data-sources.html" class="page-card">
         <div class="card-icon">◬</div>
         <div class="card-title">Data Sources <span class="card-arrow">↗</span></div>
-        <div class="card-desc">Provenance, coverage by season, source badges, ID mapping strategy, known gaps, update cadence.</div>
+        <div class="card-desc">Provenance, source coverage, static + dynamic era matrices, ID mapping strategy, and league-specific caveats.</div>
         <div class="card-tags">
           <span class="tag">Lahman</span>
           <span class="tag">Retrosheet</span>
@@ -368,19 +152,30 @@
       </div>
       <div class="divider"></div>
       <div class="stat-item">
-        <div class="stat-value">1871–</div>
+        <div class="stat-value">1871–2025</div>
         <div class="stat-label">Data range</div>
       </div>
       <div class="divider"></div>
       <div class="stat-item">
-        <div class="stat-value">3</div>
-        <div class="stat-label">Data sources</div>
+        <div class="stat-value">9</div>
+        <div class="stat-label">Era Buckets</div>
       </div>
       <div class="divider"></div>
       <div class="stat-item">
-        <div class="stat-value">Lahman · Retrosheet · MLB StatsAPI</div>
-        <div class="stat-label">Sources</div>
+        <div class="stat-value">`/v1` namespaces + league slices</div>
+        <div class="stat-label">API Scope</div>
       </div>
+    </div>
+    <div class="era-strip">
+      <span class="era-chip">fed 1914-1915</span>
+      <span class="era-chip">nlg 1935-1949</span>
+      <span class="era-chip">boomer 1950-1962</span>
+      <span class="era-chip">pitcher 1963-1968</span>
+      <span class="era-chip">turf 1969-1993</span>
+      <span class="era-chip">steroid 1994-2004</span>
+      <span class="era-chip">moneyball 2005-2012</span>
+      <span class="era-chip">statcast 2013-2019</span>
+      <span class="era-chip">modern 2020-2025</span>
     </div>
 
   </div>

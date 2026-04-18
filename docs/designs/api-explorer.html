@@ -6,74 +6,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
-  <style>
-    :root{--bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981}
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
-    h1,h2,h3{font-family:'Google Sans',sans-serif}
-    code,pre{font-family:'Google Sans Code',monospace}
-    .site-header{border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:56px;background:var(--surface)}
-    .logo{font-family:'Google Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none}
-    .badge{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);padding:2px 8px;border-radius:4px}
-    .nav-links{margin-left:auto;display:flex;gap:0.25rem}
-    .nav-links a{font-size:0.8rem;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:4px;transition:color 0.15s,background 0.15s}
-    .nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--border)}
-
-    .layout{display:grid;grid-template-columns:300px 1fr 340px;height:calc(100vh - 56px)}
-    .sidebar{border-right:1px solid var(--border);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:0.5rem}
-    .center{overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
-    .right{border-left:1px solid var(--border);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem;background:var(--surface)}
-
-    .sidebar-label,.panel-label,.ap-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
-    .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
-
-    /* Endpoint list */
-    .ep-group{margin-bottom:1rem}
-    .ep-group-label{font-family:'Google Sans Code',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem}
-    .ep-item{display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.6rem;border-radius:5px;cursor:pointer;transition:background 0.15s}
-    .ep-item:hover,.ep-item.active{background:var(--surface2)}
-    .ep-method{font-family:'Google Sans Code',monospace;font-size:0.62rem;padding:1px 5px;border-radius:3px;background:rgba(16,185,129,0.15);color:var(--accent2);min-width:30px;text-align:center}
-    .ep-path{font-family:'Google Sans Code',monospace;font-size:0.72rem;color:var(--muted);transition:color 0.15s}
-    .ep-item:hover .ep-path,.ep-item.active .ep-path{color:var(--text)}
-
-    /* URL bar */
-    .url-bar{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:1rem}
-    .url-method{background:var(--border);color:var(--accent2);font-family:'Google Sans Code',monospace;font-size:0.75rem;padding:0 1rem;display:flex;align-items:center;border-right:1px solid var(--border)}
-    .url-input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Google Sans Code',monospace;font-size:0.78rem;padding:0.65rem 0.75rem}
-    .url-send{background:var(--accent);color:#fff;border:none;padding:0.65rem 1.25rem;font-family:'Google Sans',sans-serif;font-size:0.82rem;cursor:pointer;transition:opacity 0.15s}
-    .url-send:hover{opacity:0.85}
-
-    /* Params builder */
-    .params-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem}
-    label.pl{display:block;font-size:0.7rem;color:var(--muted);margin-bottom:3px}
-    input.pi,select.pi{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:0.75rem;font-family:'Inter',sans-serif;outline:none}
-    input.pi:focus,select.pi:focus{border-color:var(--accent)}
-    .param-doc{font-size:0.68rem;color:var(--muted);margin-top:2px;font-family:'Google Sans Code',monospace}
-
-    /* Response */
-    .response-bar{display:flex;align-items:center;gap:1rem;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:6px;margin-bottom:0.75rem;font-size:0.72rem}
-    .status-ok{color:var(--accent2);font-family:'Google Sans Code',monospace;font-weight:700}
-    .resp-meta{color:var(--muted);font-family:'Google Sans Code',monospace}
-    .json-view{background:var(--surface2);border-radius:6px;padding:1rem;font-family:'Google Sans Code',monospace;font-size:0.72rem;line-height:1.7;white-space:pre;overflow-x:auto;flex:1}
-    .jk{color:#93c5fd}
-    .js{color:#86efac}
-    .jn{color:#fde68a}
-    .jb{color:#f9a8d4}
-
-    /* Right panel */
-    .curl-block{background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.7rem;color:#a5b4fc;line-height:1.6;white-space:pre-wrap;word-break:break-all}
-    .copy-btn{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);border:none;padding:4px 10px;border-radius:4px;cursor:pointer;width:100%;text-align:center;margin-top:0.35rem;transition:color 0.15s}
-    .copy-btn:hover{color:var(--text)}
-    .schema-field{font-family:'Google Sans Code',monospace;font-size:0.7rem;padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:0.75rem}
-    .sf-name{color:#93c5fd;min-width:120px}
-    .sf-type{color:#fde68a;min-width:60px}
-    .sf-desc{color:var(--muted)}
-    .history-item{font-family:'Google Sans Code',monospace;font-size:0.68rem;color:var(--muted);padding:3px 0;cursor:pointer;transition:color 0.15s;border-bottom:1px solid var(--border)}
-    .history-item:hover{color:var(--text)}
-    .history-item:last-child{border-bottom:none}
-  </style>
-</head>
-<body>
+  <link rel="stylesheet" href="styles.css" />
+  </head>
+<body class="page-api-explorer">
 <header class="site-header">
   <a href="index.html" class="logo">Baseball API</a>
   <span class="badge">api explorer</span>
@@ -88,66 +23,89 @@
 
 <div class="layout">
 
-  <!-- Endpoint list -->
   <aside class="sidebar">
-    <div class="sidebar-label">Endpoints</div>
+    <div class="sidebar-label">Endpoints (current /v1 surface)</div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">Meta & Health</div>
+      <div class="ep-item" onclick="selectEndpoint('/meta',this)"><span class="ep-method">GET</span><span class="ep-path">/meta</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/meta/datasets',this)"><span class="ep-method">GET</span><span class="ep-path">/meta/datasets</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/ready',this)"><span class="ep-method">GET</span><span class="ep-path">/ready</span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">Search</div>
+      <div class="ep-item active" onclick="selectEndpoint('/search/players',this)"><span class="ep-method">GET</span><span class="ep-path">/search/players</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/search/teams',this)"><span class="ep-method">GET</span><span class="ep-path">/search/teams</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/search/games',this)"><span class="ep-method">GET</span><span class="ep-path">/search/games</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/search/parks',this)"><span class="ep-method">GET</span><span class="ep-path">/search/parks</span></div>
+    </div>
 
     <div class="ep-group">
       <div class="ep-group-label">Players</div>
-      <div class="ep-item active" onclick="selectEndpoint('/players',this)"><span class="ep-method">GET</span><span class="ep-path">/players</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/players',this)"><span class="ep-method">GET</span><span class="ep-path">/players</span></div>
       <div class="ep-item" onclick="selectEndpoint('/players/{id}',this)"><span class="ep-method">GET</span><span class="ep-path">/players/{id}</span></div>
-      <div class="ep-item" onclick="selectEndpoint('/players/{id}/seasons',this)"><span class="ep-method">GET</span><span class="ep-path">/players/{id}/seasons</span></div>
-      <div class="ep-item" onclick="selectEndpoint('/players/{id}/awards',this)"><span class="ep-method">GET</span><span class="ep-path">/players/{id}/awards</span></div>
-      <div class="ep-item" onclick="selectEndpoint('/players/{id}/hall-of-fame',this)"><span class="ep-method">GET</span><span class="ep-path">/players/{id}/hall-of-fame</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/players/{id}/game-logs/batting',this)"><span class="ep-method">GET</span><span class="ep-path">/players/{id}/game-logs/batting</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/players/{player_id}/stats/war',this)"><span class="ep-method">GET</span><span class="ep-path">/players/{player_id}/stats/war</span></div>
     </div>
 
     <div class="ep-group">
       <div class="ep-group-label">Teams & Franchises</div>
-      <div class="ep-item" onclick="selectEndpoint('/teams',this)"><span class="ep-method">GET</span><span class="ep-path">/teams</span></div>
-      <div class="ep-item" onclick="selectEndpoint('/teams/{id}',this)"><span class="ep-method">GET</span><span class="ep-path">/teams/{id}</span></div>
       <div class="ep-item" onclick="selectEndpoint('/franchises',this)"><span class="ep-method">GET</span><span class="ep-path">/franchises</span></div>
-      <div class="ep-item" onclick="selectEndpoint('/franchises/{id}',this)"><span class="ep-method">GET</span><span class="ep-path">/franchises/{id}</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/teams',this)"><span class="ep-method">GET</span><span class="ep-path">/teams</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/teams/{id}/daily-stats',this)"><span class="ep-method">GET</span><span class="ep-path">/teams/{id}/daily-stats</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/teams/{team_id}/run-differential',this)"><span class="ep-method">GET</span><span class="ep-path">/teams/{team_id}/run-differential</span></div>
     </div>
 
     <div class="ep-group">
-      <div class="ep-group-label">Games</div>
+      <div class="ep-group-label">Games & Events</div>
       <div class="ep-item" onclick="selectEndpoint('/games',this)"><span class="ep-method">GET</span><span class="ep-path">/games</span></div>
       <div class="ep-item" onclick="selectEndpoint('/games/{id}',this)"><span class="ep-method">GET</span><span class="ep-path">/games/{id}</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/games/{id}/events',this)"><span class="ep-method">GET</span><span class="ep-path">/games/{id}/events</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/games/{id}/plays',this)"><span class="ep-method">GET</span><span class="ep-path">/games/{id}/plays</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/games/{id}/pitches',this)"><span class="ep-method">GET</span><span class="ep-path">/games/{id}/pitches</span></div>
     </div>
 
     <div class="ep-group">
-      <div class="ep-group-label">Seasons</div>
-      <div class="ep-item" onclick="selectEndpoint('/seasons/{year}/schedule',this)"><span class="ep-method">GET</span><span class="ep-path">/seasons/{year}/schedule</span></div>
-      <div class="ep-item" onclick="selectEndpoint('/seasons/{year}/teams',this)"><span class="ep-method">GET</span><span class="ep-path">/seasons/{year}/teams</span></div>
-      <div class="ep-item" onclick="selectEndpoint('/seasons/{year}/leaders/batting',this)"><span class="ep-method">GET</span><span class="ep-path">/seasons/{year}/leaders/batting</span></div>
-      <div class="ep-item" onclick="selectEndpoint('/seasons/{year}/leaders/pitching',this)"><span class="ep-method">GET</span><span class="ep-path">/seasons/{year}/leaders/pitching</span></div>
-      <div class="ep-item" onclick="selectEndpoint('/seasons/{year}/dates/{date}/games',this)"><span class="ep-method">GET</span><span class="ep-path">/seasons/{year}/dates/{date}/games</span></div>
-    </div>
-
-    <div class="ep-group">
-      <div class="ep-group-label">Stats</div>
+      <div class="ep-group-label">Stats & Leaders</div>
       <div class="ep-item" onclick="selectEndpoint('/stats/batting',this)"><span class="ep-method">GET</span><span class="ep-path">/stats/batting</span></div>
       <div class="ep-item" onclick="selectEndpoint('/stats/pitching',this)"><span class="ep-method">GET</span><span class="ep-path">/stats/pitching</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/seasons/{year}/leaders/batting',this)"><span class="ep-method">GET</span><span class="ep-path">/seasons/{year}/leaders/batting</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/leaders/pitching/career',this)"><span class="ep-method">GET</span><span class="ep-path">/leaders/pitching/career</span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">Derived & Era</div>
+      <div class="ep-item" onclick="selectEndpoint('/win-expectancy',this)"><span class="ep-method">GET</span><span class="ep-path">/win-expectancy</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/win-expectancy/eras',this)"><span class="ep-method">GET</span><span class="ep-path">/win-expectancy/eras</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/games/{game_id}/win-probability',this)"><span class="ep-method">GET</span><span class="ep-path">/games/{game_id}/win-probability</span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">League Slices</div>
+      <div class="ep-item" onclick="selectEndpoint('/federalleague/games',this)"><span class="ep-method">GET</span><span class="ep-path">/federalleague/games</span></div>
+      <div class="ep-item" onclick="selectEndpoint('/negroleagues/games',this)"><span class="ep-method">GET</span><span class="ep-path">/negroleagues/games</span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">MLB Proxy</div>
+      <div class="ep-item" onclick="selectEndpoint('/mlb/teams',this)"><span class="ep-method">GET</span><span class="ep-path">/mlb/teams</span></div>
     </div>
   </aside>
 
-  <!-- Center: builder + response -->
   <main class="center">
 
-    <!-- URL bar -->
     <div class="url-bar">
       <span class="url-method">GET</span>
-      <input class="url-input" id="urlInput" value="https://api.baseball.example/v1/players?limit=20" />
+      <input class="url-input" id="urlInput" value="https://api.baseball.example/v1/search/players?q=aaron&page=1&per_page=20" />
       <button class="url-send" onclick="send()">Send</button>
     </div>
 
-    <!-- Params panel -->
     <div class="panel" id="paramsPanel">
-      <div class="panel-label">Parameters — <span id="paramsEndpoint">/players</span></div>
+      <div class="panel-label">Parameters — <span id="paramsEndpoint">/search/players</span></div>
       <div class="params-grid" id="paramsGrid"></div>
     </div>
 
-    <!-- Response -->
     <div class="panel">
       <div class="panel-label">Response</div>
       <div class="response-bar" id="respBar" style="display:none">
@@ -158,41 +116,30 @@
         <span class="resp-meta" id="totalCount">total: 20 records</span>
       </div>
       <div class="json-view" id="jsonView">
-<span style="color:var(--muted)">// Hit "Send" to see the response here</span>
+<span style="color:var(--muted)">// Hit "Send" to simulate response output</span>
       </div>
     </div>
 
   </main>
 
-  <!-- Right panel -->
   <aside class="right">
     <div>
       <div class="ap-label">curl</div>
       <div class="curl-block" id="curlBlock">curl -s \
-  "https://api.baseball.example/\
-v1/players?limit=20" \
+  "https://api.baseball.example/v1/search/players?q=aaron&page=1&per_page=20" \
   | jq .</div>
       <button class="copy-btn" onclick="copyCurl()">copy curl</button>
     </div>
 
     <div>
       <div class="ap-label">Schema</div>
-      <div id="schemaBlock">
-        <div class="schema-field"><span class="sf-name">player_id</span><span class="sf-type">string</span><span class="sf-desc">Lahman player key</span></div>
-        <div class="schema-field"><span class="sf-name">name_first</span><span class="sf-type">string</span><span class="sf-desc">First name</span></div>
-        <div class="schema-field"><span class="sf-name">name_last</span><span class="sf-type">string</span><span class="sf-desc">Last name</span></div>
-        <div class="schema-field"><span class="sf-name">bats</span><span class="sf-type">string</span><span class="sf-desc">R | L | B</span></div>
-        <div class="schema-field"><span class="sf-name">throws</span><span class="sf-type">string</span><span class="sf-desc">R | L</span></div>
-        <div class="schema-field"><span class="sf-name">debut</span><span class="sf-type">date</span><span class="sf-desc">MLB debut date</span></div>
-        <div class="schema-field"><span class="sf-name">final_game</span><span class="sf-type">date</span><span class="sf-desc">Last game date</span></div>
-        <div class="schema-field" style="border-bottom:none"><span class="sf-name">birth_country</span><span class="sf-type">string</span><span class="sf-desc">Birth country</span></div>
-      </div>
+      <div id="schemaBlock"></div>
     </div>
 
     <div>
       <div class="ap-label">Request history</div>
       <div id="historyBlock">
-        <div class="history-item">GET /players?limit=20</div>
+        <div class="history-item">GET /search/players?q=aaron&page=1&per_page=20</div>
       </div>
     </div>
   </aside>
@@ -202,81 +149,244 @@ v1/players?limit=20" \
 <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
 <script>
   const endpointParams = {
-    '/players': [
-      {name:'limit',type:'number',default:'20',doc:'Results per page (max 100)'},
-      {name:'offset',type:'number',default:'0',doc:'Pagination offset'},
-      {name:'search',type:'text',default:'',doc:'Name search'},
-      {name:'active_from',type:'number',default:'',doc:'Active from year'},
+    '/meta': [],
+    '/meta/datasets': [],
+    '/ready': [],
+    '/search/players': [
+      {name:'q',type:'text',default:'aaron',doc:'Name query'},
+      {name:'debut_year',type:'number',default:'',doc:'Optional debut year filter'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
     ],
-    '/players/{id}': [{name:'id',type:'text',default:'mayswi01',doc:'Lahman player ID'}],
-    '/players/{id}/seasons': [
-      {name:'id',type:'text',default:'mayswi01',doc:'Lahman player ID'},
-      {name:'year_from',type:'number',default:'',doc:'Season from'},
-      {name:'year_to',type:'number',default:'',doc:'Season to'},
+    '/search/teams': [
+      {name:'q',type:'text',default:'yankees',doc:'Team query'},
+      {name:'year',type:'number',default:'2024',doc:'Optional season year'},
+      {name:'league',type:'text',default:'',doc:'AL or NL'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/search/games': [
+      {name:'q',type:'text',default:'yankees red sox 2004 alcs game 7',doc:'Natural language query'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/search/parks': [
+      {name:'q',type:'text',default:'fenway',doc:'Park query'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/players': [
+      {name:'name',type:'text',default:'aaron',doc:'Player name filter'},
+      {name:'debut_year',type:'number',default:'',doc:'Optional debut year'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/players/{id}': [
+      {name:'id',type:'text',default:'mayswi01',doc:'Lahman player ID'}
+    ],
+    '/players/{id}/game-logs/batting': [
+      {name:'id',type:'text',default:'judgeaa01',doc:'Lahman player ID'},
+      {name:'season',type:'number',default:'2023',doc:'Season filter'},
+      {name:'date_from',type:'text',default:'',doc:'YYYYMMDD'},
+      {name:'date_to',type:'text',default:'',doc:'YYYYMMDD'},
+      {name:'min_hr',type:'number',default:'',doc:'Minimum HR in game'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/players/{player_id}/stats/war': [
+      {name:'player_id',type:'text',default:'troutmi01',doc:'Lahman player ID'},
+      {name:'season',type:'number',default:'2023',doc:'Optional season'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/franchises': [
+      {name:'active',type:'text',default:'',doc:'true to return active only'}
+    ],
+    '/teams': [
+      {name:'year',type:'number',default:'2024',doc:'Season year'},
+      {name:'league',type:'text',default:'',doc:'AL or NL'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/teams/{id}/daily-stats': [
+      {name:'id',type:'text',default:'NYA',doc:'Team ID'},
+      {name:'season',type:'number',default:'2024',doc:'Season year'},
+      {name:'sort_by',type:'text',default:'date',doc:'date | runs | runs_allowed'},
+      {name:'sort_order',type:'text',default:'desc',doc:'asc | desc'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/teams/{team_id}/run-differential': [
+      {name:'team_id',type:'text',default:'NYA',doc:'Team ID'},
+      {name:'season',type:'number',default:'2024',doc:'Required season'},
+      {name:'windows',type:'text',default:'10,20,30',doc:'Rolling windows'}
     ],
     '/games': [
-      {name:'season',type:'number',default:'1998',doc:'Season year'},
-      {name:'home_team',type:'text',default:'',doc:'Home team ID'},
-      {name:'min_innings',type:'number',default:'9',doc:'Minimum innings'},
-      {name:'postseason',type:'text',default:'false',doc:'true | false'},
-      {name:'limit',type:'number',default:'20',doc:'Results per page'},
+      {name:'season',type:'number',default:'2024',doc:'Season year'},
+      {name:'home_team',type:'text',default:'',doc:'Home team filter'},
+      {name:'away_team',type:'text',default:'',doc:'Away team filter'},
+      {name:'park_id',type:'text',default:'',doc:'Park filter'},
+      {name:'date_from',type:'text',default:'',doc:'YYYY-MM-DD'},
+      {name:'date_to',type:'text',default:'',doc:'YYYY-MM-DD'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/games/{id}': [
+      {name:'id',type:'text',default:'NYA202404010',doc:'Retrosheet game ID'}
+    ],
+    '/games/{id}/events': [
+      {name:'id',type:'text',default:'NYA202404010',doc:'Retrosheet game ID'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'50',doc:'Results per page'}
+    ],
+    '/games/{id}/plays': [
+      {name:'id',type:'text',default:'NYA202404010',doc:'Retrosheet game ID'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'50',doc:'Results per page'}
+    ],
+    '/games/{id}/pitches': [
+      {name:'id',type:'text',default:'NYA202404010',doc:'Retrosheet game ID'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'100',doc:'Results per page'}
     ],
     '/stats/batting': [
       {name:'season_from',type:'number',default:'1990',doc:'Season range start'},
       {name:'season_to',type:'number',default:'2000',doc:'Season range end'},
-      {name:'min_ab',type:'number',default:'300',doc:'Minimum at-bats'},
-      {name:'sort',type:'text',default:'hr',doc:'Sort field'},
-      {name:'order',type:'text',default:'desc',doc:'asc | desc'},
-      {name:'limit',type:'number',default:'20',doc:'Results per page'},
+      {name:'min_ab',type:'number',default:'300',doc:'Minimum AB'},
+      {name:'sort_by',type:'text',default:'hr',doc:'Sort field'},
+      {name:'sort_order',type:'text',default:'desc',doc:'asc | desc'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
     ],
+    '/stats/pitching': [
+      {name:'season',type:'number',default:'2024',doc:'Optional season'},
+      {name:'min_ip',type:'number',default:'150',doc:'Minimum innings pitched'},
+      {name:'sort_by',type:'text',default:'era',doc:'Sort field'},
+      {name:'sort_order',type:'text',default:'asc',doc:'asc | desc'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/seasons/{year}/leaders/batting': [
+      {name:'year',type:'number',default:'1998',doc:'Season year'},
+      {name:'stat',type:'text',default:'hr',doc:'Leader stat'},
+      {name:'league',type:'text',default:'',doc:'AL or NL'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'10',doc:'Results per page'}
+    ],
+    '/leaders/pitching/career': [
+      {name:'stat',type:'text',default:'so',doc:'Career stat'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'10',doc:'Results per page'}
+    ],
+    '/win-expectancy': [
+      {name:'inning',type:'number',default:'9',doc:'1-9'},
+      {name:'is_bottom',type:'text',default:'true',doc:'true | false'},
+      {name:'outs',type:'number',default:'2',doc:'0-2'},
+      {name:'runners',type:'text',default:'12_',doc:'___,1__,12_,123, etc.'},
+      {name:'score_diff',type:'number',default:'-1',doc:'Home score differential'},
+      {name:'start_year',type:'number',default:'',doc:'Optional era start year'},
+      {name:'end_year',type:'number',default:'',doc:'Optional era end year'}
+    ],
+    '/win-expectancy/eras': [],
+    '/games/{game_id}/win-probability': [
+      {name:'game_id',type:'text',default:'NYA202404010',doc:'Retrosheet game ID'}
+    ],
+    '/federalleague/games': [
+      {name:'season',type:'number',default:'1914',doc:'Optional year filter'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/negroleagues/games': [
+      {name:'season',type:'number',default:'1942',doc:'Optional year filter'},
+      {name:'page',type:'number',default:'1',doc:'Page number'},
+      {name:'per_page',type:'number',default:'20',doc:'Results per page'}
+    ],
+    '/mlb/teams': [
+      {name:'sportId',type:'number',default:'1',doc:'MLB sport ID'},
+      {name:'season',type:'number',default:'2025',doc:'Optional season'}
+    ]
   };
 
   const sampleResponses = {
-    '/players': `{
-  <span class="jk">"total"</span>: <span class="jn">18589</span>,
-  <span class="jk">"page"</span>: <span class="jn">1</span>,
-  <span class="jk">"per_page"</span>: <span class="jn">20</span>,
-  <span class="jk">"players"</span>: [
+    '/search/players': `{
+  <span class="jk">"data"</span>: [
     {
       <span class="jk">"player_id"</span>: <span class="js">"aaronha01"</span>,
       <span class="jk">"name_first"</span>: <span class="js">"Hank"</span>,
       <span class="jk">"name_last"</span>: <span class="js">"Aaron"</span>,
-      <span class="jk">"bats"</span>: <span class="js">"R"</span>,
-      <span class="jk">"throws"</span>: <span class="js">"R"</span>,
-      <span class="jk">"debut"</span>: <span class="js">"1954-04-13"</span>,
-      <span class="jk">"final_game"</span>: <span class="js">"1976-10-03"</span>
+      <span class="jk">"debut"</span>: <span class="js">"1954-04-13"</span>
     }
-  ]
+  ],
+  <span class="jk">"page"</span>: <span class="jn">1</span>,
+  <span class="jk">"per_page"</span>: <span class="jn">20</span>,
+  <span class="jk">"total"</span>: <span class="jn">247</span>
 }`,
-    '/players/{id}': `{
-  <span class="jk">"player_id"</span>: <span class="js">"mayswi01"</span>,
-  <span class="jk">"name_first"</span>: <span class="js">"Willie"</span>,
-  <span class="jk">"name_last"</span>: <span class="js">"Mays"</span>,
-  <span class="jk">"bats"</span>: <span class="js">"R"</span>,
-  <span class="jk">"throws"</span>: <span class="js">"R"</span>,
-  <span class="jk">"debut"</span>: <span class="js">"1951-05-25"</span>,
-  <span class="jk">"final_game"</span>: <span class="js">"1973-09-09"</span>,
-  <span class="jk">"birth_country"</span>: <span class="js">"USA"</span>
-}`,
-    '/games': `{
-  <span class="jk">"total"</span>: <span class="jn">2430</span>,
-  <span class="jk">"games"</span>: [
+    '/games/{id}/events': `{
+  <span class="jk">"data"</span>: [
     {
-      <span class="jk">"game_id"</span>: <span class="js">"NYA199804060"</span>,
-      <span class="jk">"date"</span>: <span class="js">"1998-04-06"</span>,
-      <span class="jk">"home_team"</span>: <span class="js">"NYA"</span>,
-      <span class="jk">"away_team"</span>: <span class="js">"OAK"</span>,
-      <span class="jk">"home_score"</span>: <span class="jn">17</span>,
-      <span class="jk">"away_score"</span>: <span class="jn">13</span>,
-      <span class="jk">"innings"</span>: <span class="jn">9</span>,
-      <span class="jk">"attendance"</span>: <span class="jn">56717</span>
+      <span class="jk">"game_id"</span>: <span class="js">"NYA202404010"</span>,
+      <span class="jk">"event_seq"</span>: <span class="jn">12</span>,
+      <span class="jk">"inning"</span>: <span class="jn">3</span>,
+      <span class="jk">"description"</span>: <span class="js">"Judge homered to left"</span>
     }
-  ]
+  ],
+  <span class="jk">"page"</span>: <span class="jn">1</span>,
+  <span class="jk">"per_page"</span>: <span class="jn">50</span>,
+  <span class="jk">"total"</span>: <span class="jn">96</span>
 }`,
+    '/win-expectancy/eras': `[
+  {
+    <span class="jk">"start_year"</span>: <span class="jn">2020</span>,
+    <span class="jk">"end_year"</span>: <span class="jn">2025</span>,
+    <span class="jk">"label"</span>: <span class="js">"2020-2025 Era"</span>,
+    <span class="jk">"state_count"</span>: <span class="jn">1248</span>
+  }
+]`
   };
 
-  let currentEndpoint = '/players';
+  const schemas = {
+    '/search/players': [
+      ['data[]','object','Paginated list of player rows'],
+      ['player_id','string','Lahman player key'],
+      ['name_first','string','First name'],
+      ['name_last','string','Last name'],
+      ['debut','date','Debut date'],
+      ['page','integer','Page number'],
+      ['per_page','integer','Results per page'],
+      ['total','integer','Total matches']
+    ],
+    '/games/{id}/events': [
+      ['data[]','object','Event rows'],
+      ['event_seq','integer','Event sequence number'],
+      ['inning','integer','Inning'],
+      ['description','string','Play description'],
+      ['page','integer','Page number'],
+      ['per_page','integer','Results per page'],
+      ['total','integer','Total events']
+    ],
+    '/win-expectancy/eras': [
+      ['start_year','integer','Era start year'],
+      ['end_year','integer','Era end year'],
+      ['label','string','Display label'],
+      ['state_count','integer','Distinct game states sampled'],
+      ['total_sample','integer','Total sample size for era']
+    ]
+  };
+
+  let currentEndpoint = '/search/players';
   let history = [];
+
+  function renderSchema(ep) {
+    const fields = schemas[ep] || [
+      ['data','object','Endpoint-specific payload'],
+      ['page','integer','Page number when paginated'],
+      ['per_page','integer','Results per page when paginated'],
+      ['total','integer','Total result count when paginated']
+    ];
+    document.getElementById('schemaBlock').innerHTML = fields.map(([name,type,desc], idx)=>
+      `<div class="schema-field"${idx===fields.length-1?' style="border-bottom:none"':''}><span class="sf-name">${name}</span><span class="sf-type">${type}</span><span class="sf-desc">${desc}</span></div>`
+    ).join('');
+  }
 
   function selectEndpoint(ep, el) {
     document.querySelectorAll('.ep-item').forEach(e=>e.classList.remove('active'));
@@ -284,9 +394,10 @@ v1/players?limit=20" \
     currentEndpoint = ep;
     document.getElementById('paramsEndpoint').textContent = ep;
     renderParams(ep);
+    renderSchema(ep);
     buildUrl();
     document.getElementById('respBar').style.display='none';
-    document.getElementById('jsonView').innerHTML='<span style="color:var(--muted)">// Hit "Send" to see the response here</span>';
+    document.getElementById('jsonView').innerHTML='<span style="color:var(--muted)">// Hit "Send" to simulate response output</span>';
   }
 
   function renderParams(ep) {
@@ -302,55 +413,57 @@ v1/players?limit=20" \
   }
 
   function buildUrl() {
-    const params = endpointParams[currentEndpoint]||[];
+    const params = endpointParams[currentEndpoint] || [];
     const base = 'https://api.baseball.example/v1';
     let path = currentEndpoint;
     const qp = [];
+
     params.forEach(p=>{
       const el = document.getElementById('param_'+p.name);
-      if(!el) return;
+      if (!el) return;
       const v = el.value.trim();
-      if(path.includes(`{${p.name}}`)) {
-        path = path.replace(`{${p.name}}`, v||p.default||p.name);
-      } else if(v && v!==p.default) {
-        qp.push(`${p.name}=${encodeURIComponent(v)}`);
-      } else if(v && p.default) {
+
+      if (path.includes(`{${p.name}}`)) {
+        path = path.replace(`{${p.name}}`, v || p.default || p.name);
+      } else if (v !== '') {
         qp.push(`${p.name}=${encodeURIComponent(v)}`);
       }
     });
-    const url = base+path+(qp.length?'?'+qp.join('&'):'');
-    document.getElementById('urlInput').value=url;
-    document.getElementById('curlBlock').textContent=`curl -s \\\n  "${url}" \\\n  | jq .`;
+
+    const url = base + path + (qp.length ? '?' + qp.join('&') : '');
+    document.getElementById('urlInput').value = url;
+    document.getElementById('curlBlock').textContent = `curl -s \\\n  "${url}" \\\n  | jq .`;
   }
 
   function send() {
     const url = document.getElementById('urlInput').value;
-    const start = Date.now();
-    // Simulate response
+
     setTimeout(()=>{
-      const ms = Math.floor(Math.random()*20+8);
+      const ms = Math.floor(Math.random()*25+8);
       document.getElementById('respBar').style.display='flex';
       document.getElementById('statusCode').textContent='200 OK';
       document.getElementById('respTime').textContent=ms+'ms';
       document.getElementById('respSize').textContent=(Math.random()*2+0.5).toFixed(1)+' KB';
       document.getElementById('cacheStatus').textContent='cache: '+(Math.random()>0.5?'hit':'miss');
       document.getElementById('totalCount').textContent='total: '+Math.floor(Math.random()*5000+10)+' records';
-      const resp = sampleResponses[currentEndpoint]||sampleResponses['/players'];
+
+      const resp = sampleResponses[currentEndpoint] || sampleResponses['/search/players'];
       document.getElementById('jsonView').innerHTML=resp;
 
-      // Add to history
       history.unshift('GET '+url.replace('https://api.baseball.example/v1',''));
-      if(history.length>5) history.pop();
-      document.getElementById('historyBlock').innerHTML=history.map(h=>`<div class="history-item" onclick="document.getElementById('urlInput').value='https://api.baseball.example/v1${h.replace('GET ','')}'">GET ${h.replace('GET ','')}</div>`).join('');
-    }, 150);
+      if (history.length > 6) history.pop();
+      document.getElementById('historyBlock').innerHTML=history.map(h=>
+        `<div class="history-item" onclick="document.getElementById('urlInput').value='https://api.baseball.example/v1${h.replace('GET ','')}'">${h}</div>`
+      ).join('');
+    }, 140);
   }
 
   function copyCurl() {
     navigator.clipboard.writeText(document.getElementById('curlBlock').textContent);
   }
 
-  // Init
-  renderParams('/players');
+  renderParams('/search/players');
+  renderSchema('/search/players');
   buildUrl();
 </script>
 </body>

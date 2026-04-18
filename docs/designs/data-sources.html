@@ -6,68 +6,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    :root{--bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981;--lahman:#3b82f6;--retro:#10b981;--mlb:#f59e0b}
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
-    h1,h2,h3{font-family:'Google Sans',sans-serif}
-    code,pre{font-family:'Google Sans Code',monospace}
-    .site-header{border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:56px;background:var(--surface)}
-    .logo{font-family:'Google Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none}
-    .badge{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);padding:2px 8px;border-radius:4px}
-    .nav-links{margin-left:auto;display:flex;gap:0.25rem}
-    .nav-links a{font-size:0.8rem;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:4px;transition:color 0.15s,background 0.15s}
-    .nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--border)}
-
-    .main{max-width:1100px;margin:0 auto;padding:2rem}
-
-    .page-title{font-size:1.75rem;font-weight:700;letter-spacing:-0.03em;color:#f1f5f9;margin-bottom:0.4rem}
-    .page-sub{font-size:0.85rem;color:var(--muted);margin-bottom:2rem;line-height:1.6}
-
-    .sources-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:2rem}
-    .source-card{background:var(--surface);padding:1.5rem}
-    .source-badge{display:inline-flex;align-items:center;gap:0.4rem;padding:4px 10px;border-radius:99px;font-family:'Google Sans Code',monospace;font-size:0.7rem;font-weight:700;margin-bottom:0.75rem}
-    .badge-lahman{background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)}
-    .badge-retro{background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3)}
-    .badge-mlb{background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)}
-    .source-name{font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9;margin-bottom:0.4rem}
-    .source-desc{font-size:0.78rem;color:var(--muted);line-height:1.6;margin-bottom:0.75rem}
-    .source-meta{display:grid;grid-template-columns:1fr 1fr;gap:0.35rem}
-    .sm-item{background:var(--surface2);border-radius:5px;padding:0.4rem 0.6rem}
-    .sm-val{font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.82rem;color:#f1f5f9}
-    .sm-lbl{font-size:0.62rem;color:var(--muted)}
-    .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1.5rem}
-    .panel-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
-
-    /* Coverage timeline */
-    .timeline{position:relative;padding:0.75rem 0}
-    .tl-row{display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem}
-    .tl-label{font-family:'Google Sans Code',monospace;font-size:0.72rem;color:var(--muted);min-width:80px}
-    .tl-bar-wrap{flex:1;height:20px;background:var(--surface2);border-radius:4px;position:relative;overflow:hidden}
-    .tl-bar{height:100%;border-radius:4px;position:absolute;display:flex;align-items:center;padding-left:8px}
-    .tl-bar-text{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:rgba(255,255,255,0.6);white-space:nowrap}
-    .tl-years{font-family:'Google Sans Code',monospace;font-size:0.68rem;color:var(--muted);min-width:100px;text-align:right}
-
-    /* ID mapping */
-    .id-table{width:100%;border-collapse:collapse;font-size:0.75rem}
-    .id-table th{text-align:left;color:var(--muted);font-weight:500;padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);font-family:'Google Sans',sans-serif;font-size:0.72rem}
-    .id-table td{padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);color:var(--text);font-family:'Google Sans Code',monospace;font-size:0.72rem}
-    .id-table tr:last-child td{border-bottom:none}
-    .id-badge{display:inline-block;padding:1px 7px;border-radius:3px;font-size:0.65rem}
-
-    /* Caveats */
-    .caveat-list{display:flex;flex-direction:column;gap:0.5rem}
-    .caveat-item{display:flex;gap:0.75rem;padding:0.6rem 0.75rem;background:var(--surface2);border-radius:6px;align-items:flex-start}
-    .caveat-dot{width:6px;height:6px;border-radius:50%;margin-top:0.4rem;flex-shrink:0}
-    .caveat-text{font-size:0.78rem;color:var(--muted);line-height:1.6}
-    .caveat-text strong{color:#f1f5f9}
-
-    /* Two col */
-    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-  </style>
-</head>
-<body>
+  </head>
+<body class="page-data-sources">
 <header class="site-header">
   <a href="index.html" class="logo">Baseball API</a>
   <span class="badge">data sources</span>
@@ -83,7 +25,7 @@
 <div class="main">
 
   <div class="page-title">Data Sources &amp; Provenance</div>
-  <div class="page-sub">This API combines three data sources. Understanding which data comes from where, its historical coverage, and its known limitations is essential for accurate research.</div>
+  <div class="page-sub">This API combines three data sources plus league-specific historical slices. Understanding source provenance, coverage windows, and era boundaries is essential for accurate comparisons.</div>
 
   <!-- Source cards -->
   <div class="sources-grid">
@@ -94,7 +36,7 @@
       <div class="source-desc">The canonical open-source statistical database for major league baseball. Covers batting, pitching, fielding, standings, team stats, franchise history, awards, managerial records, Hall of Fame voting, and postseason data.</div>
       <div class="source-meta">
         <div class="sm-item"><div class="sm-val">1871</div><div class="sm-lbl">Starts</div></div>
-        <div class="sm-item"><div class="sm-val">2024</div><div class="sm-lbl">Through</div></div>
+        <div class="sm-item"><div class="sm-val">2025</div><div class="sm-lbl">Through</div></div>
         <div class="sm-item"><div class="sm-val">Annual</div><div class="sm-lbl">Update cadence</div></div>
         <div class="sm-item"><div class="sm-val">playerID</div><div class="sm-lbl">Primary key</div></div>
       </div>
@@ -106,7 +48,7 @@
       <div class="source-desc">Detailed game and play-by-play event data for historical MLB games, including game logs, box scores, and annual roster files. The richest source for game-level and event-level historical records.</div>
       <div class="source-meta">
         <div class="sm-item"><div class="sm-val">1918</div><div class="sm-lbl">Starts (dense)</div></div>
-        <div class="sm-item"><div class="sm-val">2024</div><div class="sm-lbl">Through</div></div>
+        <div class="sm-item"><div class="sm-val">2025</div><div class="sm-lbl">Through</div></div>
         <div class="sm-item"><div class="sm-val">Periodic</div><div class="sm-lbl">Update cadence</div></div>
         <div class="sm-item"><div class="sm-val">gameID</div><div class="sm-lbl">Primary key</div></div>
       </div>
@@ -141,14 +83,14 @@
         <div class="tl-bar-wrap">
           <div class="tl-bar" style="background:rgba(59,130,246,0.5);left:0;width:100%"><span class="tl-bar-text">batting · pitching · fielding · awards · HoF</span></div>
         </div>
-        <div class="tl-years">1871 – 2024</div>
+        <div class="tl-years">1871 – 2025</div>
       </div>
       <div class="tl-row">
         <div class="tl-label">Retrosheet</div>
         <div class="tl-bar-wrap">
-          <div class="tl-bar" style="background:rgba(16,185,129,0.5);left:3%;width:97%"><span class="tl-bar-text">game logs · event files · rosters</span></div>
+          <div class="tl-bar" style="background:rgba(16,185,129,0.5);left:3%;width:97%"><span class="tl-bar-text">game logs · event files · rosters (+ fed/nlg slices)</span></div>
         </div>
-        <div class="tl-years">1918 – 2024</div>
+        <div class="tl-years">1918 – 2025</div>
       </div>
       <div class="tl-row">
         <div class="tl-label">MLB StatsAPI</div>
@@ -157,6 +99,24 @@
         </div>
         <div class="tl-years">~2000 – live</div>
       </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">Era Matrix</div>
+    <div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin-bottom:0.75rem">
+      <span class="id-badge" style="background:rgba(16,185,129,0.15);color:#10b981">fed 1914-1915</span>
+      <span class="id-badge" style="background:rgba(16,185,129,0.15);color:#10b981">nlg 1935-1949</span>
+      <span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">boomer 1950-1962</span>
+      <span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">pitcher 1963-1968</span>
+      <span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">turf 1969-1993</span>
+      <span class="id-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">steroid 1994-2004</span>
+      <span class="id-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">moneyball 2005-2012</span>
+      <span class="id-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">statcast 2013-2019</span>
+      <span class="id-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">modern 2020-2025</span>
+    </div>
+    <div style="font-size:0.75rem;color:var(--muted);line-height:1.6">
+      Static era buckets come from seed configuration. Dynamic game-state eras for win expectancy should be read from <code>/v1/win-expectancy/eras</code> before rendering era selectors in-app.
     </div>
   </div>
 
@@ -218,6 +178,10 @@
           <div class="caveat-text"><strong>Negro Leagues:</strong> Lahman and Retrosheet have limited coverage of Negro League seasons. Data should not be used for cross-era comparisons without noting this gap.</div>
         </div>
         <div class="caveat-item">
+          <div class="caveat-dot" style="background:#ef4444"></div>
+          <div class="caveat-text"><strong>Federal League:</strong> Dedicated coverage exists only for 1914-1915 via <code>/v1/federalleague/*</code>. Treat cross-league comparisons as historical context, not 1:1 modern equivalence.</div>
+        </div>
+        <div class="caveat-item">
           <div class="caveat-dot" style="background:#f59e0b"></div>
           <div class="caveat-text"><strong>1994 strike season:</strong> Lahman has partial season records. Some aggregate statistics may be incomplete.</div>
         </div>
@@ -241,15 +205,15 @@
       <table class="id-table" style="font-size:0.72rem">
         <thead><tr><th>Data type</th><th>Primary source</th><th>Fallback</th><th>Coverage</th><th>Last updated</th></tr></thead>
         <tbody>
-          <tr><td>Player batting stats</td><td><span class="id-badge badge-lahman" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td>—</td><td>1871–2024</td><td>2025-01-15</td></tr>
-          <tr><td>Player pitching stats</td><td><span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td>—</td><td>1871–2024</td><td>2025-01-15</td></tr>
-          <tr><td>Game logs</td><td><span class="id-badge" style="background:rgba(16,185,129,0.15);color:#10b981">Retrosheet</span></td><td><span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td>1918–2024</td><td>2024-11-30</td></tr>
-          <tr><td>Play-by-play events</td><td><span class="id-badge" style="background:rgba(16,185,129,0.15);color:#10b981">Retrosheet</span></td><td>—</td><td>1918–2024 (partial)</td><td>2024-11-30</td></tr>
-          <tr><td>Standings</td><td><span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td><span class="id-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">MLB StatsAPI</span></td><td>1871–2024</td><td>2025-01-15</td></tr>
+          <tr><td>Player batting stats</td><td><span class="id-badge badge-lahman" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td>—</td><td>1871–2025</td><td>2026-01-15</td></tr>
+          <tr><td>Player pitching stats</td><td><span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td>—</td><td>1871–2025</td><td>2026-01-15</td></tr>
+          <tr><td>Game logs</td><td><span class="id-badge" style="background:rgba(16,185,129,0.15);color:#10b981">Retrosheet</span></td><td><span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td>1918–2025</td><td>2026-02-04</td></tr>
+          <tr><td>Play-by-play events</td><td><span class="id-badge" style="background:rgba(16,185,129,0.15);color:#10b981">Retrosheet</span></td><td>—</td><td>1918–2025 (partial)</td><td>2026-02-04</td></tr>
+          <tr><td>Standings</td><td><span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td><span class="id-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">MLB StatsAPI</span></td><td>1871–2025</td><td>2026-01-15</td></tr>
           <tr><td>Schedules (future)</td><td><span class="id-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">MLB StatsAPI</span></td><td>—</td><td>2000–live</td><td>Live</td></tr>
-          <tr><td>Venues / parks</td><td><span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td><span class="id-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">MLB StatsAPI</span></td><td>1871–2024</td><td>2025-01-15</td></tr>
-          <tr><td>Awards &amp; HOF</td><td><span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td>—</td><td>1936–2024</td><td>2025-01-15</td></tr>
-          <tr><td>Rosters</td><td><span class="id-badge" style="background:rgba(16,185,129,0.15);color:#10b981">Retrosheet</span></td><td><span class="id-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">MLB StatsAPI</span></td><td>1905–2024</td><td>2024-11-30</td></tr>
+          <tr><td>Venues / parks</td><td><span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td><span class="id-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">MLB StatsAPI</span></td><td>1871–2025</td><td>2026-01-15</td></tr>
+          <tr><td>Awards &amp; HOF</td><td><span class="id-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">Lahman</span></td><td>—</td><td>1936–2025</td><td>2026-01-15</td></tr>
+          <tr><td>Rosters</td><td><span class="id-badge" style="background:rgba(16,185,129,0.15);color:#10b981">Retrosheet</span></td><td><span class="id-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">MLB StatsAPI</span></td><td>1905–2025</td><td>2026-02-04</td></tr>
         </tbody>
       </table>
     </div>
@@ -260,7 +224,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
 <script>
   const ctx = document.getElementById('coverageChart').getContext('2d');
-  const decades = ['1871','1880','1890','1900','1910','1920','1930','1940','1950','1960','1970','1980','1990','2000','2010','2020','2024'];
+  const decades = ['1871','1880','1890','1900','1910','1920','1930','1940','1950','1960','1970','1980','1990','2000','2010','2020','2025'];
   new Chart(ctx, {
     type:'bar',
     data:{

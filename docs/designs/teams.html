@@ -6,57 +6,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    :root{--bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981}
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
-    h1,h2,h3,h4{font-family:'Google Sans',sans-serif}
-    code,pre,.mono{font-family:'Google Sans Code',monospace}
-    .site-header{border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:56px;background:var(--surface)}
-    .logo{font-family:'Google Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none}
-    .badge{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);padding:2px 8px;border-radius:4px}
-    .nav-links{margin-left:auto;display:flex;gap:0.25rem}
-    .nav-links a{font-size:0.8rem;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:4px;transition:color 0.15s,background 0.15s}
-    .nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--border)}
-    .layout{display:grid;grid-template-columns:260px 1fr 300px;height:calc(100vh - 56px)}
-    .sidebar{border-right:1px solid var(--border);overflow-y:auto;padding:1.25rem}
-    .center{overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
-    .api-panel{border-left:1px solid var(--border);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem}
-    .sidebar-label,.panel-label,.ap-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
-    .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
-    .tab-row{display:flex;gap:0.25rem;margin-bottom:1rem}
-    .tab{font-size:0.78rem;padding:5px 12px;border-radius:4px;cursor:pointer;color:var(--muted);border:1px solid transparent;transition:all 0.15s;font-family:'Google Sans',sans-serif}
-    .tab.active{background:var(--surface2);color:var(--text);border-color:var(--border)}
-    .tab:hover:not(.active){color:var(--text)}
-    table{width:100%;border-collapse:collapse;font-size:0.75rem}
-    th{text-align:left;color:var(--muted);font-weight:500;padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);cursor:pointer;font-family:'Google Sans',sans-serif;font-size:0.72rem;white-space:nowrap}
-    td{padding:0.4rem 0.5rem;border-bottom:1px solid var(--border);color:var(--text);font-family:'Google Sans Code',monospace;font-size:0.72rem}
-    tr:last-child td{border-bottom:none}
-    tr:hover td{background:var(--surface2)}
-    .api-url{font-family:'Google Sans Code',monospace;font-size:0.72rem;color:var(--accent);background:var(--surface2);padding:0.6rem 0.75rem;border-radius:6px;word-break:break-all;line-height:1.5}
-    .copy-btn{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);border:none;padding:4px 10px;border-radius:4px;cursor:pointer;width:100%;text-align:center;margin-top:0.35rem;transition:color 0.15s}
-    .copy-btn:hover{color:var(--text)}
-    .curl-block{background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;color:#a5b4fc;line-height:1.6;white-space:pre-wrap;word-break:break-all}
-    .json-preview{background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;color:#86efac;line-height:1.6;white-space:pre;overflow-x:auto;max-height:240px;overflow-y:auto}
-    .franchise-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
-    .f-name{font-family:'Google Sans',sans-serif;font-size:1.05rem;font-weight:700;color:#f1f5f9;margin-bottom:2px}
-    .f-meta{font-size:0.72rem;color:var(--muted);line-height:1.7}
-    .stat-row{display:flex;gap:1rem;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)}
-    .stat-chip{display:flex;flex-direction:column;gap:2px}
-    .sc-val{font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.95rem;color:#f1f5f9}
-    .sc-lbl{font-size:0.65rem;color:var(--muted)}
-    .franchise-list{display:flex;flex-direction:column;gap:0.3rem}
-    .fi{padding:0.5rem 0.75rem;border-radius:6px;cursor:pointer;font-size:0.8rem;transition:background 0.15s}
-    .fi:hover,.fi.active{background:var(--surface2)}
-    .fi .fi-name{color:#f1f5f9;margin-bottom:1px}
-    .fi .fi-meta{font-size:0.7rem;color:var(--muted);font-family:'Google Sans Code',monospace}
-    .seg-ctrl{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:1rem;width:fit-content}
-    .seg-btn{font-size:0.78rem;padding:5px 14px;cursor:pointer;color:var(--muted);border:none;background:transparent;font-family:'Google Sans',sans-serif;transition:all 0.15s}
-    .seg-btn.active{background:var(--border);color:var(--text)}
-  </style>
-</head>
-<body>
+  </head>
+<body class="page-teams">
 <header class="site-header">
   <a href="index.html" class="logo">Baseball API</a>
   <span class="badge">teams</span>

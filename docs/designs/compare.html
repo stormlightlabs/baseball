@@ -6,54 +6,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    :root{--bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981;--cA:#3b82f6;--cB:#f59e0b}
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
-    h1,h2,h3{font-family:'Google Sans',sans-serif}
-    code,pre{font-family:'Google Sans Code',monospace}
-    .site-header{border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:56px;background:var(--surface)}
-    .logo{font-family:'Google Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none}
-    .badge{font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);padding:2px 8px;border-radius:4px}
-    .nav-links{margin-left:auto;display:flex;gap:0.25rem}
-    .nav-links a{font-size:0.8rem;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:4px;transition:color 0.15s,background 0.15s}
-    .nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--border)}
-
-    .compare-header{padding:1.5rem 2rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;background:var(--surface)}
-    .compare-slot{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem}
-    .slot-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.5rem}
-    .slot-name{font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9;margin-bottom:2px}
-    .slot-meta{font-size:0.72rem;color:var(--muted)}
-    .slot-A .slot-name{color:var(--cA)}
-    .slot-B .slot-name{color:var(--cB)}
-    .vs-badge{font-family:'Google Sans',sans-serif;font-weight:700;font-size:1.1rem;color:var(--muted);text-align:center}
-    .mode-pills{display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;padding:1rem 2rem;border-bottom:1px solid var(--border);background:var(--surface)}
-    .mpill{font-size:0.75rem;padding:5px 14px;border-radius:99px;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'Google Sans',sans-serif;transition:all 0.15s}
-    .mpill.active{border-color:var(--accent);color:var(--accent);background:rgba(59,130,246,0.08)}
-    .content{padding:1.5rem 2rem;display:flex;flex-direction:column;gap:1.5rem}
-    .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
-    .panel-label{font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
-    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-
-    /* Stat comparison table */
-    .stat-compare{width:100%;border-collapse:collapse}
-    .stat-compare td{padding:0.5rem 0.75rem;border-bottom:1px solid var(--border);font-size:0.82rem}
-    .stat-compare tr:last-child td{border-bottom:none}
-    .stat-compare .sc-label{color:var(--muted);font-size:0.72rem;width:120px}
-    .sc-a{text-align:right;font-family:'Google Sans',sans-serif;font-weight:700;color:var(--cA)}
-    .sc-b{text-align:left;font-family:'Google Sans',sans-serif;font-weight:700;color:var(--cB)}
-    .sc-bar-wrap{flex:1;display:flex;align-items:center;gap:4px;justify-content:center}
-    .bar-a{height:8px;border-radius:3px 0 0 3px;background:var(--cA)}
-    .bar-b{height:8px;border-radius:0 3px 3px 0;background:var(--cB)}
-
-    .example-comparisons{display:flex;flex-wrap:wrap;gap:0.5rem}
-    .ec{font-size:0.75rem;padding:5px 12px;border-radius:6px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.15s}
-    .ec:hover{border-color:var(--accent);color:var(--accent)}
-    select,input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:5px;font-size:0.78rem;font-family:'Inter',sans-serif;outline:none}
-  </style>
-</head>
-<body>
+  </head>
+<body class="page-compare">
 <header class="site-header">
   <a href="index.html" class="logo">Baseball API</a>
   <span class="badge">compare</span>
