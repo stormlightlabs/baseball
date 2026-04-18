@@ -1,20 +1,21 @@
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import type { Era } from '$lib/eras';
   import EraBadge from './EraBadge.svelte';
 
   type Props = {
     era: Era;
-    /** When provided, renders as an anchor */
-    href?: string;
+    /** When provided, renders as a link to /seasons?year=... */
+    year?: number;
     onclick?: () => void;
   };
 
-  let { era, href, onclick }: Props = $props();
+  let { era, year, onclick }: Props = $props();
 </script>
 
-{#if href}
+{#if year}
   <a
-    {href}
+    href={resolve(`/seasons?year=${year}`)}
     class="inline-flex items-center gap-1.5 rounded-full border border-outline bg-crust px-2.5 py-1 no-underline transition-colors hover:border-primary/50 hover:bg-surface"
     title={era.caveat}>
     <EraBadge {era} size="xs" />

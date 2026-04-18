@@ -229,7 +229,7 @@
     <div class="mb-2 text-center font-monospace text-[0.65rem] tracking-wider text-muted uppercase">Jump to era</div>
     <div class="flex flex-wrap justify-center gap-2">
       {#each STATIC_ERAS as era (era.code)}
-        <EraRangeChip {era} href={resolve(`/seasons?year=${era.from}`)} />
+        <EraRangeChip {era} year={era.from} />
       {/each}
     </div>
   </section>
