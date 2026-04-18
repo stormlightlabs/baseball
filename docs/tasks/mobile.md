@@ -7,7 +7,7 @@
 
 ## Phase 0: Project Scaffold
 
-- [ ] Initialize Flutter project in `mobile/` with Android + iOS targets.
+- [x] Initialize Flutter project in `mobile/` with Android + iOS targets.
 - [ ] Configure `BLoC` for state management.
 - [ ] Add `dio` + `retrofit` and generate typed API client from OpenAPI spec.
 - [ ] Set up Material 3 theme with `ColorScheme.fromSeed()` and dark mode default.
@@ -160,7 +160,7 @@ Acceptance:
     - Seed from `player_id` hash.
     - Generate 32×32 sprite with team-colored cap and jersey.
     - Render at 128×128 with nearest-neighbor scaling.
-    - Use `pixel_art_generator` package or custom `CustomPainter` grid renderer.
+    - Use `pixel_art_generator` package.
 - [ ] Create `StatCardWidget` template:
     - Player avatar, name, position, team.
     - 4-6 headline stats with inline sparklines.
