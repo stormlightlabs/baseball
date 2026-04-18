@@ -1,105 +1,66 @@
 import 'package:flutter/material.dart';
 
 enum MlbTeam {
-  diamondbacks(167, 25, 48, 227, 212, 173),
-  braves(206, 17, 65, 19, 39, 79),
-  orioles(223, 70, 1, 0, 0, 0),
-  redSox(189, 48, 57, 12, 35, 64),
-  cubs(14, 51, 134, 204, 52, 51),
-  whiteSox(39, 37, 31, 196, 206, 212),
-  reds(198, 1, 31, 0, 0, 0),
-  guardians(227, 25, 55, 12, 35, 64),
-  rockies(51, 0, 111, 0, 0, 0),
-  tigers(12, 35, 64, 250, 70, 22),
-  astros(0, 45, 98, 235, 110, 31),
-  royals(0, 70, 135, 189, 155, 96),
-  angels(186, 0, 33, 0, 50, 99),
-  dodgers(0, 90, 156, 255, 255, 255),
-  marlins(0, 0, 0, 0, 119, 200),
-  brewers(18, 40, 75, 255, 197, 47),
-  twins(0, 43, 92, 211, 17, 69),
-  mets(0, 45, 114, 255, 89, 16),
-  yankees(19, 36, 72, 196, 206, 212),
-  athletics(0, 56, 49, 239, 178, 30),
-  phillies(232, 24, 40, 0, 45, 114),
-  pirates(39, 37, 31, 253, 184, 39),
-  padres(47, 36, 29, 162, 170, 173),
-  giants(253, 90, 30, 39, 37, 31),
-  mariners(12, 44, 86, 0, 92, 92),
-  cardinals(196, 30, 58, 12, 35, 64),
-  rays(9, 44, 92, 143, 188, 230),
-  rangers(0, 50, 120, 192, 17, 31),
-  blueJays(19, 74, 142, 29, 45, 92),
-  nationals(171, 0, 3, 20, 34, 90);
+  ari('ARI', 'Arizona Diamondbacks', '#A71930'),
+  atl('ATL', 'Atlanta Braves', '#CE1141'),
+  bal('BAL', 'Baltimore Orioles', '#DF4601'),
+  bos('BOS', 'Boston Red Sox', '#BD3039'),
+  chc('CHC', 'Chicago Cubs', '#0E3386'),
+  cws('CWS', 'Chicago White Sox', '#27251F'),
+  cin('CIN', 'Cincinnati Reds', '#C6011F'),
+  cle('CLE', 'Cleveland Guardians', '#E31937'),
+  col('COL', 'Colorado Rockies', '#33006F'),
+  det('DET', 'Detroit Tigers', '#0C2340'),
+  hou('HOU', 'Houston Astros', '#002D62'),
+  kc('KC', 'Kansas City Royals', '#004687'),
+  laa('LAA', 'Los Angeles Angels', '#BA0021'),
+  lad('LAD', 'Los Angeles Dodgers', '#005A9C'),
+  mia('MIA', 'Miami Marlins', '#000000'),
+  mil('MIL', 'Milwaukee Brewers', '#12284B'),
+  min('MIN', 'Minnesota Twins', '#002B5C'),
+  nym('NYM', 'New York Mets', '#002D72'),
+  nyy('NYY', 'New York Yankees', '#132448'),
+  ath('ATH', 'Athletics', '#003831'),
+  phi('PHI', 'Philadelphia Phillies', '#E81828'),
+  pit('PIT', 'Pittsburgh Pirates', '#27251F'),
+  sd('SD', 'San Diego Padres', '#2F241D'),
+  sf('SF', 'San Francisco Giants', '#FD5A1E'),
+  sea('SEA', 'Seattle Mariners', '#0C2C56'),
+  stl('STL', 'St. Louis Cardinals', '#C41E3A'),
+  tb('TB', 'Tampa Bay Rays', '#092C5C'),
+  tex('TEX', 'Texas Rangers', '#003278'),
+  tor('TOR', 'Toronto Blue Jays', '#134A8E'),
+  wsh('WSH', 'Washington Nationals', '#AB0003');
 
-  const MlbTeam(
-    this.primaryR,
-    this.primaryG,
-    this.primaryB,
-    this.secondaryR,
-    this.secondaryG,
-    this.secondaryB,
-  );
+  const MlbTeam(this.code, this.displayName, this.primaryHex);
 
-  final int primaryR;
-  final int primaryG;
-  final int primaryB;
-  final int secondaryR;
-  final int secondaryG;
-  final int secondaryB;
+  final String code;
+  final String displayName;
+  final String primaryHex;
 
-  Color get primaryColor => Color.fromARGB(255, primaryR, primaryG, primaryB);
-  Color get secondaryColor =>
-      Color.fromARGB(255, secondaryR, secondaryG, secondaryB);
+  Color get primaryColor => colorFromHex(primaryHex);
 
-  String get displayName => switch (this) {
-    MlbTeam.diamondbacks => 'Arizona Diamondbacks',
-    MlbTeam.braves => 'Atlanta Braves',
-    MlbTeam.orioles => 'Baltimore Orioles',
-    MlbTeam.redSox => 'Boston Red Sox',
-    MlbTeam.cubs => 'Chicago Cubs',
-    MlbTeam.whiteSox => 'Chicago White Sox',
-    MlbTeam.reds => 'Cincinnati Reds',
-    MlbTeam.guardians => 'Cleveland Guardians',
-    MlbTeam.rockies => 'Colorado Rockies',
-    MlbTeam.tigers => 'Detroit Tigers',
-    MlbTeam.astros => 'Houston Astros',
-    MlbTeam.royals => 'Kansas City Royals',
-    MlbTeam.angels => 'Los Angeles Angels',
-    MlbTeam.dodgers => 'Los Angeles Dodgers',
-    MlbTeam.marlins => 'Miami Marlins',
-    MlbTeam.brewers => 'Milwaukee Brewers',
-    MlbTeam.twins => 'Minnesota Twins',
-    MlbTeam.mets => 'New York Mets',
-    MlbTeam.yankees => 'New York Yankees',
-    MlbTeam.athletics => 'Oakland Athletics',
-    MlbTeam.phillies => 'Philadelphia Phillies',
-    MlbTeam.pirates => 'Pittsburgh Pirates',
-    MlbTeam.padres => 'San Diego Padres',
-    MlbTeam.giants => 'San Francisco Giants',
-    MlbTeam.mariners => 'Seattle Mariners',
-    MlbTeam.cardinals => 'St. Louis Cardinals',
-    MlbTeam.rays => 'Tampa Bay Rays',
-    MlbTeam.rangers => 'Texas Rangers',
-    MlbTeam.blueJays => 'Toronto Blue Jays',
-    MlbTeam.nationals => 'Washington Nationals',
-  };
+  static MlbTeam? fromCode(String? code) {
+    if (code == null) {
+      return null;
+    }
+    for (final team in MlbTeam.values) {
+      if (team.code == code) {
+        return team;
+      }
+    }
+    return null;
+  }
+}
 
-  String get primaryHex =>
-      '#${primaryR.toRadixString(16).padLeft(2, '0').toUpperCase()}'
-      '${primaryG.toRadixString(16).padLeft(2, '0').toUpperCase()}'
-      '${primaryB.toRadixString(16).padLeft(2, '0').toUpperCase()}';
+final Map<String, String> mlbTeamPrimaryHex = Map<String, String>.unmodifiable(<String, String>{
+  for (final team in MlbTeam.values) team.code: team.primaryHex,
+});
 
-  String get secondaryHex =>
-      '#${secondaryR.toRadixString(16).padLeft(2, '0').toUpperCase()}'
-      '${secondaryG.toRadixString(16).padLeft(2, '0').toUpperCase()}'
-      '${secondaryB.toRadixString(16).padLeft(2, '0').toUpperCase()}';
+Color? teamPrimaryColor(String? teamCode) => MlbTeam.fromCode(teamCode)?.primaryColor;
 
-  ColorScheme colorScheme({Brightness brightness = Brightness.light}) =>
-      ColorScheme.fromSeed(
-        seedColor: primaryColor,
-        brightness: brightness,
-        primary: primaryColor,
-        secondary: secondaryColor,
-      );
+Color colorFromHex(String hexColor) {
+  final normalized = hexColor.replaceFirst('#', '');
+  final value = int.parse('FF$normalized', radix: 16);
+  return Color(value);
 }

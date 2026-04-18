@@ -8,18 +8,18 @@
 ## Phase 0: Project Scaffold
 
 - [x] Initialize Flutter project in `mobile/` with Android + iOS targets.
-- [ ] Configure `BLoC` for state management.
-- [ ] Add `dio` + `retrofit` and generate typed API client from OpenAPI spec.
-- [ ] Set up Material 3 theme with `ColorScheme.fromSeed()` and dark mode default.
-- [ ] Implement team color map (30 teams → primary hex) as a static Dart map.
-- [ ] Add `dynamic_color` package; wrap `MaterialApp` with `DynamicColorBuilder` for fallback system palette on neutral screens.
-- [ ] Build bottom navigation shell (5 tabs: Home, Players, Teams, Games, More).
-- [ ] Configure `hive` for local cache and offline storage.
+- [x] Configure `BLoC` for state management.
+- [x] Add `dio` + `retrofit` and generate typed API client from OpenAPI spec.
+- [x] Set up Material 3 theme with `ColorScheme.fromSeed()` and dark mode default.
+- [x] Implement team color map (30 teams → primary hex) as a static Dart map.
+- [x] Add `dynamic_color` package; wrap `MaterialApp` with `DynamicColorBuilder` for fallback system palette on neutral screens.
+- [x] Build bottom navigation shell (5 tabs: Home, Players, Teams, Games, More).
+- [x] Configure `hive` for local cache and offline storage.
 
 Acceptance:
 
-- [ ] App launches on Android + iOS with bottom nav, dark theme, and team-aware color switching stub.
-- [ ] API client can fetch from `/api/v1/health` and display result.
+- [x] App launches on Android + iOS with bottom nav, dark theme, and team-aware color switching stub.
+- [x] API client can fetch from `/api/v1/health` and display result.
 
 ## Phase 1: Core Screens (Port from Mobile Designs)
 
@@ -34,7 +34,7 @@ Acceptance:
 
 - [ ] Bio card with pixel-art avatar placeholder, name, metadata, bio-stats grid.
 - [ ] Horizontal scrollable tabs: Batting, Pitching, Awards, HOF.
-- [ ] Career chart (line chart, selectable stats) using `fl_chart` or `CustomPainter`.
+- [ ] Career chart (line chart, selectable stats) using `fl_chart`
 - [ ] Season log table with sortable columns.
 - [ ] Awards section.
 - [ ] Dynamic theme: set `ColorScheme.fromSeed(team.primaryColor)` when player loads.
@@ -56,7 +56,7 @@ Acceptance:
 
 ### Seasons, Leaders, Compare, Data Sources
 
-- [ ] Port remaining screens from mobile designs (lower priority, can be stubs initially).
+- [ ] Port remaining screens from mobile designs
 
 Acceptance:
 
@@ -169,7 +169,7 @@ Acceptance:
     - Big Fly watermark.
 - [ ] Capture card as PNG via `RenderRepaintBoundary`.
 - [ ] Share via `share_plus` platform share sheet.
-- [ ] Add share action to Player Detail screen (FAB or app bar action).
+- [ ] Add share action to Player Detail screen (FAB).
 
 Acceptance:
 
