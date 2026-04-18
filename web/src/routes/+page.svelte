@@ -8,6 +8,15 @@
   import Pill from '$lib/components/Pill.svelte';
   import SearchInput from '$lib/components/SearchInput.svelte';
   import { STATIC_ERAS } from '$lib/eras';
+  import {
+    ALL_ENDPOINTS,
+    DATASET_UI_HINTS,
+    ENTITY_TYPES,
+    FEATURED_GROUPS,
+    FEATURED_QUERIES,
+    QUICK_LINKS,
+    SOURCE_COLORS
+  } from '$lib/home/constants';
   import { meta } from '$lib/meta.svelte.js';
   import { type ChartConfiguration } from 'chart.js';
   import { onMount } from 'svelte';
@@ -16,16 +25,6 @@
 
   let searchQuery = $state('');
   let activeEntity = $state<string | null>(null);
-
-  type EntityType = { label: string; path: '/players' | '/teams' | '/games' | '/seasons'; apiEndpoint: string };
-
-  const ENTITY_TYPES: EntityType[] = [
-    { label: 'Players', path: '/players', apiEndpoint: '/v1/search/players' },
-    { label: 'Teams', path: '/teams', apiEndpoint: '/v1/search/teams' },
-    { label: 'Franchises', path: '/teams', apiEndpoint: '/v1/search/teams' },
-    { label: 'Games', path: '/games', apiEndpoint: '/v1/search/games' },
-    { label: 'Parks', path: '/seasons', apiEndpoint: '/v1/search/parks' }
-  ];
 
   const activeApiEndpoint = $derived.by(() => {
     const entity = ENTITY_TYPES.find((e) => e.label === activeEntity);
@@ -40,7 +39,7 @@
     goto(resolve(`${path}?q=${encodeURIComponent(q)}`));
   }
 
-  function handlePill(entity: EntityType) {
+  function handlePill(entity: (typeof ENTITY_TYPES)[number]) {
     const q = searchQuery.trim();
     if (q) {
       goto(resolve(`${entity.path}?q=${encodeURIComponent(q)}`));
@@ -49,87 +48,9 @@
     }
   }
 
-  const QUICK_LINKS = [
-    { label: 'Players', path: '/players', hint: '/v1/players', desc: 'Career stats, batting, pitching, awards' },
-    { label: 'Teams', path: '/teams', hint: '/v1/franchises', desc: 'Franchise history and team-season records' },
-    { label: 'Games', path: '/games', hint: '/v1/games', desc: 'Game finder with advanced filters' },
-    {
-      label: 'Leaders',
-      path: '/leaders',
-      hint: '/v1/seasons/{year}/leaders/{type}',
-      desc: 'Stat leaderboards by season or career'
-    },
-    {
-      label: 'Seasons',
-      path: '/seasons',
-      hint: '/v1/seasons/{year}/teams',
-      desc: 'Season hub: teams, schedule, date explorer'
-    }
-  ] as const;
-
-  const FEATURED_QUERIES: { title: string; endpoint: string; group?: string }[] = [
-    { title: 'HR leaders in 1927', endpoint: '/v1/seasons/1927/leaders/batting?stat=hr', group: 'standard' },
-    {
-      title: 'Career HR leaders (min 3000 AB)',
-      endpoint: '/v1/stats/batting?sort_by=hr&min_ab=3000',
-      group: 'standard'
-    },
-    {
-      title: 'ERA leaders — Year of the Pitcher (1968)',
-      endpoint: '/v1/seasons/1968/leaders/pitching?stat=era',
-      group: 'standard'
-    },
-    {
-      title: 'Win expectancy — bases loaded, 2 outs',
-      endpoint: '/v1/win-expectancy?runners=7&outs=2',
-      group: 'derived'
-    },
-    { title: 'WAR leaders by season (Statcast era)', endpoint: '/v1/seasons/2019/leaders/war', group: 'derived' },
-    {
-      title: 'Run differential — 1998 Yankees',
-      endpoint: '/v1/teams/NYA/run-differential?season=1998',
-      group: 'derived'
-    },
-    { title: 'Federal League games (1914)', endpoint: '/v1/federalleague/games?season=1914', group: 'historical' },
-    { title: 'Negro Leagues teams', endpoint: '/v1/negroleagues/teams', group: 'historical' },
-    { title: 'Extra-inning games in 2023', endpoint: '/v1/games?season=2023&min_innings=10', group: 'standard' },
-    {
-      title: 'Most saves in a season (all-time)',
-      endpoint: '/v1/stats/pitching?sort_by=sv&sort_order=desc&min_ip=1',
-      group: 'standard'
-    },
-    { title: 'Batting advanced stats — 2016', endpoint: '/v1/seasons/2016/leaders/batting/advanced', group: 'derived' },
-    { title: 'Win expectancy eras (dynamic)', endpoint: '/v1/win-expectancy/eras', group: 'derived' }
-  ];
-
-  const FEATURED_GROUPS = [
-    { key: 'standard', label: 'Standard stats' },
-    { key: 'derived', label: 'Derived / computed' },
-    { key: 'historical', label: 'Historical leagues' }
-  ];
-
   let featuredGroup = $state<string>('standard');
 
   const visibleQueries = $derived(FEATURED_QUERIES.filter((q) => q.group === featuredGroup));
-
-  const ALL_ENDPOINTS = [
-    '/v1/players',
-    '/v1/players/{id}/seasons',
-    '/v1/players/{id}/awards',
-    '/v1/teams',
-    '/v1/franchises',
-    '/v1/games',
-    '/v1/seasons/{year}/teams',
-    '/v1/seasons/{year}/leaders/{type}',
-    '/v1/stats/batting',
-    '/v1/stats/pitching',
-    '/v1/win-expectancy',
-    '/v1/federalleague/games',
-    '/v1/negroleagues/games',
-    '/v1/meta'
-  ] as const;
-
-  const SOURCE_COLORS: Record<string, string> = { lahman: '#3b82f6', retrosheet: '#10b981' };
 
   let coverageChartConfig = $derived.by((): ChartConfiguration => {
     const coverage = meta.coverage;
@@ -179,32 +100,47 @@
     };
   });
 
-  let coverageBars = $derived.by(() => {
+  type CoverageBarItem = {
+    id: string;
+    label: string;
+    range: string;
+    percent: number;
+    variant: 'primary' | 'secondary' | 'warning';
+    href?: string;
+    tooltip?: string;
+  };
+
+  let coverageBars = $derived.by((): CoverageBarItem[] => {
     const coverageFrom = meta.dataFromYear ?? 1871;
     const coverageTo = meta.dataToYear ?? new Date().getFullYear();
     const coverageSpan = Math.max(1, coverageTo - coverageFrom);
 
     if (meta.datasets.length > 0) {
       return meta.datasets.map((ds) => ({
+        id: ds.id,
         label: ds.name,
         range:
           ds.coverage_from != null && ds.coverage_to != null
             ? `${ds.coverage_from} – ${ds.coverage_to}`
-            : 'Coverage n/a',
+            : `${ds.row_count.toLocaleString()} rows`,
         percent:
           ds.coverage_from != null && ds.coverage_to != null
             ? Math.round(((ds.coverage_to - ds.coverage_from) / coverageSpan) * 100)
-            : 0,
+            : ds.row_count > 0
+              ? 100
+              : 0,
         variant: (ds.healthy === false ? 'warning' : ds.id === 'lahman' ? 'primary' : 'secondary') as
           | 'primary'
           | 'secondary'
-          | 'warning'
+          | 'warning',
+        href: DATASET_UI_HINTS[ds.id]?.href,
+        tooltip: DATASET_UI_HINTS[ds.id]?.tooltip
       }));
     }
     return [
-      { label: 'Lahman Database', range: '1871 – 2023', percent: 98, variant: 'primary' as const },
-      { label: 'Retrosheet', range: '1871 – 2023', percent: 95, variant: 'secondary' as const },
-      { label: 'MLB StatsAPI', range: '2000 – present', percent: 75, variant: 'warning' as const }
+      { id: 'lahman', label: 'Lahman Database', range: '1871 – 2023', percent: 98, variant: 'primary' as const },
+      { id: 'retrosheet', label: 'Retrosheet', range: '1871 – 2023', percent: 95, variant: 'secondary' as const },
+      { id: 'mlb-statsapi', label: 'MLB StatsAPI', range: '2000 – present', percent: 75, variant: 'warning' as const }
     ];
   });
 </script>
@@ -296,7 +232,7 @@
         <div class="panel-label">API health</div>
         {#if meta.loading}
           <div class="grid grid-cols-2 gap-x-4 gap-y-4">
-            {#each { length: 6 } as _, i (i)}
+            {#each { length: 8 } as _, i (i)}
               <div>
                 <div class="mb-1 h-2 w-12 rounded bg-outline"></div>
                 <div class="h-4 w-20 rounded bg-surface"></div>
@@ -335,9 +271,15 @@
               <div class="font-mono text-sm text-foreground">{meta.dataTo}</div>
             </div>
             <div>
-              <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">sources</div>
+              <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">datasets</div>
               <div class="font-mono text-sm text-foreground">
                 {meta.healthyDatasetCount}/{meta.datasets.length || '—'} healthy
+              </div>
+            </div>
+            <div>
+              <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">required</div>
+              <div class="font-mono text-sm text-foreground">
+                {meta.requiredHealthyCount}/{meta.requiredDatasets.length || '—'} healthy
               </div>
             </div>
             <div>
@@ -351,8 +293,14 @@
       <div class="col-span-2 bg-crust p-5">
         <div class="panel-label">Dataset coverage</div>
         <div class="mb-4 space-y-2">
-          {#each coverageBars as bar (bar.label)}
-            <CoverageBar label={bar.label} range={bar.range} percent={bar.percent} variant={bar.variant} />
+          {#each coverageBars as bar (bar.id)}
+            <CoverageBar
+              label={bar.label}
+              range={bar.range}
+              percent={bar.percent}
+              variant={bar.variant}
+              href={bar.href}
+              tooltip={bar.tooltip} />
           {/each}
         </div>
         <div class="h-20">
