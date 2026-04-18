@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Home — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f13;
+      --surface: #13161c;
+      --surface2: #1a1e27;
+      --border: #252934;
+      --text: #e2e8f0;
+      --muted: #6b7280;
+      --accent: #3b82f6;
+      --accent2: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4 { font-family: 'Google Sans', sans-serif; }
+    .mono { font-family: 'Google Sans Code', monospace; }
+
+    /* Status bar */
+    .status-bar {
+      height: 44px;
+      background: var(--bg);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 20px 8px;
+      flex-shrink: 0;
+    }
+    .sb-time { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .sb-icons { display: flex; gap: 5px; align-items: center; }
+    .sb-icon { font-size: 0.7rem; color: var(--text); font-family: 'Google Sans Code', monospace; }
+
+    /* App shell */
+    .app { display: flex; flex-direction: column; height: 100%; min-height: 844px; }
+
+    /* Top header */
+    .app-header {
+      padding: 0 16px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .app-logo { font-family: 'Google Sans', sans-serif; font-size: 1.05rem; font-weight: 700; color: #f1f5f9; }
+    .app-logo span { color: var(--accent); }
+    .header-actions { display: flex; gap: 4px; }
+    .icon-btn { width: 36px; height: 36px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+
+    /* Scrollable content */
+    .content { flex: 1; overflow-y: auto; }
+
+    /* Search hero */
+    .search-section { padding: 20px 16px 16px; }
+    .search-title { font-family: 'Google Sans', sans-serif; font-size: 1.35rem; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+    .search-sub { font-size: 0.78rem; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+    .search-bar {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .search-bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+    }
+    .search-bar input::placeholder { color: var(--muted); }
+    .search-bar button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0 16px;
+      font-family: 'Google Sans', sans-serif;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    /* Entity pills */
+    .pills-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .pills-row::-webkit-scrollbar { display: none; }
+    .pill {
+      font-size: 0.72rem;
+      padding: 5px 12px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: 'Google Sans Code', monospace;
+      flex-shrink: 0;
+    }
+    .pill.active { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.08); }
+
+    /* Quick access grid */
+    .section-header { padding: 20px 16px 10px; }
+    .section-title { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      margin: 0 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .quick-card {
+      background: var(--surface);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .quick-card:hover { background: var(--surface2); }
+    .qc-icon { font-size: 1.1rem; margin-bottom: 2px; }
+    .qc-title { font-family: 'Google Sans', sans-serif; font-size: 0.88rem; font-weight: 600; color: #f1f5f9; }
+    .qc-sub { font-size: 0.68rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+
+    /* Featured queries */
+    .queries-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+    .query-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .query-card:hover { background: var(--surface2); }
+    .qc-name { font-size: 0.82rem; color: #f1f5f9; margin-bottom: 3px; font-family: 'Google Sans', sans-serif; font-weight: 500; }
+    .qc-ep { font-family: 'Google Sans Code', monospace; font-size: 0.65rem; color: var(--accent); line-height: 1.4; }
+
+    /* Health strip */
+    .health-strip {
+      margin: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .health-left { display: flex; align-items: center; gap: 8px; }
+    .health-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); }
+    .health-text { font-size: 0.82rem; color: var(--text); font-family: 'Google Sans', sans-serif; font-weight: 500; }
+    .health-sub { font-size: 0.68rem; color: var(--muted); }
+    .health-stats { display: flex; gap: 16px; }
+    .hs { display: flex; flex-direction: column; align-items: center; }
+    .hs-val { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.85rem; color: #f1f5f9; }
+    .hs-lbl { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+    /* Era chips */
+    .era-section { padding: 0 16px 20px; }
+    .era-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+    .era-chip {
+      font-family: 'Google Sans Code', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+    .era-chip:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    /* Bottom tab bar */
+    .tab-bar {
+      height: 64px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+      flex-shrink: 0;
+    }
+    .tab-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .tab-item:hover { background: var(--surface2); }
+    .tab-icon { font-size: 1.05rem; color: var(--muted); }
+    .tab-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans', sans-serif; }
+    .tab-item.active .tab-icon, .tab-item.active .tab-label { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons">
+      <span class="sb-icon">▲▲▲</span>
+      <span class="sb-icon">WiFi</span>
+      <span class="sb-icon">■■■</span>
+    </div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-logo">Big<span>Fly</span></div>
+    <div class="header-actions">
+      <div class="icon-btn">☰</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="search-section">
+      <div class="search-title">What can I find?</div>
+      <div class="search-sub">Search 1871–2025 across players, teams, games &amp; more.</div>
+      <div class="search-bar">
+        <input type="text" placeholder='"Babe Ruth", "1927 Yankees"…' />
+        <button>Go</button>
+      </div>
+      <div class="pills-row">
+        <span class="pill active">Players</span>
+        <span class="pill">Teams</span>
+        <span class="pill">Games</span>
+        <span class="pill">Franchises</span>
+        <span class="pill">Seasons</span>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Quick access</div>
+    </div>
+    <div class="quick-grid">
+      <div class="quick-card">
+        <div class="qc-icon">◎</div>
+        <div class="qc-title">Players</div>
+        <div class="qc-sub">/players/{id}</div>
+      </div>
+      <div class="quick-card">
+        <div class="qc-icon">◈</div>
+        <div class="qc-title">Teams</div>
+        <div class="qc-sub">/franchises/{id}</div>
+      </div>
+      <div class="quick-card">
+        <div class="qc-icon">◷</div>
+        <div class="qc-title">Games</div>
+        <div class="qc-sub">/games</div>
+      </div>
+      <div class="quick-card">
+        <div class="qc-icon">◫</div>
+        <div class="qc-title">Seasons</div>
+        <div class="qc-sub">/seasons/{year}</div>
+      </div>
+      <div class="quick-card">
+        <div class="qc-icon">◉</div>
+        <div class="qc-title">Leaders</div>
+        <div class="qc-sub">/stats/batting</div>
+      </div>
+      <div class="quick-card">
+        <div class="qc-icon">⇄</div>
+        <div class="qc-title">Compare</div>
+        <div class="qc-sub">side-by-side</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Featured queries</div>
+    </div>
+    <div class="queries-list">
+      <div class="query-card">
+        <div class="qc-name">Top HR hitters, 1920–1960</div>
+        <div class="qc-ep">/stats/batting?season_from=1920&amp;season_to=1960&amp;sort_by=hr</div>
+      </div>
+      <div class="query-card">
+        <div class="qc-name">Extra-inning games in 1986</div>
+        <div class="qc-ep">/achievements/extra-inning-games?season=1986</div>
+      </div>
+      <div class="query-card">
+        <div class="qc-name">Best ERAs: min 200 IP</div>
+        <div class="qc-ep">/stats/pitching?season=2000&amp;min_ip=200&amp;sort_by=era</div>
+      </div>
+      <div class="query-card">
+        <div class="qc-name">Win expectancy — 9th-inning jam</div>
+        <div class="qc-ep">/win-expectancy?inning=9&amp;outs=2&amp;runners=12_&amp;score_diff=-1</div>
+      </div>
+    </div>
+
+    <div class="health-strip">
+      <div class="health-left">
+        <div class="health-dot"></div>
+        <div>
+          <div class="health-text">API Online</div>
+          <div class="health-sub">/api/v1 · ~12ms avg</div>
+        </div>
+      </div>
+      <div class="health-stats">
+        <div class="hs"><div class="hs-val">1871</div><div class="hs-lbl">From</div></div>
+        <div class="hs"><div class="hs-val">2025</div><div class="hs-lbl">To</div></div>
+        <div class="hs"><div class="hs-val">3</div><div class="hs-lbl">Sources</div></div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Jump to era</div>
+    </div>
+    <div class="era-section">
+      <div class="era-chips">
+        <span class="era-chip">fed 1914-15</span>
+        <span class="era-chip">nlg 1935-49</span>
+        <span class="era-chip">boomer 1950-62</span>
+        <span class="era-chip">pitcher 1963-68</span>
+        <span class="era-chip">turf 1969-93</span>
+        <span class="era-chip">steroid 1994-04</span>
+        <span class="era-chip">moneyball 2005-12</span>
+        <span class="era-chip">statcast 2013-19</span>
+        <span class="era-chip">modern 2020-25</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item active">
+      <div class="tab-icon">⌂</div>
+      <div class="tab-label">Home</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◎</div>
+      <div class="tab-label">Players</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◈</div>
+      <div class="tab-label">Teams</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◷</div>
+      <div class="tab-label">Games</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">≡</div>
+      <div class="tab-label">More</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Pitch Tunnel — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f13; --surface: #13161c; --surface2: #1a1e27;
+      --border: #252934; --text: #e2e8f0; --muted: #6b7280;
+      --accent: #3b82f6; --accent2: #10b981;
+      --pitch-ff: #ef4444; --pitch-sl: #a78bfa; --pitch-ch: #22d3ee; --pitch-cb: #f59e0b; --pitch-si: #f472b6; --pitch-ct: #84cc16;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    h1,h2,h3 { font-family: 'Google Sans', sans-serif; }
+
+    .status-bar { height: 44px; background: var(--bg); display: flex; align-items: flex-end; justify-content: space-between; padding: 0 20px 8px; flex-shrink: 0; }
+    .sb-time { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .sb-icons { display: flex; gap: 5px; align-items: center; font-size: 0.7rem; color: var(--text); font-family: 'Google Sans Code', monospace; }
+
+    .app { display: flex; flex-direction: column; height: 100%; min-height: 844px; }
+
+    .app-header { padding: 0 16px; height: 52px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .app-title { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
+    .back-btn { color: var(--accent); font-size: 1.1rem; cursor: pointer; }
+
+    .content { flex: 1; overflow-y: auto; }
+
+    .bio-strip { margin: 12px 16px; display: flex; align-items: center; gap: 10px; }
+    .bio-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 1rem; flex-shrink: 0; }
+    .bio-name { font-family: 'Google Sans', sans-serif; font-size: 0.9rem; font-weight: 700; color: #f1f5f9; }
+    .bio-meta { font-size: 0.68rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+
+    .panel { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .panel-label { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+    /* Tunnel viewport */
+    .tunnel-viewport { position: relative; width: 100%; aspect-ratio: 4/3; background: #0a0c10; border-radius: 8px; overflow: hidden; }
+    .tunnel-scene { position: absolute; inset: 0; }
+    .tunnel-scene svg { width: 100%; height: 100%; }
+    .view-label { position: absolute; top: 8px; left: 10px; font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans Code', monospace; background: rgba(13,15,19,0.8); padding: 3px 8px; border-radius: 4px; }
+    .swipe-hint { position: absolute; bottom: 8px; right: 8px; font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans Code', monospace; background: rgba(13,15,19,0.8); padding: 3px 8px; border-radius: 4px; }
+
+    /* View switcher */
+    .view-row { display: flex; gap: 6px; margin-top: 10px; }
+    .view-btn { font-size: 0.66rem; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-family: 'Google Sans Code', monospace; transition: all 0.15s; }
+    .view-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.08); }
+
+    /* Pitch type legend */
+    .pitch-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .pitch-tag { display: flex; align-items: center; gap: 4px; font-size: 0.64rem; font-family: 'Google Sans Code', monospace; color: var(--muted); padding: 4px 8px; border-radius: 5px; border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
+    .pitch-tag.active { border-color: currentColor; }
+    .pitch-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    /* Time scrubber */
+    .scrubber { margin-top: 12px; }
+    .scrubber-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans Code', monospace; margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .scrubber-track { width: 100%; height: 4px; background: var(--surface2); border-radius: 2px; position: relative; }
+    .scrubber-fill { height: 100%; width: 65%; background: var(--accent); border-radius: 2px; }
+    .scrubber-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 2px solid var(--surface); position: absolute; top: -5px; left: calc(65% - 7px); }
+
+    /* Pitch detail card */
+    .pitch-detail { margin-top: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .pd-item { background: var(--surface2); padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .pd-val { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.78rem; color: #f1f5f9; }
+    .pd-lbl { font-size: 0.56rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+
+    /* Tunnel stats */
+    .tunnel-stats { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .ts-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .ts-row:last-child { border-bottom: none; }
+    .ts-pair { display: flex; gap: 4px; align-items: center; min-width: 60px; }
+    .ts-label { flex: 1; font-size: 0.68rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+    .ts-value { font-size: 0.72rem; font-family: 'Google Sans Code', monospace; color: var(--text); font-weight: 500; }
+    .ts-bar { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+    .ts-bar-fill { height: 100%; border-radius: 2px; }
+
+    .tab-bar { height: 64px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: stretch; flex-shrink: 0; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+    .tab-icon { font-size: 1.05rem; color: var(--muted); }
+    .tab-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans', sans-serif; }
+    .tab-item.active .tab-icon, .tab-item.active .tab-label { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title"><span class="back-btn">‹</span> Pitch Tunnel</div>
+  </div>
+
+  <div class="content">
+
+    <div class="bio-strip">
+      <div class="bio-avatar">◎</div>
+      <div>
+        <div class="bio-name">Corbin Burnes</div>
+        <div class="bio-meta">burneco01 · SP · BAL · RHP</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">Pitch tunnel — batter's eye view — 2024</div>
+
+      <div class="tunnel-viewport">
+        <div class="tunnel-scene">
+          <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+            <!-- Mound perspective lines (depth cues) -->
+            <line x1="50" y1="0" x2="120" y2="300" stroke="var(--border)" stroke-width="0.3" opacity="0.3" />
+            <line x1="350" y1="0" x2="280" y2="300" stroke="var(--border)" stroke-width="0.3" opacity="0.3" />
+
+            <!-- Strike zone (perspective) -->
+            <rect x="155" y="120" width="90" height="110" fill="none" stroke="var(--border)" stroke-width="1.5" rx="2" opacity="0.5" />
+            <!-- Zone quadrants -->
+            <line x1="185" y1="120" x2="185" y2="230" stroke="var(--border)" stroke-width="0.5" opacity="0.3" />
+            <line x1="215" y1="120" x2="215" y2="230" stroke="var(--border)" stroke-width="0.5" opacity="0.3" />
+            <line x1="155" y1="157" x2="245" y2="157" stroke="var(--border)" stroke-width="0.5" opacity="0.3" />
+            <line x1="155" y1="193" x2="245" y2="193" stroke="var(--border)" stroke-width="0.5" opacity="0.3" />
+
+            <!-- Release point cluster -->
+            <circle cx="195" cy="15" r="4" fill="var(--muted)" opacity="0.2" />
+
+            <!-- Four-seam trajectory (FF) -->
+            <path d="M195 15 Q197 80 200 170" fill="none" stroke="var(--pitch-ff)" stroke-width="2.5" opacity="0.8" />
+            <circle cx="200" cy="170" r="5" fill="var(--pitch-ff)" opacity="0.9" />
+
+            <!-- Slider trajectory (SL) -->
+            <path d="M195 15 Q197 80 230 195" fill="none" stroke="var(--pitch-sl)" stroke-width="2.5" opacity="0.8" />
+            <circle cx="230" cy="195" r="5" fill="var(--pitch-sl)" opacity="0.9" />
+
+            <!-- Changeup trajectory (CH) -->
+            <path d="M195 15 Q197 80 190 210" fill="none" stroke="var(--pitch-ch)" stroke-width="2.5" opacity="0.8" />
+            <circle cx="190" cy="210" r="5" fill="var(--pitch-ch)" opacity="0.9" />
+
+            <!-- Curveball trajectory (CB) -->
+            <path d="M195 15 Q196 90 185 240" fill="none" stroke="var(--pitch-cb)" stroke-width="2.5" opacity="0.8" />
+            <circle cx="185" cy="240" r="5" fill="var(--pitch-cb)" opacity="0.9" />
+
+            <!-- Cutter trajectory (CT) -->
+            <path d="M195 15 Q197 80 215 180" fill="none" stroke="var(--pitch-ct)" stroke-width="2.5" opacity="0.8" />
+            <circle cx="215" cy="180" r="5" fill="var(--pitch-ct)" opacity="0.9" />
+
+            <!-- Tunnel point marker -->
+            <circle cx="197" cy="80" r="3" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.6">
+              <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2s" repeatCount="indefinite" />
+            </circle>
+            <text x="210" y="83" fill="#ffffff" font-size="7" font-family="Google Sans Code, monospace" opacity="0.6">tunnel point</text>
+
+            <!-- Pitch type labels at endpoints -->
+            <text x="200" y="162" fill="var(--pitch-ff)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="middle">FF</text>
+            <text x="230" y="188" fill="var(--pitch-sl)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="start">SL</text>
+            <text x="177" y="210" fill="var(--pitch-ch)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="end">CH</text>
+            <text x="172" y="244" fill="var(--pitch-cb)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="end">CB</text>
+            <text x="222" y="174" fill="var(--pitch-ct)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="start">CT</text>
+          </svg>
+        </div>
+        <div class="view-label">BATTER'S EYE</div>
+        <div class="swipe-hint">swipe to rotate</div>
+      </div>
+
+      <div class="view-row">
+        <span class="view-btn active">Batter</span>
+        <span class="view-btn">Catcher</span>
+        <span class="view-btn">Overhead</span>
+        <span class="view-btn">Side</span>
+      </div>
+
+      <div class="pitch-legend">
+        <div class="pitch-tag active" style="color:var(--pitch-ff)"><div class="pitch-dot" style="background:var(--pitch-ff)"></div>FF 95.2</div>
+        <div class="pitch-tag active" style="color:var(--pitch-sl)"><div class="pitch-dot" style="background:var(--pitch-sl)"></div>SL 87.4</div>
+        <div class="pitch-tag active" style="color:var(--pitch-ch)"><div class="pitch-dot" style="background:var(--pitch-ch)"></div>CH 87.1</div>
+        <div class="pitch-tag active" style="color:var(--pitch-cb)"><div class="pitch-dot" style="background:var(--pitch-cb)"></div>CB 79.8</div>
+        <div class="pitch-tag active" style="color:var(--pitch-ct)"><div class="pitch-dot" style="background:var(--pitch-ct)"></div>CT 91.3</div>
+      </div>
+
+      <div class="scrubber">
+        <div class="scrubber-label"><span>release</span><span>plate</span></div>
+        <div class="scrubber-track">
+          <div class="scrubber-fill"></div>
+          <div class="scrubber-thumb"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected pitch detail -->
+    <div class="panel">
+      <div class="panel-label">Four-seam fastball — selected</div>
+      <div class="pitch-detail">
+        <div class="pd-item"><div class="pd-val">95.2</div><div class="pd-lbl">MPH</div></div>
+        <div class="pd-item"><div class="pd-val">2340</div><div class="pd-lbl">SPIN RPM</div></div>
+        <div class="pd-item"><div class="pd-val">14.8"</div><div class="pd-lbl">V-BREAK</div></div>
+        <div class="pd-item"><div class="pd-val">42%</div><div class="pd-lbl">USAGE</div></div>
+      </div>
+    </div>
+
+    <!-- Tunnel distance stats -->
+    <div class="tunnel-stats">
+      <div class="panel-label">Tunnel separation at decision point</div>
+      <div class="ts-row">
+        <div class="ts-pair">
+          <div class="pitch-dot" style="background:var(--pitch-ff)"></div>
+          <div class="pitch-dot" style="background:var(--pitch-sl)"></div>
+        </div>
+        <div class="ts-label">FF → SL</div>
+        <div class="ts-bar"><div class="ts-bar-fill" style="width:25%;background:var(--accent2)"></div></div>
+        <div class="ts-value">2.1"</div>
+      </div>
+      <div class="ts-row">
+        <div class="ts-pair">
+          <div class="pitch-dot" style="background:var(--pitch-ff)"></div>
+          <div class="pitch-dot" style="background:var(--pitch-ch)"></div>
+        </div>
+        <div class="ts-label">FF → CH</div>
+        <div class="ts-bar"><div class="ts-bar-fill" style="width:18%;background:var(--accent2)"></div></div>
+        <div class="ts-value">1.5"</div>
+      </div>
+      <div class="ts-row">
+        <div class="ts-pair">
+          <div class="pitch-dot" style="background:var(--pitch-ff)"></div>
+          <div class="pitch-dot" style="background:var(--pitch-cb)"></div>
+        </div>
+        <div class="ts-label">FF → CB</div>
+        <div class="ts-bar"><div class="ts-bar-fill" style="width:55%;background:var(--accent)"></div></div>
+        <div class="ts-value">4.8"</div>
+      </div>
+      <div class="ts-row">
+        <div class="ts-pair">
+          <div class="pitch-dot" style="background:var(--pitch-ff)"></div>
+          <div class="pitch-dot" style="background:var(--pitch-ct)"></div>
+        </div>
+        <div class="ts-label">FF → CT</div>
+        <div class="ts-bar"><div class="ts-bar-fill" style="width:12%;background:var(--accent2)"></div></div>
+        <div class="ts-value">1.1"</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item"><div class="tab-icon">⌂</div><div class="tab-label">Home</div></div>
+    <div class="tab-item active"><div class="tab-icon">◎</div><div class="tab-label">Players</div></div>
+    <div class="tab-item"><div class="tab-icon">◈</div><div class="tab-label">Teams</div></div>
+    <div class="tab-item"><div class="tab-icon">◷</div><div class="tab-label">Games</div></div>
+    <div class="tab-item"><div class="tab-icon">≡</div><div class="tab-label">More</div></div>
+  </div>
+
+</div>
+</body>
+</html>

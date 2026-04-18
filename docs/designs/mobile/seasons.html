@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Seasons — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981; }
+    * { box-sizing:border-box;margin:0;padding:0; }
+    html,body { height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif; }
+    h1,h2,h3 { font-family:'Google Sans',sans-serif; }
+
+    .status-bar { height:44px;background:var(--bg);display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 8px;flex-shrink:0; }
+    .sb-time { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.85rem;color:var(--text); }
+    .sb-icons { display:flex;gap:5px;font-size:0.7rem;color:var(--text);font-family:'Google Sans Code',monospace; }
+
+    .app { display:flex;flex-direction:column;height:100%;min-height:844px; }
+
+    /* Season header bar */
+    .season-header { padding:0 16px;height:60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0; }
+    .year-picker { display:flex;align-items:center;gap:6px; }
+    .year-btn { width:28px;height:28px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:0.8rem; }
+    .year-val { font-family:'Google Sans',sans-serif;font-size:1.5rem;font-weight:700;color:#f1f5f9;cursor:pointer;border-bottom:2px solid var(--accent);padding-bottom:1px; }
+    .league-pills { display:flex;gap:4px; }
+    .lpill { font-size:0.7rem;padding:4px 10px;border-radius:99px;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'Google Sans Code',monospace;transition:all 0.15s; }
+    .lpill.active { border-color:var(--accent);color:var(--accent); }
+
+    .content { flex:1;overflow-y:auto; }
+
+    /* Season summary strip */
+    .summary-strip { display:flex;gap:1px;background:var(--border);border-bottom:1px solid var(--border); }
+    .ss-item { flex:1;background:var(--surface);padding:12px 8px;text-align:center; }
+    .ss-val { font-family:'Google Sans',sans-serif;font-weight:700;font-size:1rem;color:#f1f5f9; }
+    .ss-lbl { font-size:0.6rem;color:var(--muted);font-family:'Google Sans Code',monospace;margin-top:2px; }
+
+    .panel { margin:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px; }
+    .panel-label { font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center; }
+    .panel-action { font-size:0.68rem;color:var(--accent);cursor:pointer;font-family:'Google Sans',sans-serif; }
+
+    /* Standings table */
+    .table-wrap { overflow-x:auto;-webkit-overflow-scrolling:touch; }
+    table { width:100%;border-collapse:collapse;font-size:0.72rem;min-width:280px; }
+    th { text-align:left;color:var(--muted);font-weight:500;padding:5px 6px;border-bottom:1px solid var(--border);font-family:'Google Sans',sans-serif;font-size:0.66rem;white-space:nowrap; }
+    td { padding:6px 6px;border-bottom:1px solid var(--border);color:var(--text);font-family:'Google Sans Code',monospace;font-size:0.69rem; }
+    tr:last-child td { border-bottom:none; }
+    td.team-name { font-family:'Google Sans',sans-serif;font-size:0.75rem;color:#f1f5f9; }
+    tr.div-champ td { background:rgba(59,130,246,0.05); }
+    .clinch-badge { display:inline-block;font-size:0.58rem;font-family:'Google Sans Code',monospace;color:var(--accent2);border:1px solid rgba(16,185,129,0.4);border-radius:3px;padding:0 4px;margin-left:4px; }
+
+    /* Division label */
+    .div-label { font-family:'Google Sans',sans-serif;font-size:0.75rem;font-weight:700;color:var(--muted);padding:8px 0 4px;border-bottom:1px solid var(--border); }
+    td.div-spacer { background:var(--surface2);padding:0;height:6px; }
+
+    /* Leaders list */
+    .leader-row { display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border); }
+    .leader-row:last-child { border-bottom:none; }
+    .lr-rank { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.78rem;color:var(--muted);min-width:18px;text-align:right; }
+    .lr-name { flex:1;font-size:0.8rem;color:#f1f5f9;font-family:'Google Sans',sans-serif; }
+    .lr-team { font-family:'Google Sans Code',monospace;font-size:0.67rem;color:var(--muted); }
+    .lr-val { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.9rem;color:#f1f5f9; }
+    .lr-bar { height:4px;border-radius:2px;background:var(--accent);opacity:0.5;display:inline-block;vertical-align:middle;margin-left:4px; }
+
+    /* Calendar heatmap */
+    .cal-grid { display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:6px; }
+    .cal-day-lbl { font-size:0.58rem;color:var(--muted);text-align:center;font-family:'Google Sans Code',monospace;padding:2px 0; }
+    .cal-day { height:12px;border-radius:2px;cursor:pointer;transition:opacity 0.15s; }
+    .cal-day:hover { opacity:0.7; }
+    .g0 { background:var(--border); }
+    .g1 { background:#1e3a5f; }
+    .g2 { background:#2563eb; }
+    .g3 { background:#3b82f6; }
+    .g4 { background:#60a5fa; }
+
+    /* Notable events */
+    .notable-item { background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:background 0.15s; }
+    .notable-item:hover { background:var(--border); }
+    .notable-title { font-size:0.82rem;color:#f1f5f9;margin-bottom:2px;font-family:'Google Sans',sans-serif;font-weight:500; }
+    .notable-ep { font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--accent); }
+
+    /* Postseason bracket */
+    .bracket-row { display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border); }
+    .bracket-row:last-child { border-bottom:none; }
+    .br-round { font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);min-width:44px; }
+    .br-matchup { flex:1;font-size:0.8rem;color:#f1f5f9;font-family:'Google Sans',sans-serif; }
+    .br-result { font-family:'Google Sans Code',monospace;font-size:0.68rem;color:var(--muted); }
+    .br-winner { color:var(--accent2); }
+
+    .tab-bar { height:64px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;flex-shrink:0; }
+    .tab-item { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer; }
+    .tab-icon { font-size:1.05rem;color:var(--muted); }
+    .tab-label { font-size:0.6rem;color:var(--muted);font-family:'Google Sans',sans-serif; }
+    .tab-item.active .tab-icon,.tab-item.active .tab-label { color:var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="season-header">
+    <div class="year-picker">
+      <div class="year-btn">‹</div>
+      <div class="year-val">1998</div>
+      <div class="year-btn">›</div>
+    </div>
+    <div class="league-pills">
+      <span class="lpill active">AL</span>
+      <span class="lpill">NL</span>
+      <span class="lpill">Both</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="summary-strip">
+      <div class="ss-item"><div class="ss-val">30</div><div class="ss-lbl">Teams</div></div>
+      <div class="ss-item"><div class="ss-val">162</div><div class="ss-lbl">G / team</div></div>
+      <div class="ss-item"><div class="ss-val">4,858</div><div class="ss-lbl">Total HR</div></div>
+      <div class="ss-item"><div class="ss-val">.266</div><div class="ss-lbl">Lg AVG</div></div>
+    </div>
+
+    <!-- AL Standings -->
+    <div class="panel" style="padding-bottom:4px">
+      <div class="panel-label">
+        <span>AL Standings</span>
+        <span class="panel-action">Full table ›</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Team</th><th>W</th><th>L</th><th>GB</th><th>RS</th><th>RA</th>
+          </tr></thead>
+          <tbody>
+            <tr><td colspan="6" style="padding:4px 6px;font-family:'Google Sans',sans-serif;font-size:0.67rem;color:var(--muted);background:var(--surface2);">AL East</td></tr>
+            <tr class="div-champ"><td class="team-name">New York Yankees<span class="clinch-badge">E</span></td><td>114</td><td>48</td><td>—</td><td>965</td><td>656</td></tr>
+            <tr><td class="team-name">Boston Red Sox</td><td>92</td><td>70</td><td>22</td><td>876</td><td>748</td></tr>
+            <tr><td class="team-name">Toronto Blue Jays</td><td>88</td><td>74</td><td>26</td><td>816</td><td>768</td></tr>
+            <tr><td colspan="6" style="padding:4px 6px;font-family:'Google Sans',sans-serif;font-size:0.67rem;color:var(--muted);background:var(--surface2);">AL Central</td></tr>
+            <tr class="div-champ"><td class="team-name">Cleveland Indians<span class="clinch-badge">E</span></td><td>89</td><td>73</td><td>—</td><td>850</td><td>779</td></tr>
+            <tr><td class="team-name">Chicago White Sox</td><td>80</td><td>82</td><td>9</td><td>792</td><td>807</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Season leaders -->
+    <div class="panel">
+      <div class="panel-label">
+        <span>Batting leaders</span>
+        <span class="panel-action">All leaders ›</span>
+      </div>
+
+      <div style="margin-bottom:10px">
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.6rem;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.06em">Home Runs</div>
+        <div class="leader-row">
+          <div class="lr-rank">1</div>
+          <div class="lr-name">Mark McGwire</div>
+          <div class="lr-team">STL</div>
+          <div class="lr-val">70 <div class="lr-bar" style="width:48px"></div></div>
+        </div>
+        <div class="leader-row">
+          <div class="lr-rank">2</div>
+          <div class="lr-name">Sammy Sosa</div>
+          <div class="lr-team">CHC</div>
+          <div class="lr-val">66 <div class="lr-bar" style="width:45px"></div></div>
+        </div>
+        <div class="leader-row">
+          <div class="lr-rank">3</div>
+          <div class="lr-name">Greg Vaughn</div>
+          <div class="lr-team">SDN</div>
+          <div class="lr-val">50 <div class="lr-bar" style="width:34px"></div></div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.6rem;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.06em">Batting Average</div>
+        <div class="leader-row">
+          <div class="lr-rank">1</div>
+          <div class="lr-name">Larry Walker</div>
+          <div class="lr-team">COL</div>
+          <div class="lr-val">.363</div>
+        </div>
+        <div class="leader-row">
+          <div class="lr-rank">2</div>
+          <div class="lr-name">Moises Alou</div>
+          <div class="lr-team">HOU</div>
+          <div class="lr-val">.312</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar heatmap -->
+    <div class="panel">
+      <div class="panel-label">Game days — 1998</div>
+      <div class="cal-grid">
+        <div class="cal-day-lbl">Su</div><div class="cal-day-lbl">Mo</div><div class="cal-day-lbl">Tu</div>
+        <div class="cal-day-lbl">We</div><div class="cal-day-lbl">Th</div><div class="cal-day-lbl">Fr</div><div class="cal-day-lbl">Sa</div>
+        <!-- April -->
+        <div class="cal-day g0"></div><div class="cal-day g0"></div><div class="cal-day g0"></div>
+        <div class="cal-day g2"></div><div class="cal-day g3"></div><div class="cal-day g3"></div><div class="cal-day g4"></div>
+        <div class="cal-day g3"></div><div class="cal-day g0"></div><div class="cal-day g2"></div>
+        <div class="cal-day g3"></div><div class="cal-day g3"></div><div class="cal-day g4"></div><div class="cal-day g4"></div>
+        <div class="cal-day g4"></div><div class="cal-day g0"></div><div class="cal-day g2"></div>
+        <div class="cal-day g3"></div><div class="cal-day g3"></div><div class="cal-day g4"></div><div class="cal-day g4"></div>
+        <div class="cal-day g4"></div><div class="cal-day g0"></div><div class="cal-day g2"></div>
+        <div class="cal-day g3"></div><div class="cal-day g3"></div><div class="cal-day g4"></div><div class="cal-day g4"></div>
+      </div>
+    </div>
+
+    <!-- Notable events -->
+    <div class="panel">
+      <div class="panel-label">Notable events</div>
+      <div class="notable-item">
+        <div class="notable-title">McGwire HR #62 — breaks Roger Maris record</div>
+        <div class="notable-ep">/games/1998090800/events</div>
+      </div>
+      <div class="notable-item">
+        <div class="notable-title">Sosa's 66th HR — career high</div>
+        <div class="notable-ep">/players/sosasa01/game-logs/batting</div>
+      </div>
+      <div class="notable-item">
+        <div class="notable-title">Yankees win AL-record 114th game</div>
+        <div class="notable-ep">/seasons/1998/teams/NYA</div>
+      </div>
+    </div>
+
+    <!-- Postseason -->
+    <div class="panel">
+      <div class="panel-label">Postseason results</div>
+      <div class="bracket-row">
+        <div class="br-round">ALDS</div>
+        <div class="br-matchup">NYA def. TEX</div>
+        <div class="br-result br-winner">3–0</div>
+      </div>
+      <div class="bracket-row">
+        <div class="br-round">ALDS</div>
+        <div class="br-matchup">CLE def. BOS</div>
+        <div class="br-result br-winner">3–1</div>
+      </div>
+      <div class="bracket-row">
+        <div class="br-round">ALCS</div>
+        <div class="br-matchup">NYA def. CLE</div>
+        <div class="br-result br-winner">4–2</div>
+      </div>
+      <div class="bracket-row">
+        <div class="br-round">NLCS</div>
+        <div class="br-matchup">SDN def. ATL</div>
+        <div class="br-result br-winner">4–2</div>
+      </div>
+      <div class="bracket-row">
+        <div class="br-round">World Series</div>
+        <div class="br-matchup">NYA def. SDN</div>
+        <div class="br-result br-winner">4–0</div>
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item"><div class="tab-icon">⌂</div><div class="tab-label">Home</div></div>
+    <div class="tab-item"><div class="tab-icon">◎</div><div class="tab-label">Players</div></div>
+    <div class="tab-item"><div class="tab-icon">◈</div><div class="tab-label">Teams</div></div>
+    <div class="tab-item"><div class="tab-icon">◷</div><div class="tab-label">Games</div></div>
+    <div class="tab-item active"><div class="tab-icon">≡</div><div class="tab-label">More</div></div>
+  </div>
+
+</div>
+</body>
+</html>

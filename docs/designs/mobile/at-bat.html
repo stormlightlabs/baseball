@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>At-Bat Sequencer — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f13; --surface: #13161c; --surface2: #1a1e27;
+      --border: #252934; --text: #e2e8f0; --muted: #6b7280;
+      --accent: #3b82f6; --accent2: #10b981;
+      --pitch-ff: #ef4444; --pitch-sl: #a78bfa; --pitch-ch: #22d3ee; --pitch-cb: #f59e0b;
+      --call-ball: #3b82f6; --call-strike: #ef4444; --call-foul: #f59e0b; --call-inplay: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    h1,h2,h3 { font-family: 'Google Sans', sans-serif; }
+
+    .status-bar { height: 44px; background: var(--bg); display: flex; align-items: flex-end; justify-content: space-between; padding: 0 20px 8px; flex-shrink: 0; }
+    .sb-time { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .sb-icons { display: flex; gap: 5px; align-items: center; font-size: 0.7rem; color: var(--text); font-family: 'Google Sans Code', monospace; }
+
+    .app { display: flex; flex-direction: column; height: 100%; min-height: 844px; }
+
+    .app-header { padding: 0 16px; height: 52px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .app-title { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
+    .back-btn { color: var(--accent); font-size: 1.1rem; cursor: pointer; }
+
+    .content { flex: 1; overflow-y: auto; }
+
+    .panel { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .panel-label { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+    /* Matchup header */
+    .matchup { margin: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .matchup-player { text-align: center; flex: 1; }
+    .matchup-role { font-size: 0.58rem; color: var(--muted); font-family: 'Google Sans Code', monospace; text-transform: uppercase; margin-bottom: 4px; }
+    .matchup-name { font-family: 'Google Sans', sans-serif; font-size: 0.85rem; font-weight: 700; color: #f1f5f9; }
+    .matchup-meta { font-size: 0.62rem; color: var(--muted); font-family: 'Google Sans Code', monospace; margin-top: 2px; }
+    .matchup-vs { font-family: 'Google Sans', sans-serif; font-size: 0.7rem; color: var(--muted); font-weight: 700; padding: 0 12px; }
+    .matchup-result { margin-top: 8px; font-size: 0.68rem; font-family: 'Google Sans Code', monospace; padding: 3px 10px; border-radius: 5px; display: inline-block; }
+    .matchup-result.hr { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+
+    /* Count display */
+    .count-display { display: flex; justify-content: center; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .count-group { display: flex; gap: 4px; align-items: center; }
+    .count-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans Code', monospace; width: 10px; }
+    .count-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--border); }
+    .count-dot.filled-b { background: var(--call-ball); border-color: var(--call-ball); }
+    .count-dot.filled-s { background: var(--call-strike); border-color: var(--call-strike); }
+    .count-text { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 1.4rem; color: #f1f5f9; margin: 0 8px; }
+
+    /* Strike zone */
+    .zone-container { display: flex; justify-content: center; margin-bottom: 12px; }
+    .zone-wrapper { position: relative; width: 200px; height: 240px; }
+    .zone-box { position: absolute; left: 40px; top: 30px; width: 120px; height: 150px; border: 1.5px solid var(--border); }
+    .zone-grid line { stroke: var(--border); stroke-width: 0.5; opacity: 0.4; }
+    /* Zone quadrant lines */
+    .zone-vline1 { position: absolute; left: 80px; top: 30px; width: 1px; height: 150px; background: var(--border); opacity: 0.3; }
+    .zone-vline2 { position: absolute; left: 120px; top: 30px; width: 1px; height: 150px; background: var(--border); opacity: 0.3; }
+    .zone-hline1 { position: absolute; left: 40px; top: 80px; width: 120px; height: 1px; background: var(--border); opacity: 0.3; }
+    .zone-hline2 { position: absolute; left: 40px; top: 130px; width: 120px; height: 1px; background: var(--border); opacity: 0.3; }
+
+    /* Pitch dots in zone */
+    .pitch-dot { position: absolute; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.52rem; font-family: 'Google Sans Code', monospace; font-weight: 700; color: #fff; cursor: pointer; transition: transform 0.15s; }
+    .pitch-dot:hover { transform: scale(1.2); }
+    .pitch-dot.current { box-shadow: 0 0 0 3px rgba(255,255,255,0.3); }
+
+    /* Sequence timeline */
+    .timeline { display: flex; align-items: center; gap: 0; margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .tl-pitch { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; cursor: pointer; position: relative; }
+    .tl-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.56rem; font-family: 'Google Sans Code', monospace; font-weight: 700; color: #fff; border: 2px solid transparent; transition: all 0.15s; }
+    .tl-dot.active { border-color: #fff; }
+    .tl-speed { font-size: 0.52rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+    .tl-call { font-size: 0.5rem; color: var(--muted); font-family: 'Google Sans Code', monospace; text-transform: uppercase; }
+    .tl-connector { width: 100%; height: 1px; background: var(--border); flex-shrink: 0; position: absolute; top: 14px; left: 50%; z-index: 0; }
+    .tl-pitch:last-child .tl-connector { display: none; }
+
+    /* Playback controls */
+    .playback { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 0 16px 12px; }
+    .play-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; color: #fff; border: none; }
+    .skip-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.9rem; color: var(--muted); }
+    .play-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+
+    /* Pitch detail card */
+    .pitch-info { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; }
+    .pi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .pi-title { font-family: 'Google Sans', sans-serif; font-size: 0.82rem; font-weight: 700; color: #f1f5f9; }
+    .pi-badge { font-size: 0.6rem; padding: 3px 8px; border-radius: 4px; font-family: 'Google Sans Code', monospace; }
+    .pi-badge.strike { background: rgba(239,68,68,0.12); color: #ef4444; }
+    .pi-badge.ball { background: rgba(59,130,246,0.12); color: #3b82f6; }
+    .pi-badge.inplay { background: rgba(16,185,129,0.12); color: #10b981; }
+    .pi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .pg-item { background: var(--surface2); padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .pg-val { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.78rem; color: #f1f5f9; }
+    .pg-lbl { font-size: 0.56rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+
+    .tab-bar { height: 64px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: stretch; flex-shrink: 0; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+    .tab-icon { font-size: 1.05rem; color: var(--muted); }
+    .tab-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans', sans-serif; }
+    .tab-item.active .tab-icon, .tab-item.active .tab-label { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title"><span class="back-btn">‹</span> At-Bat</div>
+  </div>
+
+  <div class="content">
+
+    <!-- Matchup header -->
+    <div class="matchup">
+      <div class="matchup-player">
+        <div class="matchup-role">Batter</div>
+        <div class="matchup-name">M. Trout</div>
+        <div class="matchup-meta">OF · R · LAA</div>
+      </div>
+      <div class="matchup-vs">VS</div>
+      <div class="matchup-player">
+        <div class="matchup-role">Pitcher</div>
+        <div class="matchup-name">C. Burnes</div>
+        <div class="matchup-meta">SP · R · BAL</div>
+        <div class="matchup-result hr">HOME RUN</div>
+      </div>
+    </div>
+
+    <!-- Count display -->
+    <div class="panel">
+      <div class="panel-label">Count — pitch 5 of 7</div>
+      <div class="count-display">
+        <div class="count-group">
+          <span class="count-label">B</span>
+          <div class="count-dot filled-b"></div>
+          <div class="count-dot filled-b"></div>
+          <div class="count-dot"></div>
+        </div>
+        <div class="count-text">2-2</div>
+        <div class="count-group">
+          <span class="count-label">S</span>
+          <div class="count-dot filled-s"></div>
+          <div class="count-dot filled-s"></div>
+        </div>
+      </div>
+
+      <!-- Strike zone with pitches -->
+      <div class="zone-container">
+        <div class="zone-wrapper">
+          <div class="zone-box"></div>
+          <div class="zone-vline1"></div>
+          <div class="zone-vline2"></div>
+          <div class="zone-hline1"></div>
+          <div class="zone-hline2"></div>
+
+          <!-- Pitch 1: FF called strike -->
+          <div class="pitch-dot" style="left:95px;top:55px;background:var(--pitch-ff);opacity:0.5">1</div>
+          <!-- Pitch 2: SL ball -->
+          <div class="pitch-dot" style="left:15px;top:140px;background:var(--pitch-sl);opacity:0.5">2</div>
+          <!-- Pitch 3: CH foul -->
+          <div class="pitch-dot" style="left:65px;top:95px;background:var(--pitch-ch);opacity:0.5">3</div>
+          <!-- Pitch 4: FF ball high -->
+          <div class="pitch-dot" style="left:80px;top:5px;background:var(--pitch-ff);opacity:0.5">4</div>
+          <!-- Pitch 5: SL foul (current) -->
+          <div class="pitch-dot current" style="left:130px;top:115px;background:var(--pitch-sl)">5</div>
+          <!-- Pitches 6-7 not yet shown (future in sequence) -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Sequence timeline -->
+    <div class="timeline">
+      <div class="tl-pitch">
+        <div class="tl-dot" style="background:var(--pitch-ff)">FF</div>
+        <div class="tl-speed">95.1</div>
+        <div class="tl-call" style="color:var(--call-strike)">str</div>
+      </div>
+      <div class="tl-pitch">
+        <div class="tl-dot" style="background:var(--pitch-sl)">SL</div>
+        <div class="tl-speed">87.4</div>
+        <div class="tl-call" style="color:var(--call-ball)">ball</div>
+      </div>
+      <div class="tl-pitch">
+        <div class="tl-dot" style="background:var(--pitch-ch)">CH</div>
+        <div class="tl-speed">86.2</div>
+        <div class="tl-call" style="color:var(--call-foul)">foul</div>
+      </div>
+      <div class="tl-pitch">
+        <div class="tl-dot" style="background:var(--pitch-ff)">FF</div>
+        <div class="tl-speed">96.0</div>
+        <div class="tl-call" style="color:var(--call-ball)">ball</div>
+      </div>
+      <div class="tl-pitch">
+        <div class="tl-dot active" style="background:var(--pitch-sl)">SL</div>
+        <div class="tl-speed">88.1</div>
+        <div class="tl-call" style="color:var(--call-foul)">foul</div>
+      </div>
+      <div class="tl-pitch">
+        <div class="tl-dot" style="background:var(--pitch-cb);opacity:0.3">CB</div>
+        <div class="tl-speed" style="opacity:0.3">80.4</div>
+        <div class="tl-call" style="opacity:0.3">—</div>
+      </div>
+      <div class="tl-pitch">
+        <div class="tl-dot" style="background:var(--pitch-ff);opacity:0.3">FF</div>
+        <div class="tl-speed" style="opacity:0.3">95.8</div>
+        <div class="tl-call" style="opacity:0.3">—</div>
+      </div>
+    </div>
+
+    <!-- Playback controls -->
+    <div class="playback">
+      <div class="skip-btn">⟨</div>
+      <div>
+        <div class="play-btn">▶</div>
+      </div>
+      <div class="skip-btn">⟩</div>
+    </div>
+
+    <!-- Current pitch detail -->
+    <div class="pitch-info">
+      <div class="pi-header">
+        <div class="pi-title">Pitch 5 — Slider</div>
+        <div class="pi-badge strike">FOUL</div>
+      </div>
+      <div class="pi-grid">
+        <div class="pg-item"><div class="pg-val">88.1</div><div class="pg-lbl">MPH</div></div>
+        <div class="pg-item"><div class="pg-val">2510</div><div class="pg-lbl">SPIN</div></div>
+        <div class="pg-item"><div class="pg-val">-3.2"</div><div class="pg-lbl">H-BREAK</div></div>
+        <div class="pg-item"><div class="pg-val">2-2</div><div class="pg-lbl">COUNT</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item"><div class="tab-icon">⌂</div><div class="tab-label">Home</div></div>
+    <div class="tab-item"><div class="tab-icon">◎</div><div class="tab-label">Players</div></div>
+    <div class="tab-item"><div class="tab-icon">◈</div><div class="tab-label">Teams</div></div>
+    <div class="tab-item active"><div class="tab-icon">◷</div><div class="tab-label">Games</div></div>
+    <div class="tab-item"><div class="tab-icon">≡</div><div class="tab-label">More</div></div>
+  </div>
+
+</div>
+</body>
+</html>

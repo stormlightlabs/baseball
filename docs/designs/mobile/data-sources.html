@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Data Sources — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981;--lahman:#3b82f6;--retro:#10b981;--mlb:#f59e0b; }
+    * { box-sizing:border-box;margin:0;padding:0; }
+    html,body { height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif; }
+    h1,h2,h3 { font-family:'Google Sans',sans-serif; }
+
+    .status-bar { height:44px;background:var(--bg);display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 8px;flex-shrink:0; }
+    .sb-time { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.85rem;color:var(--text); }
+    .sb-icons { display:flex;gap:5px;font-size:0.7rem;color:var(--text);font-family:'Google Sans Code',monospace; }
+
+    .app { display:flex;flex-direction:column;height:100%;min-height:844px; }
+    .app-header { padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0; }
+    .app-title { font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9; }
+
+    .content { flex:1;overflow-y:auto; }
+
+    /* Source cards */
+    .source-card { margin:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px; }
+    .sc-header { display:flex;align-items:flex-start;gap:12px;margin-bottom:12px; }
+    .sc-badge { display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-family:'Google Sans Code',monospace;font-size:0.68rem;font-weight:700;flex-shrink:0; }
+    .badge-lahman { background:rgba(59,130,246,0.15);color:var(--lahman);border:1px solid rgba(59,130,246,0.3); }
+    .badge-retro { background:rgba(16,185,129,0.15);color:var(--retro);border:1px solid rgba(16,185,129,0.3); }
+    .badge-mlb { background:rgba(245,158,11,0.15);color:var(--mlb);border:1px solid rgba(245,158,11,0.3); }
+    .sc-name { font-family:'Google Sans',sans-serif;font-size:0.95rem;font-weight:700;color:#f1f5f9;margin-bottom:3px; }
+    .sc-desc { font-size:0.75rem;color:var(--muted);line-height:1.6; }
+    .sc-meta-grid { display:grid;grid-template-columns:1fr 1fr;gap:6px; }
+    .sc-meta-item { background:var(--surface2);border-radius:7px;padding:8px 10px; }
+    .smi-val { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.85rem;color:#f1f5f9; }
+    .smi-lbl { font-size:0.62rem;color:var(--muted);margin-top:1px; }
+
+    .panel { margin:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px; }
+    .panel-label { font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border); }
+
+    /* Coverage timeline */
+    .tl-row { display:flex;align-items:center;gap:10px;margin-bottom:8px; }
+    .tl-label { font-family:'Google Sans Code',monospace;font-size:0.68rem;color:var(--muted);min-width:72px; }
+    .tl-bar-wrap { flex:1;height:18px;background:var(--surface2);border-radius:4px;position:relative;overflow:hidden; }
+    .tl-bar { height:100%;border-radius:4px;position:absolute;display:flex;align-items:center;padding-left:6px;opacity:0.8; }
+    .tl-bar-text { font-family:'Google Sans Code',monospace;font-size:0.6rem;color:rgba(255,255,255,0.7);white-space:nowrap; }
+    .tl-years { font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);min-width:80px;text-align:right; }
+
+    /* Year axis */
+    .year-axis { display:flex;justify-content:space-between;padding:0 0 4px;margin-left:82px;margin-right:80px; }
+    .ya-tick { font-family:'Google Sans Code',monospace;font-size:0.6rem;color:var(--muted); }
+
+    /* ID mapping table */
+    .id-table { width:100%;border-collapse:collapse;font-size:0.7rem; }
+    .id-table th { text-align:left;color:var(--muted);font-weight:500;padding:5px 6px;border-bottom:1px solid var(--border);font-family:'Google Sans',sans-serif;font-size:0.67rem; }
+    .id-table td { padding:6px 6px;border-bottom:1px solid var(--border);color:var(--text);font-family:'Google Sans Code',monospace;font-size:0.68rem; }
+    .id-table tr:last-child td { border-bottom:none; }
+    .id-badge { display:inline-block;padding:1px 6px;border-radius:3px;font-size:0.62rem; }
+    .id-lah { background:rgba(59,130,246,0.15);color:var(--lahman); }
+    .id-ret { background:rgba(16,185,129,0.15);color:var(--retro); }
+    .id-mlb { background:rgba(245,158,11,0.15);color:var(--mlb); }
+
+    /* Caveats */
+    .caveat-item { display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start; }
+    .caveat-item:last-child { border-bottom:none; }
+    .cav-dot { width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0; }
+    .cav-text { font-size:0.78rem;color:var(--muted);line-height:1.6; }
+    .cav-text strong { color:#f1f5f9; }
+
+    /* Stats strip */
+    .stats-strip { display:flex;gap:1px;background:var(--border);border-bottom:1px solid var(--border); }
+    .ss-item { flex:1;background:var(--surface);padding:12px 8px;text-align:center; }
+    .ss-val { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.95rem;color:#f1f5f9; }
+    .ss-lbl { font-size:0.58rem;color:var(--muted);font-family:'Google Sans Code',monospace;margin-top:2px; }
+
+    .tab-bar { height:64px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;flex-shrink:0; }
+    .tab-item { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer; }
+    .tab-icon { font-size:1.05rem;color:var(--muted); }
+    .tab-label { font-size:0.6rem;color:var(--muted);font-family:'Google Sans',sans-serif; }
+    .tab-item.active .tab-icon,.tab-item.active .tab-label { color:var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title">Data Sources</div>
+  </div>
+
+  <div class="content">
+
+    <!-- Quick stats -->
+    <div class="stats-strip">
+      <div class="ss-item"><div class="ss-val">3</div><div class="ss-lbl">Sources</div></div>
+      <div class="ss-item"><div class="ss-val">154yr</div><div class="ss-lbl">Coverage</div></div>
+      <div class="ss-item"><div class="ss-val">~18M</div><div class="ss-lbl">Records</div></div>
+      <div class="ss-item"><div class="ss-val">9</div><div class="ss-lbl">Era buckets</div></div>
+    </div>
+
+    <!-- Lahman -->
+    <div class="source-card">
+      <div class="sc-header">
+        <div>
+          <span class="sc-badge badge-lahman">Lahman DB</span>
+        </div>
+      </div>
+      <div class="sc-name" style="margin-bottom:4px">Lahman Baseball Database</div>
+      <div class="sc-desc" style="margin-bottom:12px">Historical statistics for batting, pitching, fielding, awards, salaries, standings, and HOF inductees. Primary backbone for all career and season-level data.</div>
+      <div class="sc-meta-grid">
+        <div class="sc-meta-item"><div class="smi-val">1871–2025</div><div class="smi-lbl">Coverage</div></div>
+        <div class="sc-meta-item"><div class="smi-val">~12M</div><div class="smi-lbl">Rows</div></div>
+        <div class="sc-meta-item"><div class="smi-val">Annual</div><div class="smi-lbl">Update freq</div></div>
+        <div class="sc-meta-item"><div class="smi-val">CC BY-SA</div><div class="smi-lbl">License</div></div>
+      </div>
+    </div>
+
+    <!-- Retrosheet -->
+    <div class="source-card">
+      <div class="sc-header">
+        <div>
+          <span class="sc-badge badge-retro">Retrosheet</span>
+        </div>
+      </div>
+      <div class="sc-name" style="margin-bottom:4px">Retrosheet Event Files</div>
+      <div class="sc-desc" style="margin-bottom:12px">Play-by-play event data, game logs, box scores, and roster files. Powers game-level drilldowns, win-probability calculations, and the Federal/Negro League slices.</div>
+      <div class="sc-meta-grid">
+        <div class="sc-meta-item"><div class="smi-val">1918–2025</div><div class="smi-lbl">Coverage</div></div>
+        <div class="sc-meta-item"><div class="smi-val">~5M</div><div class="smi-lbl">Games</div></div>
+        <div class="sc-meta-item"><div class="smi-val">Post-season</div><div class="smi-lbl">Update freq</div></div>
+        <div class="sc-meta-item"><div class="smi-val">Free</div><div class="smi-lbl">License</div></div>
+      </div>
+    </div>
+
+    <!-- MLB StatsAPI -->
+    <div class="source-card">
+      <div class="sc-header">
+        <div>
+          <span class="sc-badge badge-mlb">MLB StatsAPI</span>
+        </div>
+      </div>
+      <div class="sc-name" style="margin-bottom:4px">MLB Stats API</div>
+      <div class="sc-desc" style="margin-bottom:12px">Official MLB schedule, venue, transaction, and live game data. Used for 2000-present scheduling, ballpark metadata, and Statcast-era supplementary context.</div>
+      <div class="sc-meta-grid">
+        <div class="sc-meta-item"><div class="smi-val">2000–live</div><div class="smi-lbl">Coverage</div></div>
+        <div class="sc-meta-item"><div class="smi-val">Live</div><div class="smi-lbl">Update freq</div></div>
+        <div class="sc-meta-item"><div class="smi-val">Read-only</div><div class="smi-lbl">Access</div></div>
+        <div class="sc-meta-item"><div class="smi-val">Restricted</div><div class="smi-lbl">License</div></div>
+      </div>
+    </div>
+
+    <!-- Coverage timeline -->
+    <div class="panel">
+      <div class="panel-label">Coverage timeline</div>
+      <div class="year-axis">
+        <span class="ya-tick">1871</span>
+        <span class="ya-tick">1920</span>
+        <span class="ya-tick">1960</span>
+        <span class="ya-tick">2000</span>
+        <span class="ya-tick">2025</span>
+      </div>
+      <div class="tl-row">
+        <div class="tl-label" style="color:var(--lahman)">Lahman</div>
+        <div class="tl-bar-wrap">
+          <div class="tl-bar" style="left:0;width:98%;background:rgba(59,130,246,0.5)">
+            <span class="tl-bar-text">batting · pitching · awards</span>
+          </div>
+        </div>
+        <div class="tl-years">1871–2025</div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-label" style="color:var(--retro)">Retrosheet</div>
+        <div class="tl-bar-wrap">
+          <div class="tl-bar" style="left:18%;width:80%;background:rgba(16,185,129,0.5)">
+            <span class="tl-bar-text">play-by-play</span>
+          </div>
+        </div>
+        <div class="tl-years">1918–2025</div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-label" style="color:var(--mlb)">MLB API</div>
+        <div class="tl-bar-wrap">
+          <div class="tl-bar" style="left:60%;width:38%;background:rgba(245,158,11,0.5)">
+            <span class="tl-bar-text">live</span>
+          </div>
+        </div>
+        <div class="tl-years">2000–live</div>
+      </div>
+    </div>
+
+    <!-- ID mapping -->
+    <div class="panel">
+      <div class="panel-label">ID mapping — player keys</div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="id-table">
+          <thead><tr>
+            <th>Player</th>
+            <th>Lahman</th>
+            <th>Retro</th>
+            <th>MLB</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td>Willie Mays</td>
+              <td><span class="id-badge id-lah">mayswi01</span></td>
+              <td><span class="id-badge id-ret">maywi001</span></td>
+              <td><span class="id-badge id-mlb">594798</span></td>
+            </tr>
+            <tr>
+              <td>Babe Ruth</td>
+              <td><span class="id-badge id-lah">ruthba01</span></td>
+              <td><span class="id-badge id-ret">ruthba01</span></td>
+              <td><span class="id-badge id-mlb">—</span></td>
+            </tr>
+            <tr>
+              <td>Hank Aaron</td>
+              <td><span class="id-badge id-lah">aaronha01</span></td>
+              <td><span class="id-badge id-ret">aaroha01</span></td>
+              <td><span class="id-badge id-mlb">—</span></td>
+            </tr>
+            <tr>
+              <td>S. Ohtani</td>
+              <td><span class="id-badge id-lah">ohtansh01</span></td>
+              <td><span class="id-badge id-ret">ohtash01</span></td>
+              <td><span class="id-badge id-mlb">660271</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Caveats -->
+    <div class="panel">
+      <div class="panel-label">Data caveats</div>
+      <div class="caveat-item">
+        <div class="cav-dot" style="background:var(--mlb)"></div>
+        <div class="cav-text"><strong>Federal League (1914–15)</strong> included in Lahman + partial Retrosheet. Flagged with <code>league=FL</code> filter.</div>
+      </div>
+      <div class="caveat-item">
+        <div class="cav-dot" style="background:var(--retro)"></div>
+        <div class="cav-text"><strong>Negro Leagues (1920–48)</strong> partial play-by-play via Retrosheet NLG files. Coverage &lt;60% of games.</div>
+      </div>
+      <div class="caveat-item">
+        <div class="cav-dot" style="background:var(--accent)"></div>
+        <div class="cav-text"><strong>Statcast era (2015+)</strong> exit velocity, spin rate, and launch angle data only via MLB API. Not available pre-2015.</div>
+      </div>
+      <div class="caveat-item">
+        <div class="cav-dot" style="background:var(--muted)"></div>
+        <div class="cav-text"><strong>Salary data</strong> is Lahman-sourced (1985–2016 only). Incomplete for pre-1985 and post-2016 seasons.</div>
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item"><div class="tab-icon">⌂</div><div class="tab-label">Home</div></div>
+    <div class="tab-item"><div class="tab-icon">◎</div><div class="tab-label">Players</div></div>
+    <div class="tab-item"><div class="tab-icon">◈</div><div class="tab-label">Teams</div></div>
+    <div class="tab-item"><div class="tab-icon">◷</div><div class="tab-label">Games</div></div>
+    <div class="tab-item active"><div class="tab-icon">≡</div><div class="tab-label">More</div></div>
+  </div>
+
+</div>
+</body>
+</html>

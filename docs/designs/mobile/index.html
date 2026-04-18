@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Baseball API — Mobile Design Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f13;
+      --surface: #13161c;
+      --surface2: #1a1e27;
+      --border: #252934;
+      --text: #e2e8f0;
+      --muted: #6b7280;
+      --accent: #3b82f6;
+      --accent2: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+    h1, h2, h3, h4 { font-family: 'Google Sans', sans-serif; }
+    code, .mono { font-family: 'Google Sans Code', monospace; }
+
+    .site-header {
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      height: 56px;
+      background: var(--surface);
+    }
+    .logo { font-family: 'Google Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--text); text-decoration: none; }
+    .badge { font-family: 'Google Sans Code', monospace; font-size: 0.7rem; background: var(--border); color: var(--muted); padding: 2px 8px; border-radius: 4px; }
+    .badge.mobile { background: rgba(59,130,246,0.15); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); }
+    .nav-links { margin-left: auto; display: flex; gap: 0.5rem; align-items: center; }
+    .nav-links a { font-size: 0.8rem; color: var(--muted); text-decoration: none; padding: 4px 10px; border-radius: 4px; transition: color 0.15s, background 0.15s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--border); }
+
+    .hero {
+      padding: 3.5rem 2rem 2.5rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .hero-label { font-family: 'Google Sans Code', monospace; font-size: 0.75rem; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1rem; }
+    .hero h1 { font-size: 2.5rem; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 0.75rem; color: #f1f5f9; }
+    .hero p { font-size: 0.95rem; color: var(--muted); line-height: 1.7; max-width: 520px; }
+
+    .section { max-width: 1400px; margin: 0 auto; padding: 0 2rem 5rem; }
+    .section-label {
+      font-family: 'Google Sans Code', monospace;
+      font-size: 0.7rem; color: var(--muted); letter-spacing: 0.08em;
+      text-transform: uppercase; margin-bottom: 2rem;
+      padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);
+    }
+
+    /* Phone frames grid */
+    .frames-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 3rem 2.5rem;
+      justify-items: center;
+    }
+
+    .frame-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .frame-label {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .frame-label .fl-icon { color: var(--accent); font-family: 'Google Sans Code', monospace; font-size: 0.85rem; }
+    .frame-label a { color: inherit; text-decoration: none; }
+    .frame-label a:hover { color: var(--accent); }
+    .frame-tags { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: center; }
+    .ftag { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); background: var(--border); padding: 1px 6px; border-radius: 3px; }
+    .ftag.accent { color: var(--accent); background: rgba(59,130,246,0.1); }
+
+    /* The device shell */
+    .device {
+      width: 280px;
+      height: 606px;
+      background: #0a0c10;
+      border-radius: 36px;
+      border: 8px solid #1d2230;
+      box-shadow:
+        0 0 0 1px #252934,
+        inset 0 0 0 1px rgba(255,255,255,0.04),
+        0 32px 80px rgba(0,0,0,0.6);
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+    }
+    .device:hover {
+      transform: translateY(-4px);
+      box-shadow:
+        0 0 0 1px var(--accent),
+        inset 0 0 0 1px rgba(255,255,255,0.04),
+        0 40px 100px rgba(0,0,0,0.7);
+    }
+    .device-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 22px;
+      background: #0a0c10;
+      border-radius: 0 0 14px 14px;
+      z-index: 10;
+      border: 1px solid #1d2230;
+      border-top: none;
+    }
+    .device iframe {
+      width: 390px;
+      height: 844px;
+      border: none;
+      transform-origin: top left;
+      transform: scale(0.7179);
+      pointer-events: none;
+    }
+    .device a.frame-link {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+    }
+
+    .status-bar {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .stat-item { display: flex; flex-direction: column; gap: 2px; }
+    .stat-value { font-family: 'Google Sans', sans-serif; font-size: 1.4rem; font-weight: 700; color: #f1f5f9; }
+    .stat-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .divider { width: 1px; height: 28px; background: var(--border); }
+
+    .nav-note {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem 3rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .note-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      flex: 1;
+      min-width: 220px;
+    }
+    .note-card .nc-label { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .note-card .nc-text { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+    .note-card .nc-text strong { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <a href="../index.html" class="logo">Baseball API</a>
+    <span class="badge mobile">mobile</span>
+    <nav class="nav-links">
+      <a href="../index.html">← Desktop hub</a>
+      <a href="home.html" class="active">Home</a>
+      <a href="players.html">Players</a>
+      <a href="teams.html">Teams</a>
+      <a href="games.html">Games</a>
+      <a href="seasons.html">Seasons</a>
+      <a href="leaders.html">Leaders</a>
+      <a href="compare.html">Compare</a>
+      <a href="data-sources.html">Data</a>
+      <a href="spray-chart.html">Spray</a>
+      <a href="pitch-tunnel.html">Tunnel</a>
+      <a href="at-bat.html">At-Bat</a>
+      <a href="stat-cards.html">Cards</a>
+      <a href="learning.html">Learn</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="hero-label">Mobile Design Wireframes</div>
+    <h1>Mobile App Hub</h1>
+    <p>Scrollable iPhone-form-factor wireframes for the Big Fly mobile app. Feature parity with the web dashboard — bottom tab navigation, touch-optimized layouts, and single-column card patterns.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Screens — tap any frame to open full size</div>
+
+    <div class="frames-grid">
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="home.html" title="Home screen"></iframe>
+          <a href="home.html" class="frame-link" title="Open Home screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">⌂</span>
+          <a href="home.html">Home</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag accent">landing</span>
+          <span class="ftag">search</span>
+          <span class="ftag">quick links</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="players.html" title="Players screen"></iframe>
+          <a href="players.html" class="frame-link" title="Open Players screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◎</span>
+          <a href="players.html">Players</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag">/players/{id}</span>
+          <span class="ftag">career stats</span>
+          <span class="ftag">charts</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="teams.html" title="Teams screen"></iframe>
+          <a href="teams.html" class="frame-link" title="Open Teams screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◈</span>
+          <a href="teams.html">Teams</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag">/franchises/{id}</span>
+          <span class="ftag">roster</span>
+          <span class="ftag">schedule</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="games.html" title="Games screen"></iframe>
+          <a href="games.html" class="frame-link" title="Open Games screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◷</span>
+          <a href="games.html">Games</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag">/games</span>
+          <span class="ftag">finder</span>
+          <span class="ftag">play-by-play</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="seasons.html" title="Seasons screen"></iframe>
+          <a href="seasons.html" class="frame-link" title="Open Seasons screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◫</span>
+          <a href="seasons.html">Seasons</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag">/seasons/{year}</span>
+          <span class="ftag">standings</span>
+          <span class="ftag">postseason</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="leaders.html" title="Leaders screen"></iframe>
+          <a href="leaders.html" class="frame-link" title="Open Leaders screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◉</span>
+          <a href="leaders.html">Leaders</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag">/stats/batting</span>
+          <span class="ftag">leaderboards</span>
+          <span class="ftag">eras</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="compare.html" title="Compare screen"></iframe>
+          <a href="compare.html" class="frame-link" title="Open Compare screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">⇄</span>
+          <a href="compare.html">Compare</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag accent">featured</span>
+          <span class="ftag">side-by-side</span>
+          <span class="ftag">era-normalized</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="data-sources.html" title="Data Sources screen"></iframe>
+          <a href="data-sources.html" class="frame-link" title="Open Data Sources screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◬</span>
+          <a href="data-sources.html">Data Sources</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag">Lahman</span>
+          <span class="ftag">Retrosheet</span>
+          <span class="ftag">provenance</span>
+        </div>
+      </div>
+
+      <!-- Native features -->
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="spray-chart.html" title="Spray Chart screen"></iframe>
+          <a href="spray-chart.html" class="frame-link" title="Open Spray Chart screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◉</span>
+          <a href="spray-chart.html">Spray Chart</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag accent">native</span>
+          <span class="ftag">park overlay</span>
+          <span class="ftag">batted balls</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="pitch-tunnel.html" title="Pitch Tunnel screen"></iframe>
+          <a href="pitch-tunnel.html" class="frame-link" title="Open Pitch Tunnel screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◉</span>
+          <a href="pitch-tunnel.html">Pitch Tunnel</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag accent">native</span>
+          <span class="ftag">2.5D trajectories</span>
+          <span class="ftag">tunnel point</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="at-bat.html" title="At-Bat Sequencer screen"></iframe>
+          <a href="at-bat.html" class="frame-link" title="Open At-Bat Sequencer screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◉</span>
+          <a href="at-bat.html">At-Bat Sequencer</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag accent">native</span>
+          <span class="ftag">pitch-by-pitch</span>
+          <span class="ftag">strike zone</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="stat-cards.html" title="Stat Cards screen"></iframe>
+          <a href="stat-cards.html" class="frame-link" title="Open Stat Cards screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◉</span>
+          <a href="stat-cards.html">Stat Cards</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag accent">native</span>
+          <span class="ftag">pixel art</span>
+          <span class="ftag">shareable</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="learning.html" title="Learning Mode screen"></iframe>
+          <a href="learning.html" class="frame-link" title="Open Learning Mode screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◉</span>
+          <a href="learning.html">Learning Mode</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag accent">native</span>
+          <span class="ftag">pitch ID</span>
+          <span class="ftag">quiz</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section" style="padding-top: 0;">
+    <div class="section-label">Design notes</div>
+  </div>
+
+  <div class="nav-note">
+    <div class="note-card">
+      <div class="nc-label">Navigation</div>
+      <div class="nc-text"><strong>Bottom tab bar</strong> — 5 tabs: Home, Players, Teams, Games, More. The More sheet surfaces Seasons, Leaders, Compare, and Data Sources. Tab icons use the same geometric glyphs as the desktop nav.</div>
+    </div>
+    <div class="note-card">
+      <div class="nc-label">Layout pattern</div>
+      <div class="nc-text"><strong>Single-column cards</strong> with 16px horizontal padding. Desktop's 3-column sidebar layouts collapse to stacked sections. Tables scroll horizontally within cards when content overflows.</div>
+    </div>
+    <div class="note-card">
+      <div class="nc-label">Touch targets</div>
+      <div class="nc-text"><strong>44px minimum</strong> tap target height. Filter chips are 36px. Segmented controls are 40px. Tables use 40px row height. Bottom tab bar items are 64px with icon + label.</div>
+    </div>
+    <div class="note-card">
+      <div class="nc-label">Form factor</div>
+      <div class="nc-text"><strong>390 × 844px</strong> viewport — iPhone 14 baseline. Dynamic Island / notch handled with 44px safe area at top. Home indicator safe area (34px) at bottom. Dark mode only.</div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="stat-item">
+      <div class="stat-value">13</div>
+      <div class="stat-label">Screens</div>
+    </div>
+    <div class="divider"></div>
+    <div class="stat-item">
+      <div class="stat-value">390×844</div>
+      <div class="stat-label">Viewport</div>
+    </div>
+    <div class="divider"></div>
+    <div class="stat-item">
+      <div class="stat-value">5-tab</div>
+      <div class="stat-label">Navigation</div>
+    </div>
+    <div class="divider"></div>
+    <div class="stat-item">
+      <div class="stat-value">1871–2025</div>
+      <div class="stat-label">Data range</div>
+    </div>
+  </div>
+
+</body>
+</html>

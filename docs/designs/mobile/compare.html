@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Compare — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981;--cA:#3b82f6;--cB:#f59e0b; }
+    * { box-sizing:border-box;margin:0;padding:0; }
+    html,body { height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif; }
+    h1,h2,h3 { font-family:'Google Sans',sans-serif; }
+
+    .status-bar { height:44px;background:var(--bg);display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 8px;flex-shrink:0; }
+    .sb-time { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.85rem;color:var(--text); }
+    .sb-icons { display:flex;gap:5px;font-size:0.7rem;color:var(--text);font-family:'Google Sans Code',monospace; }
+
+    .app { display:flex;flex-direction:column;height:100%;min-height:844px; }
+    .app-header { padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0; }
+    .app-title { font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9; }
+    .icon-btn { width:36px;height:36px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:0.9rem; }
+
+    .content { flex:1;overflow-y:auto; }
+
+    /* Picker row */
+    .picker-row { display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface); }
+    .picker-slot { flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;transition:border-color 0.15s; }
+    .picker-slot.slot-A { border-color:rgba(59,130,246,0.4); }
+    .picker-slot.slot-B { border-color:rgba(245,158,11,0.4); }
+    .ps-label { font-family:'Google Sans Code',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2px; }
+    .ps-name { font-family:'Google Sans',sans-serif;font-size:0.85rem;font-weight:700; }
+    .ps-name.a { color:var(--cA); }
+    .ps-name.b { color:var(--cB); }
+    .ps-meta { font-size:0.66rem;color:var(--muted);font-family:'Google Sans Code',monospace;margin-top:1px; }
+    .vs-badge { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.9rem;color:var(--muted);flex-shrink:0; }
+
+    /* Mode tabs */
+    .mode-tabs { display:flex;gap:6px;overflow-x:auto;padding:10px 16px;scrollbar-width:none;border-bottom:1px solid var(--border); }
+    .mode-tabs::-webkit-scrollbar { display:none; }
+    .mtab { font-size:0.75rem;padding:5px 14px;border-radius:99px;border:1px solid var(--border);color:var(--muted);cursor:pointer;white-space:nowrap;font-family:'Google Sans',sans-serif;flex-shrink:0;transition:all 0.15s; }
+    .mtab.active { border-color:var(--accent);color:var(--accent);background:rgba(59,130,246,0.08); }
+
+    /* Era normalization toggle */
+    .era-toggle { display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:rgba(59,130,246,0.05);border-bottom:1px solid var(--border); }
+    .et-label { font-size:0.75rem;color:var(--muted); }
+    .et-label strong { color:var(--accent);font-weight:500; }
+    .toggle-pill { display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:2px; }
+    .tp-btn { font-size:0.65rem;padding:3px 10px;border-radius:99px;cursor:pointer;color:var(--muted);font-family:'Google Sans',sans-serif;transition:all 0.15s; }
+    .tp-btn.active { background:var(--accent);color:#fff; }
+
+    .panel { margin:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px; }
+    .panel-label { font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border); }
+
+    /* Stat comparison rows */
+    .stat-row { padding:7px 0;border-bottom:1px solid var(--border); }
+    .stat-row:last-child { border-bottom:none; }
+    .sr-label { font-size:0.68rem;color:var(--muted);text-align:center;font-family:'Google Sans Code',monospace;margin-bottom:5px; }
+    .sr-bar-section { display:flex;align-items:center;gap:8px; }
+    .sr-val-a { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.88rem;color:var(--cA);text-align:right;min-width:40px; }
+    .sr-val-b { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.88rem;color:var(--cB);text-align:left;min-width:40px; }
+    .sr-bars { flex:1;display:flex;align-items:center;gap:2px; }
+    .bar-a { height:8px;border-radius:3px 0 0 3px;background:var(--cA);opacity:0.7; }
+    .bar-b { height:8px;border-radius:0 3px 3px 0;background:var(--cB);opacity:0.7; }
+
+    /* Radar / chart */
+    .chart-section { position:relative; }
+
+    /* Examples */
+    .examples-row { display:flex;gap:6px;flex-wrap:wrap;margin-top:4px; }
+    .ex-item { font-size:0.7rem;padding:4px 10px;border-radius:6px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.15s;font-family:'Google Sans Code',monospace; }
+    .ex-item:hover { border-color:var(--accent);color:var(--accent); }
+
+    /* Bio compare */
+    .bio-compare { display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start; }
+    .bio-col { background:var(--surface2);border-radius:8px;padding:10px; }
+    .bio-col.a { border:1px solid rgba(59,130,246,0.3); }
+    .bio-col.b { border:1px solid rgba(245,158,11,0.3); }
+    .bc-name { font-family:'Google Sans',sans-serif;font-size:0.82rem;font-weight:700;margin-bottom:3px; }
+    .bc-name.a { color:var(--cA); }
+    .bc-name.b { color:var(--cB); }
+    .bc-info { font-size:0.66rem;color:var(--muted);line-height:1.5;font-family:'Google Sans Code',monospace; }
+    .bio-vs { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.8rem;color:var(--muted); }
+
+    .tab-bar { height:64px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;flex-shrink:0; }
+    .tab-item { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer; }
+    .tab-icon { font-size:1.05rem;color:var(--muted); }
+    .tab-label { font-size:0.6rem;color:var(--muted);font-family:'Google Sans',sans-serif; }
+    .tab-item.active .tab-icon,.tab-item.active .tab-label { color:var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title">Compare</div>
+    <div class="icon-btn">⊞</div>
+  </div>
+
+  <div class="content">
+
+    <!-- Picker -->
+    <div class="picker-row">
+      <div class="picker-slot slot-A">
+        <div class="ps-label">Player A</div>
+        <div class="ps-name a">Willie Mays</div>
+        <div class="ps-meta">mayswi01 · OF · 1951–73</div>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="picker-slot slot-B">
+        <div class="ps-label">Player B</div>
+        <div class="ps-name b">Babe Ruth</div>
+        <div class="ps-meta">ruthba01 · OF · 1914–35</div>
+      </div>
+    </div>
+
+    <!-- Mode tabs -->
+    <div class="mode-tabs">
+      <span class="mtab active">Overview</span>
+      <span class="mtab">Batting</span>
+      <span class="mtab">Pitching</span>
+      <span class="mtab">Fielding</span>
+      <span class="mtab">Advanced</span>
+    </div>
+
+    <!-- Era normalization toggle -->
+    <div class="era-toggle">
+      <span class="et-label">Era normalization — <strong>on</strong> (adj+)</span>
+      <div class="toggle-pill">
+        <div class="tp-btn active">On</div>
+        <div class="tp-btn">Off</div>
+      </div>
+    </div>
+
+    <!-- Bio comparison -->
+    <div class="panel">
+      <div class="panel-label">Bio overview</div>
+      <div class="bio-compare">
+        <div class="bio-col a">
+          <div class="bc-name a">W. Mays</div>
+          <div class="bc-info">
+            OF · Giants<br>
+            1951–1973<br>
+            22 seasons<br>
+            660 HR<br>
+            .302 AVG
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center">
+          <div class="bio-vs">vs</div>
+        </div>
+        <div class="bio-col b">
+          <div class="bc-name b">B. Ruth</div>
+          <div class="bc-info">
+            P/OF · Yankees<br>
+            1914–1935<br>
+            22 seasons<br>
+            714 HR<br>
+            .342 AVG
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat comparison bars -->
+    <div class="panel">
+      <div class="panel-label">Batting comparison (era-adj)</div>
+
+      <div class="stat-row">
+        <div class="sr-label">Home Runs (career)</div>
+        <div class="sr-bar-section">
+          <div class="sr-val-a">660</div>
+          <div class="sr-bars">
+            <div class="bar-a" style="width:48%"></div>
+            <div class="bar-b" style="width:52%"></div>
+          </div>
+          <div class="sr-val-b">714</div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="sr-label">Batting Average</div>
+        <div class="sr-bar-section">
+          <div class="sr-val-a">.302</div>
+          <div class="sr-bars">
+            <div class="bar-a" style="width:47%"></div>
+            <div class="bar-b" style="width:53%"></div>
+          </div>
+          <div class="sr-val-b">.342</div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="sr-label">OPS+</div>
+        <div class="sr-bar-section">
+          <div class="sr-val-a">156</div>
+          <div class="sr-bars">
+            <div class="bar-a" style="width:45%"></div>
+            <div class="bar-b" style="width:55%"></div>
+          </div>
+          <div class="sr-val-b">206</div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="sr-label">WAR (career)</div>
+        <div class="sr-bar-section">
+          <div class="sr-val-a">156</div>
+          <div class="sr-bars">
+            <div class="bar-a" style="width:52%"></div>
+            <div class="bar-b" style="width:48%"></div>
+          </div>
+          <div class="sr-val-b">142</div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="sr-label">RBI</div>
+        <div class="sr-bar-section">
+          <div class="sr-val-a">1903</div>
+          <div class="sr-bars">
+            <div class="bar-a" style="width:46%"></div>
+            <div class="bar-b" style="width:54%"></div>
+          </div>
+          <div class="sr-val-b">2213</div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="sr-label">Stolen Bases</div>
+        <div class="sr-bar-section">
+          <div class="sr-val-a">338</div>
+          <div class="sr-bars">
+            <div class="bar-a" style="width:88%"></div>
+            <div class="bar-b" style="width:12%"></div>
+          </div>
+          <div class="sr-val-b">123</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Radar chart -->
+    <div class="panel">
+      <div class="panel-label">5-tool radar (era-normalized)</div>
+      <canvas id="radarChart" height="200"></canvas>
+    </div>
+
+    <!-- Example comparisons -->
+    <div class="panel">
+      <div class="panel-label">Try these matchups</div>
+      <div class="examples-row">
+        <span class="ex-item">Ruth vs Gehrig</span>
+        <span class="ex-item">Aaron vs Bonds</span>
+        <span class="ex-item">Koufax vs Gibson</span>
+        <span class="ex-item">DiMaggio vs Williams</span>
+        <span class="ex-item">1927 NYY vs 1998 NYY</span>
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item"><div class="tab-icon">⌂</div><div class="tab-label">Home</div></div>
+    <div class="tab-item"><div class="tab-icon">◎</div><div class="tab-label">Players</div></div>
+    <div class="tab-item"><div class="tab-icon">◈</div><div class="tab-label">Teams</div></div>
+    <div class="tab-item"><div class="tab-icon">◷</div><div class="tab-label">Games</div></div>
+    <div class="tab-item active"><div class="tab-icon">≡</div><div class="tab-label">More</div></div>
+  </div>
+
+</div>
+<script>
+const ctx = document.getElementById('radarChart').getContext('2d');
+new Chart(ctx, {
+  type: 'radar',
+  data: {
+    labels: ['Hitting', 'Power', 'Speed', 'Fielding', 'Arm'],
+    datasets: [
+      {
+        label: 'Willie Mays',
+        data: [95, 90, 98, 99, 95],
+        borderColor: 'rgba(59,130,246,0.8)',
+        backgroundColor: 'rgba(59,130,246,0.15)',
+        pointBackgroundColor: '#3b82f6',
+        pointRadius: 4
+      },
+      {
+        label: 'Babe Ruth',
+        data: [99, 99, 60, 65, 70],
+        borderColor: 'rgba(245,158,11,0.8)',
+        backgroundColor: 'rgba(245,158,11,0.15)',
+        pointBackgroundColor: '#f59e0b',
+        pointRadius: 4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: '#6b7280', font: { family: 'Inter', size: 10 } } }
+    },
+    scales: {
+      r: {
+        min: 0, max: 100,
+        ticks: { display: false },
+        grid: { color: '#252934' },
+        pointLabels: { color: '#6b7280', font: { size: 9 } }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>

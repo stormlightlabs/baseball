@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Leaders — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981; }
+    * { box-sizing:border-box;margin:0;padding:0; }
+    html,body { height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif; }
+    h1,h2,h3 { font-family:'Google Sans',sans-serif; }
+
+    .status-bar { height:44px;background:var(--bg);display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 8px;flex-shrink:0; }
+    .sb-time { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.85rem;color:var(--text); }
+    .sb-icons { display:flex;gap:5px;font-size:0.7rem;color:var(--text);font-family:'Google Sans Code',monospace; }
+
+    .app { display:flex;flex-direction:column;height:100%;min-height:844px; }
+    .app-header { padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0; }
+    .app-title { font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9; }
+    .icon-btn { width:36px;height:36px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:0.9rem; }
+
+    .content { flex:1;overflow-y:auto; }
+
+    /* Mode/scope controls */
+    .controls-strip { padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface); }
+    .seg-ctrl { display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px; }
+    .seg-btn { flex:1;font-size:0.75rem;padding:7px 0;cursor:pointer;color:var(--muted);border:none;background:transparent;font-family:'Google Sans',sans-serif;text-align:center;transition:all 0.15s; }
+    .seg-btn.active { background:var(--border);color:var(--text); }
+
+    .scope-row { display:flex;gap:6px;align-items:center; }
+    .scope-pill { font-size:0.7rem;padding:4px 12px;border-radius:99px;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'Google Sans Code',monospace;transition:all 0.15s; }
+    .scope-pill.active { border-color:var(--accent);color:var(--accent);background:rgba(59,130,246,0.08); }
+    .season-sel { background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:8px;font-size:0.75rem;font-family:'Inter',sans-serif;outline:none;margin-left:auto; }
+
+    /* Stat chips */
+    .stat-chips { display:flex;gap:6px;overflow-x:auto;padding:10px 16px;scrollbar-width:none;border-bottom:1px solid var(--border); }
+    .stat-chips::-webkit-scrollbar { display:none; }
+    .stat-chip { font-size:0.72rem;padding:5px 12px;border-radius:99px;border:1px solid var(--border);color:var(--muted);cursor:pointer;white-space:nowrap;font-family:'Google Sans Code',monospace;flex-shrink:0;transition:all 0.15s; }
+    .stat-chip.active { border-color:var(--accent);color:var(--accent);background:rgba(59,130,246,0.08); }
+
+    /* Leaderboard */
+    .lb-header { display:flex;align-items:center;justify-content:space-between;padding:10px 16px; }
+    .lb-title { font-family:'Google Sans',sans-serif;font-size:0.88rem;font-weight:700;color:#f1f5f9; }
+    .lb-meta { font-family:'Google Sans Code',monospace;font-size:0.68rem;color:var(--muted); }
+
+    .lb-podium { display:flex;align-items:flex-end;gap:4px;margin:0 16px 12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px 12px;justify-content:center; }
+    .podium-item { display:flex;flex-direction:column;align-items:center;gap:4px;flex:1; }
+    .podium-item.first { order:2; }
+    .podium-item.second { order:1; }
+    .podium-item.third { order:3; }
+    .podium-bar { border-radius:4px 4px 0 0;width:100%;background:var(--accent);opacity:0.7; }
+    .podium-bar.first { height:60px;opacity:1; }
+    .podium-bar.second { height:40px; }
+    .podium-bar.third { height:24px;opacity:0.5; }
+    .podium-name { font-family:'Google Sans',sans-serif;font-size:0.65rem;color:#f1f5f9;text-align:center;font-weight:600;line-height:1.3; }
+    .podium-val { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.88rem;color:#f1f5f9; }
+    .podium-rank { font-size:0.6rem;color:var(--muted); }
+
+    .leader-item { display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s; }
+    .leader-item:hover { background:var(--surface); }
+    .li-rank { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.85rem;color:var(--muted);min-width:22px;text-align:right; }
+    .li-rank.top3 { color:var(--accent); }
+    .li-initial { width:34px;height:34px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.75rem;color:var(--muted);flex-shrink:0; }
+    .li-info { flex:1; }
+    .li-name { font-size:0.83rem;color:#f1f5f9;font-family:'Google Sans',sans-serif;margin-bottom:1px; }
+    .li-meta { font-size:0.67rem;color:var(--muted);font-family:'Google Sans Code',monospace; }
+    .li-stat { text-align:right; }
+    .li-val { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.95rem;color:#f1f5f9; }
+    .li-bar-wrap { width:50px;height:4px;background:var(--border);border-radius:2px;margin-top:3px;margin-left:auto; }
+    .li-bar { height:100%;border-radius:2px;background:var(--accent);opacity:0.7; }
+
+    /* Era trend chart */
+    .chart-panel { margin:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px; }
+    .chart-label { font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border); }
+
+    .tab-bar { height:64px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;flex-shrink:0; }
+    .tab-item { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer; }
+    .tab-icon { font-size:1.05rem;color:var(--muted); }
+    .tab-label { font-size:0.6rem;color:var(--muted);font-family:'Google Sans',sans-serif; }
+    .tab-item.active .tab-icon,.tab-item.active .tab-label { color:var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title">Stat Leaders</div>
+    <div class="icon-btn">⊞</div>
+  </div>
+
+  <div class="content">
+
+    <!-- Mode/scope controls -->
+    <div class="controls-strip">
+      <div class="seg-ctrl">
+        <div class="seg-btn active">Batting</div>
+        <div class="seg-btn">Pitching</div>
+        <div class="seg-btn">Fielding</div>
+      </div>
+      <div class="scope-row">
+        <span class="scope-pill active">Season</span>
+        <span class="scope-pill">Career</span>
+        <select class="season-sel">
+          <option>2024</option>
+          <option>2023</option>
+          <option>1998</option>
+          <option>1927</option>
+          <option>1969</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Stat selector -->
+    <div class="stat-chips">
+      <span class="stat-chip active">HR</span>
+      <span class="stat-chip">AVG</span>
+      <span class="stat-chip">RBI</span>
+      <span class="stat-chip">OPS</span>
+      <span class="stat-chip">SB</span>
+      <span class="stat-chip">OBP</span>
+      <span class="stat-chip">SLG</span>
+      <span class="stat-chip">WAR</span>
+      <span class="stat-chip">wRC+</span>
+    </div>
+
+    <!-- Podium -->
+    <div class="lb-header">
+      <div class="lb-title">Home Runs — 2024</div>
+      <div class="lb-meta">NL+AL · min 100 PA</div>
+    </div>
+    <div class="lb-podium">
+      <div class="podium-item second">
+        <div class="podium-name">S. Ohtani</div>
+        <div class="podium-bar second"></div>
+        <div class="podium-val">54</div>
+        <div class="podium-rank">#2</div>
+      </div>
+      <div class="podium-item first">
+        <div class="podium-name">A. Judge</div>
+        <div class="podium-bar first"></div>
+        <div class="podium-val">58</div>
+        <div class="podium-rank">#1</div>
+      </div>
+      <div class="podium-item third">
+        <div class="podium-name">M. Olson</div>
+        <div class="podium-bar third"></div>
+        <div class="podium-val">49</div>
+        <div class="podium-rank">#3</div>
+      </div>
+    </div>
+
+    <!-- Full leaderboard -->
+    <div class="leader-item">
+      <div class="li-rank top3">1</div>
+      <div class="li-initial">AJ</div>
+      <div class="li-info">
+        <div class="li-name">Aaron Judge</div>
+        <div class="li-meta">judgaaro01 · NYA · OF</div>
+      </div>
+      <div class="li-stat">
+        <div class="li-val">58</div>
+        <div class="li-bar-wrap"><div class="li-bar" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div class="leader-item">
+      <div class="li-rank top3">2</div>
+      <div class="li-initial">SO</div>
+      <div class="li-info">
+        <div class="li-name">Shohei Ohtani</div>
+        <div class="li-meta">ohtansh01 · LAN · DH</div>
+      </div>
+      <div class="li-stat">
+        <div class="li-val">54</div>
+        <div class="li-bar-wrap"><div class="li-bar" style="width:93%"></div></div>
+      </div>
+    </div>
+    <div class="leader-item">
+      <div class="li-rank top3">3</div>
+      <div class="li-initial">MO</div>
+      <div class="li-info">
+        <div class="li-name">Matt Olson</div>
+        <div class="li-meta">olsonma01 · ATL · 1B</div>
+      </div>
+      <div class="li-stat">
+        <div class="li-val">49</div>
+        <div class="li-bar-wrap"><div class="li-bar" style="width:84%"></div></div>
+      </div>
+    </div>
+    <div class="leader-item">
+      <div class="li-rank">4</div>
+      <div class="li-initial">CA</div>
+      <div class="li-info">
+        <div class="li-name">Corbin Carroll</div>
+        <div class="li-meta">carrocor01 · ARI · OF</div>
+      </div>
+      <div class="li-stat">
+        <div class="li-val">47</div>
+        <div class="li-bar-wrap"><div class="li-bar" style="width:81%"></div></div>
+      </div>
+    </div>
+    <div class="leader-item">
+      <div class="li-rank">5</div>
+      <div class="li-initial">PG</div>
+      <div class="li-info">
+        <div class="li-name">Pete Alonso</div>
+        <div class="li-meta">alonspe01 · NYN · 1B</div>
+      </div>
+      <div class="li-stat">
+        <div class="li-val">46</div>
+        <div class="li-bar-wrap"><div class="li-bar" style="width:79%"></div></div>
+      </div>
+    </div>
+    <div class="leader-item">
+      <div class="li-rank">6</div>
+      <div class="li-initial">FO</div>
+      <div class="li-info">
+        <div class="li-name">Freddie Freeman</div>
+        <div class="li-meta">freemfr01 · LAN · 1B</div>
+      </div>
+      <div class="li-stat">
+        <div class="li-val">42</div>
+        <div class="li-bar-wrap"><div class="li-bar" style="width:72%"></div></div>
+      </div>
+    </div>
+    <div class="leader-item">
+      <div class="li-rank">7</div>
+      <div class="li-initial">KT</div>
+      <div class="li-info">
+        <div class="li-name">Kyle Tucker</div>
+        <div class="li-meta">tuckkyl01 · HOU · OF</div>
+      </div>
+      <div class="li-stat">
+        <div class="li-val">40</div>
+        <div class="li-bar-wrap"><div class="li-bar" style="width:69%"></div></div>
+      </div>
+    </div>
+
+    <!-- Era trend -->
+    <div class="chart-panel">
+      <div class="chart-label">HR rate by era — league avg (per 600 PA)</div>
+      <canvas id="eraChart" height="90"></canvas>
+    </div>
+
+    <div style="height:16px"></div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item"><div class="tab-icon">⌂</div><div class="tab-label">Home</div></div>
+    <div class="tab-item"><div class="tab-icon">◎</div><div class="tab-label">Players</div></div>
+    <div class="tab-item"><div class="tab-icon">◈</div><div class="tab-label">Teams</div></div>
+    <div class="tab-item"><div class="tab-icon">◷</div><div class="tab-label">Games</div></div>
+    <div class="tab-item active"><div class="tab-icon">≡</div><div class="tab-label">More</div></div>
+  </div>
+
+</div>
+<script>
+const ctx = document.getElementById('eraChart').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: ['1920s','1930s','1940s','1950s','1960s','1970s','1980s','1990s','2000s','2010s','2020s'],
+    datasets: [{
+      label: 'HR / 600 PA',
+      data: [8,10,9,14,11,11,14,16,19,16,22],
+      borderColor: 'rgba(59,130,246,0.8)',
+      backgroundColor: 'rgba(59,130,246,0.1)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 3,
+      pointBackgroundColor: 'rgba(59,130,246,1)'
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#6b7280', font: { size: 8 } }, grid: { color: '#252934' } },
+      y: { ticks: { color: '#6b7280', font: { size: 8 } }, grid: { color: '#252934' } }
+    }
+  }
+});
+</script>
+</body>
+</html>

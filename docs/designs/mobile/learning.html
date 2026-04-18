@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Learning Mode — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f13; --surface: #13161c; --surface2: #1a1e27;
+      --border: #252934; --text: #e2e8f0; --muted: #6b7280;
+      --accent: #3b82f6; --accent2: #10b981;
+      --pitch-ff: #ef4444; --pitch-sl: #a78bfa; --pitch-ch: #22d3ee; --pitch-cb: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    h1,h2,h3 { font-family: 'Google Sans', sans-serif; }
+
+    .status-bar { height: 44px; background: var(--bg); display: flex; align-items: flex-end; justify-content: space-between; padding: 0 20px 8px; flex-shrink: 0; }
+    .sb-time { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .sb-icons { display: flex; gap: 5px; align-items: center; font-size: 0.7rem; color: var(--text); font-family: 'Google Sans Code', monospace; }
+
+    .app { display: flex; flex-direction: column; height: 100%; min-height: 844px; }
+
+    .app-header { padding: 0 16px; height: 52px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .app-title { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #f1f5f9; }
+
+    .content { flex: 1; overflow-y: auto; }
+
+    .panel { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .panel-label { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+    /* Hero section */
+    .hero { margin: 12px 16px; text-align: center; padding: 20px 0 8px; }
+    .hero-icon { font-size: 2.4rem; margin-bottom: 8px; }
+    .hero-title { font-family: 'Google Sans', sans-serif; font-size: 1.15rem; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+    .hero-sub { font-size: 0.72rem; color: var(--muted); max-width: 280px; margin: 0 auto; line-height: 1.5; }
+
+    /* Progress strip */
+    .progress-strip { margin: 0 16px 12px; display: flex; gap: 8px; align-items: center; }
+    .prog-bar { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+    .prog-fill { height: 100%; background: var(--accent2); border-radius: 2px; }
+    .prog-label { font-size: 0.62rem; color: var(--muted); font-family: 'Google Sans Code', monospace; white-space: nowrap; }
+
+    /* Module cards */
+    .module-grid { padding: 0 16px 12px; display: flex; flex-direction: column; gap: 10px; }
+    .module-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; transition: border-color 0.15s; }
+    .module-card:hover { border-color: var(--accent); }
+    .module-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+    .module-info { flex: 1; }
+    .module-name { font-family: 'Google Sans', sans-serif; font-size: 0.85rem; font-weight: 700; color: #f1f5f9; margin-bottom: 2px; }
+    .module-desc { font-size: 0.68rem; color: var(--muted); line-height: 1.5; }
+    .module-progress { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+    .mp-bar { width: 60px; height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+    .mp-fill { height: 100%; border-radius: 2px; }
+    .mp-label { font-size: 0.56rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+    .module-arrow { color: var(--muted); font-size: 0.9rem; align-self: center; }
+
+    /* Pitch identification trainer (expanded view) */
+    .trainer { margin: 0 16px 12px; }
+    .trainer-viewport { background: #0a0c10; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative; }
+    .trainer-scene { width: 100%; aspect-ratio: 4/3; position: relative; }
+    .trainer-scene svg { width: 100%; height: 100%; }
+    .trainer-label { position: absolute; top: 8px; left: 10px; font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans Code', monospace; background: rgba(13,15,19,0.8); padding: 3px 8px; border-radius: 4px; }
+    .trainer-streak { position: absolute; top: 8px; right: 10px; font-size: 0.6rem; color: var(--accent2); font-family: 'Google Sans Code', monospace; background: rgba(13,15,19,0.8); padding: 3px 8px; border-radius: 4px; }
+
+    /* Answer options */
+    .answer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .answer-btn { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.15s; }
+    .answer-btn:hover { border-color: var(--accent); }
+    .answer-btn.correct { border-color: var(--accent2); background: rgba(16,185,129,0.08); }
+    .answer-btn.wrong { border-color: #ef4444; background: rgba(239,68,68,0.08); opacity: 0.5; }
+    .answer-type { font-family: 'Google Sans', sans-serif; font-size: 0.82rem; font-weight: 700; color: #f1f5f9; margin-bottom: 2px; }
+    .answer-desc { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+
+    /* Situation quiz */
+    .diamond { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .diamond-field { width: 160px; height: 160px; margin: 0 auto 12px; position: relative; }
+    .diamond-shape { position: absolute; width: 90px; height: 90px; border: 1.5px solid var(--border); transform: rotate(45deg); left: 35px; top: 35px; }
+    .base { position: absolute; width: 12px; height: 12px; border-radius: 2px; transform: rotate(45deg); border: 1.5px solid var(--border); }
+    .base.home { bottom: 22px; left: 74px; background: #d4d4d8; }
+    .base.first { right: 22px; top: 74px; }
+    .base.second { top: 22px; left: 74px; }
+    .base.third { left: 22px; top: 74px; }
+    .base.occupied { background: var(--accent); border-color: var(--accent); }
+    .runner-dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+    .situation-info { text-align: center; }
+    .sit-inning { font-size: 0.68rem; color: var(--muted); font-family: 'Google Sans Code', monospace; margin-bottom: 4px; }
+    .sit-state { font-family: 'Google Sans', sans-serif; font-size: 0.9rem; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+    .sit-score { font-size: 0.72rem; color: var(--muted); font-family: 'Google Sans Code', monospace; margin-bottom: 4px; }
+    .sit-count { font-size: 0.72rem; color: var(--text); font-family: 'Google Sans Code', monospace; }
+    .sit-question { margin-top: 12px; font-size: 0.78rem; color: #f1f5f9; font-family: 'Google Sans', sans-serif; text-align: center; }
+
+    /* Stats strip */
+    .stats-strip { margin: 12px 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ss-item { background: var(--surface2); padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .ss-val { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.85rem; color: #f1f5f9; }
+    .ss-lbl { font-size: 0.56rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+
+    .tab-bar { height: 64px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: stretch; flex-shrink: 0; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+    .tab-icon { font-size: 1.05rem; color: var(--muted); }
+    .tab-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans', sans-serif; }
+    .tab-item.active .tab-icon, .tab-item.active .tab-label { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title">Learn Baseball</div>
+  </div>
+
+  <div class="content">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-icon">&#9918;</div>
+      <div class="hero-title">Baseball Academy</div>
+      <div class="hero-sub">Learn the game through interactive lessons, pitch identification, and real game situations</div>
+    </div>
+
+    <!-- Overall progress -->
+    <div class="progress-strip">
+      <div class="prog-bar"><div class="prog-fill" style="width:35%"></div></div>
+      <div class="prog-label">35% complete</div>
+    </div>
+
+    <!-- Your stats -->
+    <div class="stats-strip">
+      <div class="ss-item"><div class="ss-val">42</div><div class="ss-lbl">LESSONS</div></div>
+      <div class="ss-item"><div class="ss-val">156</div><div class="ss-lbl">CORRECT</div></div>
+      <div class="ss-item"><div class="ss-val">12</div><div class="ss-lbl">STREAK</div></div>
+      <div class="ss-item"><div class="ss-val">78%</div><div class="ss-lbl">ACCURACY</div></div>
+    </div>
+
+    <!-- Module cards -->
+    <div class="module-grid">
+
+      <div class="module-card">
+        <div class="module-icon" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25)">&#9776;</div>
+        <div class="module-info">
+          <div class="module-name">Rules &amp; Scoring</div>
+          <div class="module-desc">Infield fly, balk, tag-up, force plays — animated explanations</div>
+          <div class="module-progress">
+            <div class="mp-bar"><div class="mp-fill" style="width:60%;background:var(--accent)"></div></div>
+            <div class="mp-label">6/10</div>
+          </div>
+        </div>
+        <div class="module-arrow">&#8250;</div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-icon" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25)">&#9898;</div>
+        <div class="module-info">
+          <div class="module-name">Pitch Identification</div>
+          <div class="module-desc">Watch a pitch trajectory, guess the type — four-seam, slider, change, curve</div>
+          <div class="module-progress">
+            <div class="mp-bar"><div class="mp-fill" style="width:40%;background:var(--pitch-ff)"></div></div>
+            <div class="mp-label">Level 2</div>
+          </div>
+        </div>
+        <div class="module-arrow">&#8250;</div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-icon" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25)">&#9830;</div>
+        <div class="module-info">
+          <div class="module-name">Situation Quiz</div>
+          <div class="module-desc">Real game states — predict the outcome or estimate win probability</div>
+          <div class="module-progress">
+            <div class="mp-bar"><div class="mp-fill" style="width:25%;background:var(--accent2)"></div></div>
+            <div class="mp-label">8/32</div>
+          </div>
+        </div>
+        <div class="module-arrow">&#8250;</div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-icon" style="background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.25)">&#9881;</div>
+        <div class="module-info">
+          <div class="module-name">Stat Explainers</div>
+          <div class="module-desc">Interactive calculators for WAR, wOBA, FIP — see how each input changes the output</div>
+          <div class="module-progress">
+            <div class="mp-bar"><div class="mp-fill" style="width:15%;background:#a78bfa"></div></div>
+            <div class="mp-label">1/7</div>
+          </div>
+        </div>
+        <div class="module-arrow">&#8250;</div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-icon" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25)">&#9733;</div>
+        <div class="module-info">
+          <div class="module-name">Historic Moments</div>
+          <div class="module-desc">Famous at-bats replayed pitch-by-pitch with narration</div>
+          <div class="module-progress">
+            <div class="mp-bar"><div class="mp-fill" style="width:50%;background:var(--pitch-cb)"></div></div>
+            <div class="mp-label">5/10</div>
+          </div>
+        </div>
+        <div class="module-arrow">&#8250;</div>
+      </div>
+
+    </div>
+
+    <!-- Pitch Identification preview (expanded state) -->
+    <div class="trainer">
+      <div class="trainer-viewport">
+        <div class="panel-label" style="border:none;padding:0;margin-bottom:8px">Pitch identification — round 7</div>
+        <div class="trainer-scene">
+          <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+            <!-- Strike zone -->
+            <rect x="155" y="120" width="90" height="110" fill="none" stroke="var(--border)" stroke-width="1.5" rx="2" opacity="0.5" />
+            <!-- Single pitch trajectory (mystery) -->
+            <path d="M195 15 Q196 90 225 200" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.7" />
+            <circle cx="225" cy="200" r="6" fill="#ffffff" opacity="0.8" />
+            <!-- Trajectory trail dots -->
+            <circle cx="195" cy="30" r="2" fill="#ffffff" opacity="0.2" />
+            <circle cx="195.5" cy="50" r="2" fill="#ffffff" opacity="0.25" />
+            <circle cx="196" cy="70" r="2" fill="#ffffff" opacity="0.3" />
+            <circle cx="197" cy="90" r="2" fill="#ffffff" opacity="0.35" />
+            <circle cx="200" cy="110" r="2" fill="#ffffff" opacity="0.4" />
+            <circle cx="205" cy="130" r="2" fill="#ffffff" opacity="0.45" />
+            <circle cx="210" cy="150" r="2" fill="#ffffff" opacity="0.5" />
+            <circle cx="217" cy="175" r="2" fill="#ffffff" opacity="0.6" />
+          </svg>
+          <div class="trainer-label">IDENTIFY THIS PITCH</div>
+          <div class="trainer-streak">12 streak</div>
+        </div>
+
+        <div class="answer-grid">
+          <div class="answer-btn">
+            <div class="answer-type" style="color:var(--pitch-ff)">Four-Seam</div>
+            <div class="answer-desc">Straight, high velo</div>
+          </div>
+          <div class="answer-btn correct">
+            <div class="answer-type" style="color:var(--pitch-sl)">Slider</div>
+            <div class="answer-desc">Lateral break</div>
+          </div>
+          <div class="answer-btn wrong">
+            <div class="answer-type" style="color:var(--pitch-ch)">Changeup</div>
+            <div class="answer-desc">Arm-side fade</div>
+          </div>
+          <div class="answer-btn">
+            <div class="answer-type" style="color:var(--pitch-cb)">Curveball</div>
+            <div class="answer-desc">Top-down drop</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Situation quiz preview -->
+    <div class="diamond">
+      <div class="panel-label">Situation quiz</div>
+      <div class="diamond-field">
+        <div class="diamond-shape"></div>
+        <div class="base home"></div>
+        <div class="base first"></div>
+        <div class="base second occupied"></div>
+        <div class="base third"></div>
+      </div>
+      <div class="situation-info">
+        <div class="sit-inning">Bot 7 · 1 Out</div>
+        <div class="sit-state">Runner on 2nd</div>
+        <div class="sit-score">NYY 3 — BOS 4</div>
+        <div class="sit-count">Count: 2-1</div>
+        <div class="sit-question">What is the home team's win probability?</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item"><div class="tab-icon">⌂</div><div class="tab-label">Home</div></div>
+    <div class="tab-item"><div class="tab-icon">◎</div><div class="tab-label">Players</div></div>
+    <div class="tab-item"><div class="tab-icon">◈</div><div class="tab-label">Teams</div></div>
+    <div class="tab-item"><div class="tab-icon">◷</div><div class="tab-label">Games</div></div>
+    <div class="tab-item active"><div class="tab-icon">≡</div><div class="tab-label">More</div></div>
+  </div>
+
+</div>
+</body>
+</html>

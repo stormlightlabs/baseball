@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Games — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981; }
+    * { box-sizing:border-box;margin:0;padding:0; }
+    html,body { height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif; }
+    h1,h2,h3 { font-family:'Google Sans',sans-serif; }
+
+    .status-bar { height:44px;background:var(--bg);display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 8px;flex-shrink:0; }
+    .sb-time { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.85rem;color:var(--text); }
+    .sb-icons { display:flex;gap:5px;font-size:0.7rem;color:var(--text);font-family:'Google Sans Code',monospace; }
+
+    .app { display:flex;flex-direction:column;height:100%;min-height:844px; }
+    .app-header { padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0; }
+    .app-title { font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9; }
+    .icon-btn { width:36px;height:36px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:0.9rem; }
+
+    .content { flex:1;overflow-y:auto; }
+
+    /* Filter strip */
+    .filter-strip { padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface); }
+    .filter-row { display:flex;gap:8px;margin-bottom:8px; }
+    .filter-sel { flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:8px;font-size:0.78rem;font-family:'Inter',sans-serif;outline:none; }
+    .quick-chips { display:flex;gap:6px;overflow-x:auto;scrollbar-width:none; }
+    .quick-chips::-webkit-scrollbar { display:none; }
+    .chip { font-size:0.68rem;padding:4px 10px;border-radius:99px;border:1px solid var(--border);color:var(--muted);cursor:pointer;white-space:nowrap;font-family:'Google Sans Code',monospace;flex-shrink:0;transition:all 0.15s; }
+    .chip.active { border-color:var(--accent);color:var(--accent); }
+
+    /* Results header */
+    .results-header { display:flex;align-items:center;justify-content:space-between;padding:10px 16px; }
+    .results-count { font-family:'Google Sans Code',monospace;font-size:0.7rem;color:var(--muted); }
+    .sort-btn { font-size:0.7rem;color:var(--accent);font-family:'Google Sans',sans-serif;cursor:pointer; }
+
+    /* Game cards */
+    .game-card { margin:0 16px 8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:background 0.15s; }
+    .game-card:hover { background:var(--surface2); }
+    .game-card.expanded { border-color:var(--accent); }
+
+    .gc-header { padding:12px 14px;display:flex;align-items:center;gap:12px; }
+    .gc-date { font-family:'Google Sans Code',monospace;font-size:0.68rem;color:var(--muted);min-width:50px; }
+    .gc-teams { flex:1; }
+    .gc-matchup { font-family:'Google Sans',sans-serif;font-size:0.88rem;font-weight:600;color:#f1f5f9;margin-bottom:2px; }
+    .gc-meta { font-size:0.67rem;color:var(--muted);font-family:'Google Sans Code',monospace; }
+    .gc-score { text-align:right; }
+    .gc-score-num { font-family:'Google Sans',sans-serif;font-weight:700;font-size:1.05rem;color:#f1f5f9; }
+    .gc-score-inn { font-size:0.62rem;color:var(--muted);font-family:'Google Sans Code',monospace; }
+
+    /* Expanded game detail */
+    .gc-detail { border-top:1px solid var(--border);padding:12px 14px; }
+    .gc-score-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:10px; }
+    .gc-team-score { text-align:center; }
+    .gc-team-name { font-family:'Google Sans',sans-serif;font-size:0.8rem;color:var(--muted);margin-bottom:2px; }
+    .gc-team-runs { font-family:'Google Sans',sans-serif;font-weight:700;font-size:2rem;color:#f1f5f9;line-height:1; }
+    .gc-sep { font-size:1.2rem;color:var(--muted); }
+    .meta-grid { display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px; }
+    .meta-item { background:var(--surface2);border-radius:6px;padding:6px 8px; }
+    .mi-lbl { font-size:0.6rem;color:var(--muted);font-family:'Google Sans Code',monospace;margin-bottom:1px; }
+    .mi-val { font-size:0.78rem;color:#f1f5f9;font-family:'Google Sans',sans-serif;font-weight:500; }
+
+    /* Win probability chart */
+    .wp-section { margin-bottom:10px; }
+    .wp-label { font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px; }
+    .wp-bar-wrap { position:relative;height:32px;background:var(--surface2);border-radius:6px;overflow:hidden; }
+    .wp-bar { height:100%;background:rgba(59,130,246,0.5);border-radius:6px 0 0 6px;display:flex;align-items:center;padding-left:8px; }
+    .wp-bar-text { font-size:0.68rem;color:rgba(255,255,255,0.8);font-family:'Google Sans',sans-serif;font-weight:600; }
+    .wp-bar-right { position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:0.68rem;color:rgba(255,255,255,0.6);font-family:'Google Sans',sans-serif; }
+
+    /* Plays section */
+    .plays-section { margin-top:4px; }
+    .play-item { display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.72rem; }
+    .play-item:last-child { border-bottom:none; }
+    .play-inn { font-family:'Google Sans Code',monospace;color:var(--muted);min-width:32px;font-size:0.66rem; }
+    .play-desc { flex:1;color:var(--text);line-height:1.4; }
+    .play-score { font-family:'Google Sans Code',monospace;color:var(--accent);font-size:0.66rem;white-space:nowrap; }
+
+    /* Duration trend */
+    .chart-panel { margin:0 16px 8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px; }
+    .chart-label { font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border); }
+
+    .tab-bar { height:64px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;flex-shrink:0; }
+    .tab-item { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer; }
+    .tab-icon { font-size:1.05rem;color:var(--muted); }
+    .tab-label { font-size:0.6rem;color:var(--muted);font-family:'Google Sans',sans-serif; }
+    .tab-item.active .tab-icon,.tab-item.active .tab-label { color:var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title">Game Finder</div>
+    <div style="display:flex;gap:4px">
+      <div class="icon-btn">⌕</div>
+      <div class="icon-btn">⊞</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Filter strip -->
+    <div class="filter-strip">
+      <div class="filter-row">
+        <select class="filter-sel">
+          <option>1998 season</option>
+          <option>2001</option>
+          <option>1927</option>
+          <option>1986</option>
+          <option>1969</option>
+        </select>
+        <select class="filter-sel">
+          <option value="">Any team</option>
+          <option>NYA</option>
+          <option>BOS</option>
+          <option>SFG</option>
+          <option>LAN</option>
+        </select>
+      </div>
+      <div class="quick-chips">
+        <span class="chip active">Extra innings</span>
+        <span class="chip">Doubleheaders</span>
+        <span class="chip">Postseason</span>
+        <span class="chip">Shutouts</span>
+        <span class="chip">No-hitters</span>
+        <span class="chip">Walk-offs</span>
+      </div>
+    </div>
+
+    <!-- Duration trend chart -->
+    <div class="chart-panel">
+      <div class="chart-label">Avg game duration — by decade (minutes)</div>
+      <canvas id="durationChart" height="80"></canvas>
+    </div>
+
+    <div class="results-header">
+      <div class="results-count">6 games · 1998 season</div>
+      <div class="sort-btn">Sort: Date ↓</div>
+    </div>
+
+    <!-- Game card — expanded -->
+    <div class="game-card expanded">
+      <div class="gc-header">
+        <div class="gc-date">Sep 27</div>
+        <div class="gc-teams">
+          <div class="gc-matchup">CHC @ STL</div>
+          <div class="gc-meta">Busch Stadium · 47,994 att</div>
+        </div>
+        <div class="gc-score">
+          <div class="gc-score-num">6–3</div>
+          <div class="gc-score-inn">9 inn</div>
+        </div>
+      </div>
+      <div class="gc-detail">
+        <div class="gc-score-header">
+          <div class="gc-team-score">
+            <div class="gc-team-name">Chicago Cubs</div>
+            <div class="gc-team-runs">3</div>
+          </div>
+          <div class="gc-sep">–</div>
+          <div class="gc-team-score">
+            <div class="gc-team-name">St. Louis Cardinals</div>
+            <div class="gc-team-runs">6</div>
+          </div>
+        </div>
+        <div class="meta-grid">
+          <div class="meta-item"><div class="mi-lbl">Date</div><div class="mi-val">Sep 27, 1998</div></div>
+          <div class="meta-item"><div class="mi-lbl">Duration</div><div class="mi-val">2h 58m</div></div>
+          <div class="meta-item"><div class="mi-lbl">Park</div><div class="mi-val">Busch Stadium</div></div>
+          <div class="meta-item"><div class="mi-lbl">Attendance</div><div class="mi-val">47,994</div></div>
+        </div>
+        <div class="wp-section">
+          <div class="wp-label">Final win probability</div>
+          <div class="wp-bar-wrap">
+            <div class="wp-bar" style="width:35%">
+              <span class="wp-bar-text">CHC 35%</span>
+            </div>
+            <div class="wp-bar-right">STL 65%</div>
+          </div>
+        </div>
+        <div class="plays-section">
+          <div class="play-item">
+            <div class="play-inn">B3</div>
+            <div class="play-desc">Sosa HR (66) — solo, 432 ft — solo HR. Sosa ties McGwire!</div>
+            <div class="play-score">1–1</div>
+          </div>
+          <div class="play-item">
+            <div class="play-inn">B5</div>
+            <div class="play-desc">McGwire HR (70) — solo, 399 ft — breaks own record, 70th HR</div>
+            <div class="play-score">2–2</div>
+          </div>
+          <div class="play-item">
+            <div class="play-inn">B7</div>
+            <div class="play-desc">McGwire HR (70 final) — 2-run, Cardinals extend lead</div>
+            <div class="play-score">3–5</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Regular game cards -->
+    <div class="game-card">
+      <div class="gc-header">
+        <div class="gc-date">Sep 8</div>
+        <div class="gc-teams">
+          <div class="gc-matchup">CHC @ STL</div>
+          <div class="gc-meta">Busch Stadium · 43,688 att</div>
+        </div>
+        <div class="gc-score">
+          <div class="gc-score-num">8–3</div>
+          <div class="gc-score-inn">9 inn</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-card">
+      <div class="gc-header">
+        <div class="gc-date">Jul 12</div>
+        <div class="gc-teams">
+          <div class="gc-matchup">NYA @ BOS</div>
+          <div class="gc-meta">Fenway Park · 33,871 att</div>
+        </div>
+        <div class="gc-score">
+          <div class="gc-score-num">5–4</div>
+          <div class="gc-score-inn">14 inn</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-card">
+      <div class="gc-header">
+        <div class="gc-date">Oct 17</div>
+        <div class="gc-teams">
+          <div class="gc-matchup">CLE @ NYA</div>
+          <div class="gc-meta">Yankee Stadium · 56,010 att · ALCS</div>
+        </div>
+        <div class="gc-score">
+          <div class="gc-score-num">1–4</div>
+          <div class="gc-score-inn">9 inn</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-card">
+      <div class="gc-header">
+        <div class="gc-date">May 22</div>
+        <div class="gc-teams">
+          <div class="gc-matchup">SDN @ ATL</div>
+          <div class="gc-meta">Turner Field · 38,004 att</div>
+        </div>
+        <div class="gc-score">
+          <div class="gc-score-num">0–2</div>
+          <div class="gc-score-inn">9 inn</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item"><div class="tab-icon">⌂</div><div class="tab-label">Home</div></div>
+    <div class="tab-item"><div class="tab-icon">◎</div><div class="tab-label">Players</div></div>
+    <div class="tab-item"><div class="tab-icon">◈</div><div class="tab-label">Teams</div></div>
+    <div class="tab-item active"><div class="tab-icon">◷</div><div class="tab-label">Games</div></div>
+    <div class="tab-item"><div class="tab-icon">≡</div><div class="tab-label">More</div></div>
+  </div>
+
+</div>
+<script>
+const ctx = document.getElementById('durationChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ['1900s','1910s','1920s','1930s','1940s','1950s','1960s','1970s','1980s','1990s','2000s','2010s','2020s'],
+    datasets: [{
+      label: 'Avg minutes',
+      data: [102, 108, 115, 117, 120, 128, 142, 150, 162, 168, 175, 182, 190],
+      backgroundColor: 'rgba(59,130,246,0.5)',
+      borderRadius: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#6b7280', font: { size: 7 } }, grid: { color: '#252934' } },
+      y: { ticks: { color: '#6b7280', font: { size: 8 } }, grid: { color: '#252934' } }
+    }
+  }
+});
+</script>
+</body>
+</html>

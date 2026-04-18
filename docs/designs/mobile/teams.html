@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Teams — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#3b82f6;--accent2:#10b981; }
+    * { box-sizing:border-box;margin:0;padding:0; }
+    html,body { height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif; }
+    h1,h2,h3 { font-family:'Google Sans',sans-serif; }
+
+    .status-bar { height:44px;background:var(--bg);display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 8px;flex-shrink:0; }
+    .sb-time { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.85rem;color:var(--text); }
+    .sb-icons { display:flex;gap:5px;align-items:center;font-size:0.7rem;color:var(--text);font-family:'Google Sans Code',monospace; }
+
+    .app { display:flex;flex-direction:column;height:100%;min-height:844px; }
+    .app-header { padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0; }
+    .app-title { font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9; }
+    .icon-btn { width:36px;height:36px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:0.9rem; }
+
+    .search-bar { margin:12px 16px;display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden; }
+    .search-bar input { flex:1;background:transparent;border:none;outline:none;padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.85rem; }
+    .search-bar input::placeholder { color:var(--muted); }
+    .search-bar button { background:var(--border);border:none;color:var(--muted);padding:0 14px;cursor:pointer;font-size:0.85rem; }
+
+    .content { flex:1;overflow-y:auto; }
+
+    /* Franchise header card */
+    .franchise-card { margin:0 16px 12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px; }
+    .fc-top { display:flex;align-items:center;gap:12px;margin-bottom:12px; }
+    .fc-badge { width:52px;height:52px;border-radius:10px;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0; }
+    .fc-info { flex:1; }
+    .fc-name { font-family:'Google Sans',sans-serif;font-size:1.05rem;font-weight:700;color:#f1f5f9;margin-bottom:2px; }
+    .fc-meta { font-size:0.72rem;color:var(--muted);line-height:1.6; }
+    .fc-stats { display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden; }
+    .fcs { background:var(--surface2);padding:7px 0;display:flex;flex-direction:column;align-items:center;gap:2px; }
+    .fcs-val { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.82rem;color:#f1f5f9; }
+    .fcs-lbl { font-size:0.58rem;color:var(--muted);font-family:'Google Sans Code',monospace; }
+
+    /* Segment control */
+    .seg-ctrl { display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:0 16px 12px; }
+    .seg-btn { flex:1;font-size:0.75rem;padding:8px 0;cursor:pointer;color:var(--muted);border:none;background:transparent;font-family:'Google Sans',sans-serif;text-align:center;transition:all 0.15s; }
+    .seg-btn.active { background:var(--border);color:var(--text); }
+
+    .panel { margin:0 16px 12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px; }
+    .panel-label { font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border); }
+
+    /* Standings table */
+    .table-wrap { overflow-x:auto;-webkit-overflow-scrolling:touch; }
+    table { width:100%;border-collapse:collapse;font-size:0.72rem;min-width:320px; }
+    th { text-align:left;color:var(--muted);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--border);font-family:'Google Sans',sans-serif;font-size:0.68rem;white-space:nowrap; }
+    td { padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text);font-family:'Google Sans Code',monospace;font-size:0.7rem; }
+    tr:last-child td { border-bottom:none; }
+    tr.highlight td { background:rgba(59,130,246,0.06); }
+
+    /* Roster item */
+    .roster-item { display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer; }
+    .roster-item:last-child { border-bottom:none; }
+    .ri-num { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.8rem;color:var(--muted);min-width:22px;text-align:right; }
+    .ri-initial { width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.75rem;color:var(--muted);flex-shrink:0; }
+    .ri-info { flex:1; }
+    .ri-name { font-size:0.82rem;color:#f1f5f9;font-family:'Google Sans',sans-serif; }
+    .ri-meta { font-size:0.66rem;color:var(--muted);font-family:'Google Sans Code',monospace; }
+    .ri-pos { font-family:'Google Sans Code',monospace;font-size:0.65rem;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--muted); }
+
+    /* Schedule items */
+    .game-row { display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border); }
+    .game-row:last-child { border-bottom:none; }
+    .gr-date { font-family:'Google Sans Code',monospace;font-size:0.7rem;color:var(--muted);min-width:56px; }
+    .gr-teams { flex:1; }
+    .gr-matchup { font-size:0.8rem;color:#f1f5f9;font-family:'Google Sans',sans-serif; }
+    .gr-venue { font-size:0.66rem;color:var(--muted);font-family:'Google Sans Code',monospace; }
+    .gr-score { font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.85rem;color:#f1f5f9;text-align:right; }
+    .gr-result { font-size:0.65rem;font-family:'Google Sans Code',monospace;text-align:right; }
+    .gr-result.win { color:var(--accent2); }
+    .gr-result.loss { color:#ef4444; }
+
+    /* Franchise list */
+    .franchise-list { padding:0 16px 16px; }
+    .fl-label { font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px; }
+    .fl-item { display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer; }
+    .fl-item:last-child { border-bottom:none; }
+    .fl-dot { width:8px;height:8px;border-radius:50%;background:var(--accent); }
+    .fl-name { flex:1;font-size:0.82rem;color:#f1f5f9;font-family:'Google Sans',sans-serif; }
+    .fl-years { font-size:0.67rem;color:var(--muted);font-family:'Google Sans Code',monospace; }
+
+    .tab-bar { height:64px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;flex-shrink:0; }
+    .tab-item { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer; }
+    .tab-icon { font-size:1.05rem;color:var(--muted); }
+    .tab-label { font-size:0.6rem;color:var(--muted);font-family:'Google Sans',sans-serif; }
+    .tab-item.active .tab-icon,.tab-item.active .tab-label { color:var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title">Teams</div>
+    <div class="icon-btn">⌕</div>
+  </div>
+
+  <div class="content">
+
+    <div class="search-bar">
+      <input type="text" placeholder="Franchise, city, abbreviation…" />
+      <button>→</button>
+    </div>
+
+    <!-- Franchise card -->
+    <div class="franchise-card">
+      <div class="fc-top">
+        <div class="fc-badge">◈</div>
+        <div class="fc-info">
+          <div class="fc-name">New York Yankees</div>
+          <div class="fc-meta">
+            NYA · American League East<br>
+            Active: 1901–present · 27 championships
+          </div>
+        </div>
+      </div>
+      <div class="fc-stats">
+        <div class="fcs"><div class="fcs-val">10,560</div><div class="fcs-lbl">W</div></div>
+        <div class="fcs"><div class="fcs-val">7,940</div><div class="fcs-lbl">L</div></div>
+        <div class="fcs"><div class="fcs-val">.571</div><div class="fcs-lbl">W%</div></div>
+        <div class="fcs"><div class="fcs-val">27</div><div class="fcs-lbl">WS</div></div>
+        <div class="fcs"><div class="fcs-val">40</div><div class="fcs-lbl">AL</div></div>
+      </div>
+    </div>
+
+    <!-- Segment control -->
+    <div class="seg-ctrl">
+      <div class="seg-btn active">Overview</div>
+      <div class="seg-btn">Roster</div>
+      <div class="seg-btn">Schedule</div>
+      <div class="seg-btn">Daily</div>
+    </div>
+
+    <!-- Season stats chart -->
+    <div class="panel">
+      <div class="panel-label">2024 season — run differential by month</div>
+      <canvas id="runDiffChart" height="90"></canvas>
+    </div>
+
+    <!-- Season record panel -->
+    <div class="panel">
+      <div class="panel-label">Team seasons — recent</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Year</th><th>W</th><th>L</th><th>W%</th><th>RS</th><th>RA</th><th>Finish</th>
+          </tr></thead>
+          <tbody>
+            <tr class="highlight"><td>2024</td><td>94</td><td>68</td><td>.580</td><td>762</td><td>609</td><td>AL East 1st</td></tr>
+            <tr><td>2023</td><td>82</td><td>80</td><td>.506</td><td>712</td><td>697</td><td>AL East 3rd</td></tr>
+            <tr><td>2022</td><td>99</td><td>63</td><td>.611</td><td>807</td><td>648</td><td>AL East 1st</td></tr>
+            <tr><td>2021</td><td>92</td><td>70</td><td>.568</td><td>711</td><td>629</td><td>AL Wild Card</td></tr>
+            <tr><td>2020</td><td>33</td><td>27</td><td>.550</td><td>315</td><td>261</td><td>AL East 1st</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Roster panel -->
+    <div class="panel">
+      <div class="panel-label">Current roster — 2024</div>
+      <div class="roster-item">
+        <div class="ri-num">99</div>
+        <div class="ri-initial">AJ</div>
+        <div class="ri-info">
+          <div class="ri-name">Aaron Judge</div>
+          <div class="ri-meta">judgaaro01 · Age 32</div>
+        </div>
+        <div class="ri-pos">OF</div>
+      </div>
+      <div class="roster-item">
+        <div class="ri-num">45</div>
+        <div class="ri-initial">GC</div>
+        <div class="ri-info">
+          <div class="ri-name">Gerrit Cole</div>
+          <div class="ri-meta">cologer01 · Age 33</div>
+        </div>
+        <div class="ri-pos">SP</div>
+      </div>
+      <div class="roster-item">
+        <div class="ri-num">55</div>
+        <div class="ri-initial">CT</div>
+        <div class="ri-info">
+          <div class="ri-name">Carlos Toro</div>
+          <div class="ri-meta">torocar01 · Age 27</div>
+        </div>
+        <div class="ri-pos">2B</div>
+      </div>
+      <div class="roster-item">
+        <div class="ri-num">12</div>
+        <div class="ri-initial">JS</div>
+        <div class="ri-info">
+          <div class="ri-name">Juan Soto</div>
+          <div class="ri-meta">sotojuan01 · Age 25</div>
+        </div>
+        <div class="ri-pos">OF</div>
+      </div>
+    </div>
+
+    <!-- Recent schedule -->
+    <div class="panel">
+      <div class="panel-label">Recent games</div>
+      <div class="game-row">
+        <div class="gr-date">Apr 14</div>
+        <div class="gr-teams">
+          <div class="gr-matchup">NYY @ BOS</div>
+          <div class="gr-venue">Fenway Park</div>
+        </div>
+        <div>
+          <div class="gr-score">7–4</div>
+          <div class="gr-result win">W</div>
+        </div>
+      </div>
+      <div class="game-row">
+        <div class="gr-date">Apr 13</div>
+        <div class="gr-teams">
+          <div class="gr-matchup">NYY @ BOS</div>
+          <div class="gr-venue">Fenway Park</div>
+        </div>
+        <div>
+          <div class="gr-score">3–6</div>
+          <div class="gr-result loss">L</div>
+        </div>
+      </div>
+      <div class="game-row">
+        <div class="gr-date">Apr 11</div>
+        <div class="gr-teams">
+          <div class="gr-matchup">TBR @ NYY</div>
+          <div class="gr-venue">Yankee Stadium</div>
+        </div>
+        <div>
+          <div class="gr-score">5–2</div>
+          <div class="gr-result win">W</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Other franchises -->
+    <div class="franchise-list">
+      <div class="fl-label">Other franchises</div>
+      <div class="fl-item">
+        <div class="fl-dot" style="background:#ef4444"></div>
+        <div class="fl-name">Boston Red Sox</div>
+        <div class="fl-years">1901–present</div>
+      </div>
+      <div class="fl-item">
+        <div class="fl-dot" style="background:#f59e0b"></div>
+        <div class="fl-name">San Francisco Giants</div>
+        <div class="fl-years">1883–present</div>
+      </div>
+      <div class="fl-item">
+        <div class="fl-dot" style="background:var(--accent2)"></div>
+        <div class="fl-name">Oakland Athletics</div>
+        <div class="fl-years">1901–present</div>
+      </div>
+      <div class="fl-item">
+        <div class="fl-dot" style="background:#a78bfa"></div>
+        <div class="fl-name">Los Angeles Dodgers</div>
+        <div class="fl-years">1884–present</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item"><div class="tab-icon">⌂</div><div class="tab-label">Home</div></div>
+    <div class="tab-item"><div class="tab-icon">◎</div><div class="tab-label">Players</div></div>
+    <div class="tab-item active"><div class="tab-icon">◈</div><div class="tab-label">Teams</div></div>
+    <div class="tab-item"><div class="tab-icon">◷</div><div class="tab-label">Games</div></div>
+    <div class="tab-item"><div class="tab-icon">≡</div><div class="tab-label">More</div></div>
+  </div>
+
+</div>
+<script>
+const ctx = document.getElementById('runDiffChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ['Apr','May','Jun','Jul','Aug','Sep','Oct'],
+    datasets: [{
+      label: 'Run diff',
+      data: [18, 24, 31, 15, 42, 28, 12],
+      backgroundColor: d => d.raw >= 0 ? 'rgba(16,185,129,0.6)' : 'rgba(239,68,68,0.6)',
+      borderRadius: 3
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#6b7280', font: { size: 9 } }, grid: { color: '#252934' } },
+      y: { ticks: { color: '#6b7280', font: { size: 9 } }, grid: { color: '#252934' } }
+    }
+  }
+});
+</script>
+</body>
+</html>

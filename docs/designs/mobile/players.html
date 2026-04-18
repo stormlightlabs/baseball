@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Players — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d0f13; --surface: #13161c; --surface2: #1a1e27;
+      --border: #252934; --text: #e2e8f0; --muted: #6b7280;
+      --accent: #3b82f6; --accent2: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    h1,h2,h3 { font-family: 'Google Sans', sans-serif; }
+
+    .status-bar { height: 44px; background: var(--bg); display: flex; align-items: flex-end; justify-content: space-between; padding: 0 20px 8px; flex-shrink: 0; }
+    .sb-time { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .sb-icons { display: flex; gap: 5px; align-items: center; font-size: 0.7rem; color: var(--text); font-family: 'Google Sans Code', monospace; }
+
+    .app { display: flex; flex-direction: column; height: 100%; min-height: 844px; }
+
+    .app-header { padding: 0 16px; height: 52px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .app-title { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #f1f5f9; }
+    .icon-btn { width: 36px; height: 36px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+
+    .search-bar { margin: 12px 16px; display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .search-bar input { flex: 1; background: transparent; border: none; outline: none; padding: 10px 12px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+    .search-bar input::placeholder { color: var(--muted); }
+    .search-bar button { background: var(--border); border: none; color: var(--muted); padding: 0 14px; cursor: pointer; font-size: 0.85rem; }
+
+    .content { flex: 1; overflow-y: auto; }
+
+    /* Bio card */
+    .bio-card { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .bio-top { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+    .bio-avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 1.4rem; flex-shrink: 0; }
+    .bio-info { flex: 1; }
+    .bio-name { font-family: 'Google Sans', sans-serif; font-size: 1.05rem; font-weight: 700; color: #f1f5f9; margin-bottom: 2px; }
+    .bio-meta { font-size: 0.72rem; color: var(--muted); line-height: 1.6; }
+    .bio-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .bs-item { background: var(--surface2); padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .bs-val { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.9rem; color: #f1f5f9; }
+    .bs-lbl { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+
+    /* Tabs */
+    .tab-row { display: flex; padding: 0 16px; gap: 4px; margin-bottom: 12px; }
+    .tab { font-size: 0.78rem; padding: 7px 14px; border-radius: 8px; cursor: pointer; color: var(--muted); border: 1px solid transparent; transition: all 0.15s; font-family: 'Google Sans', sans-serif; white-space: nowrap; }
+    .tab.active { background: var(--surface2); color: var(--text); border-color: var(--border); }
+
+    /* Panels */
+    .panel { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .panel-label { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+    /* Chart controls */
+    .chart-controls { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .ctrl-pill { font-size: 0.7rem; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-family: 'Google Sans Code', monospace; }
+    .ctrl-pill.active { border-color: var(--accent); color: var(--accent); }
+
+    /* Stats table */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.72rem; min-width: 380px; }
+    th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); font-family: 'Google Sans', sans-serif; font-size: 0.68rem; white-space: nowrap; }
+    td { padding: 7px 8px; border-bottom: 1px solid var(--border); color: var(--text); font-family: 'Google Sans Code', monospace; font-size: 0.7rem; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(odd) td { background: rgba(255,255,255,0.01); }
+    .team-badge { display: inline-block; background: var(--surface2); border-radius: 3px; padding: 1px 5px; font-size: 0.62rem; color: var(--muted); }
+
+    /* Awards section */
+    .award-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .award-item:last-child { border-bottom: none; }
+    .award-icon { width: 28px; height: 28px; border-radius: 6px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+    .award-info { flex: 1; }
+    .award-name { font-size: 0.8rem; color: #f1f5f9; font-family: 'Google Sans', sans-serif; font-weight: 500; }
+    .award-meta { font-size: 0.66rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+
+    /* Player list */
+    .player-recent { padding: 0 16px 16px; }
+    .pr-label { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+    .player-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .player-item:last-child { border-bottom: none; }
+    .pi-initial { width: 32px; height: 32px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.8rem; color: var(--muted); flex-shrink: 0; }
+    .pi-info { flex: 1; }
+    .pi-name { font-size: 0.82rem; color: #f1f5f9; font-family: 'Google Sans', sans-serif; }
+    .pi-meta { font-size: 0.67rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
+    .pi-arrow { color: var(--muted); font-size: 0.8rem; }
+
+    .tab-bar { height: 64px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: stretch; flex-shrink: 0; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+    .tab-icon { font-size: 1.05rem; color: var(--muted); }
+    .tab-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans', sans-serif; }
+    .tab-item.active .tab-icon, .tab-item.active .tab-label { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title">Players</div>
+    <div style="display:flex;gap:4px">
+      <div class="icon-btn">⌕</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="search-bar">
+      <input type="text" placeholder="Name, player ID…" />
+      <button>→</button>
+    </div>
+
+    <!-- Bio card -->
+    <div class="bio-card">
+      <div class="bio-top">
+        <div class="bio-avatar">◎</div>
+        <div class="bio-info">
+          <div class="bio-name">Willie Mays</div>
+          <div class="bio-meta">
+            B: May 6, 1931 · Westfield, AL<br>
+            Bats: R · Throws: R · Debut: 1951
+          </div>
+        </div>
+      </div>
+      <div class="bio-stats">
+        <div class="bs-item"><div class="bs-val">660</div><div class="bs-lbl">HR</div></div>
+        <div class="bs-item"><div class="bs-val">.302</div><div class="bs-lbl">AVG</div></div>
+        <div class="bs-item"><div class="bs-val">1903</div><div class="bs-lbl">RBI</div></div>
+        <div class="bs-item"><div class="bs-val">22</div><div class="bs-lbl">YRS</div></div>
+      </div>
+    </div>
+
+    <!-- Tab row -->
+    <div class="tab-row" style="overflow-x:auto;scrollbar-width:none;">
+      <div class="tab active">Batting</div>
+      <div class="tab">Pitching</div>
+      <div class="tab">Awards</div>
+      <div class="tab">HOF</div>
+    </div>
+
+    <!-- Chart panel -->
+    <div class="panel">
+      <div class="panel-label">Career batting — by season</div>
+      <div class="chart-controls">
+        <span class="ctrl-pill active">HR</span>
+        <span class="ctrl-pill">AVG</span>
+        <span class="ctrl-pill">RBI</span>
+        <span class="ctrl-pill">OBP</span>
+        <span class="ctrl-pill">SLG</span>
+        <span class="ctrl-pill">OPS+</span>
+      </div>
+      <canvas id="careerChart" height="100"></canvas>
+    </div>
+
+    <!-- Season table -->
+    <div class="panel">
+      <div class="panel-label">Season log — batting</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Year</th><th>Team</th><th>G</th><th>AB</th><th>AVG</th><th>HR</th><th>RBI</th><th>OPS</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>1954</td><td><span class="team-badge">NYG</span></td><td>151</td><td>565</td><td>.345</td><td>41</td><td>110</td><td>1.078</td></tr>
+            <tr><td>1955</td><td><span class="team-badge">NYG</span></td><td>152</td><td>580</td><td>.319</td><td>51</td><td>127</td><td>1.056</td></tr>
+            <tr><td>1962</td><td><span class="team-badge">SFG</span></td><td>162</td><td>621</td><td>.304</td><td>49</td><td>141</td><td>.999</td></tr>
+            <tr><td>1965</td><td><span class="team-badge">SFG</span></td><td>157</td><td>558</td><td>.317</td><td>52</td><td>112</td><td>1.043</td></tr>
+            <tr><td>1966</td><td><span class="team-badge">SFG</span></td><td>152</td><td>552</td><td>.288</td><td>37</td><td>103</td><td>.924</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Awards panel -->
+    <div class="panel">
+      <div class="panel-label">Awards &amp; honors</div>
+      <div class="award-item">
+        <div class="award-icon">★</div>
+        <div class="award-info">
+          <div class="award-name">NL MVP</div>
+          <div class="award-meta">1954, 1965</div>
+        </div>
+      </div>
+      <div class="award-item">
+        <div class="award-icon">◈</div>
+        <div class="award-info">
+          <div class="award-name">All-Star</div>
+          <div class="award-meta">24× (1954–1973)</div>
+        </div>
+      </div>
+      <div class="award-item">
+        <div class="award-icon">◎</div>
+        <div class="award-info">
+          <div class="award-name">Gold Glove</div>
+          <div class="award-meta">12× (1957–1968)</div>
+        </div>
+      </div>
+      <div class="award-item">
+        <div class="award-icon">⬡</div>
+        <div class="award-info">
+          <div class="award-name">Hall of Fame</div>
+          <div class="award-meta">Inducted 1979 · 94.7% of votes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recently viewed -->
+    <div class="player-recent">
+      <div class="pr-label">Recently viewed</div>
+      <div class="player-item">
+        <div class="pi-initial">BR</div>
+        <div class="pi-info">
+          <div class="pi-name">Babe Ruth</div>
+          <div class="pi-meta">ruthba01 · P/OF · 1914–1935</div>
+        </div>
+        <div class="pi-arrow">›</div>
+      </div>
+      <div class="player-item">
+        <div class="pi-initial">HA</div>
+        <div class="pi-info">
+          <div class="pi-name">Hank Aaron</div>
+          <div class="pi-meta">aaronha01 · OF · 1954–1976</div>
+        </div>
+        <div class="pi-arrow">›</div>
+      </div>
+      <div class="player-item">
+        <div class="pi-initial">TW</div>
+        <div class="pi-info">
+          <div class="pi-name">Ted Williams</div>
+          <div class="pi-meta">willite01 · OF · 1939–1960</div>
+        </div>
+        <div class="pi-arrow">›</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item"><div class="tab-icon">⌂</div><div class="tab-label">Home</div></div>
+    <div class="tab-item active"><div class="tab-icon">◎</div><div class="tab-label">Players</div></div>
+    <div class="tab-item"><div class="tab-icon">◈</div><div class="tab-label">Teams</div></div>
+    <div class="tab-item"><div class="tab-icon">◷</div><div class="tab-label">Games</div></div>
+    <div class="tab-item"><div class="tab-icon">≡</div><div class="tab-label">More</div></div>
+  </div>
+
+</div>
+<script>
+const ctx = document.getElementById('careerChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ['51','52','53','54','55','56','57','58','59','60','61','62','63','64','65','66','67','68','69','70','71','72','73'],
+    datasets: [{
+      label: 'HR',
+      data: [20,4,0,41,51,36,35,29,34,29,40,49,38,47,52,37,22,23,13,28,18,8,6],
+      backgroundColor: 'rgba(59,130,246,0.6)',
+      borderRadius: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#6b7280', font: { size: 8 } }, grid: { color: '#252934' } },
+      y: { ticks: { color: '#6b7280', font: { size: 8 } }, grid: { color: '#252934' } }
+    }
+  }
+});
+</script>
+</body>
+</html>
