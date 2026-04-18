@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SingleColLayout } from '$lib';
+  import SingleColLayout from '$lib/layouts/SingleColLayout.svelte';
 </script>
 
 <SingleColLayout>

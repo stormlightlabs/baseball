@@ -4,7 +4,7 @@
   let { sidebar, center, panel }: { sidebar: Snippet; center: Snippet; panel: Snippet } = $props();
 </script>
 
-<div class="grid h-[calc(100vh-3.5rem)]" style="grid-template-columns: 280px 1fr 320px">
+<div class="grid h-[calc(100vh-3.5rem)] bg-mantle" style="grid-template-columns: 280px 1fr 320px">
   <aside class="overflow-y-auto border-r border-outline p-5">
     {@render sidebar()}
   </aside>

@@ -3,6 +3,8 @@ const BASE: string = (import.meta.env.VITE_API_BASE_URL as string) || '/v1';
 
 export type Params = Record<string, string | number | boolean | null | undefined>;
 
+type PaginatedParams = Params & { page?: number; per_page?: number };
+
 export type PaginatedResponse<T> = { data: T[]; page: number; per_page: number; total: number };
 
 export type DatasetCoverage = { from?: number; to?: number };
@@ -11,6 +13,8 @@ export type DatasetStatus = {
   id: string;
   name: string;
   source: string;
+  required?: boolean;
+  healthy?: boolean;
   coverage_from?: number;
   coverage_to?: number;
   last_loaded_at?: string;
@@ -50,10 +54,7 @@ export async function apiFetch<T>(path: string, params?: Params): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export function fetchPaginated<T>(
-  path: string,
-  params?: Params & { page?: number; per_page?: number }
-): Promise<PaginatedResponse<T>> {
+export function fetchPaginated<T>(path: string, params?: PaginatedParams): Promise<PaginatedResponse<T>> {
   return apiFetch<PaginatedResponse<T>>(path, params);
 }
 

@@ -4,7 +4,7 @@
 - Deploys as static SPA; backend API namespace is `/v1/*`
 - OpenAPI spec source: `internal/docs/swagger.yaml`
 
-## 0. Scaffold and Tooling
+## Scaffold and Tooling ✓
 
 - [x] Initialize SvelteKit project in `web/` with TypeScript and `adapter-static` fallback.
 - [x] Configure Tailwind v4 and map design tokens.
@@ -14,7 +14,7 @@
 - [x] Add `task dash:dev` and `task dash:build`.
 - [x] Configure dev proxy: `/v1/* -> localhost:8080`.
 
-## 1. Shared Layout and Components
+## Shared Layout and Components ✓
 
 ### Layout
 
@@ -38,14 +38,14 @@
 - [x] `EraRangeChip` (year range + era short code)
 - [x] `EraLegend` (shared legend component with caveat tooltips)
 
-## 2. API Client and State
+## API Client and State ✓
 
 - [x] Typed fetch wrapper that defaults base URL to `/v1`.
 - [x] Shared meta store for `/v1/meta`.
 - [x] URL-driven state for every filter/sort/page/tab.
 - [x] Central endpoint-map constants derived from OpenAPI (avoid hardcoded stale params).
 
-## 3. Era Contracts
+## Era Contracts ✓
 
 - [x] Create a shared static era catalog from `internal/seed/eras.go`:
     - `fed`, `nlg`, `boomer`, `pitcher`, `turf`, `steroid`, `moneyball`, `statcast`, `modern`
@@ -53,7 +53,7 @@
 - [x] Implement helper: `year -> static era`, with fallback when out of configured range.
 - [x] Add global era disclaimer component for sparse historical/event coverage.
 
-## 4. Home Page (`/`)
+## Home Page (`/`) ✓
 
 Ref: `docs/designs/home.html`
 
@@ -66,28 +66,28 @@ Ref: `docs/designs/home.html`
 - [x] Add era quick-jump chips (fed -> modern) and deep-link behavior.
 - [x] Add featured queries for league-specific and derived/computed endpoints.
 
-## 5. Player Explorer (`/players`)
+## Player Explorer (`/players`) ✓
 
 Ref: `docs/designs/players.html`
 
 ### Sidebar
 
-- [ ] Search players via `GET /v1/search/players?q=...`.
-- [ ] Selected player card from `GET /v1/players/{id}`.
-- [ ] Recent players list with deep-linked selection.
+- [x] Search players via `GET /v1/search/players?q=...`.
+- [x] Selected player card from `GET /v1/players/{id}`.
+- [x] Recent players list with deep-linked selection.
 
 ### Center Content
 
-- [ ] Batting/Pitching season timelines from `GET /v1/players/{id}/seasons`.
-- [ ] Batting stats table from `GET /v1/players/{id}/stats/batting`.
-- [ ] Pitching stats table from `GET /v1/players/{id}/stats/pitching`.
-- [ ] Game logs tabs from `GET /v1/players/{id}/game-logs/{batting|pitching|fielding}`.
-- [ ] Awards tab from `GET /v1/players/{id}/awards`.
-- [ ] Hall of Fame tab from `GET /v1/players/{id}/hall-of-fame`.
-- [ ] Teams tab from `GET /v1/players/{id}/teams`.
-- [ ] Relatives tab from `GET /v1/players/{id}/relatives`.
-- [ ] Salaries tab from `GET /v1/players/{id}/salaries`.
-- [ ] Advanced tabs (optional behind toggle):
+- [x] Batting/Pitching season timelines from `GET /v1/players/{id}/stats/batting` and `/stats/pitching`.
+- [x] Batting stats table from `GET /v1/players/{id}/stats/batting`.
+- [x] Pitching stats table from `GET /v1/players/{id}/stats/pitching`.
+- [x] Game logs tabs from `GET /v1/players/{id}/game-logs/{batting|pitching|fielding}`.
+- [x] Awards tab from `GET /v1/players/{id}/awards`.
+- [x] Hall of Fame tab from `GET /v1/players/{id}/hall-of-fame`.
+- [x] Teams tab from `GET /v1/players/{id}/teams`.
+- [x] Relatives tab from `GET /v1/players/{id}/relatives`.
+- [x] Salaries tab from `GET /v1/players/{id}/salaries`.
+- [x] Advanced tabs (optional behind toggle):
     - `GET /v1/players/{player_id}/stats/batting/advanced`
     - `GET /v1/players/{player_id}/stats/pitching/advanced`
     - `GET /v1/players/{player_id}/stats/war`
@@ -96,10 +96,10 @@ Ref: `docs/designs/players.html`
 
 ### Era UX
 
-- [ ] Show era chip on each season row.
-- [ ] Show career-spans-era summary near player header.
+- [x] Show era chip on each season row.
+- [x] Show career-spans-era summary near player header.
 
-## 6. Team and Franchise Explorer (`/teams`)
+## Team and Franchise Explorer (`/teams`)
 
 Ref: `docs/designs/teams.html`
 
@@ -127,7 +127,7 @@ Ref: `docs/designs/teams.html`
 - [ ] Franchise continuity timeline segmented by era bands.
 - [ ] Warn when comparing across coverage gaps (e.g., Negro Leagues vs modern).
 
-## 7. Game Finder and Detail (`/games`)
+## Game Finder and Detail (`/games`)
 
 Ref: `docs/designs/games.html`
 
@@ -153,7 +153,7 @@ Ref: `docs/designs/games.html`
 
 - [ ] Show event-density confidence indicator by era.
 
-## 8. Season Hub (`/seasons`)
+## Season Hub (`/seasons`)
 
 Ref: `docs/designs/seasons.html`
 
@@ -172,7 +172,7 @@ Ref: `docs/designs/seasons.html`
 - [ ] Park factors snapshot from `GET /v1/seasons/{season}/park-factors`.
 - [ ] Era headline for selected season.
 
-## 9. Stat Leaders (`/leaders`)
+## Stat Leaders (`/leaders`)
 
 Ref: `docs/designs/leaders.html`
 
@@ -193,7 +193,7 @@ Ref: `docs/designs/leaders.html`
     - `GET /v1/seasons/{season}/leaders/war`
 - [ ] Era-bucket trend charts.
 
-## 10. Compare Mode (`/compare`)
+## Compare Mode (`/compare`)
 
 Ref: `docs/designs/compare.html`
 
@@ -203,7 +203,7 @@ Ref: `docs/designs/compare.html`
     - `GET /v1/win-expectancy`
     - `GET /v1/win-expectancy/eras`
 
-## 11. API Explorer (`/explorer`)
+## API Explorer (`/explorer`)
 
 Ref: `docs/designs/api-explorer.html`
 
@@ -215,7 +215,7 @@ Ref: `docs/designs/api-explorer.html`
 - [ ] Parameter builder must use real parameter names from schema (e.g., `page`/`per_page`, `name`, `q`, `sort_by`).
 - [ ] Era-aware query helpers for endpoints that support era-style filters/ranges.
 
-## 12. Data Sources (`/data`)
+## Data Sources (`/data`)
 
 Ref: `docs/designs/data-sources.html`
 
@@ -225,21 +225,21 @@ Ref: `docs/designs/data-sources.html`
 - [ ] ID crosswalk table (Lahman, Retrosheet, MLB).
 - [ ] League-specific caveat block for Federal League and Negro Leagues routes.
 
-## 13. League-Specific Views (New)
+## League-Specific Views
 
 - [ ] Add explicit UI entry points for:
     - `/v1/federalleague/games`, `/teams`, `/plays`, `/seasons/{year}/schedule`, `/seasons/{year}/teams/{team_id}/games`
     - `/v1/negroleagues/games`, `/teams`, `/plays`, `/seasons/{year}/schedule`, `/seasons/{year}/teams/{team_id}/games`
 - [ ] Show these as first-class historical contexts, not hidden filters.
 
-## 14. Account and API Keys (`/account`)
+## Account and API Keys (`/account`)
 
 - [ ] Auth state wiring to `/v1/auth/me`.
 - [ ] API key list/create/revoke against `/v1/auth/keys`.
 - [ ] OAuth launch links for GitHub/Codeberg.
 - [ ] Usage dashboard remains TBD pending dedicated usage endpoint.
 
-## 15. Cross-Cutting
+## Cross-Cutting
 
 - [ ] Loading and error states.
 - [ ] Deep-link restoration for all views.
@@ -247,7 +247,7 @@ Ref: `docs/designs/data-sources.html`
 - [ ] Keyboard navigation/accessibility.
 - [ ] API panel always shows canonical `/v1/...` request and runnable curl.
 
-## 16. Build and Deploy
+## Build and Deploy
 
 - [ ] Static build with SPA fallback.
 - [ ] Bundle OpenAPI spec into static output.

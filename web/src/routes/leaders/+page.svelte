@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ThreeColLayout } from '$lib';
+  import ThreeColLayout from '$lib/layouts/ThreeColLayout.svelte';
 </script>
 
 <ThreeColLayout>

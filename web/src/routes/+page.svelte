@@ -1,10 +1,15 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import { ApiMirrorStrip, Chart, CoverageBar, EraRangeChip, Pill, SearchInput } from '$lib';
+  import ApiMirrorStrip from '$lib/components/ApiMirrorStrip.svelte';
+  import Chart from '$lib/components/Chart.svelte';
+  import CoverageBar from '$lib/components/CoverageBar.svelte';
+  import EraRangeChip from '$lib/components/EraRangeChip.svelte';
+  import Pill from '$lib/components/Pill.svelte';
+  import SearchInput from '$lib/components/SearchInput.svelte';
   import { STATIC_ERAS } from '$lib/eras';
   import { meta } from '$lib/meta.svelte.js';
-  import type { ChartConfiguration } from 'chart.js';
+  import { type ChartConfiguration } from 'chart.js';
   import { onMount } from 'svelte';
 
   onMount(() => meta.init());
@@ -179,15 +184,22 @@
   });
 
   let coverageBars = $derived.by(() => {
+    const coverageFrom = meta.dataFromYear ?? 1871;
+    const coverageTo = meta.dataToYear ?? new Date().getFullYear();
+    const coverageSpan = Math.max(1, coverageTo - coverageFrom);
+
     if (meta.datasets.length > 0) {
       return meta.datasets.map((ds) => ({
         label: ds.name,
-        range: `${ds.coverage_from ?? '?'} – ${ds.coverage_to ?? '?'}`,
+        range:
+          ds.coverage_from != null && ds.coverage_to != null
+            ? `${ds.coverage_from} – ${ds.coverage_to}`
+            : 'Coverage n/a',
         percent:
-          ds.coverage_from && ds.coverage_to
-            ? Math.round(((ds.coverage_to - ds.coverage_from) / (2024 - 1871)) * 100)
-            : 80,
-        variant: (ds.source === 'lahman' ? 'primary' : ds.source === 'retrosheet' ? 'secondary' : 'warning') as
+          ds.coverage_from != null && ds.coverage_to != null
+            ? Math.round(((ds.coverage_to - ds.coverage_from) / coverageSpan) * 100)
+            : 0,
+        variant: (ds.healthy === false ? 'warning' : ds.id === 'lahman' ? 'primary' : 'secondary') as
           | 'primary'
           | 'secondary'
           | 'warning'
@@ -297,7 +309,7 @@
         <div class="panel-label">API health</div>
         {#if meta.loading}
           <div class="grid grid-cols-2 gap-x-4 gap-y-4">
-            {#each { length: 6 } as i (i)}
+            {#each { length: 6 } as _, i (i)}
               <div>
                 <div class="mb-1 h-2 w-12 rounded bg-outline"></div>
                 <div class="h-4 w-20 rounded bg-surface"></div>
@@ -315,9 +327,11 @@
               <div
                 class="font-monospace text-sm {meta.status === 'online'
                   ? 'text-secondary'
-                  : meta.status === 'loading'
+                  : meta.status === 'degraded'
                     ? 'text-warning'
-                    : 'text-red-400'}">
+                    : meta.status === 'loading'
+                      ? 'text-warning'
+                      : 'text-red-400'}">
                 {meta.status}
               </div>
             </div>
@@ -336,7 +350,7 @@
             <div>
               <div class="mb-0.5 font-monospace text-[0.6rem] tracking-wider text-muted uppercase">sources</div>
               <div class="font-monospace text-sm text-foreground">
-                {meta.datasets.length || '—'}
+                {meta.healthyDatasetCount}/{meta.datasets.length || '—'} healthy
               </div>
             </div>
             <div>

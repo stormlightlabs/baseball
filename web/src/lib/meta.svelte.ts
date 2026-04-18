@@ -1,11 +1,45 @@
 import { apiFetch } from './api';
 import type { MetaResponse } from './api';
 
-// FIXME: getters should be $derived state to keep them reactive
 class MetaStore {
   data = $state<MetaResponse | null>(null);
   loading = $state(false);
   error = $state<string | null>(null);
+
+  version = $derived(this.data?.version ?? '—');
+  coverage = $derived(this.data?.coverage ?? {});
+  datasets = $derived(this.data?.datasets ?? []);
+  requiredDatasets = $derived(this.datasets.filter((dataset) => dataset.required !== false));
+  healthyDatasetCount = $derived(this.datasets.filter((dataset) => dataset.healthy !== false).length);
+  requiredHealthyCount = $derived(this.requiredDatasets.filter((dataset) => dataset.healthy !== false).length);
+  requiredUnhealthyCount = $derived(this.requiredDatasets.filter((dataset) => dataset.healthy === false).length);
+
+  status = $derived.by((): 'online' | 'loading' | 'degraded' | 'offline' => {
+    if (this.loading) return 'loading';
+    if (!this.data) return 'offline';
+    return this.requiredUnhealthyCount > 0 ? 'degraded' : 'online';
+  });
+
+  dataFromYear = $derived.by(() => {
+    const years = Object.values(this.coverage)
+      .map((c) => c.from)
+      .filter((y): y is number => y !== undefined);
+    return years.length ? Math.min(...years) : null;
+  });
+
+  dataToYear = $derived.by(() => {
+    const years = Object.values(this.coverage)
+      .map((c) => c.to)
+      .filter((y): y is number => y !== undefined);
+    return years.length ? Math.max(...years) : null;
+  });
+
+  dataFrom = $derived(this.dataFromYear != null ? String(this.dataFromYear) : '—');
+  dataTo = $derived(this.dataToYear != null ? String(this.dataToYear) : '—');
+  generatedAt = $derived.by(() => {
+    if (!this.data?.generated_at) return '—';
+    return new Date(this.data.generated_at).toLocaleString();
+  });
 
   async init() {
     if (this.data || this.loading) return;
@@ -18,43 +52,6 @@ class MetaStore {
     } finally {
       this.loading = false;
     }
-  }
-
-  get version(): string {
-    return this.data?.version ?? '—';
-  }
-
-  get status(): 'online' | 'loading' | 'offline' {
-    if (this.data) return 'online';
-    if (this.loading) return 'loading';
-    return 'offline';
-  }
-
-  get coverage(): MetaResponse['coverage'] {
-    return this.data?.coverage ?? {};
-  }
-
-  get datasets(): MetaResponse['datasets'] {
-    return this.data?.datasets ?? [];
-  }
-
-  get dataFrom(): string {
-    const years = Object.values(this.data?.coverage ?? {})
-      .map((c) => c.from)
-      .filter((y): y is number => y !== undefined);
-    return years.length ? String(Math.min(...years)) : '—';
-  }
-
-  get dataTo(): string {
-    const years = Object.values(this.data?.coverage ?? {})
-      .map((c) => c.to)
-      .filter((y): y is number => y !== undefined);
-    return years.length ? String(Math.max(...years)) : '—';
-  }
-
-  get generatedAt(): string {
-    if (!this.data?.generated_at) return '—';
-    return new Date(this.data.generated_at).toLocaleDateString();
   }
 }
 
