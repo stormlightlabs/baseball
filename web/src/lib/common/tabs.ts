@@ -1,5 +1,5 @@
 import { EP } from '$lib/endpoints';
-import type { PlayerTabId, TeamTabId } from '$lib/common/constants';
+import type { GameTabId, PlayerTabId, TeamTabId } from '$lib/common/constants';
 
 export type GameLogType = 'batting' | 'pitching' | 'fielding';
 
@@ -91,6 +91,23 @@ export function endpointForTeamTab(teamId: string, tabId: TeamTabId, year?: stri
     }
     case 'run-diff': {
       return year ? EP.teamRunDifferential(teamId) : EP.team(teamId);
+    }
+  }
+}
+
+export function endpointForGameTab(gameId: string, tabId: GameTabId): string {
+  switch (tabId) {
+    case 'overview': {
+      return EP.game(gameId);
+    }
+    case 'events': {
+      return EP.gameEvents(gameId);
+    }
+    case 'plays': {
+      return EP.gamePlays(gameId);
+    }
+    case 'win-prob': {
+      return EP.gameWinProb(gameId);
     }
   }
 }

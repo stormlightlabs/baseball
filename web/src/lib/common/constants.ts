@@ -19,6 +19,23 @@ export function isTeamTabId(value: string): value is TeamTabId {
   return ALL_TEAM_TABS.some((tab) => tab.id === value);
 }
 
+export const MAIN_GAME_TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'events', label: 'Events' },
+  { id: 'plays', label: 'Plays + Pitches' },
+  { id: 'win-prob', label: 'Win Prob.' }
+] as const;
+
+export const ALL_GAME_TABS = [...MAIN_GAME_TABS] as const;
+
+export type GameTabId = (typeof ALL_GAME_TABS)[number]['id'];
+
+export const DEFAULT_GAME_TAB: GameTabId = 'overview';
+
+export function isGameTabId(value: string): value is GameTabId {
+  return ALL_GAME_TABS.some((tab) => tab.id === value);
+}
+
 export const BATTING_STATS = [
   { value: 'hr', label: 'Home Runs (HR)' },
   { value: 'avg', label: 'Batting Avg (AVG)' },

@@ -159,25 +159,25 @@ Ref: `docs/designs/games.html`
 
 ### Finder
 
-- [ ] Filter form maps to `GET /v1/games` supported params (`season`, `home_team`, `away_team`, `park_id`, `date_from`, `date_to`, `page`, `per_page`).
-- [ ] Natural-language mode maps to `GET /v1/search/games?q=...`.
-- [ ] Quick toggles for Federal League and Negro Leagues using dedicated route families.
+- [x] Filter form maps to `GET /v1/games` supported params (`season`, `home_team`, `away_team`, `park_id`, `date_from`, `date_to`, `page`, `per_page`).
+- [x] Natural-language mode maps to `GET /v1/search/games?q=...`.
+- [x] Quick toggles for Federal League and Negro Leagues using dedicated route families.
 
 ### Detail
 
-- [ ] Core metadata from `GET /v1/games/{id}`.
-- [ ] Summary box from `GET /v1/games/{id}/summary`.
-- [ ] Boxscore from `GET /v1/games/{id}/boxscore`.
-- [ ] Event stream from `GET /v1/games/{id}/events` (+ single-event fetch).
-- [ ] Plays + pitches drilldown from `GET /v1/games/{id}/plays` and `GET /v1/games/{id}/pitches`.
-- [ ] Win-probability modules from:
+- [x] Core metadata from `GET /v1/games/{id}`.
+- [x] Summary box from `GET /v1/games/{id}/summary`.
+- [x] Boxscore from `GET /v1/games/{id}/boxscore`.
+- [x] Event stream from `GET /v1/games/{id}/events` (+ single-event fetch).
+- [x] Plays + pitches drilldown from `GET /v1/games/{id}/plays` and `GET /v1/games/{id}/pitches`.
+- [x] Win-probability modules from:
     - `GET /v1/games/{game_id}/win-probability`
     - `GET /v1/games/{game_id}/win-probability/summary`
     - `GET /v1/games/{game_id}/plate-appearances/leverage`
 
 ### Era UX
 
-- [ ] Show event-density confidence indicator by era.
+- [x] Show event-density confidence indicator by era.
 
 ## Season Hub (`/seasons`)
 
@@ -277,7 +277,7 @@ Ref: `docs/designs/data-sources.html`
 
 - [ ] Static build with SPA fallback.
 - [ ] Bundle OpenAPI spec into static output.
-- [ ] Prod API base should target `/v1` namespace (example: `https://baseball.stormlightlabs.org/v1`).
+- [ ] Prod API base should target `/v1` namespace (example: `https://bigfly.tech/api/v1`).
 - [ ] Validate CDN-hosted routing for all SPA routes.
 
 ## Endpoint Map by Page

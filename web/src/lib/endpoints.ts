@@ -74,6 +74,7 @@ export const EP = {
   gameEvent: (id: string, seq: number | string) => `/games/${id}/events/${seq}` as const,
   gamePlays: (id: string) => `/games/${id}/plays` as const,
   gamePitches: (id: string) => `/games/${id}/pitches` as const,
+  gamePlayPitches: (gameId: string, playNum: number | string) => `/games/${gameId}/plays/${playNum}/pitches` as const,
   gameWinProb: (gameId: string) => `/games/${gameId}/win-probability` as const,
   gameWinProbSummary: (gameId: string) => `/games/${gameId}/win-probability/summary` as const,
   gameLeverage: (gameId: string) => `/games/${gameId}/plate-appearances/leverage` as const,
