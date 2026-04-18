@@ -307,7 +307,19 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		}
 		result.Validation = validation
 		if !validation.OK() {
-			return int64(len(validation.Issues)), fmt.Errorf("validation failed: %d error(s)", len(validation.Errors()))
+			errors := validation.Errors()
+			for _, issue := range errors {
+				echo.Infof("✗ [%s] %s", issue.Dataset, issue.Message)
+			}
+			for _, issue := range validation.Warnings() {
+				echo.Infof("⚠ [%s] %s", issue.Dataset, issue.Message)
+			}
+
+			parts := make([]string, 0, len(errors))
+			for _, issue := range errors {
+				parts = append(parts, fmt.Sprintf("[%s] %s", issue.Dataset, issue.Message))
+			}
+			return int64(len(validation.Issues)), fmt.Errorf("validation failed: %s", strings.Join(parts, "; "))
 		}
 		return int64(len(validation.Issues)), nil
 	})
@@ -440,11 +452,21 @@ func ValidatePipeline(ctx context.Context, database *db.DB, profile PipelineProf
 	if err != nil {
 		return result, fmt.Errorf("all-star check failed: %w", err)
 	}
-	allStarPlays, err := count(`SELECT COUNT(*) FROM plays WHERE gid LIKE 'ALS%'`)
+	allStarPlays, err := count(`
+		SELECT COUNT(*)
+		FROM plays p
+		JOIN games g ON g.game_id = p.gid
+		WHERE g.game_type = 'allstar'
+	`)
 	if err != nil {
 		return result, fmt.Errorf("all-star check failed: %w", err)
 	}
-	negroGames, err := count(`SELECT COUNT(*) FROM games WHERE league IN ('NAL', 'NNL', 'NN2', 'ECL', 'ANL', 'EWL', 'NSL', 'IND')`)
+	negroGames, err := count(`
+		SELECT COUNT(*)
+		FROM games
+		WHERE home_team_league IN ('NAL', 'NNL', 'NN2', 'ECL', 'ANL', 'EWL', 'NSL', 'IND')
+		   OR visiting_team_league IN ('NAL', 'NNL', 'NN2', 'ECL', 'ANL', 'EWL', 'NSL', 'IND')
+	`)
 	if err != nil {
 		return result, fmt.Errorf("negro leagues check failed: %w", err)
 	}
