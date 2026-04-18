@@ -1,6 +1,5 @@
 import { type ChartConfiguration } from 'chart.js';
-
-import { BATTING_RATE_STATS, BATTING_STATS, CHART_SCALES } from '$lib/players/constants';
+import { BATTING_RATE_STATS, BATTING_STATS, CHART_SCALES } from '$lib/common/constants';
 import type { BattingSeason, HofEntry, PitchingSeason } from '$lib/players/types';
 
 export function createBattingChartConfig(rows: BattingSeason[], stat: string): ChartConfiguration {

@@ -1,3 +1,24 @@
+export const MAIN_TEAM_TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'roster', label: 'Roster' },
+  { id: 'batting', label: 'Batting' },
+  { id: 'pitching', label: 'Pitching' },
+  { id: 'fielding', label: 'Fielding' },
+  { id: 'schedule', label: 'Schedule' },
+  { id: 'daily-trends', label: 'Daily Trends' },
+  { id: 'run-diff', label: 'Run Diff.' }
+] as const;
+
+export const ALL_TEAM_TABS = [...MAIN_TEAM_TABS] as const;
+
+export type TeamTabId = (typeof ALL_TEAM_TABS)[number]['id'];
+
+export const DEFAULT_TEAM_TAB: TeamTabId = 'overview';
+
+export function isTeamTabId(value: string): value is TeamTabId {
+  return ALL_TEAM_TABS.some((tab) => tab.id === value);
+}
+
 export const BATTING_STATS = [
   { value: 'hr', label: 'Home Runs (HR)' },
   { value: 'avg', label: 'Batting Avg (AVG)' },
@@ -34,7 +55,7 @@ export const SALARIES_COLUMNS = [
   }
 ];
 
-export const ADV_TABS = [
+export const ADVANCED_PLAYER_TABS = [
   { id: 'batting-adv', label: 'Batting Adv.' },
   { id: 'pitching-adv', label: 'Pitching Adv.' },
   { id: 'war', label: 'WAR' },
@@ -42,7 +63,7 @@ export const ADV_TABS = [
   { id: 'streaks', label: 'Streaks' }
 ] as const;
 
-export const MAIN_TABS = [
+export const MAIN_PLAYER_TABS = [
   { id: 'batting', label: 'Batting' },
   { id: 'pitching', label: 'Pitching' },
   { id: 'game-logs', label: 'Game Logs' },
@@ -53,13 +74,13 @@ export const MAIN_TABS = [
   { id: 'relatives', label: 'Relatives' }
 ] as const;
 
-export const ALL_PLAYER_TABS = [...MAIN_TABS, ...ADV_TABS] as const;
+export const ALL_PLAYER_TABS = [...MAIN_PLAYER_TABS, ...ADVANCED_PLAYER_TABS] as const;
 
 export type PlayerTabId = (typeof ALL_PLAYER_TABS)[number]['id'];
 
 export const DEFAULT_PLAYER_TAB: PlayerTabId = 'batting';
 
-export const ADVANCED_TAB_IDS = new Set<string>(ADV_TABS.map((tab) => tab.id));
+export const ADVANCED_PLAYER_TAB_IDS = new Set<string>(ADVANCED_PLAYER_TABS.map((tab) => tab.id));
 
 export function isPlayerTabId(value: string): value is PlayerTabId {
   return ALL_PLAYER_TABS.some((tab) => tab.id === value);

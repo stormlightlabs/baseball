@@ -8,12 +8,12 @@
   import Pagination from '$lib/components/Pagination.svelte';
   import { EP } from '$lib/endpoints';
   import { eraForYear } from '$lib/eras';
-  import type { PlayerStatsPayload } from '$lib/players/api-payloads';
   import { createPitchingChartConfig } from '$lib/players/charts';
   import { normalizePlayerStatsPage } from '$lib/players/normalizers';
   import { AsyncPaginatedListResource } from '$lib/players/resources.svelte';
-  import { intParam, QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
-  import type { PitchingSeason } from '$lib/players/types';
+  import { QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
+  import type { PitchingSeason, PlayerStatsPayload } from '$lib/players/types';
+  import { intParam } from '$lib/url-state.svelte';
   import { onMount } from 'svelte';
 
   let playerId = $derived(page.params.id ?? '');

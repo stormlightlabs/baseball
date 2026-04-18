@@ -1,9 +1,9 @@
 <script lang="ts">
   import { afterNavigate } from '$app/navigation';
   import { page } from '$app/state';
+  import { TEAMS_COLUMNS } from '$lib/common/constants';
   import SortableTable from '$lib/components/SortableTable.svelte';
   import { EP } from '$lib/endpoints';
-  import { TEAMS_COLUMNS } from '$lib/players/constants';
   import { fetchList } from '$lib/players/fetchers';
   import { AsyncListResource } from '$lib/players/resources.svelte';
   import type { PlayerTeam } from '$lib/players/types';

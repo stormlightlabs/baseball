@@ -8,7 +8,8 @@
   import { EP } from '$lib/endpoints';
   import { eraForYear } from '$lib/eras';
   import { AsyncPaginatedListResource } from '$lib/players/resources.svelte';
-  import { intParam, QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
+  import { QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
+  import { intParam } from '$lib/url-state.svelte';
   import { onMount } from 'svelte';
 
   type GameRow = {

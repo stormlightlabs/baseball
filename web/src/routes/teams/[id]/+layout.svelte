@@ -1,8 +1,8 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import { ALL_TEAM_TABS, DEFAULT_TEAM_TAB, type TeamTabId } from '$lib/common/constants';
   import TabRow from '$lib/components/TabRow.svelte';
-  import { intParam } from '$lib/players/routing';
-  import { ALL_TEAM_TABS, DEFAULT_TEAM_TAB, type TeamTabId } from '$lib/teams/constants';
+  import { intParam } from '$lib/url-state.svelte';
   import { onMount, type Snippet } from 'svelte';
   import { cubicOut } from 'svelte/easing';
   import { crossfade, fly } from 'svelte/transition';

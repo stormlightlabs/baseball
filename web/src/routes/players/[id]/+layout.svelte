@@ -1,9 +1,10 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import type { PlayerTabId } from '$lib/common/constants';
+  import { ADVANCED_PLAYER_TABS, ALL_PLAYER_TABS, DEFAULT_PLAYER_TAB, MAIN_PLAYER_TABS } from '$lib/common/constants';
+  import { parseGameLogType } from '$lib/common/tabs';
   import TabRow from '$lib/components/TabRow.svelte';
-  import { ADV_TABS, ALL_PLAYER_TABS, DEFAULT_PLAYER_TAB, MAIN_TABS, type PlayerTabId } from '$lib/players/constants';
-  import { intParam } from '$lib/players/routing';
-  import { parseGameLogType } from '$lib/players/tab-endpoints';
+  import { intParam } from '$lib/url-state.svelte';
   import { onMount, type Snippet } from 'svelte';
   import { cubicOut } from 'svelte/easing';
   import { crossfade, fly } from 'svelte/transition';
@@ -27,10 +28,10 @@
 
   let navTabs = $derived.by(() => {
     if (showAdvanced) return ALL_PLAYER_TABS;
-    if (ADV_TABS.some((tab) => tab.id === activeTab)) {
-      return [...MAIN_TABS, ...ADV_TABS.filter((tab) => tab.id === activeTab)];
+    if (ADVANCED_PLAYER_TABS.some((tab) => tab.id === activeTab)) {
+      return [...MAIN_PLAYER_TABS, ...ADVANCED_PLAYER_TABS.filter((tab) => tab.id === activeTab)];
     }
-    return MAIN_TABS;
+    return MAIN_PLAYER_TABS;
   });
 
   let tabs = $derived(navTabs.map((tab) => ({ ...tab, href: tabHref(tab.id) })));

@@ -3,18 +3,18 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { apiFetch } from '$lib/api';
+  import { BATTING_STATS } from '$lib/common/constants';
   import Chart from '$lib/components/Chart.svelte';
   import EraBadge from '$lib/components/EraBadge.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import { EP } from '$lib/endpoints';
   import { eraForYear } from '$lib/eras';
-  import type { PlayerStatsPayload } from '$lib/players/api-payloads';
   import { createBattingChartConfig } from '$lib/players/charts';
-  import { BATTING_STATS } from '$lib/players/constants';
   import { normalizePlayerStatsPage } from '$lib/players/normalizers';
   import { AsyncPaginatedListResource } from '$lib/players/resources.svelte';
-  import { intParam, QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
-  import type { BattingSeason } from '$lib/players/types';
+  import { QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
+  import type { BattingSeason, PlayerStatsPayload } from '$lib/players/types';
+  import { intParam } from '$lib/url-state.svelte';
   import { onMount } from 'svelte';
 
   let playerId = $derived(page.params.id ?? '');

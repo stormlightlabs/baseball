@@ -3,18 +3,17 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { apiFetch, apiUrl, fetchPaginated } from '$lib/api';
+  import { isPlayerTabId } from '$lib/common/constants';
+  import { endpointForPlayerTab, parseGameLogType } from '$lib/common/tabs';
   import ApiPanel from '$lib/components/ApiPanel.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
   import SearchInput from '$lib/components/SearchInput.svelte';
   import { EP } from '$lib/endpoints';
   import { erasInRange } from '$lib/eras';
   import ThreeColLayout from '$lib/layouts/ThreeColLayout.svelte';
-  import type { ApiPlayerPayload } from '$lib/players/api-payloads';
-  import { isPlayerTabId } from '$lib/players/constants';
   import { normalizePlayerProfile, normalizeSearchPlayersPage } from '$lib/players/normalizers';
   import { AsyncPaginatedListResource, AsyncValueResource } from '$lib/players/resources.svelte';
-  import { endpointForPlayerTab, parseGameLogType } from '$lib/players/tab-endpoints';
-  import type { PlayerProfile, PlayerResult } from '$lib/players/types';
+  import type { ApiPlayerPayload, PlayerProfile, PlayerResult } from '$lib/players/types';
   import { onMount, type Snippet } from 'svelte';
 
   let { children }: { children: Snippet } = $props();

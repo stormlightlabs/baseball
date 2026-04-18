@@ -3,13 +3,14 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { fetchPaginated } from '$lib/api';
+  import { gameLogEndpoint, parseGameLogType } from '$lib/common/tabs';
   import Pagination from '$lib/components/Pagination.svelte';
   import SortableTable from '$lib/components/SortableTable.svelte';
   import { AsyncPaginatedListResource } from '$lib/players/resources.svelte';
-  import { intParam, QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
-  import { gameLogEndpoint, parseGameLogType } from '$lib/players/tab-endpoints';
+  import { QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
   import type { GameLog } from '$lib/players/types';
   import { rowColumns } from '$lib/players/types';
+  import { intParam } from '$lib/url-state.svelte';
   import { onMount } from 'svelte';
 
   let playerId = $derived(page.params.id ?? '');

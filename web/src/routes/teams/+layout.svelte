@@ -3,6 +3,8 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { apiFetch, apiUrl, fetchPaginated } from '$lib/api';
+  import { DEFAULT_TEAM_TAB, isTeamTabId } from '$lib/common/constants';
+  import { endpointForTeamTab } from '$lib/common/tabs';
   import ApiPanel from '$lib/components/ApiPanel.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
   import SearchInput from '$lib/components/SearchInput.svelte';
@@ -11,9 +13,7 @@
   import ThreeColLayout from '$lib/layouts/ThreeColLayout.svelte';
   import { AsyncListResource, AsyncPaginatedListResource, AsyncValueResource } from '$lib/players/resources.svelte';
   import { QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
-  import { DEFAULT_TEAM_TAB, isTeamTabId } from '$lib/teams/constants';
   import { normalizeFranchiseProfile, normalizeSearchTeamsPage, normalizeTeamResult } from '$lib/teams/normalizers';
-  import { endpointForTeamTab } from '$lib/teams/tab-endpoints';
   import type { FranchiseProfile, TeamResult } from '$lib/teams/types';
   import { onMount, type Snippet } from 'svelte';
 

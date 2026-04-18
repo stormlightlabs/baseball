@@ -16,13 +16,6 @@ function mergeQuery(base: URLSearchParams, overrides: QueryOverrides): URLSearch
   return next;
 }
 
-export function intParam(params: URLSearchParams, key: string, defaultValue: number): number {
-  const raw = params.get(key);
-  if (raw === null) return defaultValue;
-  const n = Number.parseInt(raw, 10);
-  return Number.isNaN(n) ? defaultValue : n;
-}
-
 export function withMergedQuery(
   baseHref: string,
   base: URLSearchParams,

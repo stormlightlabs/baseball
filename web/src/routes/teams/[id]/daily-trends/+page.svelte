@@ -9,9 +9,10 @@
   import { EP } from '$lib/endpoints';
   import { eraForYear } from '$lib/eras';
   import { AsyncListResource, AsyncPaginatedListResource } from '$lib/players/resources.svelte';
-  import { intParam, QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
+  import { QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
   import { normalizeTeamDailyLogsPage, normalizeTeamDailyStatsPage } from '$lib/teams/normalizers';
   import type { TeamDailyLog, TeamDailyStat } from '$lib/teams/types';
+  import { intParam } from '$lib/url-state.svelte';
   import type { ChartConfiguration } from 'chart.js';
   import { onMount } from 'svelte';
 

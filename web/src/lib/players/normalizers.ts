@@ -1,6 +1,12 @@
 import type { PaginatedResponse } from '$lib/api';
-import type { ApiPlayerPayload, HallOfFamePayload, PlayerStatsPayload } from '$lib/players/api-payloads';
-import type { HofEntry, PlayerProfile, PlayerResult } from '$lib/players/types';
+import type {
+  ApiPlayerPayload,
+  HallOfFamePayload,
+  PlayerStatsPayload,
+  HofEntry,
+  PlayerProfile,
+  PlayerResult
+} from '$lib/players/types';
 
 function toDisplayName(player: ApiPlayerPayload): string {
   if (player.name && player.name.trim().length > 0) return player.name;
