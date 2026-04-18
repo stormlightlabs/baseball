@@ -2,7 +2,6 @@
   import { afterNavigate, goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import type { Pathname } from '$app/types';
   import { apiFetch } from '$lib/api';
   import Chart from '$lib/components/Chart.svelte';
   import EraBadge from '$lib/components/EraBadge.svelte';
@@ -55,10 +54,13 @@
   });
 
   function updateQuery(overrides: Record<string, string | number | null>): void {
-    const encodedId = encodeURIComponent(playerId);
-    const base = resolve(`/players/${encodedId}/batting` as Pathname);
-    const href = withMergedQuery(base, page.url.searchParams, overrides, page.url.hash);
-    void goto(resolve(href as Pathname), QUERY_NAV_OPTS);
+    const href = withMergedQuery(
+      `/players/${encodeURIComponent(playerId)}/batting`,
+      page.url.searchParams,
+      overrides,
+      page.url.hash
+    );
+    void goto(resolve(href as `/players/${string}/batting`), QUERY_NAV_OPTS);
   }
 </script>
 

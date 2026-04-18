@@ -2,9 +2,7 @@
   import { afterNavigate } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import type { Pathname } from '$app/types';
   import { EP } from '$lib/endpoints';
-  import { DEFAULT_PLAYER_TAB } from '$lib/players/constants';
   import { fetchList } from '$lib/players/fetchers';
   import { AsyncListResource } from '$lib/players/resources.svelte';
   import type { Relative } from '$lib/players/types';
@@ -14,7 +12,7 @@
   let q = $derived(page.url.searchParams.get('q') ?? '');
 
   const relativesResource = new AsyncListResource<Relative>();
-  let lastKey = $state();
+  let lastKey = '';
 
   async function refresh(force = false): Promise<void> {
     const id = playerId;
@@ -32,12 +30,9 @@
     void refresh();
   });
 
-  function relativeHref(id: string): string {
-    const encodedId = encodeURIComponent(id);
-    const base = `/players/${encodedId}/${DEFAULT_PLAYER_TAB}`;
-    if (!q) return base;
-    const qs = new URLSearchParams({ q }).toString();
-    return `${base}?${qs}`;
+  function searchQuerySuffix(): string {
+    if (!q) return '';
+    return `?${new URLSearchParams({ q }).toString()}`;
   }
 </script>
 
@@ -53,7 +48,9 @@
         <div class="flex items-center gap-3 rounded-md bg-surface px-3 py-2.5">
           {#if rel.player_id}
             <a
-              href={resolve(relativeHref(rel.player_id) as Pathname)}
+              href={resolve(
+                `/players/${encodeURIComponent(rel.player_id)}/batting${searchQuerySuffix()}` as `/players/${string}/batting`
+              )}
               class="font-display text-[0.82rem] text-primary hover:underline">
               {rel.name ?? rel.player_id}
             </a>

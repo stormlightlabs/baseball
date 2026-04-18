@@ -152,6 +152,15 @@ Should immediately answer: _what can this API do across eras?_
 - `/v1/seasons/{year}/teams/{team_id}/schedule`
 - `/v1/seasons/{year}/teams/{team_id}/daily-logs`
 
+### Contract Notes (Swagger-Backed)
+
+- `GET /v1/franchises` returns `api.FranchisesResponse` (`{ franchises: Franchise[]; total }`), not a generic `data` array.
+- `GET /v1/search/teams` is paginated (`api.PaginatedResponse`) and supports `q`, `year`, `league`, `page`, `per_page`.
+- `GET /v1/seasons/{year}/teams/{team_id}/roster` returns a plain `RosterPlayer[]` array (non-paginated).
+- `GET /v1/seasons/{year}/teams/{team_id}/{batting|pitching|fielding}` returns aggregate objects (`core.Team*Stats`) with optional `players` splits when `players=true`.
+- `GET /v1/teams/{team_id}/run-differential` requires query `season` and returns a single `core.RunDifferentialSeries` object (non-paginated).
+- `GET /v1/seasons/{year}/teams/{team_id}/schedule` is a paginated alias of `/games`.
+
 ### Era-specific behavior
 
 - Franchise view uses era segmentation for name/identity continuity.

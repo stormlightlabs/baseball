@@ -2,7 +2,6 @@
   import { afterNavigate, goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import type { Pathname } from '$app/types';
   import { fetchPaginated } from '$lib/api';
   import Pagination from '$lib/components/Pagination.svelte';
   import SortableTable from '$lib/components/SortableTable.svelte';
@@ -45,10 +44,13 @@
   });
 
   function updateQuery(overrides: Record<string, string | number | null>): void {
-    const encodedId = encodeURIComponent(playerId);
-    const base = resolve(`/players/${encodedId}/game-logs` as Pathname);
-    const href = withMergedQuery(base, page.url.searchParams, overrides, page.url.hash);
-    void goto(resolve(href as Pathname), QUERY_NAV_OPTS);
+    const href = withMergedQuery(
+      `/players/${encodeURIComponent(playerId)}/game-logs`,
+      page.url.searchParams,
+      overrides,
+      page.url.hash
+    );
+    void goto(resolve(href as `/players/${string}/game-logs`), QUERY_NAV_OPTS);
   }
 </script>
 

@@ -13,7 +13,7 @@
   let playerId = $derived(page.params.id ?? '');
 
   const awardsResource = new AsyncListResource<Award>();
-  let lastKey = $state();
+  let lastKey = '';
 
   async function refresh(force = false): Promise<void> {
     const id = playerId;

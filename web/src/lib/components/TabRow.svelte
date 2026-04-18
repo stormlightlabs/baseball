@@ -1,6 +1,5 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import type { Pathname } from '$app/types';
 
   let { tabs, active }: { tabs: Array<{ id: string; label: string; href: string }>; active: string } = $props();
 </script>
@@ -10,7 +9,7 @@
     <a
       role="tab"
       aria-selected={active === tab.id}
-      href={resolve(tab.href as Pathname)}
+      href={resolve(tab.href as '/')}
       class="rounded border px-3 py-1.25 font-display text-[0.78rem] no-underline transition-all duration-150 {active ===
       tab.id
         ? 'border-outline bg-surface text-foreground'

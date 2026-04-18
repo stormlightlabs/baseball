@@ -2,7 +2,6 @@
   import { afterNavigate, goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import type { Pathname } from '$app/types';
   import { apiFetch, apiUrl, fetchPaginated } from '$lib/api';
   import ApiPanel from '$lib/components/ApiPanel.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
@@ -11,7 +10,7 @@
   import { erasInRange } from '$lib/eras';
   import ThreeColLayout from '$lib/layouts/ThreeColLayout.svelte';
   import type { ApiPlayerPayload } from '$lib/players/api-payloads';
-  import { DEFAULT_PLAYER_TAB, isPlayerTabId } from '$lib/players/constants';
+  import { isPlayerTabId } from '$lib/players/constants';
   import { normalizePlayerProfile, normalizeSearchPlayersPage } from '$lib/players/normalizers';
   import { AsyncPaginatedListResource, AsyncValueResource } from '$lib/players/resources.svelte';
   import { endpointForPlayerTab, parseGameLogType } from '$lib/players/tab-endpoints';
@@ -93,27 +92,17 @@
     void refreshProfile();
   });
 
-  function searchHref(term: string): string {
-    const base = '/players';
-    const trimmed = term.trim();
-    if (!trimmed) return base;
-    const qs = new URLSearchParams({ q: trimmed }).toString();
-    return `${base}?${qs}`;
-  }
-
-  function playerHref(id: string): string {
-    const encodedId = encodeURIComponent(id);
-    const base = `/players/${encodedId}/${DEFAULT_PLAYER_TAB}`;
+  function searchQuerySuffix(): string {
     const trimmed = q.trim();
-    if (!trimmed) return base;
-    const qs = new URLSearchParams({ q: trimmed }).toString();
-    return `${base}?${qs}`;
+    if (!trimmed) return '';
+    return `?${new URLSearchParams({ q: trimmed }).toString()}`;
   }
 
   function handleSearch(value = searchInput): void {
     const trimmed = value.trim();
     if (!trimmed) return;
-    void goto(resolve(searchHref(trimmed) as Pathname));
+    const href = `/players?${new URLSearchParams({ q: trimmed }).toString()}`;
+    void goto(resolve(href as '/players'));
   }
 
   const fmtAvg = (v: number | undefined) => (v != null ? Number(v).toFixed(3) : '—');
@@ -204,7 +193,9 @@
       <div class="flex flex-col gap-0.5">
         {#each searchResource.items as result (result.id)}
           <a
-            href={resolve(playerHref(result.id) as Pathname)}
+            href={resolve(
+              `/players/${encodeURIComponent(result.id)}/batting${searchQuerySuffix()}` as `/players/${string}/batting`
+            )}
             class="rounded-md px-3 py-2 text-left no-underline transition-colors hover:bg-surface {playerId ===
             result.id
               ? 'bg-surface'

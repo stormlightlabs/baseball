@@ -124,22 +124,29 @@ Ref: `docs/designs/teams.html`
 
 ### Sidebar
 
-- [ ] Franchise picker from `GET /v1/franchises`.
-- [ ] Team search from `GET /v1/search/teams`.
-- [ ] Year selector to hydrate team-season detail.
+- [x] Franchise picker from `GET /v1/franchises`.
+- [x] Team search from `GET /v1/search/teams`.
+- [x] Year selector to hydrate team-season detail.
 
 ### Center Content
 
-- [ ] Franchise metadata from `GET /v1/franchises/{id}`.
-- [ ] Team-season snapshot from `GET /v1/teams/{id}?year=...`.
-- [ ] Team roster + stat tabs from:
+- [x] Franchise metadata from `GET /v1/franchises/{id}`.
+- [x] Team-season snapshot from `GET /v1/teams/{id}?year=...`.
+- [x] Team roster + stat tabs from:
     - `GET /v1/seasons/{year}/teams/{team_id}/roster`
     - `GET /v1/seasons/{year}/teams/{team_id}/batting`
     - `GET /v1/seasons/{year}/teams/{team_id}/pitching`
     - `GET /v1/seasons/{year}/teams/{team_id}/fielding`
-- [ ] Team schedule from `GET /v1/seasons/{year}/teams/{team_id}/games` and `/schedule`.
+- [x] Team schedule from `GET /v1/seasons/{year}/teams/{team_id}/games` and `/schedule`.
 - [ ] Team daily trends from `GET /v1/teams/{id}/daily-stats` and `/daily-logs`.
-- [ ] Run differential module from `GET /v1/teams/{team_id}/run-differential?season=...`.
+- [x] Run differential module from `GET /v1/teams/{team_id}/run-differential?season=...`.
+
+### API Contract Notes (Current Implementation)
+
+- [x] `GET /v1/franchises` parsed as `FranchisesResponse.franchises[]` (not `data[]`).
+- [x] `GET /v1/seasons/{year}/teams/{team_id}/roster` handled as non-paginated array response.
+- [x] `GET /v1/seasons/{year}/teams/{team_id}/{batting|pitching|fielding}` handled as aggregate stats object with optional `players`.
+- [x] `GET /v1/teams/{team_id}/run-differential` includes required `season` query and handles non-paginated series response.
 
 ### Era UX
 
