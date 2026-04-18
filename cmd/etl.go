@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"archive/zip"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -17,14 +15,21 @@ import (
 
 // ETLCmd creates the etl command group
 func ETLCmd() *cobra.Command {
+	opts := &pipelineCLIOptions{}
 	cmd := &cobra.Command{
 		Use:   "etl",
 		Short: "ETL operations for baseball data",
 		Long:  "Extract, Transform, and Load operations for Lahman and Retrosheet data sources.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runETLPipeline(cmd, opts)
+		},
 	}
+	addPipelineFlags(cmd, opts)
 	cmd.AddCommand(EtlFetchCmd())
 	cmd.AddCommand(EtlLoadCmd())
 	cmd.AddCommand(EtlStatusCmd())
+	cmd.AddCommand(EtlRunCmd())
+	cmd.AddCommand(EtlValidateCmd())
 	return cmd
 }
 
@@ -57,6 +62,52 @@ func EtlLoadCmd() *cobra.Command {
 	cmd.AddCommand(ParksLoadCmd())
 	cmd.AddCommand(AllStarLoadCmd())
 	cmd.AddCommand(BiodataLoadCmd())
+	return cmd
+}
+
+type pipelineCLIOptions struct {
+	profile string
+	mode    string
+	years   string
+	era     string
+}
+
+func addPipelineFlags(cmd *cobra.Command, opts *pipelineCLIOptions) {
+	cmd.Flags().StringVar(&opts.profile, "profile", string(seed.PipelineProfileDev), "Pipeline profile to run (dev|prod)")
+	cmd.Flags().StringVar(&opts.mode, "mode", string(seed.PipelineModeIncremental), "Pipeline execution mode (incremental|full)")
+	cmd.Flags().StringVar(&opts.years, "years", "", "Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all")
+	cmd.Flags().StringVar(&opts.era, "era", "", "Comma-separated era names to include (fed,nlg,boomer,pitcher,turf,steroid,moneyball,statcast,modern)")
+}
+
+func EtlRunCmd() *cobra.Command {
+	opts := &pipelineCLIOptions{}
+	cmd := &cobra.Command{
+		Use:   "run",
+		Short: "Run the full ETL pipeline",
+		Long:  "Run the full ETL pipeline (extract, transform, load, validate).",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runETLPipeline(cmd, opts)
+		},
+	}
+	addPipelineFlags(cmd, opts)
+	return cmd
+}
+
+func EtlValidateCmd() *cobra.Command {
+	var profile string
+	var yearsFlag string
+	var eraFlag string
+	cmd := &cobra.Command{
+		Use:   "validate",
+		Short: "Validate ETL completeness",
+		Long:  "Validate core and auxiliary ETL datasets for a profile.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return validateETLPipeline(cmd, profile, yearsFlag, eraFlag)
+		},
+	}
+	cmd.Flags().StringVar(&profile, "profile", string(seed.PipelineProfileDev), "Pipeline profile to validate (dev|prod)")
+	cmd.Flags().StringVar(&yearsFlag, "years", "", "Optional explicit years to validate coverage against")
+	cmd.Flags().StringVar(&eraFlag, "era", "", "Optional comma-separated era names to include in coverage validation")
 	return cmd
 }
 
@@ -201,6 +252,141 @@ func RetrosheetPlayersLoadCmd() *cobra.Command {
 	}
 }
 
+func runETLPipeline(cmd *cobra.Command, opts *pipelineCLIOptions) error {
+	years, err := parseYearFlag(opts.years)
+	if err != nil {
+		return err
+	}
+
+	eras, err := parseEraFlagList(opts.era)
+	if err != nil {
+		return err
+	}
+
+	echo.Header("ETL Pipeline")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	result, err := seed.RunPipeline(cmd.Context(), database, seed.PipelineOptions{
+		Profile:  seed.PipelineProfile(strings.ToLower(strings.TrimSpace(opts.profile))),
+		Mode:     seed.PipelineMode(strings.ToLower(strings.TrimSpace(opts.mode))),
+		Years:    years,
+		EraNames: eras,
+	})
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	warnings := result.Validation.Warnings()
+	if len(warnings) > 0 {
+		echo.Info("")
+		echo.Info("Validation warnings:")
+		for _, warning := range warnings {
+			echo.Infof("  • [%s] %s", warning.Dataset, warning.Message)
+		}
+	}
+
+	echo.Info("")
+	echo.Success("✓ ETL pipeline completed successfully")
+	echo.Infof("  Run ID: %d", result.RunID)
+	echo.Infof("  Years: %s", describeYears(result.Years))
+	return nil
+}
+
+func validateETLPipeline(cmd *cobra.Command, profile, yearsFlag, eraFlag string) error {
+	years, err := parseYearFlag(yearsFlag)
+	if err != nil {
+		return err
+	}
+
+	eras, err := parseEraFlagList(eraFlag)
+	if err != nil {
+		return err
+	}
+
+	opts, err := seed.NormalizePipelineOptions(seed.PipelineOptions{
+		Profile:  seed.PipelineProfile(strings.ToLower(strings.TrimSpace(profile))),
+		Mode:     seed.PipelineModeIncremental,
+		Years:    years,
+		EraNames: eras,
+	})
+	if err != nil {
+		return err
+	}
+
+	echo.Header("ETL Validation")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	result, err := seed.ValidatePipeline(cmd.Context(), database, opts.Profile, opts.Years)
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	if len(result.Issues) == 0 {
+		echo.Success("✓ Validation passed")
+		return nil
+	}
+
+	for _, issue := range result.Issues {
+		if issue.Severity == "warning" {
+			echo.Infof("⚠ [%s] %s", issue.Dataset, issue.Message)
+			continue
+		}
+		echo.Infof("✗ [%s] %s", issue.Dataset, issue.Message)
+	}
+
+	if !result.OK() {
+		return fmt.Errorf("validation failed with %d error(s)", len(result.Errors()))
+	}
+
+	echo.Success("✓ Validation passed with warnings")
+	return nil
+}
+
+func parseEraFlagList(raw string) ([]string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, nil
+	}
+
+	parts := strings.Split(raw, ",")
+	eras := make([]string, 0, len(parts))
+
+	for _, part := range parts {
+		era := normalizeEraFlag(part)
+		if era == "" {
+			continue
+		}
+		if seed.GetEra(era) == nil {
+			return nil, unknownEraError(era)
+		}
+		eras = append(eras, era)
+	}
+
+	if len(eras) == 0 {
+		return nil, nil
+	}
+
+	slices.Sort(eras)
+	eras = slices.Compact(eras)
+	return eras, nil
+}
+
 func fetchLahman(cmd *cobra.Command, args []string) error {
 	echo.Header("Lahman Database Download Instructions")
 	dataDir := "data/lahman"
@@ -229,94 +415,16 @@ func fetchLahman(cmd *cobra.Command, args []string) error {
 
 func fetchNegroLeagues(cmd *cobra.Command, args []string) error {
 	echo.Header("Fetching Negro Leagues Data")
-	dataDir := "data/retrosheet/negroleagues"
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		return fmt.Errorf("error: failed to create data directory: %w", err)
+	dataDir := filepath.Join("data", "retrosheet", "negroleagues")
+	if err := seed.FetchNegroLeaguesData(cmd.Context(), dataDir, false); err != nil {
+		return fmt.Errorf("error: %w", err)
 	}
-
-	zipURL := "https://www.retrosheet.org/downloads/negroleagues.zip"
-	zipFile := filepath.Join(dataDir, "negroleagues.zip")
-
-	if _, err := os.Stat(zipFile); err == nil {
-		echo.Info("Negro Leagues zip already downloaded")
-	} else {
-		echo.Infof("Downloading Negro Leagues data...")
-
-		resp, err := http.Get(zipURL)
-		if err != nil {
-			return fmt.Errorf("error: failed to download: %w", err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("error: download failed (HTTP %d)", resp.StatusCode)
-		}
-
-		out, err := os.Create(zipFile)
-		if err != nil {
-			return fmt.Errorf("error: failed to create file: %w", err)
-		}
-		defer out.Close()
-
-		if _, err = io.Copy(out, resp.Body); err != nil {
-			return fmt.Errorf("error: failed to save file: %w", err)
-		}
-
-		echo.Success("✓ Downloaded Negro Leagues data")
-	}
-
-	echo.Info("Extracting files...")
-	r, err := zip.OpenReader(zipFile)
-	if err != nil {
-		return fmt.Errorf("error: failed to open zip: %w", err)
-	}
-	defer r.Close()
-
-	for _, f := range r.File {
-		if f.FileInfo().IsDir() {
-			continue
-		}
-
-		outPath := filepath.Join(dataDir, f.Name)
-
-		if _, err := os.Stat(outPath); err == nil {
-			continue
-		}
-
-		rc, err := f.Open()
-		if err != nil {
-			return fmt.Errorf("error: failed to open %s in zip: %w", f.Name, err)
-		}
-
-		outFile, err := os.Create(outPath)
-		if err != nil {
-			rc.Close()
-			return fmt.Errorf("error: failed to create %s: %w", outPath, err)
-		}
-
-		_, err = io.Copy(outFile, rc)
-		outFile.Close()
-		rc.Close()
-
-		if err != nil {
-			return fmt.Errorf("error: failed to extract %s: %w", f.Name, err)
-		}
-	}
-
-	echo.Success("✓ Extracted all files")
-	echo.Info("")
-	echo.Info("Extracted files:")
-	echo.Info("  • gameinfo.csv - Game metadata")
-	echo.Info("  • plays.csv - Play-by-play data")
-	echo.Info("  • batting.csv, pitching.csv, fielding.csv - Statistics")
-	echo.Info("")
+	echo.Success("✓ Negro Leagues data downloaded and extracted")
 	echo.Infof("  Directory: %s", dataDir)
-	echo.Info("")
-	echo.Info("Next step: baseball etl load negroleagues")
 	return nil
 }
 
-func fetchRetrosheet(_ *cobra.Command, yearsFlag string, force bool) error {
+func fetchRetrosheet(cmd *cobra.Command, yearsFlag string, force bool) error {
 	echo.Header("Fetching Retrosheet Data")
 	years, err := parseYearFlag(yearsFlag)
 	if err != nil {
@@ -327,325 +435,24 @@ func fetchRetrosheet(_ *cobra.Command, yearsFlag string, force bool) error {
 		years = []int{2023, 2024, 2025}
 	}
 
-	echo.Infof("Downloading Retrosheet data for %d years...", len(years))
-
-	dataDir := "data/retrosheet"
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		return fmt.Errorf("error: failed to create data directory: %w", err)
+	dataDir := filepath.Join("data", "retrosheet")
+	if err := seed.FetchRetrosheetData(cmd.Context(), dataDir, years, force); err != nil {
+		return fmt.Errorf("error: %w", err)
 	}
 
-	gameLogsDir := filepath.Join(dataDir, "gamelogs")
-	playsDir := filepath.Join(dataDir, "plays")
-	if err := os.MkdirAll(gameLogsDir, 0755); err != nil {
-		return fmt.Errorf("error: failed to create gamelogs directory: %w", err)
-	}
-
-	if err := os.MkdirAll(playsDir, 0755); err != nil {
-		return fmt.Errorf("error: failed to create plays directory: %w", err)
-	}
-
-	gameLogFiles := make(map[string]string)
-	playFiles := make(map[string]string)
-
-	for _, year := range years {
-		gameLogFiles[fmt.Sprintf("GL%d.zip", year)] = fmt.Sprintf("https://www.retrosheet.org/gamelogs/gl%d.zip", year)
-		playFiles[fmt.Sprintf("%dplays.zip", year)] = fmt.Sprintf("https://www.retrosheet.org/downloads/plays/%dplays.zip", year)
-	}
-
-	ejectionsDir := filepath.Join(dataDir, "ejections")
-	if err := os.MkdirAll(ejectionsDir, 0755); err != nil {
-		return fmt.Errorf("error: failed to create ejections directory: %w", err)
-	}
-
-	echo.Info("Downloading game logs...")
-	for filename, url := range gameLogFiles {
-		outputPath := filepath.Join(gameLogsDir, filename)
-
-		if !force {
-			if _, err := os.Stat(outputPath); err == nil {
-				echo.Infof("  ✓ Using cached %s", filename)
-				continue
-			}
-		}
-
-		echo.Infof("  Downloading %s...", filename)
-
-		resp, err := http.Get(url)
-		if err != nil {
-			echo.Infof("  ⚠ Failed to download %s: %v", filename, err)
-			continue
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			echo.Infof("  ⚠ %s not available (HTTP %d)", filename, resp.StatusCode)
-			continue
-		}
-
-		out, err := os.Create(outputPath)
-		if err != nil {
-			return fmt.Errorf("error: failed to create %s: %w", filename, err)
-		}
-		defer out.Close()
-
-		if _, err = io.Copy(out, resp.Body); err != nil {
-			return fmt.Errorf("error: failed to save %s: %w", filename, err)
-		}
-
-		echo.Successf("  ✓ %s downloaded", filename)
-	}
-
-	echo.Info("")
-	echo.Info("Downloading play-by-play data...")
-	for filename, url := range playFiles {
-		outputPath := filepath.Join(playsDir, filename)
-
-		if !force {
-			if _, err := os.Stat(outputPath); err == nil {
-				echo.Infof("  ✓ Using cached %s", filename)
-				continue
-			}
-		}
-
-		echo.Infof("  Downloading %s...", filename)
-
-		resp, err := http.Get(url)
-		if err != nil {
-			echo.Infof("  ⚠ Failed to download %s: %v", filename, err)
-			continue
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			echo.Infof("  ⚠ %s not available (HTTP %d)", filename, resp.StatusCode)
-			continue
-		}
-
-		out, err := os.Create(outputPath)
-		if err != nil {
-			return fmt.Errorf("error: failed to create %s: %w", filename, err)
-		}
-		defer out.Close()
-
-		if _, err = io.Copy(out, resp.Body); err != nil {
-			return fmt.Errorf("error: failed to save %s: %w", filename, err)
-		}
-
-		echo.Successf("  ✓ %s downloaded", filename)
-	}
-
-	echo.Info("")
-	echo.Info("Downloading ejections data...")
-	ejectionsURL := "https://www.retrosheet.org/ejections.zip"
-	echo.Infof("  Downloading ejections.zip...")
-
-	resp, err := http.Get(ejectionsURL)
-	if err != nil {
-		echo.Infof("  ⚠ Failed to download ejections: %v", err)
-	} else {
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			echo.Infof("  ⚠ ejections.zip not available (HTTP %d)", resp.StatusCode)
-		} else {
-			outputPath := filepath.Join(ejectionsDir, "ejections.zip")
-			out, err := os.Create(outputPath)
-			if err != nil {
-				return fmt.Errorf("error: failed to create ejections.zip: %w", err)
-			}
-			defer out.Close()
-
-			if _, err = io.Copy(out, resp.Body); err != nil {
-				return fmt.Errorf("error: failed to save ejections.zip: %w", err)
-			}
-
-			echo.Successf("  ✓ ejections.zip downloaded")
-		}
-	}
-
-	echo.Info("")
-	echo.Info("Downloading player data...")
-	allplayersURL := "https://www.retrosheet.org/downloads/allplayers.zip"
-	echo.Infof("  Downloading allplayers.zip...")
-
-	resp2, err := http.Get(allplayersURL)
-	if err != nil {
-		echo.Infof("  ⚠ Failed to download allplayers: %v", err)
-	} else {
-		defer resp2.Body.Close()
-
-		if resp2.StatusCode != http.StatusOK {
-			echo.Infof("  ⚠ allplayers.zip not available (HTTP %d)", resp2.StatusCode)
-		} else {
-			outputPath := filepath.Join(dataDir, "allplayers.zip")
-			out, err := os.Create(outputPath)
-			if err != nil {
-				return fmt.Errorf("error: failed to create allplayers.zip: %w", err)
-			}
-			defer out.Close()
-
-			if _, err = io.Copy(out, resp2.Body); err != nil {
-				return fmt.Errorf("error: failed to save allplayers.zip: %w", err)
-			}
-
-			echo.Successf("  ✓ allplayers.zip downloaded")
-		}
-	}
-
-	echo.Info("")
-	echo.Info("Downloading game metadata...")
-	gameInfoZip := filepath.Join(dataDir, "gameinfo.zip")
-	gameInfoCSV := filepath.Join(dataDir, "gameinfo.csv")
-
-	if !force {
-		if _, err := os.Stat(gameInfoCSV); err == nil {
-			echo.Infof("  ✓ Using cached gameinfo.csv")
-		} else {
-			if err := downloadAndExtractGameInfo(gameInfoZip, gameInfoCSV); err != nil {
-				echo.Infof("  ⚠ Failed to download gameinfo.csv: %v", err)
-			}
-		}
-	} else {
-		if err := downloadAndExtractGameInfo(gameInfoZip, gameInfoCSV); err != nil {
-			echo.Infof("  ⚠ Failed to download gameinfo.csv: %v", err)
-		}
-	}
-
-	allstarDir := filepath.Join(dataDir, "allstar")
-	if err := os.MkdirAll(allstarDir, 0755); err != nil {
-		return fmt.Errorf("error: failed to create allstar directory: %w", err)
-	}
-
-	echo.Info("")
-	echo.Info("Downloading all-star data...")
-	allstarURL := "https://www.retrosheet.org/downloads/allstar.zip"
-	echo.Infof("  Downloading allstar.zip...")
-
-	resp3, err := http.Get(allstarURL)
-	if err != nil {
-		echo.Infof("  ⚠ Failed to download allstar: %v", err)
-	} else {
-		defer resp3.Body.Close()
-
-		if resp3.StatusCode != http.StatusOK {
-			echo.Infof("  ⚠ allstar.zip not available (HTTP %d)", resp3.StatusCode)
-		} else {
-			outputPath := filepath.Join(allstarDir, "allstar.zip")
-			out, err := os.Create(outputPath)
-			if err != nil {
-				return fmt.Errorf("error: failed to create allstar.zip: %w", err)
-			}
-			defer out.Close()
-
-			if _, err = io.Copy(out, resp3.Body); err != nil {
-				return fmt.Errorf("error: failed to save allstar.zip: %w", err)
-			}
-
-			echo.Successf("  ✓ allstar.zip downloaded")
-		}
-	}
-
-	echo.Info("\nDownloading biodata...")
-	biodataURL := "https://www.retrosheet.org/downloads/biodata.zip"
-	echo.Infof("  Downloading biodata.zip...")
-
-	resp4, err := http.Get(biodataURL)
-	if err != nil {
-		echo.Infof("  ⚠ Failed to download biodata: %v", err)
-	} else {
-		defer resp4.Body.Close()
-
-		if resp4.StatusCode != http.StatusOK {
-			echo.Infof("  ⚠ biodata.zip not available (HTTP %d)", resp4.StatusCode)
-		} else {
-			outputPath := filepath.Join(dataDir, "biodata.zip")
-			out, err := os.Create(outputPath)
-			if err != nil {
-				return fmt.Errorf("error: failed to create biodata.zip: %w", err)
-			}
-			defer out.Close()
-
-			if _, err = io.Copy(out, resp4.Body); err != nil {
-				return fmt.Errorf("error: failed to save biodata.zip: %w", err)
-			}
-
-			echo.Successf("  ✓ biodata.zip downloaded")
-		}
-	}
-
-	echo.Success("\n✓ Retrosheet data downloaded successfully")
-	echo.Infof("  Game logs: %s", gameLogsDir)
-	echo.Infof("  Play-by-play: %s", playsDir)
-	echo.Infof("  Ejections: %s", ejectionsDir)
-	echo.Infof("  Players: %s/allplayers.zip", dataDir)
-	echo.Infof("  Game metadata: %s/gameinfo.csv", dataDir)
-	echo.Infof("  All-Star: %s", allstarDir)
-	echo.Infof("  Biodata: %s/biodata.zip", dataDir)
+	echo.Success("✓ Retrosheet data downloaded successfully")
+	echo.Infof("  Years: %s", describeYears(years))
+	echo.Infof("  Directory: %s", dataDir)
 	return nil
 }
 
-func downloadAndExtractGameInfo(zipPath, csvPath string) error {
-	const gameInfoURL = "https://www.retrosheet.org/gameinfo.zip"
-
-	echo.Infof("  Downloading gameinfo.zip...")
-	resp, err := http.Get(gameInfoURL)
-	if err != nil {
-		return err
+func describeYears(years []int) string {
+	if len(years) == 0 {
+		return "0 years"
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("gameinfo.zip not available (HTTP %d)", resp.StatusCode)
-	}
-
-	out, err := os.Create(zipPath)
-	if err != nil {
-		return fmt.Errorf("failed to create gameinfo.zip: %w", err)
-	}
-
-	if _, err = io.Copy(out, resp.Body); err != nil {
-		out.Close()
-		return fmt.Errorf("failed to save gameinfo.zip: %w", err)
-	}
-	out.Close()
-
-	if err := extractZipFile(zipPath, "gameinfo.csv", csvPath); err != nil {
-		return fmt.Errorf("failed to extract gameinfo.csv: %w", err)
-	}
-
-	echo.Successf("  ✓ gameinfo.csv downloaded")
-	return nil
-}
-
-func extractZipFile(zipPath, targetName, destPath string) error {
-	r, err := zip.OpenReader(zipPath)
-	if err != nil {
-		return err
-	}
-	defer r.Close()
-
-	for _, f := range r.File {
-		if filepath.Base(f.Name) != targetName {
-			continue
-		}
-
-		rc, err := f.Open()
-		if err != nil {
-			return err
-		}
-		defer rc.Close()
-
-		out, err := os.Create(destPath)
-		if err != nil {
-			return err
-		}
-		defer out.Close()
-
-		_, err = io.Copy(out, rc)
-		return err
-	}
-
-	return fmt.Errorf("%s not found in %s", targetName, zipPath)
+	sorted := slices.Clone(years)
+	slices.Sort(sorted)
+	return fmt.Sprintf("%d years: %d-%d", len(sorted), sorted[0], sorted[len(sorted)-1])
 }
 
 func loadLahman(cmd *cobra.Command, args []string) error {
@@ -895,58 +702,14 @@ func loadFanGraphs(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	ctx := cmd.Context()
-
-	wobaFile := "data/fangraphs/woba.csv"
-	echo.Info("Loading wOBA constants...")
-
-	if _, err := os.Stat(wobaFile); os.IsNotExist(err) {
-		return fmt.Errorf("error: wOBA constants file not found: %s", wobaFile)
-	}
-
-	wobaRows, err := database.LoadFanGraphsWOBA(ctx, wobaFile)
+	rows, err := seed.LoadFanGraphsData(cmd.Context(), database, filepath.Join("data", "fangraphs"))
 	if err != nil {
-		return fmt.Errorf("error: failed to load wOBA constants: %w", err)
-	}
-
-	echo.Successf("✓ Loaded wOBA constants (%d rows)", wobaRows)
-
-	parkFactorDir := "data/fangraphs/pf"
-	echo.Info("Loading park factors...")
-
-	files, err := filepath.Glob(filepath.Join(parkFactorDir, "*.csv"))
-	if err != nil {
-		return fmt.Errorf("error: failed to list park factor files: %w", err)
-	}
-
-	if len(files) == 0 {
-		echo.Info("  No park factor files found")
-		return nil
-	}
-
-	totalParkRows := int64(0)
-	for _, file := range files {
-		basename := filepath.Base(file)
-		echo.Infof("  Loading %s...", basename)
-
-		rows, err := database.LoadFanGraphsParks(ctx, file)
-		if err != nil {
-			return fmt.Errorf("error: failed to load %s: %w", basename, err)
-		}
-
-		totalParkRows += rows
-		echo.Successf("  ✓ Loaded %s (%d rows)", basename, rows)
+		return fmt.Errorf("error: %w", err)
 	}
 
 	echo.Info("")
-	echo.Success("✓ All FanGraphs data loaded successfully")
-	echo.Infof("  wOBA constants: %d rows", wobaRows)
-	echo.Infof("  Park factors: %d rows", totalParkRows)
-
-	if err := database.RecordDatasetRefresh(ctx, "fangraphs_constants", wobaRows+totalParkRows); err != nil {
-		return fmt.Errorf("error: failed to record FanGraphs refresh: %w", err)
-	}
-
+	echo.Success("✓ FanGraphs data loaded successfully")
+	echo.Infof("  Rows loaded: %d", rows)
 	return nil
 }
 
@@ -962,44 +725,14 @@ func loadNegroLeagues(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	ctx := cmd.Context()
-	dataDir := "data/retrosheet/negroleagues"
-
-	gameinfoFile := filepath.Join(dataDir, "gameinfo.csv")
-	echo.Info("Loading Negro Leagues games from gameinfo.csv...")
-
-	if _, err := os.Stat(gameinfoFile); os.IsNotExist(err) {
-		return fmt.Errorf("error: gameinfo.csv not found at %s", gameinfoFile)
-	}
-
-	gameRows, err := database.LoadNegroLeaguesGameInfo(ctx, gameinfoFile)
+	totalRows, err := seed.LoadNegroLeagues(cmd.Context(), database, filepath.Join("data", "retrosheet", "negroleagues"))
 	if err != nil {
-		return fmt.Errorf("error: failed to load gameinfo: %w", err)
-	}
-
-	echo.Successf("✓ Loaded Negro Leagues games (%d rows)", gameRows)
-	if err := database.RecordDatasetRefresh(ctx, "negroleagues_games", gameRows); err != nil {
-		return fmt.Errorf("error: failed to record Negro Leagues games refresh: %w", err)
-	}
-
-	playsFile := filepath.Join(dataDir, "plays.csv")
-	echo.Info("Loading Negro Leagues plays from plays.csv...")
-
-	if _, err := os.Stat(playsFile); os.IsNotExist(err) {
-		echo.Info("  Skipping plays (file not found)")
-	} else {
-		playRows, err := database.LoadNegroLeaguesPlays(ctx, playsFile)
-		if err != nil {
-			return fmt.Errorf("error: failed to load plays: %w", err)
-		}
-		echo.Successf("✓ Loaded Negro Leagues plays (%d rows)", playRows)
-		if err := database.RecordDatasetRefresh(ctx, "negroleagues_plays", playRows); err != nil {
-			return fmt.Errorf("error: failed to record Negro Leagues plays refresh: %w", err)
-		}
+		return fmt.Errorf("error: %w", err)
 	}
 
 	echo.Info("")
-	echo.Success("✓ All Negro Leagues data loaded successfully")
+	echo.Success("✓ Negro Leagues data loaded successfully")
+	echo.Infof("  Rows loaded: %d", totalRows)
 	return nil
 }
 
@@ -1048,49 +781,12 @@ func loadRetrosheetPlayers(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	ctx := cmd.Context()
-	csvPath := "data/retrosheet/allplayers.csv"
-	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
-		zipPath := "data/retrosheet/allplayers.zip"
-		if _, err := os.Stat(zipPath); os.IsNotExist(err) {
-			return fmt.Errorf(`error: allplayers data not found
-
-Run this command first to download the data:
-  ./tmp/baseball etl fetch retrosheet`)
-		}
-
-		echo.Info("Extracting allplayers.zip...")
-		r, err := zip.OpenReader(zipPath)
-		if err != nil {
-			return fmt.Errorf("error: failed to open allplayers.zip: %w", err)
-		}
-		defer r.Close()
-
-		for _, f := range r.File {
-			if f.Name == "allplayers.csv" {
-				rc, err := f.Open()
-				if err != nil {
-					return fmt.Errorf("error: failed to read allplayers.csv from zip: %w", err)
-				}
-				defer rc.Close()
-
-				out, err := os.Create(csvPath)
-				if err != nil {
-					return fmt.Errorf("error: failed to create allplayers.csv: %w", err)
-				}
-				defer out.Close()
-
-				if _, err = io.Copy(out, rc); err != nil {
-					return fmt.Errorf("error: failed to extract allplayers.csv: %w", err)
-				}
-
-				echo.Success("✓ Extracted allplayers.csv")
-				break
-			}
-		}
+	csvPath, err := seed.EnsureRetrosheetPlayersCSV(filepath.Join("data", "retrosheet"))
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
 	}
 
-	rowCount, err := seed.LoadRetrosheetPlayers(ctx, database, csvPath)
+	rowCount, err := seed.LoadRetrosheetPlayers(cmd.Context(), database, csvPath)
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -1151,10 +847,8 @@ func loadParksData(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	ctx := cmd.Context()
-
 	echo.Info("Filling missing park metadata...")
-	rows, err := database.LoadMissingParks(ctx)
+	rows, err := seed.LoadParksData(cmd.Context(), database)
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -1163,10 +857,6 @@ func loadParksData(cmd *cobra.Command, args []string) error {
 	echo.Success("✓ Missing parks data loaded successfully")
 	echo.Infof("  Parks processed: %d", rows)
 	echo.Info("  Refreshed park_map materialized view")
-
-	if err := database.RecordDatasetRefresh(ctx, "parks_metadata", rows); err != nil {
-		return fmt.Errorf("error: failed to record parks refresh: %w", err)
-	}
 
 	return nil
 }
@@ -1183,87 +873,14 @@ func loadAllStar(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	ctx := cmd.Context()
-	dataDir := "data/retrosheet/allstar"
-	zipFile := filepath.Join(dataDir, "allstar.zip")
-
-	if _, err := os.Stat(zipFile); os.IsNotExist(err) {
-		return fmt.Errorf(`error: allstar.zip not found at %s
-
-Run this command first to download the data:
-  ./tmp/baseball etl fetch retrosheet`, zipFile)
-	}
-
-	echo.Info("Extracting all-star data...")
-	r, err := zip.OpenReader(zipFile)
+	totalRows, err := seed.LoadAllStarData(cmd.Context(), database, filepath.Join("data", "retrosheet", "allstar", "allstar.zip"))
 	if err != nil {
-		return fmt.Errorf("error: failed to open allstar.zip: %w", err)
-	}
-	defer r.Close()
-
-	tmpDir, err := os.MkdirTemp("", "allstar-*")
-	if err != nil {
-		return fmt.Errorf("error: failed to create temp directory: %w", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	for _, f := range r.File {
-		if f.Name == "gameinfo.csv" || f.Name == "plays.csv" {
-			rc, err := f.Open()
-			if err != nil {
-				return fmt.Errorf("error: failed to read %s from zip: %w", f.Name, err)
-			}
-
-			outPath := filepath.Join(tmpDir, f.Name)
-			out, err := os.Create(outPath)
-			if err != nil {
-				rc.Close()
-				return fmt.Errorf("error: failed to create %s: %w", f.Name, err)
-			}
-
-			_, err = io.Copy(out, rc)
-			out.Close()
-			rc.Close()
-
-			if err != nil {
-				return fmt.Errorf("error: failed to extract %s: %w", f.Name, err)
-			}
-
-			echo.Infof("  ✓ Extracted %s", f.Name)
-		}
-	}
-
-	gameinfoFile := filepath.Join(tmpDir, "gameinfo.csv")
-	playsFile := filepath.Join(tmpDir, "plays.csv")
-
-	echo.Info("")
-	echo.Info("Loading all-star games...")
-	gameRows, err := database.LoadAllStarGameInfo(ctx, gameinfoFile)
-	if err != nil {
-		return fmt.Errorf("error: failed to load gameinfo: %w", err)
-	}
-	echo.Successf("✓ Loaded all-star games (%d rows)", gameRows)
-
-	if err := database.RecordDatasetRefresh(ctx, "allstar_games", gameRows); err != nil {
-		return fmt.Errorf("error: failed to record all-star games refresh: %w", err)
-	}
-
-	echo.Info("")
-	echo.Info("Loading all-star plays...")
-	playRows, err := database.LoadAllStarPlays(ctx, playsFile)
-	if err != nil {
-		return fmt.Errorf("error: failed to load plays: %w", err)
-	}
-	echo.Successf("✓ Loaded all-star plays (%d rows)", playRows)
-
-	if err := database.RecordDatasetRefresh(ctx, "allstar_plays", playRows); err != nil {
-		return fmt.Errorf("error: failed to record all-star plays refresh: %w", err)
+		return fmt.Errorf("error: %w", err)
 	}
 
 	echo.Info("")
 	echo.Success("✓ All-star data loaded successfully")
-	echo.Infof("  Games: %d", gameRows)
-	echo.Infof("  Plays: %d", playRows)
+	echo.Infof("  Rows loaded: %d", totalRows)
 	return nil
 }
 
@@ -1289,57 +906,13 @@ func loadBiodata(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	ctx := cmd.Context()
-	dataDir := "data/retrosheet"
-
-	zipFile := filepath.Join(dataDir, "biodata.zip")
-	if _, err := os.Stat(zipFile); os.IsNotExist(err) {
-		return fmt.Errorf(`error: biodata.zip not found at %s
-
-Run this command first to download the data:
-  ./tmp/baseball etl fetch retrosheet`, zipFile)
-	}
-
-	echo.Info("Extracting biodata.zip...")
-	r, err := zip.OpenReader(zipFile)
+	tmpDir, cleanup, err := seed.ExtractBiodataArchive(filepath.Join("data", "retrosheet"))
 	if err != nil {
-		return fmt.Errorf("error: failed to open biodata.zip: %w", err)
+		return fmt.Errorf("error: %w", err)
 	}
-	defer r.Close()
+	defer cleanup()
 
-	tmpDir, err := os.MkdirTemp("", "biodata-*")
-	if err != nil {
-		return fmt.Errorf("error: failed to create temp directory: %w", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	for _, f := range r.File {
-		if strings.HasSuffix(f.Name, ".csv") {
-			rc, err := f.Open()
-			if err != nil {
-				return fmt.Errorf("error: failed to read %s from zip: %w", f.Name, err)
-			}
-
-			outPath := filepath.Join(tmpDir, f.Name)
-			out, err := os.Create(outPath)
-			if err != nil {
-				rc.Close()
-				return fmt.Errorf("error: failed to create %s: %w", f.Name, err)
-			}
-
-			_, err = io.Copy(out, rc)
-			out.Close()
-			rc.Close()
-
-			if err != nil {
-				return fmt.Errorf("error: failed to extract %s: %w", f.Name, err)
-			}
-
-			echo.Infof("  ✓ Extracted %s", f.Name)
-		}
-	}
-
-	totalRows, err := seed.LoadBiodata(ctx, database, tmpDir)
+	totalRows, err := seed.LoadBiodata(cmd.Context(), database, tmpDir)
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}

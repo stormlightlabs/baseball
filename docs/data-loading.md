@@ -4,11 +4,9 @@ This is the source of truth for loading a **complete slice** of the database.
 
 For this contract, a complete slice means:
 
-- Lahman + Retrosheet data loaded for your chosen year window.
+- Lahman + Retrosheet data loaded for the selected year policy.
 - Negro Leagues, FanGraphs constants, salary summary, Retrosheet player crosswalk, biodata, weather metadata, parks metadata, and all-star coverage loaded.
-- Dataset freshness/health checks pass in CLI and API readiness endpoints.
-
-If you skip any command in the sequence below, the slice is incomplete.
+- ETL validation and readiness checks pass.
 
 ## Command Prefixes
 
@@ -21,12 +19,20 @@ Use one prefix consistently.
 
 Examples below use `<BASEBALL>` as a placeholder for your chosen prefix.
 
-## Complete-Slice Sequence
+## Primary Entry Point
 
-Choose a year window once and use it consistently.
+`<BASEBALL> etl` is the default full ETL pipeline.
 
-- Example focused slice: `YEARS=2022-2025`
-- Full history slice: `YEARS=all`
+`<BASEBALL> etl run` is an explicit alias with identical behavior and flags.
+
+Shared pipeline flags:
+
+- `--profile dev|prod`
+- `--mode incremental|full`
+- `--years <year-list|range|all>`
+- `--era <comma-separated-era-list>`
+
+## Recommended Flows
 
 ### 1) Build and configure (local dev only)
 
@@ -35,7 +41,7 @@ task build
 cp conf/conf.example.toml conf.toml
 ```
 
-If needed for a full reset:
+Optional full reset:
 
 ```bash
 <BASEBALL> db recreate --config conf.toml
@@ -47,39 +53,30 @@ If needed for a full reset:
 <BASEBALL> db migrate
 ```
 
-### 3) Fetch external archives for the target slice
+### 3) Run the full ETL pipeline
+
+Representative development slice:
 
 ```bash
-<BASEBALL> etl fetch retrosheet --years "${YEARS}"
-<BASEBALL> etl fetch negroleagues
+<BASEBALL> etl --profile dev
 ```
 
-### 4) Populate core warehouse (Lahman + Retrosheet)
+Representative development slice with explicit years:
 
 ```bash
-<BASEBALL> db populate all --years "${YEARS}"
+<BASEBALL> etl --profile dev --years 2022-2025
 ```
 
-`db populate` also accepts `db repopulate` as a compatibility alias.
-
-### 5) Load required supplemental datasets
-
-Run in this order:
+Production/exhaustive load:
 
 ```bash
-<BASEBALL> etl load negroleagues
-<BASEBALL> etl load fangraphs
-<BASEBALL> etl load salary
-<BASEBALL> etl load retrosheet players
-<BASEBALL> etl load biodata
-<BASEBALL> etl load weather
-<BASEBALL> etl load parks
-<BASEBALL> etl load allstar
+<BASEBALL> etl --profile prod --mode full
 ```
 
-### 6) Verify completeness
+### 4) Validate completeness
 
 ```bash
+<BASEBALL> etl validate --profile dev
 <BASEBALL> etl status
 ```
 
@@ -91,29 +88,39 @@ curl http://localhost:8080/v1/meta/datasets
 curl http://localhost:8080/v1/health
 ```
 
+## Stage Commands (First-Class, Composable)
+
+These commands are still supported for partial runs, debugging, and CI:
+
+- `<BASEBALL> etl fetch retrosheet`
+- `<BASEBALL> etl fetch negroleagues`
+- `<BASEBALL> etl load lahman`
+- `<BASEBALL> etl load retrosheet`
+- `<BASEBALL> etl load retrosheet players`
+- `<BASEBALL> etl load negroleagues`
+- `<BASEBALL> etl load fangraphs`
+- `<BASEBALL> etl load salary`
+- `<BASEBALL> etl load biodata`
+- `<BASEBALL> etl load weather`
+- `<BASEBALL> etl load parks`
+- `<BASEBALL> etl load allstar`
+- `<BASEBALL> etl status`
+
 ## Command Contract Table
 
-This table documents what each command does, including defaults and write behavior.
-
-| Command                                           | Purpose                                                                                           | Write behavior                                                          | Prerequisites                                             | Default behavior                                         |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------- |
-| `<BASEBALL> db migrate`                           | Applies all SQL migrations                                                                        | Schema create/alter only                                                | Reachable Postgres                                        | None                                                     |
-| `<BASEBALL> etl fetch retrosheet --years <YEARS>` | Downloads Retrosheet game logs, plays, ejections, allplayers, gameinfo, allstar, biodata archives | Writes files under `data/retrosheet`                                    | Network access                                            | If `--years` omitted, uses `2023-2025`                   |
-| `<BASEBALL> etl fetch negroleagues`               | Downloads and extracts Negro Leagues archives                                                     | Writes files under `data/retrosheet/negroleagues`                       | Network access                                            | None                                                     |
-| `<BASEBALL> db populate all --years <YEARS>`      | Loads Lahman + Retrosheet core datasets and refreshes materialized views                          | Truncates/reloads Lahman tables; inserts/upserts Retrosheet games/plays | Migrations complete; source files present or downloadable | If `--years` omitted, Retrosheet defaults to `2023-2025` |
-| `<BASEBALL> etl load negroleagues`                | Loads Negro Leagues `gameinfo.csv` and `plays.csv`                                                | Inserts into `games`/`plays`                                            | `etl fetch negroleagues` completed                        | None                                                     |
-| `<BASEBALL> etl load fangraphs`                   | Loads wOBA, league constants, park factors                                                        | Truncates/reloads constants tables                                      | `data/fangraphs/*` files available                        | None                                                     |
-| `<BASEBALL> etl load salary`                      | Loads salary summary and per-year salary enrichments                                              | Truncates/reloads `salary_summary`; updates/inserts Lahman salaries     | `data/salaries/*` available                               | None                                                     |
-| `<BASEBALL> etl load retrosheet players`          | Loads Retrosheet player crosswalk                                                                 | Truncates/reloads `retrosheet_players`                                  | `allplayers.zip` or extracted CSV available               | None                                                     |
-| `<BASEBALL> etl load biodata`                     | Loads player biographical data, relatives, coaches, umpires                                       | Upserts/loads biodata-related tables                                    | `biodata.zip` available                                   | None                                                     |
-| `<BASEBALL> etl load weather`                     | Applies weather/game metadata to existing games                                                   | Updates `games` metadata columns                                        | `gameinfo.csv` available                                  | None                                                     |
-| `<BASEBALL> etl load parks`                       | Fills missing park metadata and refreshes park map                                                | Updates park metadata + refreshes `park_map`                            | Migrations complete                                       | None                                                     |
-| `<BASEBALL> etl load allstar`                     | Loads all-star gameinfo + plays into `games`/`plays`                                              | Inserts/upserts all-star rows                                           | `allstar.zip` available                                   | None                                                     |
-| `<BASEBALL> etl status`                           | Shows core + supplemental dataset health/freshness                                                | Read-only                                                               | Database reachable                                        | None                                                     |
+| Command                                 | Purpose                                                      | Write behavior                                                                                  | Prerequisites      |
+| --------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------ |
+| `<BASEBALL> etl` / `<BASEBALL> etl run` | Full ETL orchestration (extract, transform, load, validate)  | Downloads archives, loads core + supplemental datasets, refreshes materialized views, validates | Reachable Postgres |
+| `<BASEBALL> etl validate --profile <P>` | Profile-aware ETL completeness validation                    | Read-only                                                                                       | Reachable Postgres |
+| `<BASEBALL> etl fetch retrosheet`       | Download Retrosheet game logs, plays, and auxiliary archives | Writes files under `data/retrosheet`                                                            | Network access     |
+| `<BASEBALL> etl fetch negroleagues`     | Download and extract Negro Leagues archives                  | Writes files under `data/retrosheet/negroleagues`                                               | Network access     |
+| `<BASEBALL> etl load <dataset>`         | Execute a specific load stage                                | Dataset-dependent inserts/updates/truncation                                                    | Source files ready |
+| `<BASEBALL> etl status`                 | Show core + supplemental dataset freshness and health        | Read-only                                                                                       | Reachable Postgres |
+| `<BASEBALL> db migrate`                 | Apply SQL migrations                                         | Schema create/alter only                                                                        | Reachable Postgres |
 
 ## Retrosheet Era Contract
 
-Supported `--era` values for Retrosheet load/populate commands:
+Supported `--era` values:
 
 - `fed`
 - `nlg`
@@ -125,4 +132,4 @@ Supported `--era` values for Retrosheet load/populate commands:
 - `statcast`
 - `modern`
 
-If an invalid era is passed, CLI errors include the valid era list.
+Invalid era values fail with the full valid-era list.

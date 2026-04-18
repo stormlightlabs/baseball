@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD033 -->
-# Baseball API
+# Big Fly
 
 ![API Banner](./docs/banner.png)
 
@@ -39,31 +39,29 @@ task build
 
 For the full non-optional loading contract, see [docs/data-loading.md](./docs/data-loading.md).
 
-Quick local example for a complete slice (`2022-2025`):
+Quick local example for a complete representative slice:
 
 ```bash
 cp conf/conf.example.toml conf.toml
 ./tmp/baseball db recreate --config conf.toml
 ./tmp/baseball db migrate --config conf.toml
-./tmp/baseball etl fetch retrosheet --years=2022-2025
-./tmp/baseball etl fetch negroleagues
-./tmp/baseball db populate all --years=2022-2025
-./tmp/baseball etl load negroleagues
-./tmp/baseball etl load fangraphs
-./tmp/baseball etl load salary
-./tmp/baseball etl load retrosheet players
-./tmp/baseball etl load biodata
-./tmp/baseball etl load weather
-./tmp/baseball etl load parks
-./tmp/baseball etl load allstar
+./tmp/baseball etl --profile=dev
+./tmp/baseball etl validate --profile=dev
 ./tmp/baseball etl status
 ```
 
-`db populate` also accepts the compatibility alias `db repopulate`.
+`./tmp/baseball etl run` is an explicit alias for `./tmp/baseball etl`.
+
+For exhaustive production-style ingestion:
+
+```bash
+./tmp/baseball etl --profile=prod --mode=full
+./tmp/baseball etl validate --profile=prod
+```
 
 Retrosheet `--era` values: `fed`, `nlg`, `boomer`, `pitcher`, `turf`, `steroid`, `moneyball`, `statcast`, `modern`.
 
-When `--years` is omitted for Retrosheet fetch/load/populate commands, the default slice is `2023-2025`.
+The full ETL command also accepts `--years` and `--era` to customize the Retrosheet window.
 
 ### Server
 
