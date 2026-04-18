@@ -15,24 +15,35 @@
   import { eraForYear, erasInRange, STATIC_ERAS } from '$lib/eras';
   import ThreeColLayout from '$lib/layouts/ThreeColLayout.svelte';
   import { PlayersUiController } from '$lib/players.svelte';
-  import { AsyncListResource, AsyncPaginatedListResource, AsyncValueResource } from '$lib/players/resources.svelte';
+  import type { ApiPlayerPayload, PlayerStatsPayload } from '$lib/players/api-payloads';
   import {
-    type ApiListPayload,
-    type Award,
-    type BattingSeason,
-    type GameLog,
-    type HofEntry,
-    type PitchingSeason,
-    type PlayerProfile,
-    type PlayerResult,
-    type PlayerTeam,
-    type Relative,
-    type Salary,
-    normalizeApiList,
-    rowColumns
+    createBattingChartConfig,
+    createHallOfFameChartConfig,
+    createPitchingChartConfig
+  } from '$lib/players/charts';
+  import { ADV_TABS, BATTING_STATS, MAIN_TABS, SALARIES_COLUMNS, TEAMS_COLUMNS } from '$lib/players/constants';
+  import {
+    normalizeHallOfFamePayload,
+    normalizePlayerProfile,
+    normalizePlayerStatsPage,
+    normalizeSearchPlayersPage
+  } from '$lib/players/normalizers';
+  import { AsyncListResource, AsyncPaginatedListResource, AsyncValueResource } from '$lib/players/resources.svelte';
+  import type {
+    ApiListPayload,
+    Award,
+    BattingSeason,
+    GameLog,
+    HofEntry,
+    PitchingSeason,
+    PlayerProfile,
+    PlayerResult,
+    PlayerTeam,
+    Relative,
+    Salary
   } from '$lib/players/types';
+  import { normalizeApiList, rowColumns } from '$lib/players/types';
   import { intParam, setUrlParams } from '$lib/url-state.svelte';
-  import { type ChartConfiguration } from 'chart.js';
   import { onMount } from 'svelte';
 
   let q = $derived(page.url.searchParams.get('q') ?? '');
@@ -45,27 +56,7 @@
   let showAdvanced = $derived(page.url.searchParams.get('advanced') === '1');
 
   const ui = new PlayersUiController();
-  let mounted = false;
-
-  onMount(() => {
-    ui.syncFromUrl({ q, tab: activeTab, page: currentPage, perPage });
-    mounted = true;
-  });
-
-  $effect(() => {
-    const nextQ = q;
-    const nextTab = activeTab;
-    const nextPage = currentPage;
-    const nextPerPage = perPage;
-    if (!mounted) return;
-    ui.syncFromUrl({ q: nextQ, tab: nextTab, page: nextPage, perPage: nextPerPage });
-  });
-
-  $effect(() => {
-    const params = ui.nextUrlParams;
-    if (!params) return;
-    void setUrlParams(Object.fromEntries(params));
-  });
+  let mounted = $state(false);
 
   const searchResource = new AsyncPaginatedListResource<PlayerResult>();
   const profileResource = new AsyncValueResource<PlayerProfile>();
@@ -78,258 +69,24 @@
   const relativesResource = new AsyncListResource<Relative>();
   const gameLogsResource = new AsyncPaginatedListResource<GameLog>();
 
-  let searchResults = $derived(searchResource.items);
-  let searchLoading = $derived(searchResource.loading);
-
-  let profile = $derived(profileResource.value);
-  let profileLoading = $derived(profileResource.loading);
-  let profileError = $derived(profileResource.error);
-
-  let battingSeasons = $derived(battingResource.items);
-  let battingTotal = $derived(battingResource.total);
-  let battingLoading = $derived(battingResource.loading);
-
-  let pitchingSeasons = $derived(pitchingResource.items);
-  let pitchingTotal = $derived(pitchingResource.total);
-  let pitchingLoading = $derived(pitchingResource.loading);
-
-  let awards = $derived(awardsResource.items);
-  let awardsLoading = $derived(awardsResource.loading);
-
-  let hofEntries = $derived(hofResource.items);
-  let hofLoading = $derived(hofResource.loading);
-
-  let teams = $derived(teamsResource.items);
-  let teamsLoading = $derived(teamsResource.loading);
-
-  let salaries = $derived(salariesResource.items);
-  let salariesLoading = $derived(salariesResource.loading);
-
-  let relatives = $derived(relativesResource.items);
-  let relativesLoading = $derived(relativesResource.loading);
-
-  let gameLogs = $derived(gameLogsResource.items);
-  let gameLogsTotal = $derived(gameLogsResource.total);
-  let gameLogsLoading = $derived(gameLogsResource.loading);
-
   async function fetchList<T>(endpoint: string): Promise<T[]> {
     const payload = await apiFetch<ApiListPayload<T>>(endpoint);
     return normalizeApiList(payload);
   }
 
-  // ── Fetch: search ──────────────────────────────────────────────────────────
-
-  $effect(() => {
-    const thisQ = q;
-    if (!thisQ) {
-      searchResource.clear();
-      return;
-    }
-    void searchResource.load(() => fetchPaginated<PlayerResult>(EP.searchPlayers, { q: thisQ, per_page: 20 }));
-  });
-
-  // ── Fetch: player profile ──────────────────────────────────────────────────
-
-  $effect(() => {
-    const id = playerId;
-    if (!id) {
-      profileResource.clear();
-      return;
-    }
-    void profileResource.load(() => apiFetch<PlayerProfile>(EP.player(id)));
-  });
-
-  // ── Fetch: batting ─────────────────────────────────────────────────────────
-
-  $effect(() => {
-    const id = playerId;
-    const tab = activeTab;
-    const p = currentPage;
-    const pp = perPage;
-    if (!id || tab !== 'batting') return;
-    void battingResource.load(() =>
-      fetchPaginated<BattingSeason>(EP.playerStatsBatting(id), { page: p, per_page: pp })
-    );
-  });
-
-  // ── Fetch: pitching ────────────────────────────────────────────────────────
-
-  $effect(() => {
-    const id = playerId;
-    const tab = activeTab;
-    const p = currentPage;
-    const pp = perPage;
-    if (!id || tab !== 'pitching') return;
-    void pitchingResource.load(() =>
-      fetchPaginated<PitchingSeason>(EP.playerStatsPitching(id), { page: p, per_page: pp })
-    );
-  });
-
-  $effect(() => {
-    const id = playerId;
-    const tab = activeTab;
-    if (!id || tab !== 'awards') return;
-    void awardsResource.load(() => fetchList<Award>(EP.playerAwards(id)));
-  });
-
-  $effect(() => {
-    const id = playerId;
-    const tab = activeTab;
-    if (!id || tab !== 'hof') return;
-    void hofResource.load(() => fetchList<HofEntry>(EP.playerHallOfFame(id)));
-  });
-
-  $effect(() => {
-    const id = playerId;
-    const tab = activeTab;
-    if (!id || tab !== 'teams') return;
-    void teamsResource.load(() => fetchList<PlayerTeam>(EP.playerTeams(id)));
-  });
-
-  // ── Fetch: salaries ───────────────────────────────────────────────────────
-
-  $effect(() => {
-    const id = playerId;
-    const tab = activeTab;
-    if (!id || tab !== 'salaries') return;
-    void salariesResource.load(() => fetchList<Salary>(EP.playerSalaries(id)));
-  });
-
-  // ── Fetch: relatives ──────────────────────────────────────────────────────
-
-  $effect(() => {
-    const id = playerId;
-    const tab = activeTab;
-    if (!id || tab !== 'relatives') return;
-    void relativesResource.load(() => fetchList<Relative>(EP.playerRelatives(id)));
-  });
-
-  // ── Fetch: game logs ──────────────────────────────────────────────────────
-
-  $effect(() => {
-    const id = playerId;
-    const tab = activeTab;
-    const logType = gameLogType;
-    const p = currentPage;
-    const pp = perPage;
-    if (!id || tab !== 'game-logs') return;
-    const logEP =
-      logType === 'pitching'
-        ? EP.playerGameLogsPitching(id)
-        : logType === 'fielding'
-          ? EP.playerGameLogsFielding(id)
-          : EP.playerGameLogsBatting(id);
-    void gameLogsResource.load(() => fetchPaginated<GameLog>(logEP, { page: p, per_page: pp }));
-  });
-
-  // ── Derived: career era span ───────────────────────────────────────────────
-
   let careerEras = $derived.by(() => {
-    if (!profile?.debut_year || !profile?.final_year) return [];
-    return erasInRange(profile.debut_year, profile.final_year);
+    if (!profileResource.value?.debut_year || !profileResource.value?.final_year) return [];
+    return erasInRange(profileResource.value.debut_year, profileResource.value.final_year);
   });
 
-  // ── Batting / pitching rows with team display ─────────────────────────────
+  let battingRows = $derived(battingResource.items.map((s) => ({ ...s, team: s.team ?? s.team_id ?? '?' })));
+  let pitchingRows = $derived(pitchingResource.items.map((s) => ({ ...s, team: s.team ?? s.team_id ?? '?' })));
 
-  let battingRows = $derived(battingSeasons.map((s) => ({ ...s, team: s.team ?? s.team_id ?? '?' })));
+  let gameLogColumns = $derived(rowColumns(gameLogsResource.items));
 
-  let pitchingRows = $derived(pitchingSeasons.map((s) => ({ ...s, team: s.team ?? s.team_id ?? '?' })));
-  let gameLogColumns = $derived(rowColumns(gameLogs));
-
-  // ── Chart configs ─────────────────────────────────────────────────────────
-
-  const BATTING_STATS = [
-    { value: 'hr', label: 'Home Runs (HR)' },
-    { value: 'avg', label: 'Batting Avg (AVG)' },
-    { value: 'rbi', label: 'RBI' },
-    { value: 'sb', label: 'Stolen Bases (SB)' },
-    { value: 'obp', label: 'OBP' },
-    { value: 'slg', label: 'SLG' },
-    { value: 'ops', label: 'OPS' }
-  ] as const;
-
-  const CHART_SCALES = {
-    x: { ticks: { color: '#6b7280', font: { size: 9 } }, grid: { color: '#252934' } },
-    y: { ticks: { color: '#6b7280', font: { size: 9 } }, grid: { color: '#252934' } }
-  } as const;
-
-  let battingChartConfig = $derived.by((): ChartConfiguration => {
-    const isRate = ['avg', 'obp', 'slg', 'ops'].includes(batStat);
-    const data = battingRows.map((s) =>
-      isRate
-        ? Math.round(Number(s[batStat as keyof BattingSeason] ?? 0) * 1000)
-        : Number(s[batStat as keyof BattingSeason] ?? 0)
-    );
-    return {
-      type: 'line',
-      data: {
-        labels: battingRows.map((s) => String(s.year)),
-        datasets: [
-          {
-            label: BATTING_STATS.find((x) => x.value === batStat)?.label ?? batStat.toUpperCase(),
-            data,
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59,130,246,0.1)',
-            pointRadius: 3,
-            tension: 0.3,
-            fill: true
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { labels: { color: '#6b7280', font: { family: 'Inter', size: 10 } } } },
-        scales: CHART_SCALES
-      }
-    };
-  });
-
-  let pitchingChartConfig = $derived.by(
-    (): ChartConfiguration => ({
-      type: 'line',
-      data: {
-        labels: pitchingRows.map((s) => String(s.year)),
-        datasets: [
-          {
-            label: 'ERA',
-            data: pitchingRows.map((s) => Number(s.era ?? 0)),
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16,185,129,0.1)',
-            pointRadius: 3,
-            tension: 0.3,
-            fill: true
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { labels: { color: '#6b7280', font: { family: 'Inter', size: 10 } } } },
-        scales: CHART_SCALES
-      }
-    })
-  );
-
-  let hofChartConfig = $derived.by(
-    (): ChartConfiguration => ({
-      type: 'bar',
-      data: {
-        labels: hofEntries.map((e) => String(e.year_inducted ?? '?')),
-        datasets: [
-          { label: 'Vote %', data: hofEntries.map((e) => Number(e.pct ?? 0)), backgroundColor: 'rgba(16,185,129,0.6)' }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { labels: { color: '#6b7280', font: { size: 10 } } } },
-        scales: {
-          x: { ticks: { color: '#6b7280' }, grid: { color: '#252934' } },
-          y: { min: 0, max: 100, ticks: { color: '#6b7280', callback: (v) => v + '%' }, grid: { color: '#252934' } }
-        }
-      }
-    })
-  );
-
-  // ── Active endpoint (for API panel) ───────────────────────────────────────
+  let battingChartConfig = $derived(createBattingChartConfig(battingRows, batStat));
+  let pitchingChartConfig = $derived(createPitchingChartConfig(pitchingRows));
+  let hofChartConfig = $derived(createHallOfFameChartConfig(hofResource.items));
 
   let activeEndpoint = $derived.by(() => {
     if (!playerId) return EP.searchPlayers;
@@ -359,57 +116,143 @@
       case 'streaks':
         return EP.playerStreaks(playerId);
       case 'game-logs':
-        return gameLogType === 'pitching'
-          ? EP.playerGameLogsPitching(playerId)
-          : gameLogType === 'fielding'
-            ? EP.playerGameLogsFielding(playerId)
-            : EP.playerGameLogsBatting(playerId);
+        return getLogEndpoint(gameLogType, playerId);
       default:
         return EP.player(playerId);
     }
   });
 
   let activeUrl = $derived(apiUrl(activeEndpoint));
-
-  const MAIN_TABS = [
-    { id: 'batting', label: 'Batting' },
-    { id: 'pitching', label: 'Pitching' },
-    { id: 'game-logs', label: 'Game Logs' },
-    { id: 'awards', label: 'Awards' },
-    { id: 'hof', label: 'Hall of Fame' },
-    { id: 'teams', label: 'Teams' },
-    { id: 'salaries', label: 'Salaries' },
-    { id: 'relatives', label: 'Relatives' }
-  ];
-
-  const ADV_TABS = [
-    { id: 'batting-adv', label: 'Batting Adv.' },
-    { id: 'pitching-adv', label: 'Pitching Adv.' },
-    { id: 'war', label: 'WAR' },
-    { id: 'splits', label: 'Splits' },
-    { id: 'streaks', label: 'Streaks' }
-  ];
-
   let allTabs = $derived(showAdvanced ? [...MAIN_TABS, ...ADV_TABS] : MAIN_TABS);
 
-  const teamsColumns = [
-    { key: 'year', label: 'Year', sortable: true },
-    { key: 'team', label: 'Team', sortable: true },
-    { key: 'league', label: 'League', sortable: true },
-    { key: 'g', label: 'G', sortable: true }
-  ];
+  onMount(() => {
+    ui.syncFromUrl({ q, tab: activeTab, page: currentPage, perPage });
+    mounted = true;
+  });
 
-  const salariesColumns = [
-    { key: 'year', label: 'Year', sortable: true },
-    { key: 'team', label: 'Team', sortable: true },
-    {
-      key: 'salary',
-      label: 'Salary',
-      sortable: true,
-      rank: true,
-      format: (v: unknown) => `$${Number(v).toLocaleString()}`
+  $effect(() => {
+    const nextQ = q;
+    const nextTab = activeTab;
+    const nextPage = currentPage;
+    const nextPerPage = perPage;
+    if (!mounted) return;
+    ui.syncFromUrl({ q: nextQ, tab: nextTab, page: nextPage, perPage: nextPerPage });
+  });
+
+  $effect(() => {
+    const params = ui.nextUrlParams;
+    if (!params) return;
+    void setUrlParams(Object.fromEntries(params));
+  });
+
+  $effect(() => {
+    const thisQ = q;
+    if (!thisQ) {
+      searchResource.clear();
+      return;
     }
-  ];
+    void searchResource.load(async () => {
+      const payload = await fetchPaginated<ApiPlayerPayload>(EP.searchPlayers, { q: thisQ, per_page: 20 });
+      return normalizeSearchPlayersPage(payload);
+    });
+  });
+
+  $effect(() => {
+    const id = playerId;
+    if (!id) {
+      profileResource.clear();
+      return;
+    }
+    void profileResource.load(async () => {
+      const payload = await apiFetch<ApiPlayerPayload>(EP.player(id));
+      return normalizePlayerProfile(payload);
+    });
+  });
+
+  $effect(() => {
+    const id = playerId;
+    const tab = activeTab;
+    const p = currentPage;
+    const pp = perPage;
+    if (!id || tab !== 'batting') return;
+    void battingResource.load(async () => {
+      const payload = await apiFetch<PlayerStatsPayload<BattingSeason>>(EP.playerStatsBatting(id));
+      return normalizePlayerStatsPage(payload, p, pp);
+    });
+  });
+
+  $effect(() => {
+    const id = playerId;
+    const tab = activeTab;
+    const p = currentPage;
+    const pp = perPage;
+    if (!id || tab !== 'pitching') return;
+    void pitchingResource.load(async () => {
+      const payload = await apiFetch<PlayerStatsPayload<PitchingSeason>>(EP.playerStatsPitching(id));
+      return normalizePlayerStatsPage(payload, p, pp);
+    });
+  });
+
+  $effect(() => {
+    const id = playerId;
+    const tab = activeTab;
+    if (!id || tab !== 'awards') return;
+    void awardsResource.load(() => fetchList<Award>(EP.playerAwards(id)));
+  });
+
+  $effect(() => {
+    const id = playerId;
+    const tab = activeTab;
+    if (!id || tab !== 'hof') return;
+    void hofResource.load(async () => {
+      const payload = await apiFetch<{ records?: HofEntry[] | null; data?: HofEntry[] }>(EP.playerHallOfFame(id));
+      return normalizeHallOfFamePayload(payload);
+    });
+  });
+
+  $effect(() => {
+    const id = playerId;
+    const tab = activeTab;
+    if (!id || tab !== 'teams') return;
+    void teamsResource.load(() => fetchList<PlayerTeam>(EP.playerTeams(id)));
+  });
+
+  $effect(() => {
+    const id = playerId;
+    const tab = activeTab;
+    if (!id || tab !== 'salaries') return;
+    void salariesResource.load(() => fetchList<Salary>(EP.playerSalaries(id)));
+  });
+
+  $effect(() => {
+    const id = playerId;
+    const tab = activeTab;
+    if (!id || tab !== 'relatives') return;
+    void relativesResource.load(() => fetchList<Relative>(EP.playerRelatives(id)));
+  });
+
+  $effect(() => {
+    const id = playerId;
+    const tab = activeTab;
+    const logType = gameLogType;
+    const p = currentPage;
+    const pp = perPage;
+    if (!id || tab !== 'game-logs') return;
+
+    const logEP = getLogEndpoint(logType, id);
+    void gameLogsResource.load(() => fetchPaginated<GameLog>(logEP, { page: p, per_page: pp }));
+  });
+
+  function getLogEndpoint(kind: string, id: string): string {
+    switch (kind) {
+      case 'pitching':
+        return EP.playerGameLogsPitching(id);
+      case 'fielding':
+        return EP.playerGameLogsFielding(id);
+      default:
+        return EP.playerGameLogsBatting(id);
+    }
+  }
 
   function handleSearch(value = ui.search) {
     const trimmed = value.trim();
@@ -421,13 +264,9 @@
     void setUrlParams({ id, tab: 'batting', page: 1, stat: null });
   }
 
-  function fmtAvg(v: number | undefined) {
-    return v != null ? Number(v).toFixed(3) : '—';
-  }
+  const fmtAvg = (v: number | undefined) => (v != null ? Number(v).toFixed(3) : '—');
 
-  function fmtNum(v: number | undefined) {
-    return v != null ? String(v) : '—';
-  }
+  const fmtNum = (v: number | undefined) => (v != null ? String(v) : '—');
 </script>
 
 <ThreeColLayout>
@@ -437,54 +276,59 @@
 
     {#if playerId}
       <div class="mt-4 rounded-lg border border-outline bg-surface p-4">
-        {#if profileLoading}
-          <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
-        {:else if profileError}
-          <p class="font-mono text-[0.72rem] text-warning">{profileError}</p>
-        {:else if profile}
+        {#if profileResource.loading}
+          <p class="font-mono text-xs text-muted">Loading…</p>
+        {:else if profileResource.error}
+          <p class="font-mono text-xs text-warning">{profileResource.error}</p>
+        {:else if profileResource.value}
           <div class="mb-0.5 text-center font-mono text-[0.6rem] tracking-wider text-muted uppercase">
-            {profile.primary_position ?? profile.positions?.[0] ?? ''}
+            {profileResource.value.primary_position ?? profileResource.value.positions?.[0] ?? ''}
           </div>
           <div class="mb-1 text-center font-display text-[0.95rem] font-medium text-foreground">
-            {profile.name}
+            {profileResource.value.name}
           </div>
-          {#if profile.birth_date || profile.birth_city}
+          {#if profileResource.value.birth_date || profileResource.value.birth_city}
             <div class="mb-1 text-center font-mono text-[0.68rem] text-muted">
-              {profile.birth_date ?? ''}
-              {#if profile.birth_city}
-                · {profile.birth_city}{#if profile.birth_state}, {profile.birth_state}{/if}{/if}
+              {profileResource.value.birth_date ?? ''}
+              {#if profileResource.value.birth_city}
+                · {profileResource.value.birth_city}{#if profileResource.value.birth_state}, {profileResource.value
+                    .birth_state}{/if}{/if}
             </div>
           {/if}
-          {#if profile.bats || profile.throws || profile.debut_year}
+          {#if profileResource.value.bats || profileResource.value.throws || profileResource.value.debut_year}
             <div class="mb-3 text-center font-mono text-[0.68rem] text-muted">
-              {#if profile.bats}Bats: {profile.bats}{/if}
-              {#if profile.bats && profile.throws}
+              {#if profileResource.value.bats}Bats: {profileResource.value.bats}{/if}
+              {#if profileResource.value.bats && profileResource.value.throws}
                 ·
               {/if}
-              {#if profile.throws}Throws: {profile.throws}{/if}
-              {#if profile.debut_year}
-                · {profile.debut_year}–{profile.final_year ?? 'pres.'}{/if}
+              {#if profileResource.value.throws}Throws: {profileResource.value.throws}{/if}
+              {#if profileResource.value.debut_year}
+                · {profileResource.value.debut_year}–{profileResource.value.final_year ?? 'pres.'}{/if}
             </div>
           {/if}
-          {#if profile.career_hr != null || profile.career_avg != null || profile.career_rbi != null}
+          {#if profileResource.value.career_hr != null || profileResource.value.career_avg != null || profileResource.value.career_rbi != null}
             <div class="mb-3 grid grid-cols-3 gap-1 text-center">
-              {#if profile.career_hr != null}
+              {#if profileResource.value.career_hr != null}
                 <div>
-                  <div class="font-display text-[0.95rem] font-semibold text-foreground">{profile.career_hr}</div>
+                  <div class="font-display text-[0.95rem] font-semibold text-foreground">
+                    {profileResource.value.career_hr}
+                  </div>
                   <div class="font-mono text-[0.58rem] text-muted uppercase">HR</div>
                 </div>
               {/if}
-              {#if profile.career_avg != null}
+              {#if profileResource.value.career_avg != null}
                 <div>
                   <div class="font-display text-[0.95rem] font-semibold text-foreground">
-                    {fmtAvg(profile.career_avg)}
+                    {fmtAvg(profileResource.value.career_avg)}
                   </div>
                   <div class="font-mono text-[0.58rem] text-muted uppercase">AVG</div>
                 </div>
               {/if}
-              {#if profile.career_rbi != null}
+              {#if profileResource.value.career_rbi != null}
                 <div>
-                  <div class="font-display text-[0.95rem] font-semibold text-foreground">{profile.career_rbi}</div>
+                  <div class="font-display text-[0.95rem] font-semibold text-foreground">
+                    {profileResource.value.career_rbi}
+                  </div>
                   <div class="font-mono text-[0.58rem] text-muted uppercase">RBI</div>
                 </div>
               {/if}
@@ -505,10 +349,10 @@
       </div>
     {/if}
 
-    {#if searchResults.length > 0}
+    {#if searchResource.items.length > 0}
       <div class="mt-4 panel-label">Results</div>
       <div class="flex flex-col gap-0.5">
-        {#each searchResults as result (result.id)}
+        {#each searchResource.items as result (result.id)}
           <button
             onclick={() => selectPlayer(result.id)}
             class="rounded-md px-3 py-2 text-left transition-colors hover:bg-surface {playerId === result.id
@@ -525,10 +369,10 @@
           </button>
         {/each}
       </div>
-    {:else if searchLoading}
-      <p class="mt-3 font-mono text-[0.72rem] text-muted">Searching…</p>
+    {:else if searchResource.loading}
+      <p class="mt-3 font-mono text-xs text-muted">Searching…</p>
     {:else if !q && !playerId}
-      <p class="mt-4 font-mono text-[0.72rem] text-muted">Search for a player to begin.</p>
+      <p class="mt-4 font-mono text-xs text-muted">Search for a player to begin.</p>
     {/if}
   {/snippet}
 
@@ -546,9 +390,9 @@
         </button>
       </div>
       {#if activeTab === 'batting'}
-        {#if battingLoading}
+        {#if battingResource.loading}
           <p class="mt-4 font-mono text-[0.78rem] text-muted">Loading…</p>
-        {:else if battingSeasons.length === 0}
+        {:else if battingResource.items.length === 0}
           <p class="mt-4 font-mono text-[0.78rem] text-muted">No batting data found for this player.</p>
         {:else}
           <div class="mb-4 rounded-lg border border-outline bg-crust p-4">
@@ -557,7 +401,7 @@
               <select
                 value={batStat}
                 onchange={(e) => setUrlParams({ stat: (e.target as HTMLSelectElement).value })}
-                class="ml-auto rounded border border-outline bg-surface px-2 py-1 font-mono text-[0.72rem] text-muted focus:outline-none">
+                class="ml-auto rounded border border-outline bg-surface px-2 py-1 font-mono text-xs text-muted focus:outline-none">
                 {#each BATTING_STATS as s (s.value)}
                   <option value={s.value}>{s.label}</option>
                 {/each}
@@ -573,7 +417,7 @@
                   <tr>
                     {#each ['Year', 'Team', 'Era', 'G', 'AB', 'H', 'HR', 'RBI', 'AVG', 'SB', 'OBP', 'SLG'] as col (col)}
                       <th
-                        class="border-b border-outline px-2 py-1.5 text-left font-sans text-[0.72rem] font-medium whitespace-nowrap text-muted">
+                        class="border-b border-outline px-2 py-1.5 text-left font-sans text-xs font-medium whitespace-nowrap text-muted">
                         {col}
                       </th>
                     {/each}
@@ -583,40 +427,40 @@
                   {#each battingRows as row (`${row.year}-${row.team}`)}
                     {@const era = eraForYear(row.year)}
                     <tr class="border-b border-outline last:border-b-0 hover:[&>td]:bg-surface">
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">
                         <a href={resolve(`/seasons?year=${row.year}`)} class="text-primary hover:underline">
                           {row.year}
                         </a>
                       </td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.team}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.team}</td>
                       <td class="px-2 py-1.5">
                         {#if era}<EraBadge {era} size="xs" />{:else}<span class="text-muted">—</span>{/if}
                       </td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.g}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.ab}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.h}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.hr}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.rbi}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtAvg(row.avg)}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtNum(row.sb)}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtAvg(row.obp)}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtAvg(row.slg)}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.g}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.ab}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.h}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.hr}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.rbi}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtAvg(row.avg)}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtNum(row.sb)}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtAvg(row.obp)}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtAvg(row.slg)}</td>
                     </tr>
                   {/each}
                 </tbody>
               </table>
             </div>
-            {#if battingTotal > perPage}
+            {#if battingResource.total > perPage}
               <div class="mt-4">
-                <Pagination bind:page={ui.page} bind:perPage={ui.perPage} total={battingTotal} />
+                <Pagination bind:page={ui.page} bind:perPage={ui.perPage} total={battingResource.total} />
               </div>
             {/if}
           </div>
         {/if}
       {:else if activeTab === 'pitching'}
-        {#if pitchingLoading}
+        {#if pitchingResource.loading}
           <p class="mt-4 font-mono text-[0.78rem] text-muted">Loading…</p>
-        {:else if pitchingSeasons.length === 0}
+        {:else if pitchingResource.items.length === 0}
           <p class="mt-4 font-mono text-[0.78rem] text-muted">No pitching data found for this player.</p>
         {:else}
           <div class="mb-4 rounded-lg border border-outline bg-crust p-4">
@@ -631,7 +475,7 @@
                   <tr>
                     {#each ['Year', 'Team', 'Era', 'G', 'GS', 'W', 'L', 'SV', 'IP', 'SO', 'BB', 'ERA', 'WHIP'] as col (col)}
                       <th
-                        class="border-b border-outline px-2 py-1.5 text-left font-sans text-[0.72rem] font-medium whitespace-nowrap text-muted">
+                        class="border-b border-outline px-2 py-1.5 text-left font-sans text-xs font-medium whitespace-nowrap text-muted">
                         {col}
                       </th>
                     {/each}
@@ -641,25 +485,25 @@
                   {#each pitchingRows as row (`${row.year}-${row.team}`)}
                     {@const era = eraForYear(row.year)}
                     <tr class="border-b border-outline last:border-b-0 hover:[&>td]:bg-surface">
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">
                         <a href={resolve(`/seasons?year=${row.year}`)} class="text-primary hover:underline">
                           {row.year}
                         </a>
                       </td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.team}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.team}</td>
                       <td class="px-2 py-1.5">
                         {#if era}<EraBadge {era} size="xs" />{:else}<span class="text-muted">—</span>{/if}
                       </td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.g}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtNum(row.gs)}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.w}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.l}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtNum(row.sv)}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{row.ip}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtNum(row.so)}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{fmtNum(row.bb)}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">{Number(row.era).toFixed(2)}</td>
-                      <td class="px-2 py-1.5 font-mono text-[0.72rem] text-foreground">
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.g}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtNum(row.gs)}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.w}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.l}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtNum(row.sv)}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.ip}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtNum(row.so)}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtNum(row.bb)}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">{Number(row.era).toFixed(2)}</td>
+                      <td class="px-2 py-1.5 font-mono text-xs text-foreground">
                         {row.whip != null ? Number(row.whip).toFixed(2) : '—'}
                       </td>
                     </tr>
@@ -667,9 +511,9 @@
                 </tbody>
               </table>
             </div>
-            {#if pitchingTotal > perPage}
+            {#if pitchingResource.total > perPage}
               <div class="mt-4">
-                <Pagination bind:page={ui.page} bind:perPage={ui.perPage} total={pitchingTotal} />
+                <Pagination bind:page={ui.page} bind:perPage={ui.perPage} total={pitchingResource.total} />
               </div>
             {/if}
           </div>
@@ -687,18 +531,18 @@
           {/each}
         </div>
         <div class="rounded-lg border border-outline bg-crust p-4">
-          {#if gameLogsLoading}
-            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
-          {:else if gameLogs.length === 0}
+          {#if gameLogsResource.loading}
+            <p class="font-mono text-xs text-muted">Loading…</p>
+          {:else if gameLogsResource.items.length === 0}
             <p class="font-mono text-[0.78rem] text-muted">No {gameLogType} game logs found.</p>
           {:else}
             <div class="panel-label mb-3">
               {gameLogType.charAt(0).toUpperCase() + gameLogType.slice(1)} game logs
             </div>
-            <SortableTable columns={gameLogColumns} rows={gameLogs} />
-            {#if gameLogsTotal > perPage}
+            <SortableTable columns={gameLogColumns} rows={gameLogsResource.items} />
+            {#if gameLogsResource.total > perPage}
               <div class="mt-4">
-                <Pagination bind:page={ui.page} bind:perPage={ui.perPage} total={gameLogsTotal} />
+                <Pagination bind:page={ui.page} bind:perPage={ui.perPage} total={gameLogsResource.total} />
               </div>
             {/if}
           {/if}
@@ -706,18 +550,18 @@
       {:else if activeTab === 'awards'}
         <div class="rounded-lg border border-outline bg-crust p-4">
           <div class="panel-label mb-3">Awards timeline</div>
-          {#if awardsLoading}
-            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
-          {:else if awards.length === 0}
+          {#if awardsResource.loading}
+            <p class="font-mono text-xs text-muted">Loading…</p>
+          {:else if awardsResource.items.length === 0}
             <p class="font-mono text-[0.78rem] text-muted">No awards on record.</p>
           {:else}
             <div class="flex flex-col gap-2">
-              {#each awards as award (`${award.year}-${award.name ?? award.award_id}`)}
+              {#each awardsResource.items as award, idx (`${award.year}-${award.name ?? award.award_id}-${award.league ?? ''}-${award.notes ?? ''}-${idx}`)}
                 {@const era = eraForYear(award.year)}
                 <div class="flex items-center gap-3 rounded-md bg-surface px-3 py-2.5">
                   <a
                     href={resolve(`/seasons?year=${award.year}`)}
-                    class="min-w-11 font-mono text-[0.72rem] text-muted hover:text-primary">
+                    class="min-w-11 font-mono text-xs text-muted hover:text-primary">
                     {award.year}
                   </a>
                   {#if era}<EraBadge {era} size="xs" />{/if}
@@ -736,12 +580,12 @@
       {:else if activeTab === 'hof'}
         <div class="rounded-lg border border-outline bg-crust p-4">
           <div class="panel-label mb-3">Hall of Fame voting history</div>
-          {#if hofLoading}
-            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
-          {:else if hofEntries.length === 0}
-            <p class="font-mono text-[0.78rem] text-muted">No Hall of Fame data on record.</p>
+          {#if hofResource.loading}
+            <p class="font-mono text-xs text-muted">Loading…</p>
+          {:else if hofResource.items.length === 0}
+            <p class="font-mono text-xs text-muted">No Hall of Fame data on record.</p>
           {:else}
-            {#if hofEntries.some((e) => e.pct != null)}
+            {#if hofResource.items.some((e) => e.pct != null)}
               <div class="mb-4">
                 <Chart config={hofChartConfig} height={100} />
               </div>
@@ -760,45 +604,45 @@
                 },
                 { key: 'category', label: 'Category' }
               ]}
-              rows={hofEntries} />
+              rows={hofResource.items} />
           {/if}
         </div>
       {:else if activeTab === 'teams'}
         <div class="rounded-lg border border-outline bg-crust p-4">
           <div class="panel-label mb-3">Teams</div>
-          {#if teamsLoading}
-            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
-          {:else if teams.length === 0}
+          {#if teamsResource.loading}
+            <p class="font-mono text-xs text-muted">Loading…</p>
+          {:else if teamsResource.items.length === 0}
             <p class="font-mono text-[0.78rem] text-muted">No team data on record.</p>
           {:else}
             <SortableTable
-              columns={teamsColumns}
-              rows={teams.map((t) => ({ ...t, team: t.team ?? t.team_id ?? '?' }))} />
+              columns={TEAMS_COLUMNS}
+              rows={teamsResource.items.map((t) => ({ ...t, team: t.team ?? t.team_id ?? '?' }))} />
           {/if}
         </div>
       {:else if activeTab === 'salaries'}
         <div class="rounded-lg border border-outline bg-crust p-4">
           <div class="panel-label mb-3">Salaries</div>
-          {#if salariesLoading}
-            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
-          {:else if salaries.length === 0}
+          {#if salariesResource.loading}
+            <p class="font-mono text-xs text-muted">Loading…</p>
+          {:else if salariesResource.items.length === 0}
             <p class="font-mono text-[0.78rem] text-muted">No salary data on record.</p>
           {:else}
             <SortableTable
-              columns={salariesColumns}
-              rows={salaries.map((s) => ({ ...s, team: s.team ?? s.team_id ?? '?' }))} />
+              columns={SALARIES_COLUMNS}
+              rows={salariesResource.items.map((s) => ({ ...s, team: s.team ?? s.team_id ?? '?' }))} />
           {/if}
         </div>
       {:else if activeTab === 'relatives'}
         <div class="rounded-lg border border-outline bg-crust p-4">
           <div class="panel-label mb-3">Relatives</div>
-          {#if relativesLoading}
-            <p class="font-mono text-[0.72rem] text-muted">Loading…</p>
-          {:else if relatives.length === 0}
+          {#if relativesResource.loading}
+            <p class="font-mono text-xs text-muted">Loading…</p>
+          {:else if relativesResource.items.length === 0}
             <p class="font-mono text-[0.78rem] text-muted">No relatives on record.</p>
           {:else}
             <div class="flex flex-col gap-2">
-              {#each relatives as rel (rel.player_id ?? rel.name)}
+              {#each relativesResource.items as rel (rel.player_id ?? rel.name)}
                 <div class="flex items-center gap-3 rounded-md bg-surface px-3 py-2.5">
                   {#if rel.player_id}
                     <button

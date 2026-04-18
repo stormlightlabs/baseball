@@ -51,6 +51,7 @@
 
 <svelte:head>
   <link rel="icon" href={favicon} />
+  <title>Big Fly</title>
 </svelte:head>
 
 <header class="sticky top-0 z-50 flex h-14 items-center gap-4 border-b border-outline bg-crust px-8">
