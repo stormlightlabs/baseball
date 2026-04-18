@@ -2,12 +2,16 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import favicon from '$lib/assets/favicon.svg';
+  import { meta } from '$lib/meta.svelte.js';
   import '@fontsource-variable/google-sans';
   import '@fontsource-variable/google-sans-code';
   import '@fontsource-variable/inter';
+  import { onMount } from 'svelte';
   import './layout.css';
 
   let { children } = $props();
+
+  onMount(() => meta.init());
 
   type AppPath = (typeof LINKS)[number]['href'] | '/account';
 
@@ -54,6 +58,9 @@
   <span class="rounded bg-outline px-2 py-0.5 font-monospace text-[0.7rem] text-muted">
     {badge}
   </span>
+  {#if meta.data}
+    <span class="font-monospace text-[0.65rem] text-muted opacity-60">v{meta.version}</span>
+  {/if}
   <nav class="ml-auto flex items-center gap-1">
     {#each LINKS as { href, label } (href)}
       <a

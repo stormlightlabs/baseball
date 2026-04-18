@@ -9,10 +9,10 @@
 
 - [x] Init SvelteKit project inside `web/` (or similar) with TypeScript, `adapter-static` (fallback `index.html` for SPA). Dashboard routes live at the root (`/`); `/api/` is reserved for the backend.
 - [x] Install and configure Tailwind v4 (`@tailwindcss/vite`). Translate the design-system tokens from the wireframes into a Tailwind theme:
-  - Colors: `--bg #0d0f13`, `--surface #13161c`, `--surface2 #1a1e27`, `--border #252934`, `--text #e2e8f0`, `--muted #6b7280`, `--accent #3b82f6`, `--accent2 #10b981`, `--warning #f59e0b`.
+    - Colors: `--bg #0d0f13`, `--surface #13161c`, `--surface2 #1a1e27`, `--border #252934`, `--text #e2e8f0`, `--muted #6b7280`, `--accent #3b82f6`, `--accent2 #10b981`, `--warning #f59e0b`.
     Note: renamed to more semantic names
-  - Fonts: `sans` → Inter (300–600), `heading` → Google Sans (400/500/700), `mono` → Google Sans Code.
-  - Dark-only — no light mode toggle needed.
+    - Fonts: `sans` → Inter (300–600), `heading` → Google Sans (400/500/700), `mono` → Google Sans Code.
+    - Dark-only — no light mode toggle needed.
 - [x] Add Chart.js 4 as a dependency.
 - [x] Create a thin `<Chart>` Svelte wrapper that handles canvas lifecycle (`onMount` / `onDestroy`) and reactive data updates.
 - [x] Add an OpenAPI/Swagger parser dependency (e.g. `swagger-parser` or a lightweight alternative) to power the API Explorer page.
@@ -50,27 +50,27 @@ All pages share a header, optional sidebar, and a consistent panel/card system v
 - [x] `CoverageBar` — horizontal bar with label, range text, and filled track (percentage).
   Colored variants for each data source.
 
-## 2. API Client & Stores
+## API Client & Stores
 
-- [ ] Create a typed fetch wrapper (`$lib/api.ts`) that:
-  - Reads base URL from an env var / SvelteKit `$env` (defaults to `/v1`).
-  - Appends pagination params, returns typed `{ data, page, per_page, total }` envelopes.
-  - Exposes per-request loading/error state.
-- [ ] Build a class encapsulating Svelte runes for API health/meta (fetched once on app init from `/v1/meta`). Provides version, dataset date ranges, source coverage to the Home page and header badge.
+- [x] Create a typed fetch wrapper (`$lib/api.ts`) that:
+    - Reads base URL from an env var / SvelteKit `$env` (defaults to `/v1`).
+    - Appends pagination params, returns typed `{ data, page, per_page, total }` envelopes.
+    - Exposes per-request loading/error state.
+- [x] Build a class encapsulating Svelte runes for API health/meta (fetched once on app init from `/v1/meta`). Provides version, dataset date ranges, source coverage to the Home page and header badge.
 - [ ] URL-driven state: every filter, search term, page number, and sort column should be reflected in `$page.url.searchParams` so that every dashboard state is shareable and deep-linkable.
 
-## 3. Home Page (`/`)
+## Home Page (`/`)
 
 Ref: `docs/designs/home.html`
 
-- [ ] Search hero — centered heading, subtitle, full-width `SearchInput`, and entity-type pill row (Players, Teams, Franchises, Games, Seasons). Typing + enter or pill click navigates to the appropriate entity page with a `?q=` param.
-- [ ] Dashboard grid (3-col, gap-1px, border-radius-8) containing:
-  - **Quick Links panel** — list of nav items with endpoint hint and arrow. Links to Players, Teams, Games, Leaders, Seasons pages.
-  - **Featured Queries panel** — hardcoded list of interesting API queries with title + mono endpoint string. Clicking navigates to the API Explorer pre-filled.
-  - **API Health panel** — 2x3 grid of stat boxes sourced from `/v1/meta` (status, version, data-from, data-to, avg response, source count).
-  - **Dataset Coverage panel** (col-span-2) — three `CoverageBar`s (Lahman, Retrosheet, MLB StatsAPI) plus a stacked bar Chart.js chart showing coverage density by decade.
-  - **Endpoints panel** — simple list of top-level endpoint paths, colored accent.
-- [ ] `ApiMirrorStrip` at the bottom reflecting the last/default query.
+- [x] Search hero — centered heading, subtitle, full-width `SearchInput`, and entity-type pill row (Players, Teams, Franchises, Games, Seasons). Typing + enter or pill click navigates to the appropriate entity page with a `?q=` param.
+- [x] Dashboard grid (3-col, gap-1px, border-radius-8) containing:
+    - **Quick Links panel** — list of nav items with endpoint hint and arrow. Links to Players, Teams, Games, Leaders, Seasons pages.
+    - **Featured Queries panel** — hardcoded list of interesting API queries with title + mono endpoint string. Clicking navigates to the API Explorer pre-filled.
+    - **API Health panel** — 2x3 grid of stat boxes sourced from `/v1/meta` (status, version, data-from, data-to, avg response, source count).
+    - **Dataset Coverage panel** (col-span-2) — three `CoverageBar`s (Lahman, Retrosheet, MLB StatsAPI) plus a stacked bar Chart.js chart showing coverage density by decade.
+    - **Endpoints panel** — simple list of top-level endpoint paths, colored accent.
+- [x] `ApiMirrorStrip` at the bottom reflecting the last/default query.
 
 ## 4. Player Explorer (`/players`)
 

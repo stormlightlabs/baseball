@@ -13,3 +13,5 @@ export { default as ApiPanel } from './components/ApiPanel.svelte';
 export { default as Pagination } from './components/Pagination.svelte';
 export { default as ThreeColLayout } from './layouts/ThreeColLayout.svelte';
 export { default as SingleColLayout } from './layouts/SingleColLayout.svelte';
+export * from './api';
+export { meta } from './meta.svelte';
