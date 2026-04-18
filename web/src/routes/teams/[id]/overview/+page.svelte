@@ -3,9 +3,10 @@
   import { page } from '$app/state';
   import { apiFetch } from '$lib/api';
   import EraBadge from '$lib/components/EraBadge.svelte';
+  import EraDisclaimer from '$lib/components/EraDisclaimer.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
   import { EP } from '$lib/endpoints';
-  import { eraForYear, erasInRange } from '$lib/eras';
+  import { eraForYear, erasInRange, type Era } from '$lib/eras';
   import { AsyncValueResource } from '$lib/players/resources.svelte';
   import { normalizeFranchiseProfile, normalizeTeamSeasonProfile } from '$lib/teams/normalizers';
   import type { FranchiseProfile, TeamSeasonProfile } from '$lib/teams/types';
@@ -28,6 +29,42 @@
   let seasonEra = $derived.by(() => {
     const y = seasonResource.value?.year ?? (year ? Number(year) : null);
     return y ? eraForYear(y) : null;
+  });
+
+  let comparisonGapMessage = $derived.by(() => {
+    if (franchiseEras.length < 2 || !franchiseEras.some((era) => era.caveat)) return null;
+    const hasNegroLeagues = franchiseEras.some((era) => era.code === 'nlg');
+    const hasModern = franchiseEras.some((era) => era.code === 'modern');
+    if (hasNegroLeagues && hasModern) {
+      return 'This franchise spans Negro Leagues and modern eras. Cross-era comparisons should be treated as directional.';
+    }
+    return 'This franchise spans eras with uneven source coverage. Use cross-era comparisons with caution.';
+  });
+
+  type EraTimelineSegment = { era: Era; from: number; to: number; leftPct: number; widthPct: number };
+
+  let franchiseTimeline = $derived.by((): EraTimelineSegment[] => {
+    const profile = franchiseResource.value;
+    if (!profile?.active_from) return [];
+    const rangeFrom = profile.active_from;
+    const rangeTo = profile.active_to ?? new Date().getFullYear();
+    const span = Math.max(1, rangeTo - rangeFrom + 1);
+
+    return franchiseEras
+      .map((era) => {
+        const segmentFrom = Math.max(rangeFrom, era.from);
+        const segmentTo = Math.min(rangeTo, era.to);
+        if (segmentFrom > segmentTo) return null;
+
+        return {
+          era,
+          from: segmentFrom,
+          to: segmentTo,
+          leftPct: ((segmentFrom - rangeFrom) / span) * 100,
+          widthPct: ((segmentTo - segmentFrom + 1) / span) * 100
+        };
+      })
+      .filter((segment): segment is EraTimelineSegment => segment != null);
   });
 
   async function refreshFranchise(force = false): Promise<void> {
@@ -81,6 +118,19 @@
     if (wins == null && losses == null) return '—';
     return `${wins ?? '?'}–${losses ?? '?'}`;
   }
+
+  function timelineSegmentClass(color: Era['color']): string {
+    switch (color) {
+      case 'warning':
+        return 'bg-warning/25 border-warning/35';
+      case 'secondary':
+        return 'bg-secondary/25 border-secondary/35';
+      case 'primary':
+        return 'bg-primary/25 border-primary/35';
+      default:
+        return 'bg-surface border-outline';
+    }
+  }
 </script>
 
 {#if franchiseResource.loading}
@@ -125,6 +175,27 @@
             <EraRangeChip {era} />
           {/each}
         </div>
+
+        {#if franchiseTimeline.length > 0}
+          <div class="mt-3 rounded border border-outline/70 bg-surface px-2.5 py-2">
+            <div class="mb-2 font-mono text-[0.62rem] tracking-wider text-muted uppercase">Continuity timeline</div>
+            <div class="relative h-5 rounded border border-outline bg-mantle/70">
+              {#each franchiseTimeline as segment (segment.era.code)}
+                <div
+                  class="absolute top-0.5 bottom-0.5 rounded border {timelineSegmentClass(segment.era.color)}"
+                  style="left: {segment.leftPct}%; width: {Math.max(segment.widthPct, 1.6)}%"
+                  title={`${segment.era.label} (${segment.from}–${segment.to})`}>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </div>
+    {/if}
+
+    {#if comparisonGapMessage}
+      <div class="mt-4">
+        <EraDisclaimer eras={franchiseEras} message={comparisonGapMessage} />
       </div>
     {/if}
   </div>

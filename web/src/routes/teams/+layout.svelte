@@ -35,6 +35,13 @@
     if (!teamId && q.trim()) {
       return apiUrl(activeEndpoint, { q: q.trim(), per_page: 20 });
     }
+    if (rawTab === 'daily-trends' && year) {
+      return apiUrl(activeEndpoint, {
+        season: year,
+        page: page.url.searchParams.get('page') ?? undefined,
+        per_page: page.url.searchParams.get('per_page') ?? undefined
+      });
+    }
     if (rawTab === 'run-diff' && year) {
       return apiUrl(activeEndpoint, { season: year });
     }
@@ -159,6 +166,9 @@
         return;
       case 'schedule':
         gotoWithYear(`/teams/${encodedId}/schedule`);
+        return;
+      case 'daily-trends':
+        gotoWithYear(`/teams/${encodedId}/daily-trends`);
         return;
       case 'run-diff':
         gotoWithYear(`/teams/${encodedId}/run-diff`);

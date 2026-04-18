@@ -87,3 +87,30 @@ export type TeamSeasonProfile = {
   park?: string;
   park_id?: string;
 };
+
+export type TeamDailyStat = {
+  game_id?: string;
+  team_id?: string;
+  date?: string;
+  season?: number;
+  runs?: number;
+  runs_allowed?: number;
+  h?: number;
+  hr?: number;
+  bb?: number;
+  so?: number;
+  avg?: number;
+  obp?: number;
+  slg?: number;
+  result?: string;
+};
+
+export type TeamDailyLog = {
+  date?: string;
+  games_played?: number;
+  wins?: number;
+  losses?: number;
+  runs_scored?: number;
+  runs_allowed?: number;
+  run_diff?: number;
+};

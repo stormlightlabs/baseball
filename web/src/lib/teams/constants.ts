@@ -5,6 +5,7 @@ export const MAIN_TABS = [
   { id: 'pitching', label: 'Pitching' },
   { id: 'fielding', label: 'Fielding' },
   { id: 'schedule', label: 'Schedule' },
+  { id: 'daily-trends', label: 'Daily Trends' },
   { id: 'run-diff', label: 'Run Diff.' }
 ] as const;
 

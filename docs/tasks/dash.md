@@ -138,7 +138,7 @@ Ref: `docs/designs/teams.html`
     - `GET /v1/seasons/{year}/teams/{team_id}/pitching`
     - `GET /v1/seasons/{year}/teams/{team_id}/fielding`
 - [x] Team schedule from `GET /v1/seasons/{year}/teams/{team_id}/games` and `/schedule`.
-- [ ] Team daily trends from `GET /v1/teams/{id}/daily-stats` and `/daily-logs`.
+- [x] Team daily trends from `GET /v1/teams/{id}/daily-stats` and `/daily-logs`.
 - [x] Run differential module from `GET /v1/teams/{team_id}/run-differential?season=...`.
 
 ### API Contract Notes (Current Implementation)
@@ -150,8 +150,8 @@ Ref: `docs/designs/teams.html`
 
 ### Era UX
 
-- [ ] Franchise continuity timeline segmented by era bands.
-- [ ] Warn when comparing across coverage gaps (e.g., Negro Leagues vs modern).
+- [x] Franchise continuity timeline segmented by era bands.
+- [x] Warn when comparing across coverage gaps (e.g., Negro Leagues vs modern).
 
 ## Game Finder and Detail (`/games`)
 

@@ -3,6 +3,8 @@ import type {
   FranchiseProfile,
   RunDifferentialSeries,
   TeamBattingStats,
+  TeamDailyLog,
+  TeamDailyStat,
   TeamFieldingStats,
   TeamPitchingStats,
   TeamResult,
@@ -140,4 +142,47 @@ export function normalizeRunDifferentialSeries(payload: ApiTeamPayload): RunDiff
     run_differential: toNum(payload.run_differential),
     games: Array.isArray(payload.games) ? (payload.games as Array<Record<string, unknown>>) : []
   };
+}
+
+export function normalizeTeamDailyStat(payload: ApiTeamPayload): TeamDailyStat {
+  return {
+    game_id: toStr(payload.game_id),
+    team_id: toStr(payload.team_id),
+    date: toStr(payload.date),
+    season: toNum(payload.season),
+    runs: toNum(payload.runs),
+    runs_allowed: toNum(payload.runs_allowed),
+    h: toNum(payload.h),
+    hr: toNum(payload.hr),
+    bb: toNum(payload.bb),
+    so: toNum(payload.so),
+    avg: toNum(payload.avg),
+    obp: toNum(payload.obp),
+    slg: toNum(payload.slg),
+    result: toStr(payload.result)
+  };
+}
+
+export function normalizeTeamDailyLog(payload: ApiTeamPayload): TeamDailyLog {
+  return {
+    date: toStr(payload.date),
+    games_played: toNum(payload.games_played),
+    wins: toNum(payload.wins),
+    losses: toNum(payload.losses),
+    runs_scored: toNum(payload.runs_scored),
+    runs_allowed: toNum(payload.runs_allowed),
+    run_diff: toNum(payload.run_diff)
+  };
+}
+
+export function normalizeTeamDailyStatsPage(
+  payload: PaginatedResponse<ApiTeamPayload>
+): PaginatedResponse<TeamDailyStat> {
+  return { ...payload, data: payload.data.map(normalizeTeamDailyStat) };
+}
+
+export function normalizeTeamDailyLogsPage(
+  payload: PaginatedResponse<ApiTeamPayload>
+): PaginatedResponse<TeamDailyLog> {
+  return { ...payload, data: payload.data.map(normalizeTeamDailyLog) };
 }

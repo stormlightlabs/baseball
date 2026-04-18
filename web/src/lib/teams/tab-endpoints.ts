@@ -15,6 +15,8 @@ export function endpointForTeamTab(teamId: string, tabId: TeamTabId, year?: stri
       return year ? EP.seasonTeamFielding(year, teamId) : EP.team(teamId);
     case 'schedule':
       return year ? EP.seasonTeamSchedule(year, teamId) : EP.team(teamId);
+    case 'daily-trends':
+      return year ? EP.teamDailyStats(teamId) : EP.team(teamId);
     case 'run-diff':
       return year ? EP.teamRunDifferential(teamId) : EP.team(teamId);
   }

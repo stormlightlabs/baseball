@@ -30,7 +30,7 @@
     const tab = activeTab;
     const keys = [`id=${teamId}`, `tab=${tab}`, `year=${year}`];
     if (q) keys.push(`q=${q}`);
-    if (tab === 'schedule') {
+    if (tab === 'schedule' || tab === 'daily-trends') {
       keys.push(`page=${intParam(params, 'page', 1)}`);
       keys.push(`per_page=${intParam(params, 'per_page', 25)}`);
     }
