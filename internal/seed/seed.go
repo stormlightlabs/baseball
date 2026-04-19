@@ -78,6 +78,11 @@ func LoadLahman(ctx context.Context, database *db.DB, opts LahmanOptions) (int64
 		if err != nil {
 			return 0, fmt.Errorf("error: failed to load %s: %w", table, err)
 		}
+		if table == "Batting" {
+			if err := database.NormalizeBattingNumericNulls(ctx); err != nil {
+				return 0, fmt.Errorf("error: failed to normalize %s: %w", table, err)
+			}
+		}
 
 		totalRows += rows
 		echo.Successf("✓ Loaded %s (%d rows)", table, rows)

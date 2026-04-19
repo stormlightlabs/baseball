@@ -205,6 +205,56 @@ func (db *DB) CopyCSV(ctx context.Context, tableName, csvPath string) (int64, er
 	return tag.RowsAffected(), nil
 }
 
+// NormalizeBattingNumericNulls coerces nullable batting numeric stats to 0.
+// Lahman historical files leave many trailing numeric values blank, and COPY
+// with NULL '' maps those blanks to NULL.
+func (db *DB) NormalizeBattingNumericNulls(ctx context.Context) error {
+	query := `
+		UPDATE "Batting"
+		SET
+			"G" = COALESCE("G", 0),
+			"AB" = COALESCE("AB", 0),
+			"R" = COALESCE("R", 0),
+			"H" = COALESCE("H", 0),
+			"2B" = COALESCE("2B", 0),
+			"3B" = COALESCE("3B", 0),
+			"HR" = COALESCE("HR", 0),
+			"RBI" = COALESCE("RBI", 0),
+			"SB" = COALESCE("SB", 0),
+			"CS" = COALESCE("CS", 0),
+			"BB" = COALESCE("BB", 0),
+			"SO" = COALESCE("SO", 0),
+			"IBB" = COALESCE("IBB", 0),
+			"HBP" = COALESCE("HBP", 0),
+			"SH" = COALESCE("SH", 0),
+			"SF" = COALESCE("SF", 0),
+			"GIDP" = COALESCE("GIDP", 0)
+		WHERE
+			"G" IS NULL OR
+			"AB" IS NULL OR
+			"R" IS NULL OR
+			"H" IS NULL OR
+			"2B" IS NULL OR
+			"3B" IS NULL OR
+			"HR" IS NULL OR
+			"RBI" IS NULL OR
+			"SB" IS NULL OR
+			"CS" IS NULL OR
+			"BB" IS NULL OR
+			"SO" IS NULL OR
+			"IBB" IS NULL OR
+			"HBP" IS NULL OR
+			"SH" IS NULL OR
+			"SF" IS NULL OR
+			"GIDP" IS NULL
+	`
+
+	if _, err := db.ExecContext(ctx, query); err != nil {
+		return fmt.Errorf("failed to normalize batting nulls: %w", err)
+	}
+	return nil
+}
+
 // LoadRetrosheetGameLog extracts a retrosheet game log zip file and loads it into the games table.
 // Retrosheet CSVs don't have headers, so this function adds them before loading.
 // The gameType parameter is used to tag all games from this file (e.g., "regular", "allstar", "worldseries").

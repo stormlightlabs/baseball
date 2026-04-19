@@ -470,42 +470,8 @@ func loadLahman(cmd *cobra.Command, args []string) error {
 	dataDir := "data/lahman"
 	csvDir := filepath.Join(dataDir, "csv")
 
-	tables := []string{
-		"AllstarFull", "Appearances",
-		"AwardsManagers", "AwardsPlayers", "AwardsShareManagers", "AwardsSharePlayers",
-		"Batting", "BattingPost", "CollegePlaying",
-		"Fielding", "FieldingOF", "FieldingOFsplit", "FieldingPost",
-		"HomeGames", "HallOfFame", "Managers", "ManagersHalf",
-		"Parks", "People", "Pitching", "PitchingPost",
-		"Salaries", "Schools", "SeriesPost",
-		"Teams", "TeamsFranchises", "TeamsHalf",
-	}
-
-	ctx := cmd.Context()
-	totalRows := int64(0)
-
-	for _, table := range tables {
-		csvFile := filepath.Join(csvDir, table+".csv")
-
-		if _, err := os.Stat(csvFile); os.IsNotExist(err) {
-			echo.Infof("Skipping %s (file not found)", table)
-			continue
-		}
-
-		echo.Infof("Loading %s...", table)
-
-		rows, err := database.CopyCSV(ctx, table, csvFile)
-		if err != nil {
-			return fmt.Errorf("error: failed to load %s: %w", table, err)
-		}
-
-		totalRows += rows
-		echo.Successf("✓ Loaded %s (%d rows)", table, rows)
-	}
-
-	echo.Success(fmt.Sprintf("✓ All Lahman data loaded successfully (%d total rows)", totalRows))
-	if err := database.RecordDatasetRefresh(ctx, "lahman", totalRows); err != nil {
-		return fmt.Errorf("error: failed to record Lahman refresh: %w", err)
+	if _, err := seed.LoadLahman(cmd.Context(), database, seed.LahmanOptions{CSVDir: csvDir}); err != nil {
+		return fmt.Errorf("error: %w", err)
 	}
 	return nil
 }
