@@ -157,7 +157,7 @@
 </script>
 
 <main class="min-h-full bg-mantle pb-0">
-  <section class="mx-auto max-w-3xl px-8 pt-14 pb-8 text-center">
+  <section class="mx-auto max-w-3xl px-4 pt-10 pb-7 text-center sm:px-6 sm:pt-12 sm:pb-8 lg:px-8 lg:pt-14">
     <h1 class="mb-3 font-display text-3xl font-bold text-foreground">Big Fly</h1>
     <div class="mb-8 flex flex-col gap-1 text-base text-muted">
       <p>Baseball data from 1871 to now.</p>
@@ -178,7 +178,7 @@
     {/if}
   </section>
 
-  <section class="mx-auto max-w-3xl px-8 pb-8">
+  <section class="mx-auto max-w-3xl px-4 pb-8 sm:px-6 lg:px-8">
     <div class="mb-2 text-center font-mono text-xxs tracking-wider text-muted uppercase">Jump to era</div>
     <div class="flex flex-wrap justify-center gap-2">
       {#each STATIC_ERAS as era (era.code)}
@@ -187,16 +187,16 @@
     </div>
   </section>
 
-  <section class="mx-auto max-w-6xl px-8 pb-6">
+  <section class="mx-auto max-w-6xl px-4 pb-6 sm:px-6 lg:px-8">
     <ScoreboardStrip />
   </section>
 
-  <section class="mx-auto max-w-6xl px-8 pb-6">
+  <section class="mx-auto max-w-6xl px-4 pb-6 sm:px-6 lg:px-8">
     <LeaderCards />
   </section>
 
-  <div class="mx-auto max-w-6xl px-8 pb-6">
-    <div class="grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-outline">
+  <div class="mx-auto max-w-6xl px-4 pb-6 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 gap-px overflow-hidden rounded-lg bg-outline md:grid-cols-2 xl:grid-cols-3">
       <div class="bg-crust p-5">
         <div class="panel-label">Quick links</div>
         <ul class="space-y-1">
@@ -310,7 +310,7 @@
         {/if}
       </div>
 
-      <div class="col-span-2 bg-crust p-5">
+      <div class="bg-crust p-5 md:col-span-2">
         <div class="panel-label">Dataset coverage</div>
         <div class="mb-4 space-y-2">
           {#each coverageBars as bar (bar.id)}
@@ -347,7 +347,7 @@
     </div>
   </div>
 
-  <div class="mx-auto max-w-6xl px-8 pb-8">
+  <div class="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
     <ApiMirrorStrip url="/v1/meta" />
   </div>
 </main>

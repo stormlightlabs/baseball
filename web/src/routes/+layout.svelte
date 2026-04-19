@@ -79,20 +79,25 @@
   <title>Big Fly</title>
 </svelte:head>
 
-<div class="grid h-dvh min-h-dvh grid-rows-[3.5rem_auto_minmax(0,1fr)_auto] overflow-x-hidden bg-mantle">
-  <header class="sticky top-0 z-50 flex h-14 items-center gap-4 border-b border-outline bg-crust px-4 sm:px-6 lg:px-8">
-    <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline">Big Fly</a>
-    <span class="rounded bg-outline px-2 py-0.5 font-mono text-[0.7rem] text-muted">
-      {badge}
-    </span>
-    {#if meta.data}
-      <span class="font-mono text-xxs text-muted opacity-60">v{meta.version}</span>
-    {/if}
-    <nav class="ml-auto flex items-center gap-1">
+<div class="grid h-dvh min-h-dvh grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-x-hidden bg-mantle">
+  <header
+    class="sticky top-0 z-50 flex flex-wrap items-center gap-3 border-b border-outline bg-crust px-3 py-2 sm:px-6 lg:px-8">
+    <div class="flex min-w-0 items-center gap-2.5">
+      <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline">Big Fly</a>
+      <span class="hidden rounded bg-outline px-2 py-0.5 font-mono text-[0.7rem] text-muted sm:inline-flex">
+        {badge}
+      </span>
+      {#if meta.data}
+        <span class="hidden font-mono text-xxs text-muted opacity-60 md:inline">v{meta.version}</span>
+      {/if}
+    </div>
+    <nav class="mt-1 flex w-full min-w-0 flex-wrap items-center gap-1 sm:mt-0 sm:ml-auto sm:w-auto sm:flex-nowrap">
       {#each MAIN_LINKS as { href, label } (href)}
         <a
           href={resolve(href)}
-          class="rounded px-2.5 py-1 text-[0.8rem] no-underline transition-colors duration-150 {isActive(href)
+          class="rounded px-2 py-1 text-[0.75rem] whitespace-nowrap no-underline transition-colors duration-150 sm:px-2.5 sm:text-[0.8rem] {isActive(
+            href
+          )
             ? 'bg-outline text-foreground'
             : 'text-muted hover:bg-outline hover:text-foreground'}">
           {label}
@@ -101,12 +106,12 @@
 
       <DataNavigationMenu label="Dashboard" items={DATA_MENU_ITEMS} {pathname} />
 
-      <div class="border-l border-outline px-2">
+      <div class="flex items-center gap-1 border-l border-outline pl-2">
         <a
           href={resolve(API_DOCS_ROUTE)}
           target="_blank"
           rel="noreferrer"
-          class="rounded px-2.5 py-1 text-[0.8rem] text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground">
+          class="rounded px-2 py-1 text-[0.75rem] whitespace-nowrap text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground sm:px-2.5 sm:text-[0.8rem]">
           API
           <span class="ml-1 inline-flex items-center gap-0.5 text-xxs">
             <i class="i-tabler-external-link"></i>
@@ -114,7 +119,7 @@
         </a>
         <a
           href={resolve('/account')}
-          class="rounded px-2.5 py-1 text-[0.8rem] no-underline transition-colors duration-150 {pathname.startsWith(
+          class="rounded px-2 py-1 text-[0.75rem] whitespace-nowrap no-underline transition-colors duration-150 sm:px-2.5 sm:text-[0.8rem] {pathname.startsWith(
             '/account'
           )
             ? 'bg-outline text-foreground'
@@ -129,12 +134,14 @@
   </header>
 
   <div
-    class="flex items-center justify-center gap-4 border-b border-white bg-rose-500 px-4 py-2 font-mono text-sm text-white sm:px-6 lg:px-8">
+    class="flex flex-col items-start gap-2 border-b border-white bg-rose-500 px-3 py-2 font-mono text-xs text-white sm:flex-row sm:items-center sm:justify-center sm:gap-4 sm:px-6 sm:text-sm lg:px-8">
     <span class="inline-flex items-center gap-1.5">
-      <i class="i-tabler-alert-triangle"></i>
+      <span class="flex items-center">
+        <i class="i-tabler-alert-triangle"></i>
+      </span>
       <strong>Preview</strong>
     </span>
-    <div class="flex flex-col">
+    <div class="flex max-w-5xl flex-col">
       <span>
         Big Fly is in early alpha for the next few weeks. Expect bugs, breaking changes, and incomplete features.
       </span>

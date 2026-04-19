@@ -51,7 +51,7 @@
     type="button"
     onclick={toggleMenu}
     aria-expanded={expanded}
-    class="inline-flex items-center gap-1 rounded px-2.5 py-1 text-[0.8rem] transition-colors duration-150 {active
+    class="inline-flex items-center gap-1 rounded px-2 py-1 text-[0.75rem] transition-colors duration-150 sm:px-2.5 sm:text-[0.8rem] {active
       ? 'bg-outline text-foreground'
       : 'text-muted hover:bg-outline hover:text-foreground'}">
     <span>{label}</span>
@@ -62,7 +62,8 @@
   </button>
 
   {#if expanded}
-    <div class="absolute right-0 z-30 mt-2 w-[18rem] rounded-lg border border-outline bg-crust p-2 shadow-xl">
+    <div
+      class="absolute right-0 z-30 mt-2 w-[min(18rem,calc(100vw-1rem))] rounded-lg border border-outline bg-crust p-2 shadow-xl">
       <div class="px-2 pb-1 font-mono text-[0.62rem] tracking-wide text-muted uppercase">Sections</div>
       <div class="space-y-1">
         {#each items as item (item.href)}
