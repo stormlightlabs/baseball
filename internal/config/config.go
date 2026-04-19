@@ -177,23 +177,26 @@ func Load(configPath string) (*Config, error) {
 }
 
 func normalizedStringList(values []string, raw string) []string {
-	entries := values
-	if len(entries) == 0 && strings.TrimSpace(raw) != "" {
-		entries = strings.Split(raw, ",")
+	entries := make([]string, 0, len(values)+1)
+	entries = append(entries, values...)
+	if strings.TrimSpace(raw) != "" {
+		entries = append(entries, raw)
 	}
 
 	result := make([]string, 0, len(entries))
 	seen := make(map[string]struct{}, len(entries))
 	for _, entry := range entries {
-		value := strings.TrimSpace(entry)
-		if value == "" {
-			continue
+		for _, part := range strings.Split(entry, ",") {
+			value := strings.TrimSpace(part)
+			if value == "" {
+				continue
+			}
+			if _, ok := seen[value]; ok {
+				continue
+			}
+			seen[value] = struct{}{}
+			result = append(result, value)
 		}
-		if _, ok := seen[value]; ok {
-			continue
-		}
-		seen[value] = struct{}{}
-		result = append(result, value)
 	}
 	return result
 }
