@@ -5,6 +5,7 @@
   import Chart from '$lib/components/Chart.svelte';
   import CoverageBar from '$lib/components/CoverageBar.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
+  import LeaderCards from '$lib/components/LeaderCards.svelte';
   import Pill from '$lib/components/Pill.svelte';
   import ScoreboardStrip from '$lib/components/ScoreboardStrip.svelte';
   import SearchInput from '$lib/components/SearchInput.svelte';
@@ -158,7 +159,7 @@
 <main class="min-h-full bg-mantle pb-0">
   <section class="mx-auto max-w-3xl px-8 pt-14 pb-8 text-center">
     <h1 class="mb-3 font-display text-3xl font-bold text-foreground">Big Fly</h1>
-    <div class="mb-8 flex flex-col gap-1 text-[0.9rem] text-muted">
+    <div class="mb-8 flex flex-col gap-1 text-base text-muted">
       <p>Baseball data from 1871 to now.</p>
       <p>Powered by: Lahman · Retrosheet · MLB</p>
     </div>
@@ -171,14 +172,14 @@
     </div>
 
     {#if searchQuery.trim() || activeEntity}
-      <div class="mt-2 font-mono text-[0.65rem] text-muted">
+      <div class="mt-2 font-mono text-xxs text-muted">
         → {activeApiEndpoint}?q=…
       </div>
     {/if}
   </section>
 
   <section class="mx-auto max-w-3xl px-8 pb-8">
-    <div class="mb-2 text-center font-mono text-[0.65rem] tracking-wider text-muted uppercase">Jump to era</div>
+    <div class="mb-2 text-center font-mono text-xxs tracking-wider text-muted uppercase">Jump to era</div>
     <div class="flex flex-wrap justify-center gap-2">
       {#each STATIC_ERAS as era (era.code)}
         <EraRangeChip {era} year={era.from} />
@@ -188,6 +189,10 @@
 
   <section class="mx-auto max-w-6xl px-8 pb-6">
     <ScoreboardStrip />
+  </section>
+
+  <section class="mx-auto max-w-6xl px-8 pb-6">
+    <LeaderCards />
   </section>
 
   <div class="mx-auto max-w-6xl px-8 pb-6">
@@ -204,7 +209,7 @@
                   <div class="text-[0.82rem] font-medium text-foreground transition-colors group-hover:text-primary">
                     {link.label}
                   </div>
-                  <div class="truncate font-mono text-[0.65rem] text-muted">{link.hint}</div>
+                  <div class="truncate font-mono text-xxs text-muted">{link.hint}</div>
                 </div>
                 <span class="mt-0.5 text-muted transition-colors group-hover:text-primary">→</span>
               </a>
@@ -237,7 +242,7 @@
                 <div class="mb-0.5 text-[0.82rem] text-foreground transition-colors group-hover:text-primary">
                   {q.title}
                 </div>
-                <div class="truncate font-mono text-[0.65rem] text-muted">{q.endpoint}</div>
+                <div class="truncate font-mono text-xxs text-muted">{q.endpoint}</div>
               </a>
             </li>
           {/each}

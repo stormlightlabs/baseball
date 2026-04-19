@@ -738,9 +738,15 @@ definitions:
     type: object
   core.MLBAward:
     properties:
+      awardRecipients:
+        items:
+          $ref: '#/definitions/core.MLBAwardRecipient'
+        type: array
       description:
         type: string
       id:
+        type: string
+      link:
         type: string
       name:
         type: string
@@ -748,6 +754,25 @@ definitions:
         type: integer
       sport:
         $ref: '#/definitions/core.MLBSportRef'
+    type: object
+  core.MLBAwardRecipient:
+    properties:
+      date:
+        type: string
+      id:
+        type: integer
+      link:
+        type: string
+      name:
+        type: string
+      notes:
+        type: string
+      player:
+        $ref: '#/definitions/core.MLBPerson'
+      season:
+        type: string
+      team:
+        $ref: '#/definitions/core.MLBTeamRef'
     type: object
   core.MLBAwardsResponse:
     properties:
@@ -771,12 +796,115 @@ definitions:
     type: object
   core.MLBDivisionRef:
     properties:
+      abbreviation:
+        type: string
       id:
         type: integer
       link:
         type: string
       name:
         type: string
+    type: object
+  core.MLBFieldInfo:
+    properties:
+      capacity:
+        type: integer
+      center:
+        type: integer
+      left:
+        type: integer
+      leftCenter:
+        type: integer
+      leftLine:
+        type: integer
+      right:
+        type: integer
+      rightCenter:
+        type: integer
+      rightLine:
+        type: integer
+      roofType:
+        type: string
+      turfType:
+        type: string
+    type: object
+  core.MLBGame:
+    properties:
+      content:
+        $ref: '#/definitions/core.MLBNamedResource'
+      dayNight:
+        type: string
+      doubleHeader:
+        type: string
+      gameDate:
+        type: string
+      gameNumber:
+        type: integer
+      gamePk:
+        type: integer
+      gameType:
+        type: string
+      gamedayType:
+        type: string
+      gamesInSeries:
+        type: integer
+      linescore:
+        $ref: '#/definitions/core.MLBLineScore'
+      link:
+        type: string
+      officialDate:
+        type: string
+      scheduledInnings:
+        type: integer
+      season:
+        type: string
+      seriesDescription:
+        type: string
+      seriesGameNumber:
+        type: integer
+      status:
+        $ref: '#/definitions/core.MLBGameStatus'
+      teams:
+        $ref: '#/definitions/core.MLBGameTeams'
+      venue:
+        $ref: '#/definitions/core.MLBVenueRef'
+    type: object
+  core.MLBGameStatus:
+    properties:
+      abstractGameCode:
+        type: string
+      abstractGameState:
+        type: string
+      codedGameState:
+        type: string
+      detailedState:
+        type: string
+      startTimeTBD:
+        type: boolean
+      statusCode:
+        type: string
+    type: object
+  core.MLBGameTeamWrapper:
+    properties:
+      isWinner:
+        type: boolean
+      leagueRecord:
+        $ref: '#/definitions/core.MLBWinLossRecord'
+      score:
+        type: integer
+      seriesNumber:
+        type: integer
+      splitSquad:
+        type: boolean
+      team:
+        $ref: '#/definitions/core.MLBTeamRef'
+    type: object
+  core.MLBGameTeams:
+    properties:
+      away:
+        $ref: '#/definitions/core.MLBGameTeamWrapper'
+      home:
+        $ref: '#/definitions/core.MLBGameTeamWrapper'
     type: object
   core.MLBHandedness:
     properties:
@@ -785,9 +913,133 @@ definitions:
       description:
         type: string
     type: object
+  core.MLBLeagueRecord:
+    properties:
+      league:
+        $ref: '#/definitions/core.MLBLeagueRef'
+      losses:
+        type: integer
+      pct:
+        type: string
+      wins:
+        type: integer
+    type: object
   core.MLBLeagueRef:
     properties:
       abbreviation:
+        type: string
+      id:
+        type: integer
+      link:
+        type: string
+      name:
+        type: string
+    type: object
+  core.MLBLineScore:
+    properties:
+      balls:
+        type: integer
+      currentInning:
+        type: integer
+      currentInningOrdinal:
+        type: string
+      defense:
+        $ref: '#/definitions/core.MLBLineScoreDefense'
+      inningHalf:
+        type: string
+      inningState:
+        type: string
+      innings:
+        items:
+          $ref: '#/definitions/core.MLBLineScoreInning'
+        type: array
+      isTopInning:
+        type: boolean
+      offense:
+        $ref: '#/definitions/core.MLBLineScoreOffense'
+      outs:
+        type: integer
+      scheduledInnings:
+        type: integer
+      strikes:
+        type: integer
+      teams:
+        $ref: '#/definitions/core.MLBLineScoreTeams'
+    type: object
+  core.MLBLineScoreDefense:
+    properties:
+      catcher:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      center:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      first:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      left:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      pitcher:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      right:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      second:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      shortstop:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      team:
+        $ref: '#/definitions/core.MLBTeamRef'
+      third:
+        $ref: '#/definitions/core.MLBPlayerRef'
+    type: object
+  core.MLBLineScoreInning:
+    properties:
+      away:
+        $ref: '#/definitions/core.MLBLineScoreInningHalf'
+      home:
+        $ref: '#/definitions/core.MLBLineScoreInningHalf'
+      num:
+        type: integer
+      ordinalNum:
+        type: string
+    type: object
+  core.MLBLineScoreInningHalf:
+    properties:
+      errors:
+        type: integer
+      hits:
+        type: integer
+      runs:
+        type: integer
+    type: object
+  core.MLBLineScoreOffense:
+    properties:
+      batter:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      first:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      inHole:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      onDeck:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      pitcher:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      second:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      team:
+        $ref: '#/definitions/core.MLBTeamRef'
+      third:
+        $ref: '#/definitions/core.MLBPlayerRef'
+    type: object
+  core.MLBLineScoreTeams:
+    properties:
+      away:
+        $ref: '#/definitions/core.MLBLineScoreInningHalf'
+      home:
+        $ref: '#/definitions/core.MLBLineScoreInningHalf'
+    type: object
+  core.MLBNamedResource:
+    properties:
+      abbreviation:
+        type: string
+      displayName:
         type: string
       id:
         type: integer
@@ -832,6 +1084,8 @@ definitions:
         type: string
       currentAge:
         type: integer
+      currentTeam:
+        $ref: '#/definitions/core.MLBTeamRef'
       firstLastName:
         type: string
       firstName:
@@ -889,6 +1143,15 @@ definitions:
       weight:
         type: integer
     type: object
+  core.MLBPlayerRef:
+    properties:
+      fullName:
+        type: string
+      id:
+        type: integer
+      link:
+        type: string
+    type: object
   core.MLBPosition:
     properties:
       abbreviation:
@@ -915,6 +1178,14 @@ definitions:
         items:
           $ref: '#/definitions/core.MLBDivisionRecord'
         type: array
+      expectedRecords:
+        items:
+          $ref: '#/definitions/core.MLBSplitRecord'
+        type: array
+      leagueRecords:
+        items:
+          $ref: '#/definitions/core.MLBLeagueRecord'
+        type: array
       splitRecords:
         items:
           $ref: '#/definitions/core.MLBSplitRecord'
@@ -924,6 +1195,46 @@ definitions:
     properties:
       status:
         type: string
+    type: object
+  core.MLBScheduleDate:
+    properties:
+      date:
+        type: string
+      events:
+        items:
+          items:
+            type: integer
+          type: array
+        type: array
+      games:
+        items:
+          $ref: '#/definitions/core.MLBGame'
+        type: array
+      totalEvents:
+        type: integer
+      totalGames:
+        type: integer
+      totalGamesInProgress:
+        type: integer
+      totalItems:
+        type: integer
+    type: object
+  core.MLBScheduleResponse:
+    properties:
+      copyright:
+        type: string
+      dates:
+        items:
+          $ref: '#/definitions/core.MLBScheduleDate'
+        type: array
+      totalEvents:
+        type: integer
+      totalGames:
+        type: integer
+      totalGamesInProgress:
+        type: integer
+      totalItems:
+        type: integer
     type: object
   core.MLBSeason:
     properties:
@@ -1009,6 +1320,8 @@ definitions:
         $ref: '#/definitions/core.MLBLeagueRef'
       roundRobin:
         $ref: '#/definitions/core.MLBRoundRobin'
+      season:
+        type: string
       sport:
         $ref: '#/definitions/core.MLBSportRef'
       standingsType:
@@ -1025,6 +1338,381 @@ definitions:
       records:
         items:
           $ref: '#/definitions/core.MLBStandingsRecord'
+        type: array
+    type: object
+  core.MLBStatExemption:
+    properties:
+      code:
+        type: string
+      detail:
+        type: string
+      type:
+        type: string
+    type: object
+  core.MLBStatGroup:
+    properties:
+      airOuts:
+        items:
+          type: integer
+        type: array
+      assists:
+        items:
+          type: integer
+        type: array
+      atBats:
+        items:
+          type: integer
+        type: array
+      atBatsPerHomeRun:
+        items:
+          type: integer
+        type: array
+      atBatsPerStrikeout:
+        items:
+          type: integer
+        type: array
+      avg:
+        items:
+          type: integer
+        type: array
+      babip:
+        items:
+          type: integer
+        type: array
+      balks:
+        items:
+          type: integer
+        type: array
+      baseOnBalls:
+        items:
+          type: integer
+        type: array
+      blownSaves:
+        items:
+          type: integer
+        type: array
+      caughtStealing:
+        items:
+          type: integer
+        type: array
+      caughtStealingPct:
+        items:
+          type: integer
+        type: array
+      chances:
+        items:
+          type: integer
+        type: array
+      completeGames:
+        items:
+          type: integer
+        type: array
+      doublePlays:
+        items:
+          type: integer
+        type: array
+      doubles:
+        items:
+          type: integer
+        type: array
+      earnedRuns:
+        items:
+          type: integer
+        type: array
+      era:
+        items:
+          type: integer
+        type: array
+      errors:
+        items:
+          type: integer
+        type: array
+      extraBaseHits:
+        items:
+          type: integer
+        type: array
+      fielding:
+        items:
+          type: integer
+        type: array
+      gamesFinished:
+        items:
+          type: integer
+        type: array
+      gamesPlayed:
+        items:
+          type: integer
+        type: array
+      gamesStarted:
+        items:
+          type: integer
+        type: array
+      gidp:
+        items:
+          type: integer
+        type: array
+      groundOuts:
+        items:
+          type: integer
+        type: array
+      groundOutsToAirouts:
+        items:
+          type: integer
+        type: array
+      hitBatsmen:
+        items:
+          type: integer
+        type: array
+      hitByPitch:
+        items:
+          type: integer
+        type: array
+      hits:
+        items:
+          type: integer
+        type: array
+      hitsPer9Inn:
+        items:
+          type: integer
+        type: array
+      holds:
+        items:
+          type: integer
+        type: array
+      homeRuns:
+        items:
+          type: integer
+        type: array
+      homeRunsPer9:
+        items:
+          type: integer
+        type: array
+      inheritedRunners:
+        items:
+          type: integer
+        type: array
+      inheritedRunnersScored:
+        items:
+          type: integer
+        type: array
+      inningsPitched:
+        items:
+          type: integer
+        type: array
+      intentionalWalks:
+        items:
+          type: integer
+        type: array
+      leftOnBase:
+        items:
+          type: integer
+        type: array
+      losses:
+        items:
+          type: integer
+        type: array
+      numberOfPitches:
+        items:
+          type: integer
+        type: array
+      obp:
+        items:
+          type: integer
+        type: array
+      ops:
+        items:
+          type: integer
+        type: array
+      passedBall:
+        items:
+          type: integer
+        type: array
+      pitchesPerInning:
+        items:
+          type: integer
+        type: array
+      pitchesPerPlateAppearance:
+        items:
+          type: integer
+        type: array
+      plateAppearances:
+        items:
+          type: integer
+        type: array
+      putOuts:
+        items:
+          type: integer
+        type: array
+      qualityStarts:
+        items:
+          type: integer
+        type: array
+      rangeFactorPer9Inn:
+        items:
+          type: integer
+        type: array
+      rangeFactorPerGame:
+        items:
+          type: integer
+        type: array
+      rbi:
+        items:
+          type: integer
+        type: array
+      runs:
+        items:
+          type: integer
+        type: array
+      sacBunts:
+        items:
+          type: integer
+        type: array
+      sacFlies:
+        items:
+          type: integer
+        type: array
+      saveOpportunities:
+        items:
+          type: integer
+        type: array
+      savePercentage:
+        items:
+          type: integer
+        type: array
+      saves:
+        items:
+          type: integer
+        type: array
+      shutouts:
+        items:
+          type: integer
+        type: array
+      singles:
+        items:
+          type: integer
+        type: array
+      slg:
+        items:
+          type: integer
+        type: array
+      stolenBases:
+        items:
+          type: integer
+        type: array
+      stolenBasesAllowed:
+        items:
+          type: integer
+        type: array
+      strikeOuts:
+        items:
+          type: integer
+        type: array
+      strikePercentage:
+        items:
+          type: integer
+        type: array
+      strikeoutsPer9Inn:
+        items:
+          type: integer
+        type: array
+      throwingErrors:
+        items:
+          type: integer
+        type: array
+      totalBases:
+        items:
+          type: integer
+        type: array
+      triplePlays:
+        items:
+          type: integer
+        type: array
+      triples:
+        items:
+          type: integer
+        type: array
+      walkOffs:
+        items:
+          type: integer
+        type: array
+      walksAndHitsPerInningPitched:
+        items:
+          type: integer
+        type: array
+      walksPer9Inn:
+        items:
+          type: integer
+        type: array
+      whip:
+        items:
+          type: integer
+        type: array
+      wildPitches:
+        items:
+          type: integer
+        type: array
+      winPercentage:
+        items:
+          type: integer
+        type: array
+      wins:
+        items:
+          type: integer
+        type: array
+    type: object
+  core.MLBStatResult:
+    properties:
+      displayName:
+        type: string
+      exemptions:
+        items:
+          $ref: '#/definitions/core.MLBStatExemption'
+        type: array
+      group:
+        $ref: '#/definitions/core.MLBNamedResource'
+      season:
+        type: string
+      sortBy:
+        type: string
+      splits:
+        items:
+          $ref: '#/definitions/core.MLBStatSplit'
+        type: array
+      totalSplits:
+        type: integer
+      type:
+        $ref: '#/definitions/core.MLBNamedResource'
+    type: object
+  core.MLBStatSplit:
+    properties:
+      division:
+        $ref: '#/definitions/core.MLBDivisionRef'
+      gameType:
+        type: string
+      league:
+        $ref: '#/definitions/core.MLBLeagueRef'
+      player:
+        $ref: '#/definitions/core.MLBPlayerRef'
+      position:
+        $ref: '#/definitions/core.MLBPosition'
+      rank:
+        type: integer
+      season:
+        type: string
+      sport:
+        $ref: '#/definitions/core.MLBSportRef'
+      stat:
+        $ref: '#/definitions/core.MLBStatGroup'
+      team:
+        $ref: '#/definitions/core.MLBTeamRef'
+    type: object
+  core.MLBStatsResponse:
+    properties:
+      copyright:
+        type: string
+      stats:
+        items:
+          $ref: '#/definitions/core.MLBStatResult'
         type: array
     type: object
   core.MLBStreak:
@@ -1081,25 +1769,101 @@ definitions:
       venue:
         $ref: '#/definitions/core.MLBVenueRef'
     type: object
+  core.MLBTeamCrosswalkResponse:
+    properties:
+      local_season:
+        type: integer
+      matched:
+        type: integer
+      requested_season:
+        type: integer
+      rows:
+        items:
+          $ref: '#/definitions/core.MLBTeamCrosswalkRow'
+        type: array
+      unmatched:
+        type: integer
+    type: object
+  core.MLBTeamCrosswalkRow:
+    properties:
+      confidence:
+        type: string
+      local_franchise_id:
+        type: string
+      local_league:
+        type: string
+      local_team_id:
+        type: string
+      local_team_name:
+        type: string
+      match_method:
+        type: string
+      mlb_abbreviation:
+        type: string
+      mlb_club_name:
+        type: string
+      mlb_file_code:
+        type: string
+      mlb_franchise_name:
+        type: string
+      mlb_team_code:
+        type: string
+      mlb_team_id:
+        type: integer
+      mlb_team_name:
+        type: string
+    type: object
   core.MLBTeamRecord:
     properties:
       clinchIndicator:
         type: string
+      clinched:
+        type: boolean
+      conferenceGamesBack:
+        type: string
+      divisionChamp:
+        type: boolean
+      divisionGamesBack:
+        type: string
+      divisionLeader:
+        type: boolean
       divisionRank:
+        type: string
+      eliminationNumber:
         type: string
       gamesBack:
         type: string
       gamesPlayed:
         type: integer
+      hasWildcard:
+        type: boolean
+      lastTenRecords:
+        items:
+          $ref: '#/definitions/core.MLBSplitRecord'
+        type: array
       lastUpdated:
+        type: string
+      leagueGamesBack:
         type: string
       leagueRank:
         type: string
       leagueRecord:
         $ref: '#/definitions/core.MLBWinLossRecord'
+      losses:
+        type: integer
+      magicNumber:
+        type: string
       records:
         $ref: '#/definitions/core.MLBRecordDetails'
+      runDifferential:
+        type: string
+      runsAllowed:
+        type: integer
+      runsScored:
+        type: integer
       season:
+        type: string
+      sportGamesBack:
         type: string
       sportRank:
         type: string
@@ -1107,8 +1871,16 @@ definitions:
         $ref: '#/definitions/core.MLBStreak'
       team:
         $ref: '#/definitions/core.MLBTeamRef'
+      wildCardEliminationNumber:
+        type: string
       wildCardGamesBack:
         type: string
+      wildCardRank:
+        type: string
+      winningPercentage:
+        type: string
+      wins:
+        type: integer
     type: object
   core.MLBTeamRef:
     properties:
@@ -1128,17 +1900,68 @@ definitions:
           $ref: '#/definitions/core.MLBTeam'
         type: array
     type: object
+  core.MLBTimeZone:
+    properties:
+      id:
+        type: string
+      offset:
+        type: integer
+      tz:
+        type: string
+    type: object
   core.MLBVenue:
     properties:
       active:
         type: boolean
+      capacity:
+        type: integer
+      fieldInfo:
+        $ref: '#/definitions/core.MLBFieldInfo'
       id:
         type: integer
       link:
         type: string
+      location:
+        $ref: '#/definitions/core.MLBVenueLocation'
       name:
         type: string
+      roofType:
+        type: string
       season:
+        type: string
+      timeZone:
+        $ref: '#/definitions/core.MLBTimeZone'
+      turfType:
+        type: string
+      venueType:
+        type: string
+    type: object
+  core.MLBVenueCoordinates:
+    properties:
+      latitude:
+        type: string
+      longitude:
+        type: string
+    type: object
+  core.MLBVenueLocation:
+    properties:
+      address1:
+        type: string
+      address2:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      defaultCoordinates:
+        $ref: '#/definitions/core.MLBVenueCoordinates'
+      phone:
+        type: string
+      postalCode:
+        type: string
+      state:
+        type: string
+      stateAbbrev:
         type: string
     type: object
   core.MLBVenueRef:
@@ -4225,6 +5048,31 @@ paths:
       summary: MLB award by ID
       tags:
       - mlb
+  /mlb/crosswalk/teams:
+    get:
+      consumes:
+      - application/json
+      description: Map MLB Stats API team IDs/abbreviations to local team_id and franchise_id
+        for a season.
+      parameters:
+      - description: Season year (defaults to current year)
+        in: query
+        name: season
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.MLBTeamCrosswalkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: MLB team ID crosswalk
+      tags:
+      - mlb
   /mlb/people:
     get:
       consumes:
@@ -4320,8 +5168,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBScheduleResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -4422,8 +5269,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/core.MLBStatsResponse'
         "500":
           description: Internal Server Error
           schema:

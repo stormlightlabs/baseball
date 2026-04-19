@@ -69,20 +69,20 @@ Acceptance:
 ### Backend
 
 - [ ] Add `GET /api/internal/spray-chart/{player_id}` endpoint in Go.
-    - Query params: `season`, `vs` (L/R), `park_id`.
-    - Map Retrosheet hit-location codes to standardized field coordinates (origin at home plate, y toward CF, feet).
-    - Include park wall geometry as `[angle_deg, distance_ft]` control points.
-    - Return batted-ball events with `x`, `y`, `result`, `exit_velo`, `launch_angle`, `pitcher`, `pitch_type`, `date`.
+  - Query params: `season`, `vs` (L/R), `park_id`.
+  - Map Retrosheet hit-location codes to standardized field coordinates (origin at home plate, y toward CF, feet).
+  - Include park wall geometry as `[angle_deg, distance_ft]` control points.
+  - Return batted-ball events with `x`, `y`, `result`, `exit_velo`, `launch_angle`, `pitcher`, `pitch_type`, `date`.
 - [ ] Add park dimension data to the database (wall distances at standard survey angles for each park).
 - [ ] Seed park geometry for all active parks (30 current + historically significant parks).
 
 ### Frontend
 
 - [ ] Create `SprayChartPainter` extending `CustomPainter`:
-    - Draw infield diamond (bases, foul lines, dirt cutout).
-    - Draw outfield wall from park geometry Bézier control points.
-    - Plot batted-ball events as circles (radius ∝ exit velo, color ∝ result).
-    - Implement `hitTest` for tap detection on individual events.
+  - Draw infield diamond (bases, foul lines, dirt cutout).
+  - Draw outfield wall from park geometry Bézier control points.
+  - Plot batted-ball events as circles (radius ∝ exit velo, color ∝ result).
+  - Implement `hitTest` for tap detection on individual events.
 - [ ] Wrap in `InteractiveViewer` for pinch-to-zoom and pan.
 - [ ] Add filter controls: vs LHP/RHP, pitch type, count, season picker.
 - [ ] Add park overlay toggle (compare home vs. away park walls).
@@ -101,18 +101,18 @@ Acceptance:
 ### Backend
 
 - [ ] Add `GET /api/internal/pitch-tunnel/{pitcher_id}` endpoint.
-    - Query params: `season`, `pitch_types` (comma-separated codes).
-    - Aggregate pitch data by type: avg velocity, avg spin rate, spin axis, pfx_x, pfx_z, release point, usage %.
-    - Return per-type trajectory parameters.
+  - Query params: `season`, `pitch_types` (comma-separated codes).
+  - Aggregate pitch data by type: avg velocity, avg spin rate, spin axis, pfx_x, pfx_z, release point, usage %.
+  - Return per-type trajectory parameters.
 - [ ] Ensure pitch-level data includes movement vectors (pfx_x, pfx_z) where available.
 
 ### Frontend
 
 - [ ] Create `PitchTunnelGame` Flame component:
-    - Fixed camera at batter's eye position (3.5 ft height, 1 ft behind plate).
-    - Render strike zone as semi-transparent rectangle.
-    - Compute pitch trajectories as cubic Bézier curves using Nathan physics model (RK4 integration with drag + Magnus force).
-    - Color-code by pitch type with labeled legend.
+  - Fixed camera at batter's eye position (3.5 ft height, 1 ft behind plate).
+  - Render strike zone as semi-transparent rectangle.
+  - Compute pitch trajectories as cubic Bézier curves using Nathan physics model (RK4 integration with drag + Magnus force).
+  - Color-code by pitch type with labeled legend.
 - [ ] Implement view rotation: batter's eye, catcher, overhead, side (swipe gesture).
 - [ ] Add tunnel point markers (last point where two pitch types are within perceptual threshold).
 - [ ] Add time scrubber: slider to animate pitch progression from release to plate.
@@ -131,16 +131,16 @@ Acceptance:
 ### Backend
 
 - [ ] Add `GET /api/internal/at-bat/{game_id}/{ab_num}` endpoint.
-    - Return batter/pitcher info, pitch sequence (type, speed, location x/z, call, count), and at-bat result.
-    - Derive from existing `plays` and `pitches` tables.
+  - Return batter/pitcher info, pitch sequence (type, speed, location x/z, call, count), and at-bat result.
+  - Derive from existing `plays` and `pitches` tables.
 
 ### Frontend
 
 - [ ] Create `AtBatSequencerWidget`:
-    - `CustomPainter` draws strike zone scaled to batter height.
-    - Pitches animate in with trajectory arc (200ms per pitch).
-    - Count display updates with each pitch.
-    - Horizontal timeline below zone shows sequence as labeled dots.
+  - `CustomPainter` draws strike zone scaled to batter height.
+  - Pitches animate in with trajectory arc (200ms per pitch).
+  - Count display updates with each pitch.
+  - Horizontal timeline below zone shows sequence as labeled dots.
 - [ ] Auto-play mode: pitches appear at 1.5s intervals.
 - [ ] Manual mode: swipe left/right to step through.
 - [ ] Tap pitch dot for detail (type, speed, result, count).
@@ -157,16 +157,16 @@ Acceptance:
 ## Phase 5: Stat Card Generator
 
 - [ ] Implement deterministic pixel-art avatar generator:
-    - Seed from `player_id` hash.
-    - Generate 32×32 sprite with team-colored cap and jersey.
-    - Render at 128×128 with nearest-neighbor scaling.
-    - Use `pixel_art_generator` package.
+  - Seed from `player_id` hash.
+  - Generate 32×32 sprite with team-colored cap and jersey.
+  - Render at 128×128 with nearest-neighbor scaling.
+  - Use `pixel_art_generator` package.
 - [ ] Create `StatCardWidget` template:
-    - Player avatar, name, position, team.
-    - 4-6 headline stats with inline sparklines.
-    - Team accent gradient background.
-    - Season/career scope label.
-    - Big Fly watermark.
+  - Player avatar, name, position, team.
+  - 4-6 headline stats with inline sparklines.
+  - Team accent gradient background.
+  - Season/career scope label.
+  - Big Fly watermark.
 - [ ] Capture card as PNG via `RenderRepaintBoundary`.
 - [ ] Share via `share_plus` platform share sheet.
 - [ ] Add share action to Player Detail screen (FAB).
@@ -182,31 +182,31 @@ Acceptance:
 ### Backend
 
 - [ ] Add `GET /api/internal/quiz/situation` endpoint:
-    - Pull random historical game state (inning, outs, runners, score, count).
-    - Include actual outcome and win expectancy from materialized view.
+  - Pull random historical game state (inning, outs, runners, score, count).
+  - Include actual outcome and win expectancy from materialized view.
 - [ ] Add `GET /api/internal/quiz/pitch-type` endpoint:
-    - Pull pitch trajectory data for identification challenge.
-    - Include 4 pitch type options with correct answer.
+  - Pull pitch trajectory data for identification challenge.
+  - Include 4 pitch type options with correct answer.
 
 ### Frontend
 
 - [ ] Create Learning Mode hub screen under More tab.
 - [ ] **Rules & Scoring module**: animated diagrams explaining infield fly, balk, tag-up, force play.
-    - Use Rive or Lottie animations for field diagrams.
+  - Use Rive or Lottie animations for field diagrams.
 - [ ] **Pitch identification trainer**:
-    - Simplified pitch tunnel view showing single trajectory.
-    - 4-option multiple choice (e.g., four-seam, slider, changeup, curve).
-    - Difficulty scaling: reduce tunnel time, add similar pitch types.
+  - Simplified pitch tunnel view showing single trajectory.
+  - 4-option multiple choice (e.g., four-seam, slider, changeup, curve).
+  - Difficulty scaling: reduce tunnel time, add similar pitch types.
 - [ ] **Situation quiz**:
-    - Display game state visually (diamond with runners, scoreboard).
-    - User guesses outcome or win probability range.
-    - Reveal actual result + historical win expectancy.
+  - Display game state visually (diamond with runners, scoreboard).
+  - User guesses outcome or win probability range.
+  - Reveal actual result + historical win expectancy.
 - [ ] **Stat explainers**:
-    - Interactive WAR calculator: adjust component inputs, see WAR change.
-    - wOBA breakdown with weighted contribution bars.
+  - Interactive WAR calculator: adjust component inputs, see WAR change.
+  - wOBA breakdown with weighted contribution bars.
 - [ ] **Historical moments**:
-    - Curated list of famous at-bats.
-    - Opens at-bat sequencer with narration overlays.
+  - Curated list of famous at-bats.
+  - Opens at-bat sequencer with narration overlays.
 - [ ] Local progress tracking via Hive (correct answers, streaks, completion %).
 
 Acceptance:
@@ -215,91 +215,89 @@ Acceptance:
 - [ ] Pitch identification trainer uses actual pitch trajectory rendering.
 - [ ] Progress persists across app sessions.
 
-## Phase 7: Internal API Namespace
+## Phase 7: Expanded MLB Proxy Namespace
 
 ### Scaffold
 
-- [ ] Create `internal/api/internal.go` with `InternalRoutes` struct and `RegisterRoutes(mux)`.
-- [ ] Add `X-Internal-Token` header authentication middleware for `/api/internal/*` routes.
-- [ ] Register internal routes in `internal/api/server.go` under `/api/internal/` prefix.
-- [ ] Add MLBAM-to-local ID crosswalk helper using existing `id_crosswalk` table.
+- [ ] Expand `internal/api/mlb.go` with UI-oriented live routes under `/v1/mlb/*`.
+- [ ] Register expanded MLB proxy routes in `internal/api/server.go`.
+- [ ] Add MLBAM-to-local ID crosswalk helpers for players and teams.
 - [ ] Add MLB team ID → team color map (30 teams) as a static Go map.
 
 ### Scoreboard Endpoint
 
-- [ ] Implement `GET /api/internal/scoreboard?date={YYYY-MM-DD}`.
-    - Proxy to `/v1/mlb/schedule` with `hydrate=linescore,team,probablePitcher`.
-    - Map MLB team IDs to local franchise records for color theming.
-    - Extract game status, scores, linescore, venue, probable pitchers.
-    - Cache at 30s TTL.
+- [ ] Implement scoreboard view via `GET /v1/mlb/schedule?date={YYYY-MM-DD}&hydrate=linescore,team,probablePitcher`.
+  - Map MLB team IDs to local franchise records for color theming.
+  - Extract game status, scores, linescore, venue, probable pitchers.
+  - Cache at 30s TTL.
 - [ ] Add `core.InternalScoreboardResponse` type with game cards, team colors, and status.
 
 ### Standings Endpoint
 
-- [ ] Implement `GET /api/internal/standings?season={year}`.
-    - Proxy to `/v1/mlb/standings` with `hydrate=team&standingsTypes=regularSeason`.
-    - Group by division, enrich with team colors and franchise IDs.
-    - Include wins, losses, PCT, GB, wild card GB, streak, run differential, last 10.
-    - Cache at 5min TTL.
+- [ ] Implement standings view via `GET /v1/mlb/standings?season={year}&standingsTypes=regularSeason`.
+  - Use `GET /v1/mlb/crosswalk/teams?season={year}` for local routing IDs.
+  - Group by division, enrich with team colors and franchise IDs.
+  - Include wins, losses, PCT, GB, wild card GB, streak, run differential, last 10.
+  - Cache at 5min TTL.
 - [ ] Add `core.InternalStandingsResponse` type.
 
 ### Live Game Feed Endpoint
 
-- [ ] Implement `GET /api/internal/live/{gamePk}`.
-    - Proxy to MLB game feed (`/api/v1.1/game/{gamePk}/feed/live`).
-    - Extract linescore, current play, recent plays, runners, count.
-    - Merge with local win-probability engine when play-by-play state permits.
-    - Cache at 15s TTL (or no cache for active games).
+- [ ] Implement `GET /v1/mlb/live/{gamePk}`.
+  - Proxy to MLB game feed (`/api/v1.1/game/{gamePk}/feed/live`).
+  - Extract linescore, current play, recent plays, runners, count.
+  - Merge with local win-probability engine when play-by-play state permits.
+  - Cache at 15s TTL (or no cache for active games).
 - [ ] Add `core.InternalLiveGameResponse` type.
 
 ### Leaders Endpoint
 
-- [ ] Implement `GET /api/internal/leaders?season={year}&categories={HR,AVG,ERA,SO}`.
-    - Call `/v1/mlb/stats` with `stats=season&group=hitting|pitching&sortStat={stat}&limit=5` per category.
-    - Crosswalk MLBAM person IDs to local `player_id` for deep linking.
-    - Merge team colors.
-    - Cache at 15min TTL.
+- [ ] Implement leaders view via `GET /v1/mlb/stats` (`stats=season&group=hitting|pitching&sortStat={stat}&limit=5`).
+  - Call `/v1/mlb/stats` with `stats=season&group=hitting|pitching&sortStat={stat}&limit=5` per category.
+  - Crosswalk MLBAM person IDs to local `player_id` for deep linking.
+  - Merge team colors.
+  - Cache at 15min TTL.
 - [ ] Add `core.InternalLeadersResponse` type.
 
 ### Player Live Endpoint
 
-- [ ] Implement `GET /api/internal/player-live/{mlb_id}`.
-    - Fetch current-season stats from `/v1/mlb/people/{id}?hydrate=stats(group=[hitting,pitching],type=season)`.
-    - Crosswalk to local player record for historical context.
-    - Return merged bio + current stats + historical summary.
-    - Cache at 5min TTL.
+- [ ] Implement current player card via `GET /v1/mlb/people/{mlb_id}?hydrate=stats(group=[hitting,pitching],type=season)`.
+  - Fetch current-season stats from `/v1/mlb/people/{id}?hydrate=stats(group=[hitting,pitching],type=season)`.
+  - Crosswalk to local player record for historical context.
+  - Return merged bio + current stats + historical summary.
+  - Cache at 5min TTL.
 - [ ] Add `core.InternalPlayerLiveResponse` type.
 
 ### Team Live Endpoint
 
-- [ ] Implement `GET /api/internal/team-live/{mlb_id}`.
-    - Fetch current team info from `/v1/mlb/teams/{id}`.
-    - Crosswalk to local franchise record.
-    - Return merged team info + franchise history + team colors.
-    - Cache at 5min TTL.
+- [ ] Implement team live card via `GET /v1/mlb/teams/{mlb_id}`.
+  - Fetch current team info from `/v1/mlb/teams/{id}`.
+  - Crosswalk to local franchise record.
+  - Return merged team info + franchise history + team colors.
+  - Cache at 5min TTL.
 - [ ] Add `core.InternalTeamLiveResponse` type.
 
 Acceptance:
 
-- [ ] All internal endpoints return shaped payloads matching spec response schemas.
+- [ ] Expanded `/v1/mlb/*` routes return shaped payloads matching spec response schemas.
 - [ ] MLBAM → local ID crosswalk works for players and teams.
 - [ ] Cache TTLs are respected per endpoint group.
-- [ ] Internal auth middleware rejects requests without valid app token.
+- [ ] Expanded MLB proxy routes follow standard `/v1/*` auth and rate-limit behavior.
 
 ## Phase 8: Live Scoreboard (Mobile)
 
 ### Frontend
 
 - [ ] Create `ScoreboardWidget` for Home tab:
-    - Horizontal `PageView` of game cards.
-    - Each card shows team abbreviations, scores, inning/status, and linescore row.
-    - Team primary colors as gradient accents on each card.
-    - "LIVE" badge with pulse animation on in-progress games.
-    - "Final" / "Scheduled" badges for completed/upcoming games.
+  - Horizontal `PageView` of game cards.
+  - Each card shows team abbreviations, scores, inning/status, and linescore row.
+  - Team primary colors as gradient accents on each card.
+  - "LIVE" badge with pulse animation on in-progress games.
+  - "Final" / "Scheduled" badges for completed/upcoming games.
 - [ ] Implement `ScoreboardBloc`:
-    - Fetch from `GET /api/internal/scoreboard?date={today}`.
-    - Auto-refresh every 30s when `games_in_progress > 0`.
-    - Cache last response in Hive for offline display.
+  - Fetch from `GET /v1/mlb/schedule?date={today}&hydrate=linescore,team,probablePitcher`.
+  - Auto-refresh every 30s when `games_in_progress > 0`.
+  - Cache last response in Hive for offline display.
 - [ ] Tap game card → navigate to Live Game Tracker (in progress) or Game Detail (final).
 - [ ] Pull-to-refresh gesture.
 - [ ] Haptic tick on score changes between refreshes.
@@ -317,14 +315,14 @@ Acceptance:
 
 - [ ] Create `StandingsScreen` accessible from Teams tab (segment control: Standings / Franchises).
 - [ ] Division-grouped list with collapsible sections:
-    - Row per team: rank, team name (with color dot), W, L, PCT, GB, WC GB, streak, L10.
-    - Division leader indicator.
-    - Wild card separator line.
+  - Row per team: rank, team name (with color dot), W, L, PCT, GB, WC GB, streak, L10.
+  - Division leader indicator.
+  - Wild card separator line.
 - [ ] Segment control: AL / NL / Both.
 - [ ] Sort by any column (tap header).
 - [ ] Implement `StandingsBloc`:
-    - Fetch from `GET /api/internal/standings?season={current}`.
-    - Cache in Hive for offline.
+  - Fetch from `GET /v1/mlb/standings?season={current}&standingsTypes=regularSeason`.
+  - Cache in Hive for offline.
 - [ ] Tap team row → Team Detail with current-season year pre-selected.
 - [ ] Haptic on section collapse/expand.
 
@@ -339,16 +337,16 @@ Acceptance:
 ### Frontend
 
 - [ ] Create `LiveGameScreen`:
-    - Scoreboard header with full linescore grid (innings × team).
-    - Diamond `CustomPainter`: infield diamond with filled/empty base indicators.
-    - Count `CustomPainter`: balls (green dots), strikes (red dots), outs (white dots).
-    - Current play description with animated text transition (`AnimatedSwitcher`).
-    - Win probability sparkline (`fl_chart` `LineChart`) updating in real-time.
-    - Scrollable recent plays list.
+  - Scoreboard header with full linescore grid (innings × team).
+  - Diamond `CustomPainter`: infield diamond with filled/empty base indicators.
+  - Count `CustomPainter`: balls (green dots), strikes (red dots), outs (white dots).
+  - Current play description with animated text transition (`AnimatedSwitcher`).
+  - Win probability sparkline (`fl_chart` `LineChart`) updating in real-time.
+  - Scrollable recent plays list.
 - [ ] Implement `LiveGameBloc`:
-    - Fetch from `GET /api/internal/live/{gamePk}`.
-    - Auto-refresh every 15s during active games.
-    - Stop auto-refresh when game status is Final or Scheduled.
+  - Fetch from `GET /v1/mlb/live/{gamePk}`.
+  - Auto-refresh every 15s during active games.
+  - Stop auto-refresh when game status is Final or Scheduled.
 - [ ] Tap win probability chart → expand to full-screen view.
 - [ ] Tap play in recent list → play detail bottom sheet.
 - [ ] Haptic bump on scoring plays and third outs.
@@ -367,14 +365,14 @@ Acceptance:
 ### Frontend
 
 - [ ] Create `LeadersWidget` for Home tab (below scoreboard):
-    - Horizontal `PageView` of stat category cards.
-    - Chip row above cards for category selection.
-    - Each card: ranked list of 5 players with team-colored accent bars.
-    - Hitting categories: HR, AVG, OPS, RBI, SB.
-    - Pitching categories: ERA, SO, W, SV, WHIP.
+  - Horizontal `PageView` of stat category cards.
+  - Chip row above cards for category selection.
+  - Each card: ranked list of 5 players with team-colored accent bars.
+  - Hitting categories: HR, AVG, OPS, RBI, SB.
+  - Pitching categories: ERA, SO, W, SV, WHIP.
 - [ ] Implement `LeadersBloc`:
-    - Fetch from `GET /api/internal/leaders?season={current}&categories=HR,AVG,ERA,SO`.
-    - Cache in Hive; refresh on pull-to-refresh.
+  - Fetch from `GET /v1/mlb/stats` category queries for season leaders.
+  - Cache in Hive; refresh on pull-to-refresh.
 - [ ] Tap player row → Player Detail (via crosswalked `player_id`).
 - [ ] Swipe or tap chip to change category.
 
@@ -387,33 +385,33 @@ Acceptance:
 ## Phase 12: Design Updates
 
 - [ ] Add spray chart screen to `docs/designs/mobile/`:
-    - Full-field view with park overlay and hit dots.
-    - Filter controls and detail bottom sheet.
+  - Full-field view with park overlay and hit dots.
+  - Filter controls and detail bottom sheet.
 - [ ] Add pitch tunnel screen:
-    - Batter's-eye perspective with multiple colored trajectories.
-    - View rotation controls and time scrubber.
+  - Batter's-eye perspective with multiple colored trajectories.
+  - View rotation controls and time scrubber.
 - [ ] Add at-bat sequencer screen:
-    - Strike zone with plotted pitches and timeline.
-    - Auto-play and manual controls.
+  - Strike zone with plotted pitches and timeline.
+  - Auto-play and manual controls.
 - [ ] Add stat card screen:
-    - Card template with pixel-art avatar.
-    - Share action.
+  - Card template with pixel-art avatar.
+  - Share action.
 - [ ] Add learning mode screens:
-    - Hub with module tiles.
-    - Pitch identification trainer.
-    - Situation quiz with diamond visualization.
+  - Hub with module tiles.
+  - Pitch identification trainer.
+  - Situation quiz with diamond visualization.
 - [ ] Add live scoreboard screen:
-    - Horizontal game card carousel with team colors and linescore.
-    - LIVE badge, score display, inning indicator.
+  - Horizontal game card carousel with team colors and linescore.
+  - LIVE badge, score display, inning indicator.
 - [ ] Add standings screen:
-    - Division-grouped table with sortable columns.
-    - AL/NL segment control.
+  - Division-grouped table with sortable columns.
+  - AL/NL segment control.
 - [ ] Add live game tracker screen:
-    - Linescore grid, diamond with runners, count dots.
-    - Win probability sparkline.
-    - Recent plays list.
+  - Linescore grid, diamond with runners, count dots.
+  - Win probability sparkline.
+  - Recent plays list.
 - [ ] Add today's leaders widget:
-    - Stat category cards with ranked player lists.
+  - Stat category cards with ranked player lists.
 - [ ] Update `docs/designs/mobile/index.html` to include new screens in the gallery.
 - [ ] Update `docs/designs/mobile/players.html` to show spray chart and pitch tunnel tabs.
 - [ ] Update `docs/designs/mobile/games.html` to show at-bat sequencer and live game tracker entry points.

@@ -1,14 +1,22 @@
 <script lang="ts">
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
+  import StandingsPanel from '$lib/components/StandingsPanel.svelte';
   import { STATIC_ERAS } from '$lib/eras';
 </script>
 
-<div class="flex h-full flex-col items-center justify-center gap-3 text-center">
-  <div class="font-display text-[1.1rem] text-muted">Team & Franchise Explorer</div>
-  <p class="max-w-xs font-mono text-[0.78rem] text-muted/60">Search for a team or select a franchise in the sidebar.</p>
-  <div class="mt-2 flex flex-wrap justify-center gap-1.5">
-    {#each STATIC_ERAS as era (era.code)}
-      <EraRangeChip {era} />
-    {/each}
+<div class="flex h-full flex-col gap-4">
+  <StandingsPanel />
+
+  <div
+    class="flex flex-col items-center justify-center gap-3 rounded-lg border border-outline bg-crust p-4 text-center">
+    <div class="font-display text-[1.1rem] text-muted">Team & Franchise Explorer</div>
+    <p class="max-w-xs font-mono text-[0.78rem] text-muted/60">
+      Search for a team or select a franchise in the sidebar.
+    </p>
+    <div class="mt-2 flex flex-wrap justify-center gap-1.5">
+      {#each STATIC_ERAS as era (era.code)}
+        <EraRangeChip {era} />
+      {/each}
+    </div>
   </div>
 </div>

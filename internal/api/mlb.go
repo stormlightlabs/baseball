@@ -1,11 +1,14 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"stormlightlabs.org/baseball/internal/cache"
@@ -19,6 +22,7 @@ var mlbProxyCatalog = []core.MLBProxyCatalogItem{
 	{Route: "/v1/mlb/people/{id}", Target: "/v1/people/{personId}", Description: "Single player lookup"},
 	{Route: "/v1/mlb/teams", Target: "/v1/teams", Description: "MLB team reference and roster metadata"},
 	{Route: "/v1/mlb/teams/{id}", Target: "/v1/teams/{teamId}", Description: "Single team details"},
+	{Route: "/v1/mlb/crosswalk/teams", Target: "local+mlb", Description: "Crosswalk MLB team IDs to local team/franchise IDs"},
 	{Route: "/v1/mlb/schedule", Target: "/v1/schedule", Description: "Daily/season schedule with game metadata"},
 	{Route: "/v1/mlb/seasons", Target: "/v1/seasons", Description: "Season directory with league/division data"},
 	{Route: "/v1/mlb/stats", Target: "/v1/stats", Description: "MLB-wide stats queries"},
@@ -30,16 +34,18 @@ var mlbProxyCatalog = []core.MLBProxyCatalogItem{
 
 // MLBRoutes proxies select statsapi.mlb.com endpoints through /v1/mlb with HTTP caching
 type MLBRoutes struct {
-	client  *http.Client
-	cache   *cache.Client
-	baseURL string
+	client   *http.Client
+	cache    *cache.Client
+	teamRepo core.TeamRepository
+	baseURL  string
 }
 
-func NewMLBStatsAPIRoutes(cacheClient *cache.Client) *MLBRoutes {
+func NewMLBStatsAPIRoutes(cacheClient *cache.Client, teamRepo core.TeamRepository) *MLBRoutes {
 	return &MLBRoutes{
-		client:  &http.Client{Timeout: 10 * time.Second},
-		cache:   cacheClient,
-		baseURL: mlbStatsAPIBase,
+		client:   &http.Client{Timeout: 10 * time.Second},
+		cache:    cacheClient,
+		teamRepo: teamRepo,
+		baseURL:  mlbStatsAPIBase,
 	}
 }
 
@@ -49,6 +55,7 @@ func (mr *MLBRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/mlb/people/{id}", mr.handleMLBPerson)
 	mux.HandleFunc("GET /v1/mlb/teams", mr.handleMLBTeams)
 	mux.HandleFunc("GET /v1/mlb/teams/{id}", mr.handleMLBTeam)
+	mux.HandleFunc("GET /v1/mlb/crosswalk/teams", mr.handleMLBTeamCrosswalk)
 	mux.HandleFunc("GET /v1/mlb/schedule", mr.handleMLBSchedule)
 	mux.HandleFunc("GET /v1/mlb/seasons", mr.handleMLBSeasons)
 	mux.HandleFunc("GET /v1/mlb/stats", mr.handleMLBStats)
@@ -67,10 +74,10 @@ func (mr *MLBRoutes) RegisterRoutes(mux *http.ServeMux) {
 //	@Success		200	{object}	core.MLBOverviewResponse
 //	@Router			/mlb [get]
 func (mr *MLBRoutes) handleMLBOverview(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{
-		"base_url": "/v1/mlb",
-		"target":   mlbStatsAPIBase,
-		"routes":   mlbProxyCatalog,
+	writeJSON(w, http.StatusOK, core.MLBOverviewResponse{
+		BaseURL: "/v1/mlb",
+		Target:  mlbStatsAPIBase,
+		Routes:  mlbProxyCatalog,
 	})
 }
 
@@ -215,6 +222,288 @@ func (mr *MLBRoutes) handleMLBTeam(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, statusCode, result)
 }
 
+var mlbToLocalTeamCodeCandidates = map[string][]string{
+	"ARI": {"ARI"},
+	"ATL": {"ATL"},
+	"BAL": {"BAL"},
+	"BOS": {"BOS"},
+	"CHC": {"CHN", "CHC"},
+	"CWS": {"CHA", "CHW"},
+	"CIN": {"CIN"},
+	"CLE": {"CLE"},
+	"COL": {"COL"},
+	"DET": {"DET"},
+	"HOU": {"HOU"},
+	"KC":  {"KCA", "KCR"},
+	"LAA": {"LAA", "ANA"},
+	"LAD": {"LAN", "LAD"},
+	"MIA": {"MIA", "FLO"},
+	"MIL": {"MIL"},
+	"MIN": {"MIN"},
+	"NYM": {"NYN", "NYM"},
+	"NYY": {"NYA", "NYY"},
+	"ATH": {"OAK", "ATH"},
+	"PHI": {"PHI"},
+	"PIT": {"PIT"},
+	"SD":  {"SDN", "SDP"},
+	"SEA": {"SEA"},
+	"SF":  {"SFN", "SFG"},
+	"STL": {"SLN", "STL"},
+	"TB":  {"TBA", "TBD", "TBR"},
+	"TEX": {"TEX"},
+	"TOR": {"TOR"},
+	"WSH": {"WAS", "WSN"},
+}
+
+type localTeamLookup struct {
+	byTeamID      map[string]core.TeamSeason
+	byFranchiseID map[string]core.TeamSeason
+	byName        map[string]core.TeamSeason
+}
+
+func normalizeMLBLookupKey(value string) string {
+	if value == "" {
+		return ""
+	}
+
+	upper := strings.ToUpper(value)
+	var b strings.Builder
+	b.Grow(len(upper))
+	for _, r := range upper {
+		if (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+func buildLocalTeamLookup(localTeams []core.TeamSeason) localTeamLookup {
+	lookup := localTeamLookup{
+		byTeamID:      make(map[string]core.TeamSeason, len(localTeams)),
+		byFranchiseID: make(map[string]core.TeamSeason, len(localTeams)),
+		byName:        make(map[string]core.TeamSeason, len(localTeams)),
+	}
+
+	for _, localTeam := range localTeams {
+		teamID := normalizeMLBLookupKey(string(localTeam.TeamID))
+		if teamID != "" {
+			lookup.byTeamID[teamID] = localTeam
+		}
+
+		franchiseID := normalizeMLBLookupKey(string(localTeam.FranchiseID))
+		if franchiseID != "" {
+			lookup.byFranchiseID[franchiseID] = localTeam
+		}
+
+		teamName := normalizeMLBLookupKey(localTeam.Name)
+		if teamName != "" {
+			lookup.byName[teamName] = localTeam
+		}
+	}
+
+	return lookup
+}
+
+func localCodeCandidatesForMLBTeam(team core.MLBTeam) []string {
+	seen := map[string]struct{}{}
+	add := func(raw string, out *[]string) {
+		normalized := normalizeMLBLookupKey(raw)
+		if normalized == "" {
+			return
+		}
+		if _, exists := seen[normalized]; exists {
+			return
+		}
+		seen[normalized] = struct{}{}
+		*out = append(*out, normalized)
+	}
+
+	var candidates []string
+	add(team.Abbreviation, &candidates)
+	add(team.TeamCode, &candidates)
+	add(team.FileCode, &candidates)
+
+	if known := mlbToLocalTeamCodeCandidates[normalizeMLBLookupKey(team.Abbreviation)]; len(known) > 0 {
+		for _, candidate := range known {
+			add(candidate, &candidates)
+		}
+	}
+
+	return candidates
+}
+
+func localNameCandidatesForMLBTeam(team core.MLBTeam) []string {
+	seen := map[string]struct{}{}
+	add := func(raw string, out *[]string) {
+		normalized := normalizeMLBLookupKey(raw)
+		if normalized == "" {
+			return
+		}
+		if _, exists := seen[normalized]; exists {
+			return
+		}
+		seen[normalized] = struct{}{}
+		*out = append(*out, normalized)
+	}
+
+	var candidates []string
+	add(team.Name, &candidates)
+	add(team.FranchiseName, &candidates)
+	add(team.ClubName, &candidates)
+	add(team.TeamName, &candidates)
+	add(team.ShortName, &candidates)
+
+	if team.LocationName != "" && team.TeamName != "" {
+		add(fmt.Sprintf("%s %s", team.LocationName, team.TeamName), &candidates)
+	}
+	return candidates
+}
+
+func (mr *MLBRoutes) resolveLocalTeamSeason(ctx context.Context, requestedSeason int) (int, []core.TeamSeason, error) {
+	if mr.teamRepo == nil {
+		return requestedSeason, nil, nil
+	}
+
+	requested := core.SeasonYear(requestedSeason)
+	filter := core.TeamFilter{Year: &requested, Pagination: *core.NewPagination(1, 200)}
+	localTeams, err := mr.teamRepo.ListTeamSeasons(ctx, filter)
+	if err != nil {
+		return requestedSeason, nil, err
+	}
+	if len(localTeams) > 0 {
+		return requestedSeason, localTeams, nil
+	}
+
+	latestRows, err := mr.teamRepo.ListTeamSeasons(ctx, core.TeamFilter{Pagination: *core.NewPagination(1, 1)})
+	if err != nil {
+		return requestedSeason, nil, err
+	}
+	if len(latestRows) == 0 {
+		return requestedSeason, nil, nil
+	}
+
+	resolvedSeason := int(latestRows[0].Year)
+	resolved := core.SeasonYear(resolvedSeason)
+	localTeams, err = mr.teamRepo.ListTeamSeasons(ctx, core.TeamFilter{Year: &resolved, Pagination: *core.NewPagination(1, 200)})
+	if err != nil {
+		return requestedSeason, nil, err
+	}
+
+	return resolvedSeason, localTeams, nil
+}
+
+// handleMLBTeamCrosswalk godoc
+//
+//	@Summary		MLB team ID crosswalk
+//	@Description	Map MLB Stats API team IDs/abbreviations to local team_id and franchise_id for a season.
+//	@Tags			mlb
+//	@Accept			json
+//	@Produce		json
+//	@Param			season	query		integer	false	"Season year (defaults to current year)"
+//	@Success		200		{object}	core.MLBTeamCrosswalkResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/mlb/crosswalk/teams [get]
+func (mr *MLBRoutes) handleMLBTeamCrosswalk(w http.ResponseWriter, r *http.Request) {
+	target, err := url.JoinPath(mr.baseURL, "v1", "teams")
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	requestedSeason := getIntQuery(r, "season", time.Now().Year())
+	upstreamRequest := r.Clone(r.Context())
+	query := upstreamRequest.URL.Query()
+	query.Set("season", strconv.Itoa(requestedSeason))
+	upstreamRequest.URL.RawQuery = query.Encode()
+
+	body, statusCode, err := mr.fetchFromMLB(upstreamRequest, target)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	var mlbTeams core.MLBTeamsResponse
+	if err := json.Unmarshal(body, &mlbTeams); err != nil {
+		writeInternalServerError(w, fmt.Errorf("failed to parse MLB teams response: %w", err))
+		return
+	}
+
+	localSeason, localTeams, err := mr.resolveLocalTeamSeason(r.Context(), requestedSeason)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	localLookup := buildLocalTeamLookup(localTeams)
+	response := core.MLBTeamCrosswalkResponse{
+		RequestedSeason: requestedSeason,
+		LocalSeason:     localSeason,
+		Rows:            make([]core.MLBTeamCrosswalkRow, 0, len(mlbTeams.Teams)),
+	}
+
+	for _, mlbTeam := range mlbTeams.Teams {
+		row := core.MLBTeamCrosswalkRow{
+			MLBTeamID:        mlbTeam.ID,
+			MLBAbbreviation:  mlbTeam.Abbreviation,
+			MLBTeamCode:      mlbTeam.TeamCode,
+			MLBFileCode:      mlbTeam.FileCode,
+			MLBTeamName:      mlbTeam.Name,
+			MLBFranchiseName: mlbTeam.FranchiseName,
+			MLBClubName:      mlbTeam.ClubName,
+		}
+
+		var matchedTeam core.TeamSeason
+		matched := false
+		for _, candidate := range localCodeCandidatesForMLBTeam(mlbTeam) {
+			if team, ok := localLookup.byTeamID[candidate]; ok {
+				matchedTeam = team
+				row.MatchMethod = "team_id"
+				row.Confidence = "high"
+				matched = true
+				break
+			}
+			if team, ok := localLookup.byFranchiseID[candidate]; ok {
+				matchedTeam = team
+				row.MatchMethod = "franchise_id"
+				row.Confidence = "high"
+				matched = true
+				break
+			}
+		}
+
+		if !matched {
+			for _, candidate := range localNameCandidatesForMLBTeam(mlbTeam) {
+				if team, ok := localLookup.byName[candidate]; ok {
+					matchedTeam = team
+					row.MatchMethod = "name"
+					row.Confidence = "medium"
+					matched = true
+					break
+				}
+			}
+		}
+
+		if matched {
+			localTeamID := matchedTeam.TeamID
+			localFranchiseID := matchedTeam.FranchiseID
+			localLeague := matchedTeam.League
+			row.LocalTeamID = &localTeamID
+			row.LocalFranchiseID = &localFranchiseID
+			row.LocalLeague = &localLeague
+			row.LocalTeamName = matchedTeam.Name
+			response.Matched++
+		} else {
+			row.Confidence = "none"
+			response.Unmatched++
+		}
+
+		response.Rows = append(response.Rows, row)
+	}
+
+	w.Header().Set("X-Proxy-Target", "statsapi.mlb.com")
+	writeJSON(w, statusCode, response)
+}
+
 // handleMLBSchedule godoc
 //
 //	@Summary		MLB schedule
@@ -227,7 +516,7 @@ func (mr *MLBRoutes) handleMLBTeam(w http.ResponseWriter, r *http.Request) {
 //	@Param			season	query		string	false	"Season year"
 //	@Param			date	query		string	false	"Specific date (YYYY-MM-DD)"
 //	@Param			hydrate	query		string	false	"Hydrate payload sections (e.g. linescore,team)"
-//	@Success		200		{object}	map[string]any
+//	@Success		200		{object}	core.MLBScheduleResponse
 //	@Failure		500		{object}	ErrorResponse
 //	@Router			/mlb/schedule [get]
 func (mr *MLBRoutes) handleMLBSchedule(w http.ResponseWriter, r *http.Request) {
@@ -243,7 +532,7 @@ func (mr *MLBRoutes) handleMLBSchedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var result map[string]any
+	var result core.MLBScheduleResponse
 	if err := json.Unmarshal(body, &result); err != nil {
 		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return
@@ -299,7 +588,7 @@ func (mr *MLBRoutes) handleMLBSeasons(w http.ResponseWriter, r *http.Request) {
 //	@Param			group		query		string	true	"Grouping (e.g., hitting, pitching)"
 //	@Param			season		query		string	false	"Season year"
 //	@Param			gameType	query		string	false	"Game type (R, S, etc.)"
-//	@Success		200			{object}	map[string]any
+//	@Success		200			{object}	core.MLBStatsResponse
 //	@Failure		500			{object}	ErrorResponse
 //	@Router			/mlb/stats [get]
 func (mr *MLBRoutes) handleMLBStats(w http.ResponseWriter, r *http.Request) {
@@ -315,7 +604,7 @@ func (mr *MLBRoutes) handleMLBStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var result map[string]any // Stats endpoint has variable structure
+	var result core.MLBStatsResponse
 	if err := json.Unmarshal(body, &result); err != nil {
 		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return

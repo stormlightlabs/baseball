@@ -2,6 +2,9 @@
 title: Parking Lot
 ---
 
+Should the color hex/hue in `team-branding.ts` be in sync with `colors.dart` between
+codebases?
+
 ## Mobile
 
 Default Player should be `ohtansh01` (Shohei Ohtani).

@@ -8,6 +8,8 @@
   /* FIXME: this can be font-sans */
   --font-sans: 'Inter Variable', sans-serif;
 
+  --text-xxs: 0.65rem;
+
   --color-mantle: #0d0f13;
   --color-crust: #13161c;
   --color-surface: #1a1e27;

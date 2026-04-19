@@ -290,25 +290,27 @@ Ref: `docs/designs/data-sources.html`
 
 ### Home: Today's Leaders
 
-- [ ] Create `LeaderCards` component:
+- [x] Create `LeaderCards` component:
   - Tabbed panel with one tab per stat category.
   - Each tab: ranked top-5 list with player name, team abbreviation, stat value.
   - Player names link to `/players/[id]/batting` or `/pitching` via crosswalk.
   - Hitting tabs: HR, AVG, OPS, RBI, SB.
   - Pitching tabs: ERA, SO, W, SV, WHIP.
-- [ ] Fetch from `GET /api/internal/leaders?season={current}&categories=HR,AVG,ERA,SO`.
-- [ ] Add leaders panel to Home page below scoreboard.
+- [x] Fetch via MLB proxy:
+  - `GET /v1/mlb/stats?stats=season&group=hitting&season={current}&playerPool=qualified`
+  - `GET /v1/mlb/stats?stats=season&group=pitching&season={current}&playerPool=qualified`
+- [x] Add leaders panel to Home page below scoreboard.
 
 ### Teams: Current Standings
 
-- [ ] Create `StandingsPanel` component:
+- [x] Create `StandingsPanel` component:
   - Sortable tables grouped by division (collapsible sections).
   - Columns: Rank, Team (with color dot), W, L, PCT, GB, WC GB, Streak, Run Diff, L10.
   - Division leader highlight.
   - Segment control: AL / NL / Both.
-- [ ] Fetch from `GET /api/internal/standings?season={current}`.
-- [ ] Team name links to `/teams/[franchise_id]` with current year.
-- [ ] Add as segment/tab on Teams page alongside existing franchise and team-season views.
+- [x] Fetch from `GET /v1/mlb/standings?season={current}&standingsTypes=regularSeason`.
+- [x] Team name links to `/teams/[franchise_id]` with current year when crosswalkable (fallback: `/teams?q=`).
+- [x] Add standings panel on Teams landing view alongside existing franchise and team-season flows.
 
 ### Games: Live Game Overlay
 
@@ -319,7 +321,7 @@ Ref: `docs/designs/data-sources.html`
     - Render the copyright attribution
   - Dismissible toggle to switch between live overlay and historical view.
 - [ ] Detect live game: when viewing a game detail, check if the game crosswalks to an active `gamePk`.
-- [ ] Fetch from `GET /api/internal/live/{gamePk}`.
+- [ ] Fetch from `GET /v1/mlb/live/{gamePk}` (expanded MLB proxy route).
 - [ ] Auto-refresh 15s during in-progress games.
 
 ### Players: Current Season Stats
@@ -331,18 +333,18 @@ Ref: `docs/designs/data-sources.html`
   - "Live data from MLB" badge.
   - Render the copyright attribution
 - [ ] On Player Detail load, check if player has an active `mlb_id` via crosswalk.
-- [ ] If active, fetch from `GET /api/internal/player-live/{mlb_id}`.
+- [ ] If active, fetch from `GET /v1/mlb/people/{mlb_id}?hydrate=stats(group=[hitting,pitching],type=season)` and enrich with local lookup.
 - [ ] Render above historical stats tabs.
 - [ ] Hide card when player is not active in current season.
 
 ### Endpoint Map Update
 
-| Page    | New endpoint families                               |
-| ------- | --------------------------------------------------- |
-| Home    | `/api/internal/scoreboard`, `/api/internal/leaders` |
-| Teams   | `/api/internal/standings`                           |
-| Games   | `/api/internal/live/{gamePk}`                       |
-| Players | `/api/internal/player-live/{mlb_id}`                |
+| Page    | New endpoint families                                           |
+| ------- | --------------------------------------------------------------- |
+| Home    | `/v1/mlb/schedule`, `/v1/mlb/stats`, `/v1/mlb/teams`            |
+| Teams   | `/v1/mlb/standings`, `/v1/mlb/teams`, `/v1/mlb/crosswalk/teams` |
+| Games   | `/v1/mlb/live/{gamePk}`                                         |
+| Players | `/v1/mlb/people/{mlb_id}`                                       |
 
 ## Cross-Cutting
 
@@ -360,15 +362,15 @@ Ref: `docs/designs/data-sources.html`
 
 ## Endpoint Map by Page
 
-| Page         | Endpoint families                                                                                                              |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| Home         | `/api/v1/meta`, `/api/v1/meta/datasets`, `/api/v1/search/*`, `/api/internal/scoreboard`, `/api/internal/leaders`               |
-| Players      | `/api/v1/search/players`, `/api/v1/players/*`, computed/derived player endpoints, `/api/internal/player-live/*`                |
-| Teams        | `/api/v1/franchises/*`, `/api/v1/search/teams`, `/api/v1/teams/*`, `/api/v1/seasons/{year}/teams/*`, `/api/internal/standings` |
-| Games        | `/api/v1/games*`, `/api/v1/search/games`, `/api/v1/seasons/{year}/*games*`, win-probability/leverage, `/api/internal/live/*`   |
-| Seasons      | `/api/v1/seasons`, `/api/v1/seasons/{year}/teams`, leaders, schedule, awards, postseason                                       |
-| Leaders      | `/api/v1/stats/*`, `/api/v1/leaders/*/career`, `/api/v1/seasons/{season}/leaders/*advanced*`                                   |
-| Compare      | Player/team/season endpoints + `/api/v1/win-expectancy*`                                                                       |
-| API Docs     | Swagger UI docsite at `/api/v1/docs/`                                                                                          |
-| Data Sources | `/api/v1/meta/datasets`, `/api/v1/win-expectancy/eras`, league-specific families                                               |
-| Account      | `/api/v1/auth/*`                                                                                                               |
+| Page         | Endpoint families                                                                                                                                   |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home         | `/api/v1/meta`, `/api/v1/meta/datasets`, `/api/v1/search/*`, `/v1/mlb/schedule`, `/v1/mlb/stats`, `/v1/mlb/teams`                                   |
+| Players      | `/api/v1/search/players`, `/api/v1/players/*`, computed/derived player endpoints, `/v1/mlb/people/*`                                                |
+| Teams        | `/api/v1/franchises/*`, `/api/v1/search/teams`, `/api/v1/teams/*`, `/api/v1/seasons/{year}/teams/*`, `/v1/mlb/standings`, `/v1/mlb/crosswalk/teams` |
+| Games        | `/api/v1/games*`, `/api/v1/search/games`, `/api/v1/seasons/{year}/*games*`, win-probability/leverage, `/v1/mlb/live/*`                              |
+| Seasons      | `/api/v1/seasons`, `/api/v1/seasons/{year}/teams`, leaders, schedule, awards, postseason                                                            |
+| Leaders      | `/api/v1/stats/*`, `/api/v1/leaders/*/career`, `/api/v1/seasons/{season}/leaders/*advanced*`                                                        |
+| Compare      | Player/team/season endpoints + `/api/v1/win-expectancy*`                                                                                            |
+| API Docs     | Swagger UI docsite at `/api/v1/docs/`                                                                                                               |
+| Data Sources | `/api/v1/meta/datasets`, `/api/v1/win-expectancy/eras`, league-specific families                                                                    |
+| Account      | `/api/v1/auth/*`                                                                                                                                    |

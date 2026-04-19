@@ -1,11 +1,13 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { apiFetch } from '$lib/api';
+  import { EP } from '$lib/endpoints';
   import type { ScoreboardGame, ScoreboardSnapshot } from '$lib/home/scoreboard';
   import { normalizeScoreboardResponse, todayLocalISODate } from '$lib/home/scoreboard';
   import { onMount } from 'svelte';
 
-  const SCOREBOARD_ENDPOINT = '/v1/mlb/schedule';
+  const SCOREBOARD_ENDPOINT = EP.mlbSchedule;
   const SCOREBOARD_HYDRATE = 'linescore,team';
   const REFRESH_INTERVAL_MS = 30_000;
 
@@ -75,16 +77,7 @@
 
     try {
       const date = todayLocalISODate();
-      const params = new URLSearchParams({ date, hydrate: SCOREBOARD_HYDRATE });
-      const response = await fetch(`${SCOREBOARD_ENDPOINT}?${params.toString()}`, { credentials: 'include' });
-      if (!response.ok) {
-        const fallback = `HTTP ${response.status}`;
-        const body = await response.json().catch(() => ({ error: fallback }));
-        const message = typeof body.error === 'string' ? body.error : fallback;
-        throw new Error(message);
-      }
-
-      const payload = await response.json();
+      const payload = await apiFetch<unknown>(SCOREBOARD_ENDPOINT, { date, hydrate: SCOREBOARD_HYDRATE });
       snapshot = normalizeScoreboardResponse(payload);
       errorMessage = null;
       lastUpdatedAt = Date.now();
@@ -187,7 +180,7 @@
       </div>
       <p class="text-[0.75rem] text-muted">Today: {displayDate(snapshot.date)}</p>
       <p class="font-mono text-[0.63rem] text-muted">
-        {SCOREBOARD_ENDPOINT}?date={todayLocalISODate()}&hydrate={SCOREBOARD_HYDRATE}
+        /v1{SCOREBOARD_ENDPOINT}?date={todayLocalISODate()}&hydrate={SCOREBOARD_HYDRATE}
       </p>
     </div>
 
@@ -249,7 +242,7 @@
               )}"
               onclick={() => void openGameCard(game)}>
               <div class="mb-2 flex items-center justify-between gap-2">
-                <div class="truncate font-mono text-[0.65rem] uppercase {gameStatusToneClass(game)}">
+                <div class="truncate font-mono text-xxs uppercase {gameStatusToneClass(game)}">
                   {gameStatusLabel(game)}
                 </div>
                 {#if game.isInProgress}
@@ -284,7 +277,7 @@
               <div class="mt-2 rounded-md border border-outline bg-mantle px-2 py-2">
                 <p class="font-mono text-[0.62rem] text-warning uppercase">MLB-only live detail</p>
                 <p class="mt-1 text-[0.7rem] text-muted">No Retrosheet crosswalk is available for this game yet.</p>
-                <div class="mt-1 space-y-0.5 font-mono text-[0.65rem] text-foreground">
+                <div class="mt-1 space-y-0.5 font-mono text-xxs text-foreground">
                   <p>Matchup: {game.away.abbreviation} @ {game.home.abbreviation}</p>
                   <p>gamePk: {game.gamePk ?? '-'}</p>
                   <p>Status: {game.statusText}</p>

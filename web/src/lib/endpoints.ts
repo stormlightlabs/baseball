@@ -109,7 +109,12 @@ export const EP = {
   authKeys: '/auth/keys' as const,
   authKey: (id: string) => `/auth/keys/${id}` as const,
 
-  mlb: '/mlb' as const
+  mlb: '/mlb' as const,
+  mlbTeams: '/mlb/teams' as const,
+  mlbTeamCrosswalk: '/mlb/crosswalk/teams' as const,
+  mlbSchedule: '/mlb/schedule' as const,
+  mlbStats: '/mlb/stats' as const,
+  mlbStandings: '/mlb/standings' as const
 } as const;
 
 export const PARAMS = {

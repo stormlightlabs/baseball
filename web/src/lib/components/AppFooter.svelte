@@ -10,7 +10,7 @@
 <footer class="border-t border-outline bg-crust">
   <div class="mx-auto grid w-full max-w-6xl gap-6 p-4 sm:px-6 lg:grid-cols-3 lg:gap-8 lg:px-8">
     <section class="space-y-2">
-      <h2 class="font-mono text-[0.65rem] tracking-[0.08em] text-muted uppercase">Stormlight Labs</h2>
+      <h2 class="font-mono text-xxs tracking-[0.08em] text-muted uppercase">Stormlight Labs</h2>
       <ul class="m-0 list-none space-y-1 p-0">
         <li>
           <a
@@ -37,7 +37,7 @@
     </section>
 
     <section class="space-y-2">
-      <h2 class="font-mono text-[0.65rem] tracking-[0.08em] text-muted uppercase">Learn</h2>
+      <h2 class="font-mono text-xxs tracking-[0.08em] text-muted uppercase">Learn</h2>
       <ul class="m-0 list-none space-y-1 p-0">
         {#each DOC_LINKS as { href, label } (href)}
           <li>
@@ -52,7 +52,7 @@
     </section>
 
     <section class="space-y-2">
-      <h2 class="flex items-center gap-1 font-mono text-[0.65rem] tracking-[0.08em] text-muted uppercase">
+      <h2 class="flex items-center gap-1 font-mono text-xxs tracking-[0.08em] text-muted uppercase">
         <span class="flex items-center">
           <i class="i-tabler-info-circle"></i>
         </span>

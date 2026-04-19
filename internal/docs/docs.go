@@ -2416,6 +2416,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/mlb/crosswalk/teams": {
+            "get": {
+                "description": "Map MLB Stats API team IDs/abbreviations to local team_id and franchise_id for a season.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mlb"
+                ],
+                "summary": "MLB team ID crosswalk",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year (defaults to current year)",
+                        "name": "season",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.MLBTeamCrosswalkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/mlb/people": {
             "get": {
                 "description": "Proxy to MLB Stats API /v1/people for live roster metadata. Defaults to sportId=1 (Major League Baseball) if not provided.",
@@ -2558,8 +2595,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBScheduleResponse"
                         }
                     },
                     "500": {
@@ -2708,8 +2744,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/core.MLBStatsResponse"
                         }
                     },
                     "500": {
@@ -9114,10 +9149,19 @@ const docTemplate = `{
         "core.MLBAward": {
             "type": "object",
             "properties": {
+                "awardRecipients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBAwardRecipient"
+                    }
+                },
                 "description": {
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "link": {
                     "type": "string"
                 },
                 "name": {
@@ -9128,6 +9172,35 @@ const docTemplate = `{
                 },
                 "sport": {
                     "$ref": "#/definitions/core.MLBSportRef"
+                }
+            }
+        },
+        "core.MLBAwardRecipient": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "player": {
+                    "$ref": "#/definitions/core.MLBPerson"
+                },
+                "season": {
+                    "type": "string"
+                },
+                "team": {
+                    "$ref": "#/definitions/core.MLBTeamRef"
                 }
             }
         },
@@ -9165,6 +9238,9 @@ const docTemplate = `{
         "core.MLBDivisionRef": {
             "type": "object",
             "properties": {
+                "abbreviation": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -9173,6 +9249,160 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "core.MLBFieldInfo": {
+            "type": "object",
+            "properties": {
+                "capacity": {
+                    "type": "integer"
+                },
+                "center": {
+                    "type": "integer"
+                },
+                "left": {
+                    "type": "integer"
+                },
+                "leftCenter": {
+                    "type": "integer"
+                },
+                "leftLine": {
+                    "type": "integer"
+                },
+                "right": {
+                    "type": "integer"
+                },
+                "rightCenter": {
+                    "type": "integer"
+                },
+                "rightLine": {
+                    "type": "integer"
+                },
+                "roofType": {
+                    "type": "string"
+                },
+                "turfType": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBGame": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "$ref": "#/definitions/core.MLBNamedResource"
+                },
+                "dayNight": {
+                    "type": "string"
+                },
+                "doubleHeader": {
+                    "type": "string"
+                },
+                "gameDate": {
+                    "type": "string"
+                },
+                "gameNumber": {
+                    "type": "integer"
+                },
+                "gamePk": {
+                    "type": "integer"
+                },
+                "gameType": {
+                    "type": "string"
+                },
+                "gamedayType": {
+                    "type": "string"
+                },
+                "gamesInSeries": {
+                    "type": "integer"
+                },
+                "linescore": {
+                    "$ref": "#/definitions/core.MLBLineScore"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "officialDate": {
+                    "type": "string"
+                },
+                "scheduledInnings": {
+                    "type": "integer"
+                },
+                "season": {
+                    "type": "string"
+                },
+                "seriesDescription": {
+                    "type": "string"
+                },
+                "seriesGameNumber": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/core.MLBGameStatus"
+                },
+                "teams": {
+                    "$ref": "#/definitions/core.MLBGameTeams"
+                },
+                "venue": {
+                    "$ref": "#/definitions/core.MLBVenueRef"
+                }
+            }
+        },
+        "core.MLBGameStatus": {
+            "type": "object",
+            "properties": {
+                "abstractGameCode": {
+                    "type": "string"
+                },
+                "abstractGameState": {
+                    "type": "string"
+                },
+                "codedGameState": {
+                    "type": "string"
+                },
+                "detailedState": {
+                    "type": "string"
+                },
+                "startTimeTBD": {
+                    "type": "boolean"
+                },
+                "statusCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBGameTeamWrapper": {
+            "type": "object",
+            "properties": {
+                "isWinner": {
+                    "type": "boolean"
+                },
+                "leagueRecord": {
+                    "$ref": "#/definitions/core.MLBWinLossRecord"
+                },
+                "score": {
+                    "type": "integer"
+                },
+                "seriesNumber": {
+                    "type": "integer"
+                },
+                "splitSquad": {
+                    "type": "boolean"
+                },
+                "team": {
+                    "$ref": "#/definitions/core.MLBTeamRef"
+                }
+            }
+        },
+        "core.MLBGameTeams": {
+            "type": "object",
+            "properties": {
+                "away": {
+                    "$ref": "#/definitions/core.MLBGameTeamWrapper"
+                },
+                "home": {
+                    "$ref": "#/definitions/core.MLBGameTeamWrapper"
                 }
             }
         },
@@ -9187,10 +9417,200 @@ const docTemplate = `{
                 }
             }
         },
+        "core.MLBLeagueRecord": {
+            "type": "object",
+            "properties": {
+                "league": {
+                    "$ref": "#/definitions/core.MLBLeagueRef"
+                },
+                "losses": {
+                    "type": "integer"
+                },
+                "pct": {
+                    "type": "string"
+                },
+                "wins": {
+                    "type": "integer"
+                }
+            }
+        },
         "core.MLBLeagueRef": {
             "type": "object",
             "properties": {
                 "abbreviation": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBLineScore": {
+            "type": "object",
+            "properties": {
+                "balls": {
+                    "type": "integer"
+                },
+                "currentInning": {
+                    "type": "integer"
+                },
+                "currentInningOrdinal": {
+                    "type": "string"
+                },
+                "defense": {
+                    "$ref": "#/definitions/core.MLBLineScoreDefense"
+                },
+                "inningHalf": {
+                    "type": "string"
+                },
+                "inningState": {
+                    "type": "string"
+                },
+                "innings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBLineScoreInning"
+                    }
+                },
+                "isTopInning": {
+                    "type": "boolean"
+                },
+                "offense": {
+                    "$ref": "#/definitions/core.MLBLineScoreOffense"
+                },
+                "outs": {
+                    "type": "integer"
+                },
+                "scheduledInnings": {
+                    "type": "integer"
+                },
+                "strikes": {
+                    "type": "integer"
+                },
+                "teams": {
+                    "$ref": "#/definitions/core.MLBLineScoreTeams"
+                }
+            }
+        },
+        "core.MLBLineScoreDefense": {
+            "type": "object",
+            "properties": {
+                "catcher": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "center": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "first": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "left": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "pitcher": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "right": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "second": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "shortstop": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "team": {
+                    "$ref": "#/definitions/core.MLBTeamRef"
+                },
+                "third": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                }
+            }
+        },
+        "core.MLBLineScoreInning": {
+            "type": "object",
+            "properties": {
+                "away": {
+                    "$ref": "#/definitions/core.MLBLineScoreInningHalf"
+                },
+                "home": {
+                    "$ref": "#/definitions/core.MLBLineScoreInningHalf"
+                },
+                "num": {
+                    "type": "integer"
+                },
+                "ordinalNum": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBLineScoreInningHalf": {
+            "type": "object",
+            "properties": {
+                "errors": {
+                    "type": "integer"
+                },
+                "hits": {
+                    "type": "integer"
+                },
+                "runs": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.MLBLineScoreOffense": {
+            "type": "object",
+            "properties": {
+                "batter": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "first": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "inHole": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "onDeck": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "pitcher": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "second": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "team": {
+                    "$ref": "#/definitions/core.MLBTeamRef"
+                },
+                "third": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                }
+            }
+        },
+        "core.MLBLineScoreTeams": {
+            "type": "object",
+            "properties": {
+                "away": {
+                    "$ref": "#/definitions/core.MLBLineScoreInningHalf"
+                },
+                "home": {
+                    "$ref": "#/definitions/core.MLBLineScoreInningHalf"
+                }
+            }
+        },
+        "core.MLBNamedResource": {
+            "type": "object",
+            "properties": {
+                "abbreviation": {
+                    "type": "string"
+                },
+                "displayName": {
                     "type": "string"
                 },
                 "id": {
@@ -9258,6 +9678,9 @@ const docTemplate = `{
                 },
                 "currentAge": {
                     "type": "integer"
+                },
+                "currentTeam": {
+                    "$ref": "#/definitions/core.MLBTeamRef"
                 },
                 "firstLastName": {
                     "type": "string"
@@ -9345,6 +9768,20 @@ const docTemplate = `{
                 }
             }
         },
+        "core.MLBPlayerRef": {
+            "type": "object",
+            "properties": {
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "link": {
+                    "type": "string"
+                }
+            }
+        },
         "core.MLBPosition": {
             "type": "object",
             "properties": {
@@ -9385,6 +9822,18 @@ const docTemplate = `{
                         "$ref": "#/definitions/core.MLBDivisionRecord"
                     }
                 },
+                "expectedRecords": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBSplitRecord"
+                    }
+                },
+                "leagueRecords": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBLeagueRecord"
+                    }
+                },
                 "splitRecords": {
                     "type": "array",
                     "items": {
@@ -9398,6 +9847,67 @@ const docTemplate = `{
             "properties": {
                 "status": {
                     "type": "string"
+                }
+            }
+        },
+        "core.MLBScheduleDate": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "games": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBGame"
+                    }
+                },
+                "totalEvents": {
+                    "type": "integer"
+                },
+                "totalGames": {
+                    "type": "integer"
+                },
+                "totalGamesInProgress": {
+                    "type": "integer"
+                },
+                "totalItems": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.MLBScheduleResponse": {
+            "type": "object",
+            "properties": {
+                "copyright": {
+                    "type": "string"
+                },
+                "dates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBScheduleDate"
+                    }
+                },
+                "totalEvents": {
+                    "type": "integer"
+                },
+                "totalGames": {
+                    "type": "integer"
+                },
+                "totalGamesInProgress": {
+                    "type": "integer"
+                },
+                "totalItems": {
+                    "type": "integer"
                 }
             }
         },
@@ -9529,6 +10039,9 @@ const docTemplate = `{
                 "roundRobin": {
                     "$ref": "#/definitions/core.MLBRoundRobin"
                 },
+                "season": {
+                    "type": "string"
+                },
                 "sport": {
                     "$ref": "#/definitions/core.MLBSportRef"
                 },
@@ -9553,6 +10066,571 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/core.MLBStandingsRecord"
+                    }
+                }
+            }
+        },
+        "core.MLBStatExemption": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "detail": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBStatGroup": {
+            "type": "object",
+            "properties": {
+                "airOuts": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "assists": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "atBats": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "atBatsPerHomeRun": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "atBatsPerStrikeout": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "avg": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "babip": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "balks": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "baseOnBalls": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "blownSaves": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "caughtStealing": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "caughtStealingPct": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "chances": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "completeGames": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "doublePlays": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "doubles": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "earnedRuns": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "era": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "extraBaseHits": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "fielding": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "gamesFinished": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "gamesPlayed": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "gamesStarted": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "gidp": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "groundOuts": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "groundOutsToAirouts": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "hitBatsmen": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "hitByPitch": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "hits": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "hitsPer9Inn": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "holds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "homeRuns": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "homeRunsPer9": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "inheritedRunners": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "inheritedRunnersScored": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "inningsPitched": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "intentionalWalks": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "leftOnBase": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "losses": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "numberOfPitches": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "obp": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "ops": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "passedBall": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "pitchesPerInning": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "pitchesPerPlateAppearance": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "plateAppearances": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "putOuts": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "qualityStarts": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "rangeFactorPer9Inn": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "rangeFactorPerGame": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "rbi": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "runs": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "sacBunts": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "sacFlies": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "saveOpportunities": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "savePercentage": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "saves": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "shutouts": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "singles": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "slg": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "stolenBases": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "stolenBasesAllowed": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "strikeOuts": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "strikePercentage": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "strikeoutsPer9Inn": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "throwingErrors": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "totalBases": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "triplePlays": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "triples": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "walkOffs": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "walksAndHitsPerInningPitched": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "walksPer9Inn": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "whip": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "wildPitches": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "winPercentage": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "wins": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "core.MLBStatResult": {
+            "type": "object",
+            "properties": {
+                "displayName": {
+                    "type": "string"
+                },
+                "exemptions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBStatExemption"
+                    }
+                },
+                "group": {
+                    "$ref": "#/definitions/core.MLBNamedResource"
+                },
+                "season": {
+                    "type": "string"
+                },
+                "sortBy": {
+                    "type": "string"
+                },
+                "splits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBStatSplit"
+                    }
+                },
+                "totalSplits": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/core.MLBNamedResource"
+                }
+            }
+        },
+        "core.MLBStatSplit": {
+            "type": "object",
+            "properties": {
+                "division": {
+                    "$ref": "#/definitions/core.MLBDivisionRef"
+                },
+                "gameType": {
+                    "type": "string"
+                },
+                "league": {
+                    "$ref": "#/definitions/core.MLBLeagueRef"
+                },
+                "player": {
+                    "$ref": "#/definitions/core.MLBPlayerRef"
+                },
+                "position": {
+                    "$ref": "#/definitions/core.MLBPosition"
+                },
+                "rank": {
+                    "type": "integer"
+                },
+                "season": {
+                    "type": "string"
+                },
+                "sport": {
+                    "$ref": "#/definitions/core.MLBSportRef"
+                },
+                "stat": {
+                    "$ref": "#/definitions/core.MLBStatGroup"
+                },
+                "team": {
+                    "$ref": "#/definitions/core.MLBTeamRef"
+                }
+            }
+        },
+        "core.MLBStatsResponse": {
+            "type": "object",
+            "properties": {
+                "copyright": {
+                    "type": "string"
+                },
+                "stats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBStatResult"
                     }
                 }
             }
@@ -9639,13 +10717,98 @@ const docTemplate = `{
                 }
             }
         },
+        "core.MLBTeamCrosswalkResponse": {
+            "type": "object",
+            "properties": {
+                "local_season": {
+                    "type": "integer"
+                },
+                "matched": {
+                    "type": "integer"
+                },
+                "requested_season": {
+                    "type": "integer"
+                },
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBTeamCrosswalkRow"
+                    }
+                },
+                "unmatched": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.MLBTeamCrosswalkRow": {
+            "type": "object",
+            "properties": {
+                "confidence": {
+                    "type": "string"
+                },
+                "local_franchise_id": {
+                    "type": "string"
+                },
+                "local_league": {
+                    "type": "string"
+                },
+                "local_team_id": {
+                    "type": "string"
+                },
+                "local_team_name": {
+                    "type": "string"
+                },
+                "match_method": {
+                    "type": "string"
+                },
+                "mlb_abbreviation": {
+                    "type": "string"
+                },
+                "mlb_club_name": {
+                    "type": "string"
+                },
+                "mlb_file_code": {
+                    "type": "string"
+                },
+                "mlb_franchise_name": {
+                    "type": "string"
+                },
+                "mlb_team_code": {
+                    "type": "string"
+                },
+                "mlb_team_id": {
+                    "type": "integer"
+                },
+                "mlb_team_name": {
+                    "type": "string"
+                }
+            }
+        },
         "core.MLBTeamRecord": {
             "type": "object",
             "properties": {
                 "clinchIndicator": {
                     "type": "string"
                 },
+                "clinched": {
+                    "type": "boolean"
+                },
+                "conferenceGamesBack": {
+                    "type": "string"
+                },
+                "divisionChamp": {
+                    "type": "boolean"
+                },
+                "divisionGamesBack": {
+                    "type": "string"
+                },
+                "divisionLeader": {
+                    "type": "boolean"
+                },
                 "divisionRank": {
+                    "type": "string"
+                },
+                "eliminationNumber": {
                     "type": "string"
                 },
                 "gamesBack": {
@@ -9654,7 +10817,19 @@ const docTemplate = `{
                 "gamesPlayed": {
                     "type": "integer"
                 },
+                "hasWildcard": {
+                    "type": "boolean"
+                },
+                "lastTenRecords": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.MLBSplitRecord"
+                    }
+                },
                 "lastUpdated": {
+                    "type": "string"
+                },
+                "leagueGamesBack": {
                     "type": "string"
                 },
                 "leagueRank": {
@@ -9663,10 +10838,28 @@ const docTemplate = `{
                 "leagueRecord": {
                     "$ref": "#/definitions/core.MLBWinLossRecord"
                 },
+                "losses": {
+                    "type": "integer"
+                },
+                "magicNumber": {
+                    "type": "string"
+                },
                 "records": {
                     "$ref": "#/definitions/core.MLBRecordDetails"
                 },
+                "runDifferential": {
+                    "type": "string"
+                },
+                "runsAllowed": {
+                    "type": "integer"
+                },
+                "runsScored": {
+                    "type": "integer"
+                },
                 "season": {
+                    "type": "string"
+                },
+                "sportGamesBack": {
                     "type": "string"
                 },
                 "sportRank": {
@@ -9678,8 +10871,20 @@ const docTemplate = `{
                 "team": {
                     "$ref": "#/definitions/core.MLBTeamRef"
                 },
+                "wildCardEliminationNumber": {
+                    "type": "string"
+                },
                 "wildCardGamesBack": {
                     "type": "string"
+                },
+                "wildCardRank": {
+                    "type": "string"
+                },
+                "winningPercentage": {
+                    "type": "string"
+                },
+                "wins": {
+                    "type": "integer"
                 }
             }
         },
@@ -9711,11 +10916,31 @@ const docTemplate = `{
                 }
             }
         },
+        "core.MLBTimeZone": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "tz": {
+                    "type": "string"
+                }
+            }
+        },
         "core.MLBVenue": {
             "type": "object",
             "properties": {
                 "active": {
                     "type": "boolean"
+                },
+                "capacity": {
+                    "type": "integer"
+                },
+                "fieldInfo": {
+                    "$ref": "#/definitions/core.MLBFieldInfo"
                 },
                 "id": {
                     "type": "integer"
@@ -9723,10 +10948,68 @@ const docTemplate = `{
                 "link": {
                     "type": "string"
                 },
+                "location": {
+                    "$ref": "#/definitions/core.MLBVenueLocation"
+                },
                 "name": {
                     "type": "string"
                 },
+                "roofType": {
+                    "type": "string"
+                },
                 "season": {
+                    "type": "string"
+                },
+                "timeZone": {
+                    "$ref": "#/definitions/core.MLBTimeZone"
+                },
+                "turfType": {
+                    "type": "string"
+                },
+                "venueType": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBVenueCoordinates": {
+            "type": "object",
+            "properties": {
+                "latitude": {
+                    "type": "string"
+                },
+                "longitude": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.MLBVenueLocation": {
+            "type": "object",
+            "properties": {
+                "address1": {
+                    "type": "string"
+                },
+                "address2": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "defaultCoordinates": {
+                    "$ref": "#/definitions/core.MLBVenueCoordinates"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "postalCode": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "stateAbbrev": {
                     "type": "string"
                 }
             }

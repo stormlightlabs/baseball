@@ -247,13 +247,13 @@ Should immediately answer: _what can this API do across eras?_
 
 ## Live & Current-Season Data
 
-The dashboard uses the MLB Stats API proxy (`/v1/mlb/*`) and internal endpoints (`/api/internal/*`) to surface current-season data alongside the historical Retrosheet-backed views.
+The dashboard uses the MLB Stats API proxy (`/v1/mlb/*`) as the primary source for current-season data surfaced alongside historical Retrosheet-backed views.
 
 ### Live Scoreboard (Home Page)
 
 A scoreboard strip on the home page showing today's games with live scores.
 
-- Source: `GET /api/internal/scoreboard?date={today}`
+- Source: `GET /v1/mlb/schedule?date={today}&hydrate=linescore,team`
 - Renders as a horizontal scrollable row of compact game cards
 - Each card: away/home abbreviations, scores, inning/status indicator, team color accents
 - LIVE indicator with subtle animation on in-progress games
@@ -265,7 +265,7 @@ A scoreboard strip on the home page showing today's games with live scores.
 
 Standings panel on the Teams page, alongside the existing franchise/team-season views.
 
-- Source: `GET /api/internal/standings?season={current}`
+- Source: `GET /v1/mlb/standings?season={current}&standingsTypes=regularSeason`
 - Renders as sortable tables grouped by division
 - Columns: Rank, Team, W, L, PCT, GB, WC GB, Streak, Run Diff, L10
 - Team names link to `/teams/[franchise_id]` with current-season year context
@@ -276,7 +276,9 @@ Standings panel on the Teams page, alongside the existing franchise/team-season 
 
 Current-season stat leaders below the scoreboard on the home page.
 
-- Source: `GET /api/internal/leaders?season={current}&categories=HR,AVG,ERA,SO,WAR`
+- Source:
+  - `GET /v1/mlb/stats?stats=season&group=hitting&season={current}&playerPool=qualified`
+  - `GET /v1/mlb/stats?stats=season&group=pitching&season={current}&playerPool=qualified`
 - Renders as tabbed cards (one tab per stat category)
 - Each card: ranked top-5 list with player name, team, stat value
 - Player names link to `/players/[id]/batting` or `/players/[id]/pitching` via crosswalk
@@ -286,7 +288,7 @@ Current-season stat leaders below the scoreboard on the home page.
 
 When viewing a game that is currently in progress (detected via crosswalk to `gamePk`), the game detail page shows a live overlay.
 
-- Source: `GET /api/internal/live/{gamePk}`
+- Source: `GET /v1/mlb/live/{gamePk}` (expanded MLB proxy route to `/api/v1.1/game/{gamePk}/feed/live`)
 - Overlay panel above the historical boxscore/events showing: current score, inning, count, runners, current play, win probability chart
 - Auto-refresh 15s during live games
 - Dismissible — user can toggle between live and historical views
@@ -295,7 +297,7 @@ When viewing a game that is currently in progress (detected via crosswalk to `ga
 
 When viewing a player who is active in the current season, an additional panel shows current-season stats from the MLB API.
 
-- Source: `GET /api/internal/player-live/{mlb_id}`
+- Source: `GET /v1/mlb/people/{id}?hydrate=stats(group=[hitting,pitching],type=season)` (+ local lookup via `/v1/search/players`)
 - Renders as a "Current Season" card above the historical stats tabs
 - Shows key current-season stats (AVG/HR/RBI for hitters, ERA/SO/W for pitchers)
 - "Live data from MLB" attribution badge
@@ -303,13 +305,13 @@ When viewing a player who is active in the current season, an additional panel s
 
 ### Endpoints
 
-| Dashboard location | Internal endpoint                  | Refresh  |
-| ------------------ | ---------------------------------- | -------- |
-| Home scoreboard    | `GET /api/internal/scoreboard`     | 30s auto |
-| Home leaders       | `GET /api/internal/leaders`        | manual   |
-| Teams standings    | `GET /api/internal/standings`      | manual   |
-| Game detail live   | `GET /api/internal/live/{gamePk}`  | 15s auto |
-| Player current     | `GET /api/internal/player-live/*`  | manual   |
+| Dashboard location | Endpoint family                                         | Refresh  |
+| ------------------ | ------------------------------------------------------- | -------- |
+| Home scoreboard    | `GET /v1/mlb/schedule`                                  | 30s auto |
+| Home leaders       | `GET /v1/mlb/stats` + `GET /v1/mlb/teams`               | manual   |
+| Teams standings    | `GET /v1/mlb/standings` + `GET /v1/mlb/crosswalk/teams` | manual   |
+| Game detail live   | `GET /v1/mlb/live/{gamePk}`                             | 15s auto |
+| Player current     | `GET /v1/mlb/people/{id}` + local search/crosswalk      | manual   |
 
 ## API Documentation
 

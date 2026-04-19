@@ -86,7 +86,7 @@
       {badge}
     </span>
     {#if meta.data}
-      <span class="font-mono text-[0.65rem] text-muted opacity-60">v{meta.version}</span>
+      <span class="font-mono text-xxs text-muted opacity-60">v{meta.version}</span>
     {/if}
     <nav class="ml-auto flex items-center gap-1">
       {#each MAIN_LINKS as { href, label } (href)}
@@ -108,7 +108,7 @@
           rel="noreferrer"
           class="rounded px-2.5 py-1 text-[0.8rem] text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground">
           API
-          <span class="ml-1 inline-flex items-center gap-0.5 text-[0.65rem]">
+          <span class="ml-1 inline-flex items-center gap-0.5 text-xxs">
             <i class="i-tabler-external-link"></i>
           </span>
         </a>
@@ -120,7 +120,7 @@
             ? 'bg-outline text-foreground'
             : 'text-muted hover:bg-outline hover:text-foreground'}">
           Account
-          <span class="ml-1 inline-flex items-center gap-0.5 text-[0.65rem]">
+          <span class="ml-1 inline-flex items-center gap-0.5 text-xxs">
             <i class="i-tabler-user"></i>
           </span>
         </a>

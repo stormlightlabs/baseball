@@ -170,7 +170,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewDerivedRoutes(derivedRepo, weRepo),
 		NewComputedRoutes(advancedStatsRepo, leverageRepo, parkFactorRepo),
 		NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
-		NewMLBStatsAPIRoutes(cacheClient),
+		NewMLBStatsAPIRoutes(cacheClient, teamRepo),
 		NewFederalLeagueRoutes(gameRepo, playRepo, teamRepo),
 		NewNegroLeaguesRoutes(negroLeaguesRepo),
 		NewAchievementRoutes(achievementRepo),

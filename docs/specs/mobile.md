@@ -331,13 +331,13 @@ These pull from existing game data and pitch data, reshaping into quiz-friendly 
 
 ## Live & Current-Season Features
 
-The MLB Stats API proxy (`/v1/mlb/*`) provides real-time access to the current season. The app surfaces this data through three primary features that complement the historical Retrosheet-backed views. New `/api/internal/` endpoints aggregate MLB proxy calls with local data to reduce round-trips and shape payloads for rendering.
+The MLB Stats API proxy (`/v1/mlb/*`) provides real-time access to the current season. The app surfaces this data through three primary features that complement the historical Retrosheet-backed views. We expand `/v1/mlb/*` directly (instead of introducing `/api/internal/*`) for UI-optimized live payloads.
 
 ### 6. Live Scoreboard
 
 A real-time scoreboard of today's MLB games, prominently featured on the Home tab.
 
-**Data source**: `GET /api/internal/scoreboard?date={YYYY-MM-DD}` aggregates the MLB schedule endpoint (`/v1/mlb/schedule` with `hydrate=linescore,team,probablePitcher`) and maps team IDs to local franchise records for color theming.
+**Data source**: `GET /v1/mlb/schedule?date={YYYY-MM-DD}&hydrate=linescore,team,probablePitcher` plus `GET /v1/mlb/crosswalk/teams?season={year}` for local franchise mapping.
 
 **Response shape**:
 
@@ -392,7 +392,7 @@ A real-time scoreboard of today's MLB games, prominently featured on the Home ta
 
 Division standings with current records, streaks, and wild card positioning.
 
-**Data source**: `GET /api/internal/standings?season={year}` aggregates `/v1/mlb/standings` (with `hydrate=team`, `standingsTypes=regularSeason`) and enriches with local team colors and franchise IDs for navigation.
+**Data source**: `GET /v1/mlb/standings?season={year}&standingsTypes=regularSeason` plus `GET /v1/mlb/crosswalk/teams?season={year}` for local franchise IDs and navigation.
 
 **Response shape**:
 
@@ -442,7 +442,7 @@ Division standings with current records, streaks, and wild card positioning.
 
 A real-time game view combining MLB live feed data with the app's win probability model.
 
-**Data source**: `GET /api/internal/live/{gamePk}` proxies the MLB game feed (`/api/v1.1/game/{gamePk}/feed/live`) and merges with the local win-probability engine when play-by-play state permits. This endpoint is not cached (or cached at 15s TTL max).
+**Data source**: `GET /v1/mlb/live/{gamePk}` proxies the MLB game feed (`/api/v1.1/game/{gamePk}/feed/live`) and merges with the local win-probability engine when play-by-play state permits. This endpoint is not cached (or cached at 15s TTL max).
 
 **Response shape**:
 
@@ -494,7 +494,7 @@ A real-time game view combining MLB live feed data with the app's win probabilit
 
 Current-season stat leaders surfaced on the Home tab below the scoreboard.
 
-**Data source**: `GET /api/internal/leaders?season={year}&categories={HR,AVG,ERA,SO,WAR}` calls `/v1/mlb/stats` with `stats=season&group=hitting,pitching&sortStat={stat}&limit=5` for each requested category and merges results with local player IDs (via MLBAM crosswalk) for deep linking.
+**Data source**: `/v1/mlb/stats` calls (`stats=season&group=hitting|pitching&sortStat={stat}&limit=5`) for requested categories, plus local player lookups via `/v1/search/players` for deep linking.
 
 **Response shape**:
 
@@ -530,46 +530,46 @@ Current-season stat leaders surfaced on the Home tab below the scoreboard.
 - Tap a player row to navigate to Player Detail
 - Category chips: HR, AVG, OPS, RBI, SB (hitting) | ERA, SO, W, SV, WHIP (pitching)
 
-## `/api/internal/` Namespace
+## Expanded `/v1/mlb/*` Namespace
 
-The internal namespace provides UI-optimized endpoints that are not part of the public API contract. These endpoints aggregate multiple data sources, map IDs across systems, and return pre-shaped payloads for rendering. They do not require Swagger documentation.
+The MLB namespace provides UI-optimized live endpoints as part of the public API contract. These routes aggregate multiple data sources, map IDs across systems, and return pre-shaped payloads for rendering.
 
 ### Authentication
 
-Internal endpoints use an app-token scheme (`X-Internal-Token` header) separate from the public API key system. Tokens are provisioned per client (mobile app, web dashboard) and rotated independently.
+Live MLB endpoints use the same auth and API key policies as the rest of `/v1/*`.
 
-### Internal Endpoint Catalog
+### Live Endpoint Catalog
 
-| Endpoint                                      | Source                                        | Purpose                                                                              |
-| --------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `GET /api/internal/player-card/{id}`          | `/v1/players/*` (aggregated)                  | Aggregated player bio + key stats + recent game log for stat card rendering          |
-| `GET /api/internal/spray-chart/{player_id}`   | Retrosheet hit-location data + park geometry  | Batted-ball coordinates with launch angle, exit velocity, and park geometry           |
-| `GET /api/internal/pitch-tunnel/{pitcher_id}` | Pitch-level data with movement vectors        | Pitch trajectories with release point, spin vector, and movement profiles            |
-| `GET /api/internal/at-bat/{game_id}/{ab_num}` | `plays` + `pitches` tables                    | Full at-bat sequence: pitch-by-pitch with context, count, and result                 |
-| `GET /api/internal/quiz/situation`            | Historical game states                        | Random game situation for learning mode quizzes                                      |
-| `GET /api/internal/quiz/pitch-type`           | Pitch trajectory data                         | Pitch identification challenge with trajectory data                                  |
-| `GET /api/internal/scoreboard`                | `/v1/mlb/schedule` + team color map           | Today's games with scores, status, linescore, team colors                            |
-| `GET /api/internal/standings`                 | `/v1/mlb/standings` + franchise map           | Current standings enriched with team colors and franchise IDs                         |
-| `GET /api/internal/live/{gamePk}`             | MLB game feed + win probability engine        | Real-time game state with play-by-play and win probability                           |
-| `GET /api/internal/leaders`                   | `/v1/mlb/stats` + MLBAM crosswalk             | Current-season stat leaders with local player IDs for deep linking                   |
-| `GET /api/internal/player-live/{mlb_id}`      | `/v1/mlb/people/{id}` + `/v1/players/{id}`   | Current-season stats merged with historical player record                            |
-| `GET /api/internal/team-live/{mlb_id}`        | `/v1/mlb/teams/{id}` + `/v1/teams/{id}`      | Current team info merged with franchise history and team colors                       |
+| Endpoint                                      | Source                                       | Purpose                                                                     |
+| --------------------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------- |
+| `GET /api/internal/player-card/{id}`          | `/v1/players/*` (aggregated)                 | Aggregated player bio + key stats + recent game log for stat card rendering |
+| `GET /api/internal/spray-chart/{player_id}`   | Retrosheet hit-location data + park geometry | Batted-ball coordinates with launch angle, exit velocity, and park geometry |
+| `GET /api/internal/pitch-tunnel/{pitcher_id}` | Pitch-level data with movement vectors       | Pitch trajectories with release point, spin vector, and movement profiles   |
+| `GET /api/internal/at-bat/{game_id}/{ab_num}` | `plays` + `pitches` tables                   | Full at-bat sequence: pitch-by-pitch with context, count, and result        |
+| `GET /api/internal/quiz/situation`            | Historical game states                       | Random game situation for learning mode quizzes                             |
+| `GET /api/internal/quiz/pitch-type`           | Pitch trajectory data                        | Pitch identification challenge with trajectory data                         |
+| `GET /v1/mlb/schedule`                        | MLB schedule feed                            | Today's games with scores, status, linescore, and team details              |
+| `GET /v1/mlb/standings`                       | MLB standings feed                           | Current standings data by league/division                                   |
+| `GET /v1/mlb/crosswalk/teams`                 | `/v1/mlb/teams` + local team/franchise map   | MLB team ID → local `team_id` / `franchise_id` mapping for navigation       |
+| `GET /v1/mlb/live/{gamePk}`                   | MLB game feed + win probability engine       | Real-time game state with play-by-play and win probability                  |
+| `GET /v1/mlb/stats`                           | MLB stats feed                               | Current-season stat leaders and split queries                               |
+| `GET /v1/mlb/people/{mlb_id}`                 | MLB people feed + local search lookups       | Current-season player stats with local player routing                       |
 
 ### ID Crosswalk
 
-Several internal endpoints must bridge MLB Stats API IDs (MLBAM `personId`, `teamId`) to local Retrosheet/Lahman IDs (`player_id`, `team_id`, `franchise_id`). The crosswalk is maintained in the existing `id_crosswalk` table and exposed via `GET /v1/players/{id}` which includes `mlb_id` when available. Internal endpoints perform this join server-side so clients never need to manage dual ID spaces.
+Live endpoints bridge MLB Stats API IDs (MLBAM `personId`, `teamId`) to local Retrosheet/Lahman IDs (`player_id`, `team_id`, `franchise_id`). Team mappings are exposed via `GET /v1/mlb/crosswalk/teams`; player mappings use local search/player endpoints server-side so clients avoid managing dual ID spaces.
 
 ### Caching Strategy
 
-| Endpoint group   | Cache TTL | Rationale                                            |
-| ---------------- | --------- | ---------------------------------------------------- |
-| Scoreboard       | 30s       | Scores update frequently during games                |
-| Standings        | 5min      | Changes only after games complete                    |
-| Live game feed   | 15s       | Near-real-time without overwhelming upstream         |
-| Leaders          | 15min     | Stats update after games; no need for sub-minute     |
-| Player/team live | 5min      | Bio/roster data changes infrequently                 |
-| Spray/tunnel/ab  | 1hr       | Historical data; changes only on data loads          |
-| Quiz             | No cache  | Should return varied results                         |
+| Endpoint group   | Cache TTL | Rationale                                        |
+| ---------------- | --------- | ------------------------------------------------ |
+| Scoreboard       | 30s       | Scores update frequently during games            |
+| Standings        | 5min      | Changes only after games complete                |
+| Live game feed   | 15s       | Near-real-time without overwhelming upstream     |
+| Leaders          | 15min     | Stats update after games; no need for sub-minute |
+| Player/team live | 5min      | Bio/roster data changes infrequently             |
+| Spray/tunnel/ab  | 1hr       | Historical data; changes only on data loads      |
+| Quiz             | No cache  | Should return varied results                     |
 
 ## Performance Targets
 

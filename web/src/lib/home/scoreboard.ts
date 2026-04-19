@@ -1,3 +1,5 @@
+import { teamPrimaryHexFor } from '$lib/mlb/team-branding';
+
 export type ScoreboardTeam = {
   id?: string;
   name?: string;
@@ -28,64 +30,6 @@ export type ScoreboardSnapshot = {
   nextGameDate?: string;
   gamesInProgress: number;
   games: ScoreboardGame[];
-};
-
-const MLB_TEAM_PRIMARY_HEX: Record<string, string> = {
-  ARI: '#A71930',
-  ATL: '#CE1141',
-  BAL: '#DF4601',
-  BOS: '#BD3039',
-  CHC: '#0E3386',
-  CWS: '#27251F',
-  CIN: '#C6011F',
-  CLE: '#E31937',
-  COL: '#33006F',
-  DET: '#0C2340',
-  HOU: '#002D62',
-  KC: '#004687',
-  LAA: '#BA0021',
-  LAD: '#005A9C',
-  MIA: '#000000',
-  MIL: '#12284B',
-  MIN: '#002B5C',
-  NYM: '#002D72',
-  NYY: '#132448',
-  ATH: '#003831',
-  PHI: '#E81828',
-  PIT: '#27251F',
-  SD: '#2F241D',
-  SF: '#FD5A1E',
-  SEA: '#0C2C56',
-  STL: '#C41E3A',
-  TB: '#092C5C',
-  TEX: '#003278',
-  TOR: '#134A8E',
-  WSH: '#AB0003'
-};
-
-const MLB_CODE_ALIASES: Record<string, string> = {
-  ANA: 'LAA',
-  CAL: 'LAA',
-  CHA: 'CWS',
-  CHN: 'CHC',
-  CLN: 'CLE',
-  FLO: 'MIA',
-  KCA: 'KC',
-  KCN: 'KC',
-  LAN: 'LAD',
-  BRO: 'LAD',
-  MON: 'WSH',
-  NYA: 'NYY',
-  NYN: 'NYM',
-  PHA: 'ATH',
-  OAK: 'ATH',
-  SDN: 'SD',
-  SFN: 'SF',
-  SLN: 'STL',
-  TBA: 'TB',
-  TBD: 'TB',
-  WAS: 'WSH',
-  WSN: 'WSH'
 };
 
 function toObject(value: unknown): Record<string, unknown> {
@@ -139,13 +83,6 @@ function normalizeColor(value: unknown): string | undefined {
   return undefined;
 }
 
-function normalizeMlbTeamCode(rawCode: string | undefined): string | undefined {
-  if (!rawCode) return undefined;
-  const upper = rawCode.toUpperCase();
-  if (MLB_TEAM_PRIMARY_HEX[upper]) return upper;
-  return MLB_CODE_ALIASES[upper];
-}
-
 function toTeamAbbreviation(raw: unknown, fallbackName?: string): string {
   const direct = toString(raw)?.toUpperCase();
   if (direct && direct.length <= 4) return direct;
@@ -182,8 +119,7 @@ function normalizeTeam(raw: unknown): ScoreboardTeam {
     row.abbreviation ?? row.abbr ?? row.team_code ?? row.teamCode ?? row.fileCode ?? row.triCode,
     name
   );
-  const normalizedCode = normalizeMlbTeamCode(abbreviation);
-  const mappedColor = normalizedCode ? MLB_TEAM_PRIMARY_HEX[normalizedCode] : undefined;
+  const mappedColor = teamPrimaryHexFor(abbreviation);
   return {
     id: teamID,
     name,

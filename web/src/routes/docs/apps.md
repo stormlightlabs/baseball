@@ -2,7 +2,7 @@
 
 ## Web App
 
-The web app runs as a static site and calls API endpoints under `/v1`.
+The web app runs as a static site (deployed to a CDN) and calls API endpoints under `/v1`.
 
 - Home page surfaces search + featured queries.
 - Docs pages provide API navigation and implementation notes.
@@ -29,4 +29,4 @@ Keep path usage consistent with web/API clients (`/v1/...`).
   - `GET /v1/auth/keys`
   - `DELETE /v1/auth/keys/{id}`
 
-For API contracts and schemas, use Swagger at [/explorer](/explorer).
+For detailed API contracts and schemas, checkout out our Swagger docs at [/explorer](/explorer).

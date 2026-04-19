@@ -1,7 +1,8 @@
 # Introduction
 
-Big Fly unifies historical baseball datasets behind one API namespace: `/v1`.
-Use this docs section to understand coverage, query patterns, and authentication.
+Big Fly unifies historical baseball datasets behind one unified API, currently behind the namespace: `/v1`.
+
+Use these docs to understand coverage, query patterns, and authentication (to manage your keys).
 
 ## Quick Start
 

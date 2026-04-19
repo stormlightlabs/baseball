@@ -78,6 +78,11 @@ tasks:
     cmds:
       - go test ./... -v
 
+  vet:
+    desc: Run go vet across all packages
+    cmds:
+      - go vet ./...
+
   test:filter:
     desc: "Run tests matching a pattern (usage: task test:filter -- -run
       TestPattern)"
