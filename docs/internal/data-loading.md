@@ -98,15 +98,48 @@ curl http://localhost:8080/v1/meta/datasets
 curl http://localhost:8080/v1/health
 ```
 
-### 5) Production-style external clone flow
+### 5) Production bootstrap (automatic temp clone + cleanup)
 
 ```bash
-tmpdir="$(mktemp -d)"
-git clone --depth=1 <baseball-data-repo-url> "$tmpdir/baseball-data"
-<BASEBALL> etl --profile prod --mode full --data-root "$tmpdir/baseball-data"
-<BASEBALL> etl validate --profile prod --data-root "$tmpdir/baseball-data"
-rm -rf "$tmpdir"
+<BASEBALL> etl --profile prod --mode full
+<BASEBALL> etl validate --profile prod
 ```
+
+If required snapshot files are missing under the default data root (`tools/data` locally,
+`/home/app/tools/data` in Docker), the pipeline auto-clones
+`https://github.com/stormlightlabs/bigflydata.git` into a temporary directory and
+cleans it up after completion.
+
+Optional overrides:
+
+- `BASEBALL_DATA_REPO_URL` (default snapshot repo URL)
+- `BASEBALL_DATA_REPO_REF` (branch/tag/SHA)
+- `BASEBALL_DATA_AUTO_CLONE` (`true` by default; set `false` to disable)
+
+### 6) Publish snapshot updates (`tools/data` submodule)
+
+```bash
+# from repo root
+cd tools/data
+git pull
+git lfs install
+uv run baseball-data sync
+uv run baseball-data build
+uv run baseball-data verify
+git add .
+git commit -m "Sync snapshot data"
+git push
+
+cd ../..
+git add tools/data .gitmodules
+git commit -m "Bump tools/data submodule"
+git push
+```
+
+Notes:
+
+- `tools/data` points to `https://github.com/stormlightlabs/bigflydata.git`.
+- Push to `tools/data` first; the parent repo only records the submodule commit SHA.
 
 ## Stage Commands (First-Class, Composable)
 

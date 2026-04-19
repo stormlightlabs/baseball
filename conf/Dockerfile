@@ -14,7 +14,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /baseball ./cli
 FROM debian:bookworm-slim
 
 RUN adduser --disabled-password --gecos "" app && \
-	apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
+	apt-get update && apt-get install -y --no-install-recommends ca-certificates git git-lfs && \
+	git lfs install --system --skip-smudge && \
 	rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/app

@@ -28,15 +28,19 @@ The repo ships two Compose files in `conf/`:
 4. Designate **app** as the public service on port **8080**.
 5. Assign your domain -- Coolify provisions TLS automatically.
 6. Set the health check path to `/v1/health`.
-7. Configure environment variables in Coolify's UI:
+7. In app Git settings, enabling **Git Submodules** is optional. Production ETL can auto-clone snapshot data at runtime.
+8. Configure environment variables in Coolify's UI:
 
-| Variable            | Example                                                         | Notes                            |
-| ------------------- | --------------------------------------------------------------- | -------------------------------- |
-| `DATABASE_URL`      | `postgres://postgres:pw@postgres:5432/baseball?sslmode=disable` | Host is the Compose service name |
-| `REDIS_URL`         | `redis://redis:6379/0`                                          |                                  |
-| `BASEBALL_DATA_ROOT`| `/home/app/tools/data`                                          | Mount or clone snapshot data here |
-| `POSTGRES_PASSWORD` | _(strong password)_                                             | Mark as sensitive                |
-| `POSTGRES_DB`       | `baseball`                                                      |                                  |
+| Variable                   | Example                                                         | Notes                             |
+| -------------------------- | --------------------------------------------------------------- | --------------------------------- |
+| `DATABASE_URL`             | `postgres://postgres:pw@postgres:5432/baseball?sslmode=disable` | Host is the Compose service name  |
+| `REDIS_URL`                | `redis://redis:6379/0`                                          |                                   |
+| `BASEBALL_DATA_ROOT`       | `/home/app/tools/data`                                          | Default data root checked by ETL  |
+| `BASEBALL_DATA_REPO_URL`   | `https://github.com/stormlightlabs/bigflydata.git`              | Optional snapshot clone override  |
+| `BASEBALL_DATA_REPO_REF`   | `main`                                                          | Optional branch/tag/SHA override  |
+| `BASEBALL_DATA_AUTO_CLONE` | `true`                                                          | Set `false` to disable auto clone |
+| `POSTGRES_PASSWORD`        | _(strong password)_                                             | Mark as sensitive                 |
+| `POSTGRES_DB`              | `baseball`                                                      |                                   |
 
 Optional: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `CODEBERG_CLIENT_ID`, `CODEBERG_CLIENT_SECRET`, `CACHE_ENABLED`, `CACHE_VERSION`.
 
@@ -55,6 +59,10 @@ docker compose exec app baseball etl run --profile dev --years 2022-2025
 docker compose exec app baseball etl validate --profile dev --years 2022-2025
 docker compose exec app baseball etl status
 ```
+
+If required files are missing under `/home/app/tools/data`, the ETL pipeline
+automatically clones `bigflydata` into a temporary directory, uses it for the
+run, then cleans it up.
 
 If your snapshot data is mounted/cloned outside the default root:
 
@@ -94,7 +102,7 @@ docker compose exec app baseball etl validate --profile prod --years 2026
 docker compose exec app baseball etl status
 ```
 
-Production temp-clone pattern:
+Manual temp-clone pattern (optional when auto-clone is enabled):
 
 ```bash
 tmpdir="$(mktemp -d)"

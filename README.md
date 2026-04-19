@@ -49,6 +49,30 @@ Dataset root resolution for `etl` and `db` commands:
 The standalone `baseball-data` scaffold lives at `tools/data`
 (`uv run --project tools/data baseball-data <sync|build|verify>`).
 
+### Data Warehouse Sync (`tools/data`)
+
+When snapshot content changes, update and push `tools/data` first, then bump the
+submodule pointer in this repo.
+
+```bash
+# 1) Update data repo
+cd tools/data
+git pull
+git lfs install
+uv run baseball-data sync
+uv run baseball-data build
+uv run baseball-data verify
+git add .
+git commit -m "Sync snapshot data"
+git push
+
+# 2) Bump submodule pointer in parent repo
+cd ../..
+git add tools/data .gitmodules
+git commit -m "Bump tools/data submodule"
+git push
+```
+
 Quick local example for a complete representative slice:
 
 ```bash
@@ -74,15 +98,21 @@ Retrosheet `--era` values: `fed`, `nlg`, `boomer`, `pitcher`, `turf`, `steroid`,
 The full ETL command also accepts `--years` and `--era` to customize the Retrosheet window.
 It also accepts `--data-root` when snapshots are mounted/cloned outside defaults.
 
-Production-style temp clone + cleanup:
+Automatic snapshot bootstrap (when default `tools/data` is empty/incomplete):
 
 ```bash
-tmpdir="$(mktemp -d)"
-git clone --depth=1 <baseball-data-repo-url> "$tmpdir/baseball-data"
-./tmp/baseball etl --profile=prod --mode=full --data-root "$tmpdir/baseball-data"
-./tmp/baseball etl validate --profile=prod --data-root "$tmpdir/baseball-data"
-rm -rf "$tmpdir"
+./tmp/baseball etl --profile=prod --mode=full
 ```
+
+When required files are missing under `tools/data` (or `/home/app/tools/data` in Docker),
+the ETL pipeline automatically clones `https://github.com/stormlightlabs/bigflydata.git`
+to a temporary directory, uses it for the run, then cleans it up.
+
+Optional env overrides:
+
+- `BASEBALL_DATA_REPO_URL` (default `https://github.com/stormlightlabs/bigflydata.git`)
+- `BASEBALL_DATA_REPO_REF` (branch/tag/SHA)
+- `BASEBALL_DATA_AUTO_CLONE` (`true` by default; set `false` to disable)
 
 ### Server
 
@@ -125,25 +155,25 @@ Endpoints
 - **Health**: `GET /v1/health` is a liveness probe, while `GET /v1/ready`
   mirrors what `baseball server health` checks for dataset readiness.
 - **Primary resources**:
-    - `/v1/players`
-    - `/v1/teams`
-    - `/v1/stats`
-    - `/v1/games`
-    - `/v1/plays`
-    - `/v1/awards`
-    - `/v1/postseason`
-    - `/v1/allstar`
-    - `/v1/managers`
-    - `/v1/parks`
-    - `/v1/umpires`
-    - `/v1/ejections`
-    - `/v1/pitches`
+  - `/v1/players`
+  - `/v1/teams`
+  - `/v1/stats`
+  - `/v1/games`
+  - `/v1/plays`
+  - `/v1/awards`
+  - `/v1/postseason`
+  - `/v1/allstar`
+  - `/v1/managers`
+  - `/v1/parks`
+  - `/v1/umpires`
+  - `/v1/ejections`
+  - `/v1/pitches`
 - **Other**:
-    - `/v1/meta` (dataset refresh metadata)
-    - `/v1/search/*` for fuzzy finding &. natural-language lookup.
+  - `/v1/meta` (dataset refresh metadata)
+  - `/v1/search/*` for fuzzy finding &. natural-language lookup.
 - **Authentication flows**:
-    - `/v1/auth/github` and `/v1/auth/codeberg` drive OAuth
-    - `/account` in the web app lets you mint API keys after login.
+  - `/v1/auth/github` and `/v1/auth/codeberg` drive OAuth
+  - `/account` in the web app lets you mint API keys after login.
 
 </details>
 

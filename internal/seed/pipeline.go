@@ -134,6 +134,20 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return PipelineRunResult{}, err
 	}
 
+	provisioned, err := ensurePipelineDataRoot(ctx, opts)
+	if err != nil {
+		return PipelineRunResult{}, err
+	}
+	defer provisioned.cleanup()
+	if provisioned.rootPath != opts.DataRoot {
+		opts.DataRoot = provisioned.rootPath
+		opts.LahmanCSVDir = LahmanCSVDir(opts.DataRoot)
+		opts.RetrosheetDataDir = RetrosheetDir(opts.DataRoot)
+		opts.FanGraphsDir = FanGraphsDir(opts.DataRoot)
+		opts.ChadwickDataDir = ChadwickDir(opts.DataRoot)
+		opts.SalaryDataDir = SalariesDir(opts.DataRoot)
+	}
+
 	params := map[string]any{
 		"years":     opts.Years,
 		"eras":      opts.EraNames,
