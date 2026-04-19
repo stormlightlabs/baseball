@@ -21,3 +21,14 @@
 @utility panel-label {
   @apply mb-2 border-b border-outline pb-1.5 font-mono text-[0.65rem] tracking-[0.08em] text-muted uppercase;
 }
+
+@layer base {
+  html,
+  body {
+    @apply m-0 min-h-dvh bg-mantle text-foreground overflow-x-hidden overscroll-y-none;
+  }
+
+  button {
+    @apply cursor-pointer disabled:cursor-not-allowed disabled:opacity-50;
+  }
+}

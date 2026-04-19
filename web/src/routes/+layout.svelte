@@ -56,47 +56,51 @@
   <title>Big Fly</title>
 </svelte:head>
 
-<header class="sticky top-0 z-50 flex h-14 items-center gap-4 border-b border-outline bg-crust px-8">
-  <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline">Big Fly</a>
-  <span class="rounded bg-outline px-2 py-0.5 font-mono text-[0.7rem] text-muted">
-    {badge}
-  </span>
-  {#if meta.data}
-    <!-- <span class="font-mono text-[0.65rem] text-muted opacity-60">v{meta.version}</span> -->
-    <span class="font-mono text-[0.65rem] text-muted opacity-60">ALPHA</span>
-  {/if}
-  <nav class="ml-auto flex items-center gap-1">
-    {#each LINKS as { href, label } (href)}
+<div class="flex min-h-dvh flex-col overflow-x-hidden bg-mantle">
+  <header class="sticky top-0 z-50 flex h-14 items-center gap-4 border-b border-outline bg-crust px-4 sm:px-6 lg:px-8">
+    <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline">Big Fly</a>
+    <span class="rounded bg-outline px-2 py-0.5 font-mono text-[0.7rem] text-muted">
+      {badge}
+    </span>
+    {#if meta.data}
+      <!-- <span class="font-mono text-[0.65rem] text-muted opacity-60">v{meta.version}</span> -->
+      <span class="font-mono text-[0.65rem] text-muted opacity-60">ALPHA</span>
+    {/if}
+    <nav class="ml-auto flex items-center gap-1">
+      {#each LINKS as { href, label } (href)}
+        <a
+          href={resolve(href)}
+          class="rounded px-2.5 py-1 text-[0.8rem] no-underline transition-colors duration-150 {isActive(href)
+            ? 'bg-outline text-foreground'
+            : 'text-muted hover:bg-outline hover:text-foreground'}">
+          {label}
+        </a>
+      {/each}
       <a
-        href={resolve(href)}
-        class="rounded px-2.5 py-1 text-[0.8rem] no-underline transition-colors duration-150 {isActive(href)
+        href={resolve(API_DOCS_ROUTE)}
+        target="_blank"
+        rel="noreferrer"
+        class="ml-2 rounded px-2.5 py-1 text-[0.8rem] text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground">
+        API docs
+      </a>
+      <a
+        href={resolve('/account')}
+        class="rounded px-2.5 py-1 text-[0.8rem] no-underline transition-colors duration-150 {pathname.startsWith(
+          '/account'
+        )
           ? 'bg-outline text-foreground'
           : 'text-muted hover:bg-outline hover:text-foreground'}">
-        {label}
+        Account
       </a>
-    {/each}
-    <a
-      href={resolve(API_DOCS_ROUTE)}
-      target="_blank"
-      rel="noreferrer"
-      class="ml-2 rounded px-2.5 py-1 text-[0.8rem] text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground">
-      API docs
-    </a>
-    <a
-      href={resolve('/account')}
-      class="rounded px-2.5 py-1 text-[0.8rem] no-underline transition-colors duration-150 {pathname.startsWith(
-        '/account'
-      )
-        ? 'bg-outline text-foreground'
-        : 'text-muted hover:bg-outline hover:text-foreground'}">
-      Account
-    </a>
-  </nav>
-</header>
+    </nav>
+  </header>
 
-<div class="border-b border-white bg-rose-500 px-8 py-2 font-mono text-sm text-white">
-  Preview notice: Big Fly is in early alpha for the next few weeks. Expect bugs, breaking changes, and incomplete
-  features. We appreciate your patience and feedback as we work towards a stable release in the coming weeks!
+  <div class="border-b border-white bg-rose-500 px-4 py-2 font-mono text-sm text-white sm:px-6 lg:px-8">
+    Preview notice: Big Fly is in early alpha for the next few weeks. Expect bugs, breaking changes, and incomplete
+    features. We appreciate your patience and feedback as we work towards a stable release in the coming weeks!
+  </div>
+
+  <main class="min-h-0 flex-1">
+    {@render children()}
+  </main>
 </div>
-
-{@render children()}

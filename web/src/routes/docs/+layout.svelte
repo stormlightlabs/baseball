@@ -41,7 +41,7 @@
   }
 </script>
 
-<main class="min-h-[calc(100vh-3.5rem)] bg-mantle">
+<main class="min-h-full bg-mantle">
   <div
     class="mx-auto grid w-full max-w-416 grid-cols-[18rem_minmax(0,1fr)_14rem] gap-4 px-6 pt-5 pb-7 max-[74rem]:grid-cols-[17rem_minmax(0,1fr)] max-[56rem]:grid-cols-1 max-[56rem]:px-[0.9rem] max-[56rem]:pt-[0.9rem] max-[56rem]:pb-[1.2rem]">
     <nav

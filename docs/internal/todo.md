@@ -21,7 +21,6 @@ Remove api endpoints from Quick Access cards
 This might be applicable to the API as well: we should normalize era labels such that
 they're not abbreviated. This could be under `/meta`
 
-The go project's static content (html templates, css, js) should be moved to the `web`
-project.
+## DevOps
 
-For `api.bigfly.tech` to work, we have to namespace the API routes behind `/v1` not `/api/v1`
+We need to add a HEALTHCHECK instruction to the Dockerfile.
