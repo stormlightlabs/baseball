@@ -1,5 +1,6 @@
-/** Base URL: set VITE_API_BASE_URL in .env.production for CDN deploys; defaults to /api/v1 (dev proxy) */
-const BASE: string = (import.meta.env.VITE_API_BASE_URL as string) || '/api/v1';
+/** Base URL: set VITE_API_BASE_URL in .env.production; defaults to /v1 for local proxy. */
+const BASE_RAW: string = (import.meta.env.VITE_API_BASE_URL as string) || '/v1';
+const BASE = BASE_RAW.endsWith('/') ? BASE_RAW.slice(0, -1) : BASE_RAW;
 
 export type Params = Record<string, string | number | boolean | null | undefined>;
 
@@ -31,9 +32,10 @@ export type MetaResponse = {
 };
 
 function buildUrl(path: string, params?: Params): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const origin = globalThis.window !== undefined ? globalThis.location.origin : 'http://localhost:8080';
   const base = BASE.startsWith('http') ? BASE : origin + BASE;
-  const url = new URL(base + path);
+  const url = new URL(base + normalizedPath);
   if (params) {
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== null && v !== '') {
@@ -46,7 +48,7 @@ function buildUrl(path: string, params?: Params): string {
 
 export async function apiFetch<T>(path: string, params?: Params): Promise<T> {
   const url = buildUrl(path, params);
-  const res = await fetch(url);
+  const res = await fetch(url, { credentials: 'include' });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error((body as { error: string }).error ?? `HTTP ${res.status}`);
@@ -61,4 +63,10 @@ export function fetchPaginated<T>(path: string, params?: PaginatedParams): Promi
 /** Returns the resolved URL for a given API path + params (useful for ApiPanel/ApiMirrorStrip). */
 export function apiUrl(path: string, params?: Params): string {
   return buildUrl(path, params);
+}
+
+/** Returns a URL/href for non-fetch links (OAuth/docs) without forcing an origin. */
+export function apiHref(path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${BASE}${normalizedPath}`;
 }

@@ -10,11 +10,11 @@
 		respond "OK" 200
 	}
 
-	handle /api/v1/* {
+	handle /v1/* {
 		reverse_proxy app:8080 {
 			lb_policy round_robin
 
-			health_uri /api/v1/health
+			health_uri /v1/health
 			health_interval 10s
 			health_timeout 5s
 
@@ -27,7 +27,7 @@
 	}
 
 	handle / {
-		respond "Baseball API - Use /api/v1/* endpoints" 200
+		respond "Baseball API - Use /v1/* endpoints" 200
 	}
 
 	encode gzip zstd
@@ -42,17 +42,17 @@
 # Production HTTPS configuration
 #
 # bigfly.tech {
-# 	handle /api/v1/* {
+# 	handle /v1/* {
 # 		reverse_proxy app:8080 {
 # 			lb_policy round_robin
-# 			health_uri /api/v1/health
+# 			health_uri /v1/health
 # 			health_interval 10s
 # 			health_timeout 5s
 # 		}
 # 	}
 #
 # 	handle / {
-# 		respond "Baseball API - Use /api/v1/* endpoints" 200
+# 		respond "Baseball API - Use /v1/* endpoints" 200
 # 	}
 #
 # 	encode gzip zstd

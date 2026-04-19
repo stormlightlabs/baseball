@@ -26,7 +26,7 @@ class MetaHealthStrip extends StatelessWidget {
         child: ListTile(
           leading: Icon(Icons.error_outline, color: colorScheme.error),
           title: const Text('API metadata unavailable'),
-          subtitle: Text(error ?? 'Failed to fetch /api/v1/meta'),
+          subtitle: Text(error ?? 'Failed to fetch /v1/meta'),
         ),
       );
     }
@@ -48,7 +48,7 @@ class MetaHealthStrip extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(online ? 'API Online' : 'API Degraded'),
-                  Text('/api/v1/meta · v${meta!.version}', style: Theme.of(context).textTheme.bodySmall),
+                  Text('/v1/meta · v${meta!.version}', style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
             ),

@@ -1,9 +1,29 @@
 # Introduction
 
-This page is a stub for the docs introduction.
+Big Fly unifies historical baseball datasets behind one API namespace: `/v1`.
+Use this docs section to understand coverage, query patterns, and authentication.
 
-## Coming Soon
+## Quick Start
 
-- Overview of the dashboard and API surface
-- How to navigate the docs
-- Recommended reading path
+1. Check health/readiness:
+   - `GET /v1/health`
+   - `GET /v1/ready`
+2. Open Swagger (served by the API binary): [/explorer](/explorer)
+3. Create API keys from the web account page: [/account](/account)
+4. Start with endpoint families:
+   - `/v1/search/*`
+   - `/v1/players/*`
+   - `/v1/teams/*`
+   - `/v1/games/*`
+   - `/v1/stats/*`
+
+## Reading Path
+
+1. [About](/docs/about) for scope, data sources, and architecture.
+2. [Apps](/docs/apps) for practical client usage patterns.
+3. API reference pages for concrete request/response contracts.
+
+## Notes
+
+- Swagger/OpenAPI docs remain hosted in the API service at `/v1/docs/`.
+- Web and mobile clients should target `/v1` paths only, not `/api/v1`.

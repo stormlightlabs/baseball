@@ -93,14 +93,14 @@ Think of `baseball server fetch` as a built-in, auth-aware `curl`. It:
 
 ### HTTP API
 
-The REST API lives at `/v1` (or the host/port defined in `conf.toml`). Interactive Swagger UI continues to be available at `/docs` for request/response schemas.
+The REST API lives at `/v1` (or the host/port defined in `conf.toml`). Interactive Swagger UI is served by the API binary at `/v1/docs/` for request/response schemas.
 
 <details>
 <summary>
 Endpoints
 </summary>
 
-- **Authentication**: API keys (`Authorization: Bearer sk_...`) or dashboard-issued session tokens; start the server with `--debug` while iterating locally to skip auth.
+- **Authentication**: API keys (`Authorization: Bearer sk_...`) or OAuth session tokens from the web account page; start the server with `--debug` while iterating locally to skip auth.
 - **Health**: `GET /v1/health` is a liveness probe, while `GET /v1/ready`
   mirrors what `baseball server health` checks for dataset readiness.
 - **Primary resources**:
@@ -122,7 +122,7 @@ Endpoints
     - `/v1/search/*` for fuzzy finding &. natural-language lookup.
 - **Authentication flows**:
     - `/v1/auth/github` and `/v1/auth/codeberg` drive OAuth
-    - `/dashboard` lets you mint API keys after login.
+    - `/account` in the web app lets you mint API keys after login.
 
 </details>
 

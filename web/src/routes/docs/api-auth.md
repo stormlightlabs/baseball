@@ -1,7 +1,7 @@
 # Authentication & API Key Endpoints
 
 Browser-based OAuth (GitHub + Codeberg) and API key management live inside `AuthRoutes`.
-These routes are required for the dashboard, CLI login, and programmatic API access.
+These routes are required for the web account page, CLI login, and programmatic API access.
 
 ## Summary
 

@@ -23,7 +23,7 @@ Use [Database Loading Contract (Complete Slice)](./data-loading.md) as the autho
 
 ### API Conventions
 
-- Base URL: `https://bigfly.tech/api/v1/...` (prod) and `http://localhost:8080/v1/...` (dev).
+- Base URL: `https://api.bigfly.tech/v1/...` (prod) and `http://localhost:8080/v1/...` (dev).
 - Common query params: `page`, `per_page`, `sort`, `order`, `from`/`to` (dates as `YYYY-MM-DD`), and stat filters such as `min_pa`, `min_ip`, `min_g`.
 - Paginated responses wrap payloads inside an envelope containing `data`, `page`, `per_page`, and `total`.
 - Default envelope metadata keeps clients backward compatible while letting us add new fields later.

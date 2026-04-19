@@ -30,7 +30,7 @@
 
   const activeApiEndpoint = $derived.by(() => {
     const entity = ENTITY_TYPES.find((e) => e.label === activeEntity);
-    return entity ? entity.apiEndpoint : '/api/v1/search/players';
+    return entity ? entity.apiEndpoint : '/v1/search/players';
   });
 
   function handleSearch() {
@@ -338,6 +338,6 @@
   </div>
 
   <div class="mx-auto max-w-6xl px-8 pb-8">
-    <ApiMirrorStrip url="/api/v1/meta" />
+    <ApiMirrorStrip url="/v1/meta" />
   </div>
 </main>

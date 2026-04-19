@@ -35,7 +35,8 @@ tasks:
   swagger:generate:
     desc: Generate Swagger/OpenAPI documentation
     cmds:
-      - swag init --dir ./internal/api --generalInfo server.go --output ./internal/docs --parseDependency --parseInternal --md ./internal/api
+      - swag init --dir ./internal/api --generalInfo server.go --output
+        ./internal/docs --parseDependency --parseInternal --md ./internal/api
       - task: swagger:fix
       - task: dash:sync-spec
     sources:
@@ -65,7 +66,8 @@ tasks:
   swagger:clean:
     desc: Clean generated swagger files
     cmds:
-      - rm -f internal/docs/docs.go internal/docs/swagger.json internal/docs/swagger.yaml
+      - rm -f internal/docs/docs.go internal/docs/swagger.json
+        internal/docs/swagger.yaml
 
   db:migrate:
     desc: Run database migrations
@@ -78,7 +80,8 @@ tasks:
       - go test ./... -v
 
   test:filter:
-    desc: "Run tests matching a pattern (usage: task test:filter -- -run TestPattern)"
+    desc: "Run tests matching a pattern (usage: task test:filter -- -run
+      TestPattern)"
     cmds:
       - go test ./... -v {{.CLI_ARGS}}
       - task: swagger:generate
@@ -86,27 +89,12 @@ tasks:
       - echo ""
       - echo "Rebuild complete! Restart the server to pick up changes"
 
-  dash:sync-spec:
-    desc: Copy generated OpenAPI docs into web/static for the API explorer
-    cmds:
-      - mkdir -p web/static/openapi
-      - cp internal/docs/swagger.json web/static/openapi/swagger.json
-      - cp internal/docs/swagger.yaml web/static/openapi/swagger.yaml
-    sources:
-      - internal/docs/swagger.json
-      - internal/docs/swagger.yaml
-    generates:
-      - web/static/openapi/swagger.json
-      - web/static/openapi/swagger.yaml
-
   dash:dev:
-    desc: Start the dashboard dev server (proxies /api/v1 to localhost:8080)
-    deps: [dash:sync-spec]
+    desc: Start the dashboard dev server (proxies /v1 to localhost:8080)
     cmds:
       - pnpm --dir web dev
 
   dash:build:
     desc: Build the dashboard as a static SPA
-    deps: [dash:sync-spec]
     cmds:
       - pnpm --dir web build

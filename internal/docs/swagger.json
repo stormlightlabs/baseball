@@ -14,7 +14,7 @@
         },
         "version": "1.0"
     },
-    "basePath": "/api/v1",
+    "basePath": "/v1",
     "paths": {
         "/achievements/cycles": {
             "get": {

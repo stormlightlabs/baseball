@@ -45,7 +45,7 @@ func newGithubConf() *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     getEnv("GITHUB_CLIENT_ID", ""),
 		ClientSecret: getEnv("GITHUB_CLIENT_SECRET", ""),
-		RedirectURL:  getEnv("GITHUB_REDIRECT_URL", "http://localhost:8080/api/v1/auth/github/callback"),
+		RedirectURL:  getEnv("GITHUB_REDIRECT_URL", "http://localhost:8080/v1/auth/github/callback"),
 		Scopes:       []string{"user:email"},
 		Endpoint:     github.Endpoint,
 	}
@@ -55,7 +55,7 @@ func newCodebergConf() *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     getEnv("CODEBERG_CLIENT_ID", ""),
 		ClientSecret: getEnv("CODEBERG_CLIENT_SECRET", ""),
-		RedirectURL:  getEnv("CODEBERG_REDIRECT_URL", "http://localhost:8080/api/v1/auth/codeberg/callback"),
+		RedirectURL:  getEnv("CODEBERG_REDIRECT_URL", "http://localhost:8080/v1/auth/codeberg/callback"),
 		Scopes:       []string{"read:user"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://codeberg.org/login/oauth/authorize",

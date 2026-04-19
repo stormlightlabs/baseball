@@ -3,7 +3,7 @@
 //	@title	Baseball API
 //	@description.markdown
 //	@version			1.0
-//	@BasePath			/api/v1
+//	@BasePath			/v1
 //
 //	@contact.name		API Support
 //	@contact.url		https://github.com/stormlightlabs/baseball
@@ -104,7 +104,6 @@ import (
 	"database/sql"
 	_ "expvar"
 	"net/http"
-	"strings"
 
 	httpSwagger "github.com/swaggo/http-swagger"
 	"stormlightlabs.org/baseball/internal/cache"
@@ -171,7 +170,6 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewDerivedRoutes(derivedRepo, weRepo),
 		NewComputedRoutes(advancedStatsRepo, leverageRepo, parkFactorRepo),
 		NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
-		NewUIRoutes(apiKeyRepo),
 		NewMLBStatsAPIRoutes(cacheClient),
 		NewFederalLeagueRoutes(gameRepo, playRepo, teamRepo),
 		NewNegroLeaguesRoutes(negroLeaguesRepo),
@@ -182,7 +180,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 
 // NewServer wires all registrars into one mux.
 func newServer(registrars ...Registrar) *Server {
-	docs.SwaggerInfo.BasePath = "/api/v1"
+	docs.SwaggerInfo.BasePath = "/v1"
 
 	mux := http.NewServeMux()
 
@@ -209,14 +207,5 @@ func newServer(registrars ...Registrar) *Server {
 
 // Implement http.Handler
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/api" {
-		clone := r.Clone(r.Context())
-		clone.URL.Path = strings.TrimPrefix(r.URL.Path, "/api")
-		if clone.URL.Path == "" {
-			clone.URL.Path = "/"
-		}
-		s.mux.ServeHTTP(w, clone)
-		return
-	}
 	s.mux.ServeHTTP(w, r)
 }

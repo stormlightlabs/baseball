@@ -84,7 +84,7 @@ class SeasonsScreen extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Text(
-                'Loaded ${state.availableSeasons.length} seasons from /api/v1/seasons',
+                'Loaded ${state.availableSeasons.length} seasons from /v1/seasons',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),

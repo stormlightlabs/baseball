@@ -320,6 +320,6 @@
   {/snippet}
 
   {#snippet panel()}
-    <ApiPanel endpoint={`/api/v1${activeEndpoint}`} url={activeUrl} />
+    <ApiPanel endpoint={`/v1${activeEndpoint}`} url={activeUrl} />
   {/snippet}
 </ThreeColLayout>

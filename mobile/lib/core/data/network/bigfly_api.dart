@@ -8,6 +8,6 @@ part 'bigfly_api.g.dart';
 abstract class BigFlyApi {
   factory BigFlyApi(Dio dio, {String baseUrl}) = _BigFlyApi;
 
-  @GET('/api/v1/health')
+  @GET('/v1/health')
   Future<HealthResponse> getHealth();
 }

@@ -67,7 +67,7 @@ func ServerFetchCmd() *cobra.Command {
 		Short: "Test API endpoints",
 		Long: `cURL-like tool for testing API endpoints with formatted output.
 
-Path should be relative to /api/v1/ (e.g., 'players?name=ruth' or 'teams/BOS?year=2023').`,
+Path should be relative to /v1/ (e.g., 'players?name=ruth' or 'teams/BOS?year=2023').`,
 		Args: cobra.ExactArgs(1),
 		RunE: fetchEndpoint,
 	}
@@ -187,7 +187,7 @@ func fetchEndpoint(cmd *cobra.Command, args []string) error {
 func checkHealth(cmd *cobra.Command, args []string) error {
 	echo.Header("Health Check")
 
-	serverURL := "http://localhost:8080/api/v1/ready"
+	serverURL := "http://localhost:8080/v1/ready"
 	echo.Infof("Checking: %s", serverURL)
 	echo.Info("")
 
@@ -227,14 +227,14 @@ func authInstructions(cmd *cobra.Command, args []string) error {
 	echo.Info("")
 	echo.Info("To access the Baseball API, you need an API key or session token.")
 	echo.Info("")
-	echo.Info("Step 1: Login to the Dashboard")
-	echo.Info("  Visit: http://localhost:8080/dashboard")
-	echo.Info("  Or login directly:")
-	echo.Info("    • GitHub: http://localhost:8080/api/v1/auth/github")
-	echo.Info("    • Codeberg: http://localhost:8080/api/v1/auth/codeberg")
+	echo.Info("Step 1: Sign in")
+	echo.Info("  Use the web app Account page (for local dev: http://localhost:5173/account).")
+	echo.Info("  OAuth entrypoints:")
+	echo.Info("    • GitHub: http://localhost:8080/v1/auth/github")
+	echo.Info("    • Codeberg: http://localhost:8080/v1/auth/codeberg")
 	echo.Info("")
 	echo.Info("Step 2: Generate an API Key")
-	echo.Info("  After logging in, you can generate API keys from the dashboard.")
+	echo.Info("  After logging in, generate API keys from the Account page.")
 	echo.Info("  API keys allow programmatic access without logging in each time.")
 	echo.Info("")
 	echo.Info("Step 3: Use Your API Key")
@@ -244,7 +244,7 @@ func authInstructions(cmd *cobra.Command, args []string) error {
 	echo.Infof("     baseball server fetch 'players?name=ruth' --api-key 'sk_...'")
 	echo.Info("")
 	echo.Info("  B. With HTTP requests:")
-	echo.Info("     curl -H 'Authorization: Bearer sk_...' http://localhost:8080/api/v1/players")
+	echo.Info("     curl -H 'Authorization: Bearer sk_...' http://localhost:8080/v1/players")
 	echo.Info("")
 	echo.Success("✓ For local development, start the server with --debug to disable authentication")
 	echo.Infof("  baseball server start --debug")
@@ -392,9 +392,8 @@ func startServer(cmd *cobra.Command, args []string) error {
 	echo.Success(fmt.Sprintf("✓ Server started on %s", addr))
 	if !cfg.Server.DebugMode {
 		echo.Info("ℹ Authentication enabled")
-		echo.Info("  GitHub OAuth: /api/v1/auth/github")
-		echo.Info("  Codeberg OAuth: /api/v1/auth/codeberg")
-		echo.Info("  Dashboard: /dashboard")
+		echo.Info("  GitHub OAuth: /v1/auth/github")
+		echo.Info("  Codeberg OAuth: /v1/auth/codeberg")
 	}
 	echo.Info("")
 	echo.Info("Press Ctrl+C to stop")
@@ -470,9 +469,6 @@ func extractRoutesFromAST(dir string) ([]Route, error) {
 
 			pattern := strings.Trim(patternLit.Value, "\"")
 			method, path := parsePattern(pattern)
-			if strings.HasPrefix(path, "/v1") {
-				path = "/api" + path
-			}
 			if path != "" {
 				routes = append(routes, Route{Method: method, Path: path})
 			}
@@ -481,8 +477,8 @@ func extractRoutesFromAST(dir string) ([]Route, error) {
 		})
 	}
 
-	routes = append(routes, Route{Method: "GET", Path: "/api/v1/health"})
-	routes = append(routes, Route{Method: "GET", Path: "/api/v1/docs/"})
+	routes = append(routes, Route{Method: "GET", Path: "/v1/health"})
+	routes = append(routes, Route{Method: "GET", Path: "/v1/docs/"})
 	routes = append(routes, Route{Method: "GET", Path: "/debug/vars"})
 
 	return routes, nil

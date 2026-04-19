@@ -116,7 +116,7 @@
   <div class="mb-3 grid gap-3 md:grid-cols-[1fr_auto]">
     <div>
       <p class="font-mono text-[0.69rem] text-muted">
-        Browse paginated events from <code>/api/v1/games/{gameId}/events</code>.
+        Browse paginated events from <code>/v1/games/{gameId}/events</code>.
       </p>
     </div>
     <div class="rounded border border-outline bg-surface px-2.5 py-2">

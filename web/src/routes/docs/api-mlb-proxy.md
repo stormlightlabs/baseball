@@ -8,8 +8,8 @@ Every proxy call adds caching, shared auth, and a consistent schema so clients d
 | Endpoint                  | Dataset       | Highlights                                                                         |
 | ------------------------- | ------------- | ---------------------------------------------------------------------------------- |
 | `GET /v1/mlb`             | MLB Stats API | Catalog of proxied routes (`routes` array) plus base URL metadata.                 |
-| `GET /v1/mlb/people`      | MLB Stats API | Pass-through to `/v1/people`; supports `personIds`, `sportId`, and `hydrate`.      |
-| `GET /v1/mlb/people/{id}` | MLB Stats API | Single-player lookup mirroring `/v1/people/{personId}`.                            |
+| `GET /v1/mlb/people`      | MLB Stats API | Pass-through to `/api/v1/people`; supports `personIds`, `sportId`, and `hydrate`.  |
+| `GET /v1/mlb/people/{id}` | MLB Stats API | Single-player lookup mirroring `/api/v1/people/{personId}`.                        |
 | `GET /v1/mlb/teams`       | MLB Stats API | Team directory; accepts `sportId` (defaults to 1) and `season`.                    |
 | `GET /v1/mlb/teams/{id}`  | MLB Stats API | Individual team record, optionally filtered by `season`.                           |
 | `GET /v1/mlb/schedule`    | MLB Stats API | Schedule endpoint relayed directly from MLB Stats; any query params are forwarded. |
