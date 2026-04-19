@@ -273,6 +273,10 @@ func downloadIfNeeded(ctx context.Context, url, destPath string, force bool) (bo
 }
 
 func downloadToFile(ctx context.Context, url, destPath string) error {
+	if err := waitForRetrosheetDownloadSlot(ctx); err != nil {
+		return err
+	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err

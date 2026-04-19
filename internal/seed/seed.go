@@ -550,6 +550,10 @@ func downloadRetrosheetWildCardGames(dest string) error {
 }
 
 func downloadFile(url, dest string) error {
+	if err := waitForRetrosheetDownloadSlot(context.Background()); err != nil {
+		return err
+	}
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return err

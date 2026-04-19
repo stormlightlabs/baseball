@@ -2,6 +2,7 @@ package db
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"database/sql"
 	"embed"
@@ -24,6 +25,9 @@ var migrationFiles embed.FS
 
 //go:embed queries/fill_missing_parks.sql
 var fillMissingParksQuery string
+
+//go:embed negro_leagues_teams.csv
+var negroLeaguesTeamsCSV []byte
 
 // Migration represents a single database migration.
 type Migration struct {
@@ -961,15 +965,11 @@ func (db *DB) RefreshMaterializedViews(ctx context.Context, viewNames []string) 
 
 // loadNegroLeaguesTeamMapping reads the team-to-league mapping CSV
 func loadNegroLeaguesTeamMapping() (map[string]string, error) {
-	mappingPath := "internal/db/negro_leagues_teams.csv"
-
-	file, err := os.Open(mappingPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open team mapping file: %w", err)
+	if len(negroLeaguesTeamsCSV) == 0 {
+		return nil, fmt.Errorf("embedded team mapping is empty")
 	}
-	defer file.Close()
 
-	reader := csv.NewReader(file)
+	reader := csv.NewReader(bytes.NewReader(negroLeaguesTeamsCSV))
 	reader.Comment = '#'
 	reader.TrimLeadingSpace = true
 
