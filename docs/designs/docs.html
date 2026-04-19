@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docs — Baseball API Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="page-docs">
+
+<header class="site-header">
+  <a href="index.html" class="logo">Baseball API</a>
+  <span class="badge">docs</span>
+  <nav class="nav-links">
+    <a href="home.html">Home</a>
+    <a href="players.html">Players</a>
+    <a href="teams.html">Teams</a>
+    <a href="games.html">Games</a>
+    <a href="seasons.html">Seasons</a>
+    <a href="leaders.html">Leaders</a>
+    <a href="compare.html">Compare</a>
+    <a href="data-sources.html">Data</a>
+    <a href="docs.html" class="active">Docs</a>
+  </nav>
+</header>
+
+<div class="docs-layout">
+
+  <!-- Left sidebar: doc nav -->
+  <nav class="docs-sidebar">
+    <div class="ds-search">
+      <input type="text" placeholder="Search docs…" />
+    </div>
+
+    <div class="ds-group">
+      <div class="ds-group-label">API Reference</div>
+      <a href="#" class="ds-item">Players</a>
+      <a href="#" class="ds-item">Teams &amp; Franchises</a>
+      <a href="#" class="ds-item">Games</a>
+      <a href="#" class="ds-item">Stats &amp; Leaders</a>
+      <a href="#" class="ds-item">Search</a>
+      <a href="#" class="ds-item">Play-by-Play &amp; Pitches</a>
+      <a href="#" class="ds-item">Game Context</a>
+      <a href="#" class="ds-item">Per-Game Aggregations</a>
+      <a href="#" class="ds-item">Computed &amp; Derived</a>
+      <a href="#" class="ds-item">Achievements</a>
+      <a href="#" class="ds-item">Awards &amp; Postseason</a>
+      <a href="#" class="ds-item">Parks, Umpires &amp; Managers</a>
+      <a href="#" class="ds-item">League Coverage</a>
+      <a href="#" class="ds-item">MLB Proxy</a>
+      <a href="#" class="ds-item">Meta &amp; Utility</a>
+      <a href="#" class="ds-item">Auth</a>
+    </div>
+
+    <div class="ds-group">
+      <div class="ds-group-label">Data &amp; Architecture</div>
+      <a href="#" class="ds-item ds-item--active">ID Crosswalk</a>
+      <a href="#" class="ds-item">Data Loading</a>
+      <a href="#" class="ds-item">Statistical Methodology</a>
+    </div>
+
+    <div class="ds-group">
+      <div class="ds-group-label">Project</div>
+      <a href="#" class="ds-item">README</a>
+      <a href="#" class="ds-item">Roadmap</a>
+      <a href="#" class="ds-item">Testing</a>
+    </div>
+  </nav>
+
+  <!-- Center: rendered doc content -->
+  <main class="docs-main">
+
+    <!-- Breadcrumb + meta bar -->
+    <div class="doc-meta-bar">
+      <span class="doc-breadcrumb">Data &amp; Architecture</span>
+      <span class="doc-breadcrumb-sep">›</span>
+      <span class="doc-breadcrumb doc-breadcrumb--active">ID Crosswalk</span>
+      <span class="doc-meta-right">
+        <span class="doc-file-tag">id-crosswalk.md</span>
+      </span>
+    </div>
+
+    <!-- Rendered markdown body -->
+    <article class="doc-body">
+
+      <h1>Dataset ID Crosswalk System</h1>
+      <p>Maps player, team, and park identifiers across Lahman and Retrosheet datasets. Enables seamless joins and dual-ID API lookups.</p>
+
+      <h2>Coverage</h2>
+      <table>
+        <thead>
+          <tr><th>Crosswalk</th><th>Source</th><th>Total</th><th>Mapped</th><th>Coverage</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Player IDs</td><td>People</td><td>24K</td><td>21K</td><td><span class="cov-pill cov-high">88%</span></td><td>Deduplicates records with same Retro ID</td></tr>
+          <tr><td>Team/Franchise</td><td>Teams</td><td>256</td><td>256</td><td><span class="cov-pill cov-full">100%</span></td><td>Tracks relocations and name changes</td></tr>
+          <tr><td>Parks</td><td>Games</td><td>449</td><td>142</td><td><span class="cov-pill cov-low">32%</span></td><td>Missing parks are primarily Negro Leagues</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Player ID Mapping</h2>
+      <p>Maps Lahman <code>playerID</code> to Retrosheet <code>retroID</code>. Enables API lookups with either format.</p>
+
+      <h3>Views &amp; Functions</h3>
+      <table>
+        <thead><tr><th>View/Function</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>player_id_map</code></td><td>Materialized view with bidirectional map</td></tr>
+          <tr><td><code>lahman_to_retro()</code></td><td>Convert Lahman ID to Retrosheet ID</td></tr>
+          <tr><td><code>retro_to_lahman()</code></td><td>Convert Retrosheet ID to Lahman ID</td></tr>
+        </tbody>
+      </table>
+
+      <h3>API Usage</h3>
+      <p>API endpoints automatically accept both ID formats. Responses include both IDs when available.</p>
+      <pre><code><span class="sh-comment"># Both return the same player with both IDs in response</span>
+GET /v1/players/troutmi01  <span class="sh-comment"># Lahman ID</span>
+GET /v1/players/troum001   <span class="sh-comment"># Retrosheet ID</span></code></pre>
+
+      <h2>Team/Franchise Mapping</h2>
+      <p>Links team codes to franchises across seasons. Handles relocations and historical name changes.</p>
+
+      <h3>Views &amp; Functions</h3>
+      <table>
+        <thead><tr><th>View/Function</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>team_franchise_map</code></td><td>Team-season-franchise relationships</td></tr>
+          <tr><td><code>franchise_current_team()</code></td><td>Get current team ID for franchise</td></tr>
+          <tr><td><code>franchise_all_teams()</code></td><td>Get all historical teams for franchise</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Park Mapping</h2>
+      <p>Cross-references Retrosheet park codes with Lahman park metadata. Enriches game responses with park names and locations.</p>
+
+      <h3>Views &amp; Functions</h3>
+      <table>
+        <thead><tr><th>View/Function</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>park_map</code></td><td>All parks with metadata where available</td></tr>
+          <tr><td><code>parks_missing_from_lahman</code></td><td>High-usage parks needing metadata</td></tr>
+          <tr><td><code>get_park_info()</code></td><td>Lookup park details by Retrosheet code</td></tr>
+          <tr><td><code>active_parks()</code></td><td>Parks used since specified year</td></tr>
+        </tbody>
+      </table>
+
+      <h3>API Enrichment</h3>
+      <p>Game endpoints automatically include park metadata:</p>
+      <pre><code>GET /v1/games/NYA202509280
+<span class="sh-comment"># Returns park_name, park_city, park_state alongside park_id</span></code></pre>
+
+      <h2>Implementation Details</h2>
+      <p>All crosswalks use materialized views with unique indexes for concurrent refresh. Helper functions simplify common lookups without explicit joins.</p>
+      <p>Player repository accepts either ID format automatically via crosswalk join. Game repository enriches responses with park metadata from <code>park_map</code>.</p>
+      <p>Duplicate handling: Player crosswalk deduplicates by preferring records with debut dates. Park crosswalk deduplicates Parks table using <code>DISTINCT ON parkkey</code>.</p>
+
+    </article>
+
+  </main>
+
+  <!-- Right: outline / on-this-page -->
+  <aside class="docs-toc">
+    <div class="toc-label">On this page</div>
+    <nav class="toc-nav">
+      <a href="#" class="toc-item toc-h2">Coverage</a>
+      <a href="#" class="toc-item toc-h2">Player ID Mapping</a>
+      <a href="#" class="toc-item toc-h3">Views &amp; Functions</a>
+      <a href="#" class="toc-item toc-h3">API Usage</a>
+      <a href="#" class="toc-item toc-h2">Team/Franchise Mapping</a>
+      <a href="#" class="toc-item toc-h3">Views &amp; Functions</a>
+      <a href="#" class="toc-item toc-h2">Park Mapping</a>
+      <a href="#" class="toc-item toc-h3">Views &amp; Functions</a>
+      <a href="#" class="toc-item toc-h3">API Enrichment</a>
+      <a href="#" class="toc-item toc-h2">Implementation Details</a>
+    </nav>
+
+    <div class="toc-divider"></div>
+    <div class="toc-label">Source file</div>
+    <div class="toc-file-link">
+      <span class="toc-file-icon">◈</span>
+      <span class="toc-file-name">docs/id-crosswalk.md</span>
+    </div>
+  </aside>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+</body>
+</html>

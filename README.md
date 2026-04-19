@@ -37,7 +37,7 @@ task build
 
 ### Complete Slice Loading
 
-For the full non-optional loading contract, see [docs/data-loading.md](./docs/data-loading.md).
+For the full non-optional loading contract, see [data-loading.md](./docs/internal/data-loading.md).
 
 Quick local example for a complete representative slice:
 

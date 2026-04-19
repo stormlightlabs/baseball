@@ -235,6 +235,19 @@ Ref: `docs/designs/compare.html`
 - [x] Add direct Swagger docsite link in top-level app navigation.
 - [x] Route former `/explorer` dashboard path to Swagger docs for compatibility.
 
+## Docs (`/docs`)
+
+Ref: `docs/designs/docs.html`
+
+- [ ] Install and configure mdsvex in the SvelteKit project.
+- [ ] Add `docs/` as a source directory for mdsvex pre-rendering (copy or symlink `docs/*.md` into the SvelteKit source tree, or configure mdsvex glob to reach them).
+- [ ] Generate a static route per doc file: `/docs/[slug]` from each `*.md` filename.
+- [ ] Build three-column docs layout (`/docs/+layout.svelte`): sidebar nav, center prose outlet, right TOC.
+- [ ] Left sidebar: grouped doc list (API Reference / Data & Architecture / Project) with search filter.
+- [ ] Right column: on-this-page TOC extracted from rendered heading tree at build time.
+- [ ] Apply prose stylesheet matching dark dashboard theme (headings, tables, code blocks, inline code).
+- [ ] Redirect `/docs` to first doc (e.g. `/docs/README` or `/docs/api-players`).
+
 ## Data Sources (`/data`)
 
 Ref: `docs/designs/data-sources.html`

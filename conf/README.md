@@ -44,7 +44,7 @@ Optional: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `CODEBERG_CLIENT_ID`, `COD
 ## Data preparation and loading
 
 Use one canonical complete-slice runbook for both local and Docker workflows:
-[docs/data-loading.md](../docs/data-loading.md).
+[data-loading.md](../docs/internal/data-loading.md).
 
 Quick Docker/Coolify example for a complete slice (`2022-2025`):
 

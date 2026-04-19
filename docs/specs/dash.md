@@ -250,6 +250,35 @@ Should immediately answer: _what can this API do across eras?_
 - The dashboard links out to the existing Swagger UI docsite at `/api/v1/docs/`.
 - The dashboard does not own a separate in-app API Explorer surface.
 
+## Docs (`/docs`)
+
+Pre-rendered prose documentation derived from the `docs/` markdown files in the repo.
+
+### Rendering strategy
+
+- Use [mdsvex](https://mdsvex.paka.dev/) to pre-render Markdown at build time into Svelte components.
+- Each `docs/*.md` file becomes a statically generated route under `/docs/[slug]`.
+- No client-side markdown parsing; all HTML is generated at build time via `adapter-static`.
+
+### Layout
+
+- Three-column: left sidebar (doc nav + search), center (rendered prose), right (table-of-contents / on-this-page).
+- Left sidebar groups docs by category: **API Reference**, **Data & Architecture**, **Project**.
+- Right column generates an on-this-page TOC from the rendered heading tree.
+
+### Doc categories
+
+| Category            | Source files                                                                                                                                                                                                                                                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API Reference       | `api-players`, `api-teams`, `api-games`, `api-stats`, `api-search`, `api-pitches`, `api-play-by-play`, `api-game-context`, `api-per-game-aggregations`, `api-computed`, `api-derived-advanced`, `api-achievements`, `api-awards-postseason`, `api-parks-umpires-managers`, `api-league-coverage`, `api-mlb-proxy`, `api-meta-utility`, `api-auth` |
+| Data & Architecture | `id-crosswalk`, `data-loading`, `statistical-methodology`                                                                                                                                                                                                                                                                                         |
+| Project             | `README`, `ROADMAP`, `testing`                                                                                                                                                                                                                                                                                                                    |
+
+### Prose styling
+
+- Headings, tables, inline `code`, and fenced code blocks styled to match the dashboard dark theme.
+- Coverage/status pills rendered for percentage values in tables.
+
 ## Data Sources and Coverage Page
 
 ### Must include
@@ -273,16 +302,18 @@ Authenticated area behind `/account`.
 
 ## Page Architecture
 
-| Route       | Page         | Layout     | Auth | Notes                                          |
-| ----------- | ------------ | ---------- | ---- | ---------------------------------------------- |
-| `/`         | Home         | single-col | no   | search + meta + era jump                       |
-| `/players`  | Players      | three-col  | no   | search/empty route                             |
-|             |              |            |      | canonical deep links use `/players/[id]/[tab]` |
-| `/teams`    | Teams        | three-col  | no   | franchise + team-season + era context          |
-| `/games`    | Games        | three-col  | no   | finder + game detail + event richness          |
-| `/seasons`  | Seasons      | three-col  | no   | season hub + awards/postseason                 |
-| `/leaders`  | Leaders      | three-col  | no   | quick leaders + query lab + advanced           |
-| `/compare`  | Compare      | three-col  | no   | side-by-side + era normalization               |
-| `/api/v1/docs/` | API Docs (Swagger) | external | no | Existing Swagger UI docsite linked from app navigation |
-| `/data`     | Data Sources | single-col | no   | provenance + era matrix + caveats              |
-| `/account`  | Account      | single-col | yes  | API keys + usage                               |
+| Route           | Page               | Layout     | Auth | Notes                                                  |
+| --------------- | ------------------ | ---------- | ---- | ------------------------------------------------------ |
+| `/`             | Home               | single-col | no   | search + meta + era jump                               |
+| `/players`      | Players            | three-col  | no   | search/empty route                                     |
+|                 |                    |            |      | canonical deep links use `/players/[id]/[tab]`         |
+| `/teams`        | Teams              | three-col  | no   | franchise + team-season + era context                  |
+| `/games`        | Games              | three-col  | no   | finder + game detail + event richness                  |
+| `/seasons`      | Seasons            | three-col  | no   | season hub + awards/postseason                         |
+| `/leaders`      | Leaders            | three-col  | no   | quick leaders + query lab + advanced                   |
+| `/compare`      | Compare            | three-col  | no   | side-by-side + era normalization                       |
+| `/api/v1/docs/` | API Docs (Swagger) | external   | no   | Existing Swagger UI docsite linked from app navigation |
+| `/data`         | Data Sources       | single-col | no   | provenance + era matrix + caveats                      |
+| `/docs`         | Docs               | three-col  | no   | mdsvex pre-rendered prose from `docs/*.md`             |
+| `/docs/[slug]`  | Doc page           | three-col  | no   | individual doc with sidebar nav + TOC                  |
+| `/account`      | Account            | single-col | yes  | API keys + usage                                       |

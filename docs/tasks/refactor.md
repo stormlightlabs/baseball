@@ -73,7 +73,7 @@ Acceptance:
 
 ## Phase 6: Documentation and Migration Finish
 
-- [ ] Update root `README.md` and `docs/data-loading.md` with the simplified canonical flow.
+- [ ] Update root `README.md` and `docs/internal/data-loading.md` with the simplified canonical flow.
 - [ ] Add a deprecation timeline and removal criteria for overlapping commands.
 - [ ] Publish a short migration guide for automation/scripts.
 

@@ -26,7 +26,7 @@ Expands on Section 1 of `docs/ROADMAP.md`. Covers core Lahman-backed biographica
 | ----------------------------------------------- | ------- | -------------------------------------------------------------------------------------- |
 | `GET /v1/players/{player_id}/game-logs`         | R       | Returns Retrosheet game log rows (starter-focused today) with per-game stat lines.     |
 | `GET /v1/players/{player_id}/appearances`       | R       | Enumerates every appearance with role (starter, pinch-hit, defensive swap) and inning. |
-| `GET /v1/players/{player_id}/plays`             | R       | Streams every play involving the player with Lahman↔Retrosheet identity mapping.      |
+| `GET /v1/players/{player_id}/plays`             | R       | Streams every play involving the player with Lahman ↔ Retrosheet identity mapping.     |
 | `GET /v1/players/{player_id}/plate-appearances` | R       | Normalized PA feed exposing pitcher/batter splits, leverage, and situational filters.  |
 
 ### Details
