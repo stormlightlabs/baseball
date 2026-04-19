@@ -35,7 +35,3 @@ Post-ETL we need to clean-up year specific Play-by-Play & Game log data to keep 
 Slog?
 
 API version should be `ALPHA` (keep the `v1` namespace) while we iron out kinks in the system.
-
-### DevOps
-
-We need to add a HEALTHCHECK instruction to the Dockerfile.
