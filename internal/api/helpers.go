@@ -44,7 +44,7 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusNotFound, ErrorResponse{Error: err.Error()})
 		return
 	}
-	writeError(w, err)
+	writeInternalServerError(w, err)
 }
 
 func getIntQuery(r *http.Request, key string, defaultVal int) int {
