@@ -11,6 +11,7 @@ void main() {
         cacheStore: InMemoryCacheStore(),
         homeRepository: FakeHomeRepository(),
         playerRepository: FakePlayerRepository(),
+        teamRepository: FakeTeamRepository(),
         useDynamicColor: false,
       ),
     );
@@ -31,6 +32,7 @@ void main() {
         cacheStore: InMemoryCacheStore(),
         homeRepository: FakeHomeRepository(),
         playerRepository: FakePlayerRepository(),
+        teamRepository: FakeTeamRepository(),
         useDynamicColor: false,
       ),
     );

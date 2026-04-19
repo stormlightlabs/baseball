@@ -12,6 +12,7 @@ void main() {
         cacheStore: InMemoryCacheStore(),
         homeRepository: FakeHomeRepository(),
         playerRepository: FakePlayerRepository(),
+        teamRepository: FakeTeamRepository(),
         useDynamicColor: false,
       ),
     );
@@ -37,6 +38,7 @@ void main() {
             PlayerSearchResult(id: 'mayswi01', name: 'Willie Mays', subtitle: 'mayswi01 · OF · 1951–1973'),
           ],
         ),
+        teamRepository: FakeTeamRepository(),
         useDynamicColor: false,
       ),
     );

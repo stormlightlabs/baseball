@@ -19,6 +19,8 @@ class BaseballApiClient {
   Future<Map<String, dynamic>> getFranchises({bool active = true}) =>
       _getMap('/api/v1/franchises', query: <String, dynamic>{'active': active});
 
+  Future<Map<String, dynamic>> getFranchise(String id) => _getMap('/api/v1/franchises/$id');
+
   Future<List<dynamic>> getSeasons() => _getList('/api/v1/seasons');
 
   Future<Map<String, dynamic>> getPlayer(String id) => _getMap('/api/v1/players/$id');
@@ -32,6 +34,38 @@ class BaseballApiClient {
 
   Future<Map<String, dynamic>> getTeamSeason(String teamId, {required int year}) =>
       _getMap('/api/v1/teams/$teamId', query: <String, dynamic>{'year': year});
+
+  Future<List<dynamic>> getTeamRoster({required int year, required String teamId}) =>
+      _getList('/api/v1/seasons/$year/teams/$teamId/roster');
+
+  Future<Map<String, dynamic>> getTeamSchedule({
+    required int year,
+    required String teamId,
+    int page = 1,
+    int perPage = 40,
+  }) => _getMap(
+    '/api/v1/seasons/$year/teams/$teamId/schedule',
+    query: <String, dynamic>{'page': page, 'per_page': perPage},
+  );
+
+  Future<Map<String, dynamic>> getTeamDailyLogs({
+    required int year,
+    required String teamId,
+    int page = 1,
+    int perPage = 40,
+  }) => _getMap(
+    '/api/v1/seasons/$year/teams/$teamId/daily-logs',
+    query: <String, dynamic>{'page': page, 'per_page': perPage},
+  );
+
+  Future<Map<String, dynamic>> getTeamRunDifferential({
+    required String teamId,
+    required int season,
+    List<int> windows = const <int>[10, 20, 30],
+  }) => _getMap(
+    '/api/v1/teams/$teamId/run-differential',
+    query: <String, dynamic>{'season': season, 'windows': windows.join(',')},
+  );
 
   Future<Map<String, dynamic>> _getMap(String path, {Map<String, dynamic>? query}) async {
     final response = await _dio.get<dynamic>(path, queryParameters: query);

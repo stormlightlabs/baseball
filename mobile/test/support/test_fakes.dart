@@ -4,6 +4,8 @@ import 'package:bigfly_mobile/features/home/data/models/meta_models.dart';
 import 'package:bigfly_mobile/features/home/data/repositories/home_repository.dart';
 import 'package:bigfly_mobile/features/players/data/models/player_models.dart';
 import 'package:bigfly_mobile/features/players/data/repositories/player_repository.dart';
+import 'package:bigfly_mobile/features/teams/data/models/team_models.dart';
+import 'package:bigfly_mobile/features/teams/data/repositories/team_repository.dart';
 
 class InMemoryCacheStore implements CacheStore {
   final Map<String, String> _data = <String, String>{};
@@ -151,6 +153,62 @@ class FakePlayerRepository implements PlayerRepository {
   }
 }
 
+class FakeTeamRepository implements TeamRepository {
+  FakeTeamRepository({
+    this.franchises,
+    this.searchResults,
+    this.searchError,
+    this.detailError,
+    TeamDetailBundle? detail,
+  }) : detail = detail ?? defaultTeamDetail;
+
+  final List<FranchiseSummary>? franchises;
+  final List<TeamSeasonRecord>? searchResults;
+  final Object? searchError;
+  final Object? detailError;
+  final TeamDetailBundle detail;
+
+  TeamSeasonRecord? lastLoadedTeam;
+  String? lastSeedCode;
+
+  @override
+  Future<TeamDetailBundle> fetchTeamDetail(TeamSeasonRecord team) async {
+    lastLoadedTeam = team;
+    if (detailError != null) {
+      throw detailError!;
+    }
+    return detail;
+  }
+
+  @override
+  Future<List<FranchiseSummary>> listFranchises({bool active = true}) async {
+    return franchises ??
+        const <FranchiseSummary>[
+          FranchiseSummary(id: 'NYY', name: 'New York Yankees', active: true, activeFrom: 1901, activeTo: null),
+          FranchiseSummary(id: 'BOS', name: 'Boston Red Sox', active: true, activeFrom: 1901, activeTo: null),
+        ];
+  }
+
+  @override
+  Future<List<TeamSeasonRecord>> searchTeams(String query, {int limit = 12}) async {
+    if (searchError != null) {
+      throw searchError!;
+    }
+
+    return searchResults ?? const <TeamSeasonRecord>[defaultTeamSeason];
+  }
+
+  @override
+  Future<TeamSeasonRecord?> seedTeamForCode(String? teamCode) async {
+    lastSeedCode = teamCode;
+    final teams = searchResults ?? const <TeamSeasonRecord>[defaultTeamSeason];
+    if (teams.isEmpty) {
+      return null;
+    }
+    return teams.first;
+  }
+}
+
 final MetaSnapshot defaultMetaSnapshot = MetaSnapshot(
   version: '1.0.0',
   generatedAt: DateTime.parse('2026-04-18T00:00:00Z'),
@@ -211,4 +269,95 @@ final PlayerDetailBundle defaultPlayerDetail = PlayerDetailBundle(
     PlayerHallOfFameRecord(year: 1979, votedBy: 'BBWAA', votes: 409, ballots: 432, inducted: true),
   ],
   themeTeamCode: 'SF',
+);
+
+const TeamSeasonRecord defaultTeamSeason = TeamSeasonRecord(
+  teamId: 'NYA',
+  year: 2024,
+  franchiseId: 'NYY',
+  league: 'AL',
+  name: 'New York Yankees',
+  parkId: 'NYC16',
+  games: 162,
+  wins: 94,
+  losses: 68,
+  ties: 0,
+  runsScored: 762,
+  runsAllowed: 609,
+  division: 'East',
+);
+
+final TeamDetailBundle defaultTeamDetail = TeamDetailBundle(
+  team: defaultTeamSeason,
+  franchise: const FranchiseSummary(
+    id: 'NYY',
+    name: 'New York Yankees',
+    active: true,
+    activeFrom: 1901,
+    activeTo: null,
+  ),
+  recentSeasons: const <TeamSeasonRecord>[
+    defaultTeamSeason,
+    TeamSeasonRecord(
+      teamId: 'NYA',
+      year: 2023,
+      franchiseId: 'NYY',
+      league: 'AL',
+      name: 'New York Yankees',
+      parkId: 'NYC16',
+      games: 162,
+      wins: 82,
+      losses: 80,
+      ties: 0,
+      runsScored: 712,
+      runsAllowed: 697,
+      division: 'East',
+    ),
+  ],
+  roster: const <TeamRosterPlayer>[
+    TeamRosterPlayer(
+      playerId: 'judgear01',
+      firstName: 'Aaron',
+      lastName: 'Judge',
+      position: 'OF',
+      hr: 58,
+      rbi: 144,
+      avg: 0.31,
+    ),
+    TeamRosterPlayer(
+      playerId: 'cologe01',
+      firstName: 'Gerrit',
+      lastName: 'Cole',
+      position: 'SP',
+      w: 15,
+      l: 4,
+      era: 2.57,
+      so: 222,
+    ),
+  ],
+  schedule: const <TeamGameSummary>[
+    TeamGameSummary(
+      id: 'NYY202404140',
+      season: 2024,
+      date: null,
+      homeTeam: 'BOS',
+      awayTeam: 'NYA',
+      homeScore: 4,
+      awayScore: 7,
+      parkName: 'Fenway Park',
+    ),
+  ],
+  dailyLogs: const <TeamDailyLog>[
+    TeamDailyLog(date: null, gamesPlayed: 1, wins: 1, losses: 0, runsScored: 7, runsAllowed: 4, runDiff: 3),
+  ],
+  runDifferential: const TeamRunDifferentialSeries(
+    entityId: 'NYA',
+    season: 2024,
+    gamesPlayed: 1,
+    runsScored: 7,
+    runsAllowed: 4,
+    runDifferential: 3,
+    games: <RunDifferentialGamePoint>[RunDifferentialGamePoint(date: null, differential: 3, cumulativeDiff: 3)],
+  ),
+  themeTeamCode: 'NYY',
 );

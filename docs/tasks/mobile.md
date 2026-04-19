@@ -41,12 +41,12 @@ Acceptance:
 
 ### Team Detail
 
-- [ ] Franchise card with badge, name, league/division, stats grid.
-- [ ] Segment control: Overview, Roster, Schedule, Daily.
-- [ ] Run differential chart.
-- [ ] Current roster list.
-- [ ] Recent games list with win/loss color coding.
-- [ ] Dynamic theme: seed from franchise primary color.
+- [x] Franchise card with badge, name, league/division, stats grid.
+- [x] Segment control: Overview, Roster, Schedule, Daily.
+- [x] Run differential chart.
+- [x] Current roster list.
+- [x] Recent games list with win/loss color coding.
+- [x] Dynamic theme: seed from franchise primary color.
 
 ### Games
 
@@ -61,7 +61,7 @@ Acceptance:
 Acceptance:
 
 - [ ] All 5 main tabs functional with real API data.
-- [ ] Team color theming applies on player and team detail screens.
+- [x] Team color theming applies on player and team detail screens.
 - [ ] Theme transitions animate smoothly (300ms ease-out via `AnimatedTheme`).
 
 ## Phase 2: Spray Chart
