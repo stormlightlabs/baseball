@@ -46,21 +46,21 @@ Optional: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `CODEBERG_CLIENT_ID`, `COD
 Use one canonical complete-slice runbook for both local and Docker workflows:
 [data-loading.md](../docs/internal/data-loading.md).
 
-Quick Docker/Coolify example for a complete slice (`2022-2025`):
+Quick Docker/Coolify example for a representative complete slice (`2022-2025`) using the streamlined ETL entrypoint:
 
 ```bash
 docker compose exec app baseball db migrate
-docker compose exec app baseball etl fetch retrosheet --years 2022-2025
-docker compose exec app baseball etl fetch negroleagues
-docker compose exec app baseball db populate all --years 2022-2025
-docker compose exec app baseball etl load negroleagues
-docker compose exec app baseball etl load fangraphs
-docker compose exec app baseball etl load salary
-docker compose exec app baseball etl load retrosheet players
-docker compose exec app baseball etl load biodata
-docker compose exec app baseball etl load weather
-docker compose exec app baseball etl load parks
-docker compose exec app baseball etl load allstar
+docker compose exec app baseball etl run --profile dev --years 2022-2025
+docker compose exec app baseball etl validate --profile dev --years 2022-2025
+docker compose exec app baseball etl status
+```
+
+First-time full historical setup (production profile):
+
+```bash
+docker compose exec app baseball db migrate
+docker compose exec app baseball etl run --profile prod --mode full
+docker compose exec app baseball etl validate --profile prod
 docker compose exec app baseball etl status
 ```
 
@@ -81,10 +81,9 @@ docker compose exec app baseball db migrate
 For new seasons:
 
 ```bash
-docker compose exec app baseball etl fetch retrosheet --years 2026
-docker compose exec app baseball db populate retrosheet --years 2026
-docker compose exec app baseball etl load weather
-docker compose exec app baseball db refresh-views
+docker compose exec app baseball etl run --profile prod --years 2026
+docker compose exec app baseball etl validate --profile prod --years 2026
+docker compose exec app baseball etl status
 ```
 
 ## Scaling
