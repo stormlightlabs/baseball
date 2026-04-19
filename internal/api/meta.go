@@ -8,7 +8,8 @@ import (
 	"stormlightlabs.org/baseball/internal/seed"
 )
 
-const apiVersion = "1.0.0"
+// TODO: we'll update to semantic versioning when ready
+const apiVersion = "ALPHA" // 1.0.0
 
 type MetaRoutes struct {
 	repo core.MetaRepository

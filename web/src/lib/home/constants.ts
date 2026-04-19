@@ -10,8 +10,8 @@ export const ENTITY_TYPES: EntityType[] = [
 
 export const QUICK_LINKS = [
   { label: 'Players', path: '/players', hint: '/v1/players', desc: 'Career stats, batting, pitching, awards' },
-  { label: 'Teams', path: '/teams', hint: '/v1/franchises', desc: 'Franchise history and team-season records' },
-  { label: 'Games', path: '/games', hint: '/v1/games', desc: 'Game finder with advanced filters' },
+  { label: 'Teams', path: '/teams', hint: '/v1/franchises', desc: 'Franchise history and season records' },
+  { label: 'Games', path: '/games', hint: '/v1/games', desc: 'Game log & play-by-play browser with advanced filters' },
   {
     label: 'Leaders',
     path: '/leaders',

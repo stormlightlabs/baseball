@@ -157,10 +157,10 @@
 <main class="min-h-full bg-mantle pb-0">
   <section class="mx-auto max-w-3xl px-8 pt-14 pb-8 text-center">
     <h1 class="mb-3 font-display text-3xl font-bold text-foreground">Big Fly</h1>
-    <p class="mb-8 text-[0.9rem] text-muted">
-      Historical baseball data from 1871 to present — players, teams, games, and stats.
-      <br />Lahman · Retrosheet · MLB StatsAPI
-    </p>
+    <div class="mb-8 flex flex-col gap-1 text-[0.9rem] text-muted">
+      <p>Baseball data from 1871 to now.</p>
+      <p>Powered by: Lahman · Retrosheet · MLB</p>
+    </div>
     <SearchInput bind:value={searchQuery} placeholder="Search players, teams, games…" onsubmit={handleSearch} />
 
     <div class="mt-3 flex flex-wrap justify-center gap-2">

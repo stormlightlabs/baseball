@@ -64,8 +64,7 @@
       {badge}
     </span>
     {#if meta.data}
-      <!-- <span class="font-mono text-[0.65rem] text-muted opacity-60">v{meta.version}</span> -->
-      <span class="font-mono text-[0.65rem] text-muted opacity-60">ALPHA</span>
+      <span class="font-mono text-[0.65rem] text-muted opacity-60">v{meta.version}</span>
     {/if}
     <nav class="ml-auto flex items-center gap-1">
       {#each LINKS as { href, label } (href)}
@@ -104,9 +103,18 @@
     </nav>
   </header>
 
-  <div class="border-b border-white bg-rose-500 px-4 py-2 font-mono text-sm text-white sm:px-6 lg:px-8">
-    Preview notice: Big Fly is in early alpha for the next few weeks. Expect bugs, breaking changes, and incomplete
-    features. We appreciate your patience and feedback as we work towards a stable release in the coming weeks!
+  <div
+    class="flex items-center justify-center gap-4 border-b border-white bg-rose-500 px-4 py-2 font-mono text-sm text-white sm:px-6 lg:px-8">
+    <span class="inline-flex items-center gap-1.5">
+      <i class="i-tabler-alert-triangle"></i>
+      <strong>Preview</strong>
+    </span>
+    <div class="flex flex-col">
+      <span>
+        Big Fly is in early alpha for the next few weeks. Expect bugs, breaking changes, and incomplete features.
+      </span>
+      <span>We appreciate your patience and feedback as we work towards a stable release in the coming weeks! </span>
+    </div>
   </div>
 
   <main class="min-h-0 overflow-x-hidden overflow-y-auto">

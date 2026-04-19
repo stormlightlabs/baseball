@@ -26,11 +26,7 @@ export function createBattingChartConfig(rows: BattingSeason[], stat: string): C
         }
       ]
     },
-    options: {
-      responsive: true,
-      plugins: { legend: { labels: { color: '#6b7280', font: { family: 'Inter', size: 10 } } } },
-      scales: CHART_SCALES
-    }
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: CHART_SCALES }
   };
 }
 

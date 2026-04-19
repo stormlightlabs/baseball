@@ -28,6 +28,12 @@ Games are paginated but the UI doesn't reflect this and asserts that there are o
 The doc file badge (ex. `docs/introduction.md`) should link to the Github source file
 (ex. `https://github.com/stormlightlabs/baseball/blob/main/web/src/routes/docs/introduction.md`)
 
+### Players
+
+Season Log Team column should link to team page, with a tooltip showing the full team name.
+
+Table should be sortable
+
 ## Backend
 
 Post-ETL we need to clean-up year specific Play-by-Play & Game log data to keep space lean.
