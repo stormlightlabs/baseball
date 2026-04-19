@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/db"
@@ -43,6 +44,7 @@ func EtlFetchCmd() *cobra.Command {
 	cmd.AddCommand(LahmanFetchCmd())
 	cmd.AddCommand(RetrosheetFetchCmd())
 	cmd.AddCommand(NegroLeaguesFetchCmd())
+	cmd.AddCommand(ChadwickFetchCmd())
 	return cmd
 }
 
@@ -62,6 +64,7 @@ func EtlLoadCmd() *cobra.Command {
 	cmd.AddCommand(ParksLoadCmd())
 	cmd.AddCommand(AllStarLoadCmd())
 	cmd.AddCommand(BiodataLoadCmd())
+	cmd.AddCommand(MLBAMCrosswalkLoadCmd())
 	return cmd
 }
 
@@ -148,6 +151,16 @@ func NegroLeaguesFetchCmd() *cobra.Command {
 		Short: "Download Negro Leagues data from Retrosheet",
 		Long:  "Download Negro Leagues event files from Retrosheet.",
 		RunE:  fetchNegroLeagues,
+	}
+}
+
+// ChadwickFetchCmd creates the fetch chadwick command
+func ChadwickFetchCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "chadwick",
+		Short: "Download Chadwick register data",
+		Long:  "Download Chadwick register people.csv used for MLBAM player crosswalks.",
+		RunE:  fetchChadwick,
 	}
 }
 
@@ -421,6 +434,17 @@ func fetchNegroLeagues(cmd *cobra.Command, args []string) error {
 	}
 	echo.Success("✓ Negro Leagues data downloaded and extracted")
 	echo.Infof("  Directory: %s", dataDir)
+	return nil
+}
+
+func fetchChadwick(cmd *cobra.Command, args []string) error {
+	echo.Header("Fetching Chadwick Register Data")
+	dataDir := filepath.Join("data", "chadwick")
+	if err := seed.FetchChadwickRegisterData(cmd.Context(), dataDir, false); err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	echo.Success("✓ Chadwick register downloaded successfully")
+	echo.Infof("  File: %s", filepath.Join(dataDir, "people.csv"))
 	return nil
 }
 
@@ -887,4 +911,57 @@ func loadBiodata(cmd *cobra.Command, args []string) error {
 	echo.Success("✓ All biodata loaded successfully")
 	echo.Infof("  Total rows: %d", totalRows)
 	return nil
+}
+
+func loadMLBAMCrosswalk(cmd *cobra.Command, yearsFlag string) error {
+	echo.Header("Loading MLBAM Crosswalk Data")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+
+	echo.Success("✓ Connected to database")
+
+	years, err := parseYearFlag(yearsFlag)
+	if err != nil {
+		return err
+	}
+	if len(years) == 0 {
+		years = []int{time.Now().Year()}
+	}
+
+	playerRows, err := seed.LoadPlayerMLBAMMappings(cmd.Context(), database, filepath.Join("data", "chadwick"))
+	if err != nil {
+		return fmt.Errorf("error loading player MLBAM mappings: %w", err)
+	}
+
+	teamRows, err := seed.LoadTeamMLBAMMappings(cmd.Context(), database, years)
+	if err != nil {
+		return fmt.Errorf("error loading team MLBAM mappings: %w", err)
+	}
+
+	echo.Info("")
+	echo.Success("✓ MLBAM crosswalk loaded successfully")
+	echo.Infof("  Player mappings: %d", playerRows)
+	echo.Infof("  Team mappings: %d", teamRows)
+	echo.Infof("  Team years: %s", describeYears(years))
+	return nil
+}
+
+// MLBAMCrosswalkLoadCmd creates the load crosswalk command.
+func MLBAMCrosswalkLoadCmd() *cobra.Command {
+	var yearsFlag string
+	cmd := &cobra.Command{
+		Use:   "crosswalk",
+		Short: "Load persisted MLBAM crosswalk data",
+		Long:  "Load MLBAM player/team crosswalk mappings into player_mlbam_map and team_mlbam_map.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return loadMLBAMCrosswalk(cmd, yearsFlag)
+		},
+	}
+	cmd.Flags().StringVar(&yearsFlag, "years", "", "Comma-separated years, ranges, or 'all' for team MLBAM mappings")
+	return cmd
 }

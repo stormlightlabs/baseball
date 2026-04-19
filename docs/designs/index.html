@@ -46,7 +46,7 @@
         <div class="card-desc">Search dispatcher for `/v1/search/*`, live game scoreboard strip, current-season leaders panel, quick links, featured endpoint recipes, health/readiness, and era jump chips.</div>
         <div class="card-tags">
           <span class="tag">/search/*</span>
-          <span class="tag">/api/internal/scoreboard</span>
+          <span class="tag">/v1/mobile/scoreboard</span>
           <span class="tag accent">landing</span>
         </div>
       </a>
@@ -68,7 +68,7 @@
         <div class="card-desc">Franchise identity with era continuity, team-season records, run differential, daily stats, roster, schedule, and current standings with wild card positioning.</div>
         <div class="card-tags">
           <span class="tag">/franchises/{id}</span>
-          <span class="tag">/api/internal/standings</span>
+          <span class="tag">/v1/mobile/standings</span>
           <span class="tag green">charts</span>
         </div>
       </a>
@@ -79,7 +79,7 @@
         <div class="card-desc">Season/date/team/park filters, natural-language search, game detail with events, plays, pitches, win-probability context, and a live overlay for in-progress games.</div>
         <div class="card-tags">
           <span class="tag">/games</span>
-          <span class="tag">/api/internal/live/{gamePk}</span>
+          <span class="tag">/v1/mobile/live/{gamePk}</span>
           <span class="tag">/search/games</span>
         </div>
       </a>
@@ -151,7 +151,7 @@
         <div class="card-title">Live Scoreboard <span style="font-size:0.55rem;color:#ef4444;animation:none">● LIVE</span></div>
         <div class="card-desc">Today's games with real-time scores, linescore, inning status, and team color accents. Auto-refreshes every 30s during live games. Appears as a strip on the Home page.</div>
         <div class="card-tags">
-          <span class="tag" style="color:#ef4444;border-color:rgba(239,68,68,0.3)">/api/internal/scoreboard</span>
+          <span class="tag" style="color:#ef4444;border-color:rgba(239,68,68,0.3)">/v1/mobile/scoreboard</span>
           <span class="tag">30s refresh</span>
           <span class="tag">home page</span>
         </div>
@@ -162,7 +162,7 @@
         <div class="card-title">Current Standings</div>
         <div class="card-desc">All 6 divisions with sortable columns: W, L, PCT, GB, wild card GB, streak, run differential, and L10 records. Lives in the Teams page as a "Standings" tab.</div>
         <div class="card-tags">
-          <span class="tag" style="color:#ef4444;border-color:rgba(239,68,68,0.3)">/api/internal/standings</span>
+          <span class="tag" style="color:#ef4444;border-color:rgba(239,68,68,0.3)">/v1/mobile/standings</span>
           <span class="tag">teams page</span>
           <span class="tag">wild card</span>
         </div>
@@ -173,7 +173,7 @@
         <div class="card-title">Live Game Overlay</div>
         <div class="card-desc">When a searched game is currently in progress, an overlay shows live score, linescore, count/runners, current play, and win probability chart. Refreshes every 15s.</div>
         <div class="card-tags">
-          <span class="tag" style="color:#ef4444;border-color:rgba(239,68,68,0.3)">/api/internal/live/{gamePk}</span>
+          <span class="tag" style="color:#ef4444;border-color:rgba(239,68,68,0.3)">/v1/mobile/live/{gamePk}</span>
           <span class="tag">15s refresh</span>
           <span class="tag">games page</span>
         </div>
@@ -184,7 +184,7 @@
         <div class="card-title">Season Leaders</div>
         <div class="card-desc">Current-season top-5 per stat category (HR, AVG, OPS, RBI, ERA, SO) with deep links to player profiles via MLBAM crosswalk. Shown as tabbed panel on the Home page.</div>
         <div class="card-tags">
-          <span class="tag" style="color:#ef4444;border-color:rgba(239,68,68,0.3)">/api/internal/leaders</span>
+          <span class="tag" style="color:#ef4444;border-color:rgba(239,68,68,0.3)">/v1/mobile/leaders</span>
           <span class="tag">home page</span>
           <span class="tag">crosswalk</span>
         </div>

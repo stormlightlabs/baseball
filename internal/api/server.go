@@ -104,6 +104,7 @@ import (
 	"database/sql"
 	_ "expvar"
 	"net/http"
+	"strings"
 
 	httpSwagger "github.com/swaggo/http-swagger"
 	"stormlightlabs.org/baseball/internal/cache"
@@ -113,7 +114,8 @@ import (
 )
 
 type Server struct {
-	mux *http.ServeMux
+	mux      *http.ServeMux
+	enricher *responseDetailsEnricher
 }
 
 func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
@@ -132,6 +134,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 	umpireRepo := repository.NewUmpireRepository(db)
 	coachRepo := repository.NewCoachRepository(db)
 	postseasonRepo := repository.NewPostseasonRepository(db)
+	crosswalkRepo := repository.NewCrosswalkRepository(db)
 	ejectionRepo := repository.NewEjectionRepository(db)
 	derivedRepo := repository.NewDerivedStatsRepository(db)
 	weRepo := repository.NewWinExpectancyRepository(db)
@@ -150,7 +153,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 
 	echo.Info("Registering routes...")
 
-	return newServer(
+	server := newServer(
 		NewPlayerRoutes(playerRepo, awardRepo),
 		NewTeamRoutes(teamRepo, gameRepo),
 		NewStatsRoutes(statsRepo),
@@ -158,7 +161,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewGameRoutes(gameRepo, playRepo),
 		NewPlayRoutes(playRepo, playerRepo),
 		NewPitchRoutes(pitchRepo),
-		NewMetaRoutes(metaRepo),
+		NewMetaRoutes(metaRepo, crosswalkRepo),
 		NewManagerRoutes(managerRepo),
 		NewParkRoutes(parkRepo),
 		NewUmpireRoutes(umpireRepo),
@@ -176,6 +179,8 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewAchievementRoutes(achievementRepo),
 		NewSalaryRoutes(salaryRepo),
 	)
+	server.enricher = newResponseDetailsEnricher(db)
+	return server
 }
 
 // NewServer wires all registrars into one mux.
@@ -207,5 +212,32 @@ func newServer(registrars ...Registrar) *Server {
 
 // Implement http.Handler
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.mux.ServeHTTP(w, r)
+	if !requestWantsDetails(r) {
+		s.mux.ServeHTTP(w, r)
+		return
+	}
+
+	buffered := newBufferedResponseWriter()
+	s.mux.ServeHTTP(buffered, r)
+
+	status := buffered.StatusCode()
+	body := buffered.body.Bytes()
+	contentType := buffered.Header().Get("Content-Type")
+	if s.enricher != nil && status >= 200 && status < 300 && strings.Contains(contentType, "application/json") {
+		if enriched, changed, err := s.enricher.Enrich(r.Context(), body); err == nil && changed {
+			body = enriched
+		}
+	}
+
+	for key, values := range buffered.Header() {
+		if strings.EqualFold(key, "Content-Length") {
+			continue
+		}
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+
+	w.WriteHeader(status)
+	_, _ = w.Write(body)
 }

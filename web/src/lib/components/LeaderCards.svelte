@@ -1,12 +1,11 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { apiFetch, fetchPaginated } from '$lib/api';
+  import { apiFetch } from '$lib/api';
   import { EP } from '$lib/endpoints';
   import {
     buildLeaderBoardByCategory,
     LEADER_CATEGORIES,
-    normalizeMlbTeamsAbbrByID,
-    normalizeNameForMatch,
+    normalizeMlbTeamsAbbrByIDFromDetails,
     type LeaderCategory,
     type LeaderRow
   } from '$lib/home/leaders';
@@ -15,7 +14,7 @@
   type CategoryID = LeaderCategory['id'];
 
   const CURRENT_SEASON = new Date().getFullYear();
-  const STATS_HINT = `/v1${EP.mlbStats}?stats=season&group={hitting|pitching}&season=${CURRENT_SEASON}&playerPool=qualified`;
+  const STATS_HINT = `/v1${EP.mlbStats}?stats=season&group={hitting|pitching}&season=${CURRENT_SEASON}&playerPool=qualified&include=details`;
 
   let loading = $state(true);
   let refreshing = $state(false);
@@ -34,7 +33,7 @@
     SV: [],
     WHIP: []
   });
-  let crosswalkByName = $state<Record<string, string>>({});
+  let crosswalkByMLBID = $state<Record<number, string>>({});
 
   const category = $derived.by(
     () => LEADER_CATEGORIES.find((entry) => entry.id === activeCategory) ?? LEADER_CATEGORIES[0]
@@ -53,25 +52,32 @@
     }
 
     try {
-      const [hittingPayload, pitchingPayload, teamsPayload] = await Promise.all([
+      const [hittingPayload, pitchingPayload] = await Promise.all([
         apiFetch<unknown>(EP.mlbStats, {
           stats: 'season',
           group: 'hitting',
           season: CURRENT_SEASON,
-          playerPool: 'qualified'
+          playerPool: 'qualified',
+          include: 'details'
         }),
         apiFetch<unknown>(EP.mlbStats, {
           stats: 'season',
           group: 'pitching',
           season: CURRENT_SEASON,
-          playerPool: 'qualified'
-        }),
-        apiFetch<unknown>(EP.mlbTeams, { season: CURRENT_SEASON })
+          playerPool: 'qualified',
+          include: 'details'
+        })
       ]);
 
-      const teamAbbrByID = normalizeMlbTeamsAbbrByID(teamsPayload);
+      const teamAbbrByID = {
+        ...normalizeMlbTeamsAbbrByIDFromDetails(hittingPayload),
+        ...normalizeMlbTeamsAbbrByIDFromDetails(pitchingPayload)
+      };
       board = buildLeaderBoardByCategory(hittingPayload, pitchingPayload, teamAbbrByID, 5);
-      crosswalkByName = await resolvePlayerCrosswalk(board);
+      crosswalkByMLBID = {
+        ...extractPlayerCrosswalkByMLBID(hittingPayload),
+        ...extractPlayerCrosswalkByMLBID(pitchingPayload)
+      };
       errorMessage = null;
     } catch (error) {
       const message = error instanceof Error && error.message ? error.message : 'Failed to load today’s leaders.';
@@ -90,7 +96,7 @@
   type PlayerHref = `/players/${string}/batting` | `/players/${string}/pitching` | `/players?${string}`;
 
   function playerHref(row: LeaderRow): PlayerHref {
-    const localID = crosswalkByName[row.playerName];
+    const localID = row.playerMlbID != null ? crosswalkByMLBID[row.playerMlbID] : undefined;
     if (localID) {
       if (row.group === 'pitching') {
         return `/players/${encodeURIComponent(localID)}/pitching`;
@@ -114,35 +120,19 @@
     return undefined;
   }
 
-  async function resolvePlayerCrosswalk(leaderBoard: Record<CategoryID, LeaderRow[]>): Promise<Record<string, string>> {
-    const uniqueNames = [
-      ...new Set(Object.values(leaderBoard).flatMap((entries) => entries.map((entry) => entry.playerName)))
-    ];
-    if (uniqueNames.length === 0) return {};
+  function extractPlayerCrosswalkByMLBID(payload: unknown): Record<number, string> {
+    const root = toObject(payload);
+    const meta = toObject(root.meta);
+    const details = toObject(meta.details);
+    const crosswalk = toObject(details.crosswalk);
+    const mlbamPlayerToLocal = toObject(crosswalk.mlbam_player_to_local);
 
-    const pairs = await Promise.all(
-      uniqueNames.map(async (name) => {
-        try {
-          const payload = await fetchPaginated<Record<string, unknown>>(EP.searchPlayers, { q: name, per_page: 5 });
-          const rows = payload.data.map((entry) => toObject(entry));
-          if (rows.length === 0) return null;
-
-          const normalizedTarget = normalizeNameForMatch(name);
-          const exact = rows.find((entry) => normalizeNameForMatch(toString(entry.name) ?? '') === normalizedTarget);
-          const picked = exact ?? rows[0];
-          const id = toString(picked?.id);
-          if (!id) return null;
-          return [name, id] as const;
-        } catch {
-          return null;
-        }
-      })
-    );
-
-    const map: Record<string, string> = {};
-    for (const pair of pairs) {
-      if (!pair) continue;
-      map[pair[0]] = pair[1];
+    const map: Record<number, string> = {};
+    for (const [rawMLBID, rawLocalID] of Object.entries(mlbamPlayerToLocal)) {
+      const mlbID = Number.parseInt(rawMLBID, 10);
+      const localID = toString(rawLocalID);
+      if (!Number.isFinite(mlbID) || !localID) continue;
+      map[mlbID] = localID;
     }
     return map;
   }
@@ -203,7 +193,7 @@
       {/each}
     </ul>
     <p class="mt-2 text-xs text-muted">
-      Showing top 5 by {category?.label}. Player links use best-effort local crosswalk via `/v1/search/players`.
+      Showing top 5 by {category?.label}. Player links resolve from MLBAM IDs via `/v1/meta/crosswalk/players`.
     </p>
   {/if}
 </section>

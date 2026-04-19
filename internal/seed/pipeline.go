@@ -36,6 +36,7 @@ type PipelineOptions struct {
 	EraNames          []string
 	LahmanCSVDir      string
 	RetrosheetDataDir string
+	ChadwickDataDir   string
 	FanGraphsDir      string
 	SalaryDataDir     string
 }
@@ -102,6 +103,9 @@ func NormalizePipelineOptions(opts PipelineOptions) (PipelineOptions, error) {
 	if opts.FanGraphsDir == "" {
 		opts.FanGraphsDir = filepath.Join("data", "fangraphs")
 	}
+	if opts.ChadwickDataDir == "" {
+		opts.ChadwickDataDir = filepath.Join("data", "chadwick")
+	}
 	if opts.SalaryDataDir == "" {
 		opts.SalaryDataDir = filepath.Join("data", "salaries")
 	}
@@ -164,6 +168,16 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 
 	rows, stepErr := runPipelineStep(ctx, database, runID, "extract.retrosheet", func() (int64, error) {
 		return 0, FetchRetrosheetData(ctx, opts.RetrosheetDataDir, opts.Years, force)
+	})
+	result.TotalRows += rows
+	if stepErr != nil {
+		runStatus = "failed"
+		runErrMsg = stepErr.Error()
+		return result, stepErr
+	}
+
+	rows, stepErr = runPipelineStep(ctx, database, runID, "extract.chadwick", func() (int64, error) {
+		return 0, FetchChadwickRegisterData(ctx, opts.ChadwickDataDir, force)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -251,6 +265,26 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		}
 		defer cleanup()
 		return LoadBiodata(ctx, database, tmpDir)
+	})
+	result.TotalRows += rows
+	if stepErr != nil {
+		runStatus = "failed"
+		runErrMsg = stepErr.Error()
+		return result, stepErr
+	}
+
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.crosswalk.players_mlbam", func() (int64, error) {
+		return LoadPlayerMLBAMMappings(ctx, database, opts.ChadwickDataDir)
+	})
+	result.TotalRows += rows
+	if stepErr != nil {
+		runStatus = "failed"
+		runErrMsg = stepErr.Error()
+		return result, stepErr
+	}
+
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.crosswalk.teams_mlbam", func() (int64, error) {
+		return LoadTeamMLBAMMappings(ctx, database, opts.Years)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -448,6 +482,14 @@ func ValidatePipeline(ctx context.Context, database *db.DB, profile PipelineProf
 	if err != nil {
 		return result, fmt.Errorf("parks check failed: %w", err)
 	}
+	playerMLBAMMap, err := count(`SELECT COUNT(*) FROM player_mlbam_map`)
+	if err != nil {
+		return result, fmt.Errorf("mlbam crosswalk check failed: %w", err)
+	}
+	teamMLBAMMap, err := count(`SELECT COUNT(*) FROM team_mlbam_map`)
+	if err != nil {
+		return result, fmt.Errorf("mlbam crosswalk check failed: %w", err)
+	}
 	allStarGames, err := count(`SELECT COUNT(*) FROM games WHERE game_type = 'allstar'`)
 	if err != nil {
 		return result, fmt.Errorf("all-star check failed: %w", err)
@@ -494,6 +536,9 @@ func ValidatePipeline(ctx context.Context, database *db.DB, profile PipelineProf
 	}
 	if parkMap == 0 {
 		addErr("parks_metadata", "park_map is empty")
+	}
+	if playerMLBAMMap == 0 || teamMLBAMMap == 0 {
+		addErr("mlbam_crosswalk", "MLBAM player/team crosswalk tables are empty")
 	}
 	if allStarGames == 0 || allStarPlays == 0 {
 		addErr("allstar", "All-Star games/plays are incomplete")

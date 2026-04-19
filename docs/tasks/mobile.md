@@ -2,7 +2,7 @@
 
 - Ref spec: `docs/specs/mobile.md`
 - Stack: Flutter 3.x, Dart, Flame engine, Material 3, BLoC
-- Backend: Go API additions under `api/internal/`
+- Backend: Go API additions under `/v1/mobile/*`, `/v1/mlb/*`, and `/v1/meta/*`
 - Scope: native mobile app + backend endpoints + design updates
 
 ## Phase 0: Project Scaffold
@@ -68,7 +68,7 @@ Acceptance:
 
 ### Backend
 
-- [ ] Add `GET /api/internal/spray-chart/{player_id}` endpoint in Go.
+- [ ] Add `GET /v1/mobile/spray-chart/{player_id}` endpoint in Go.
   - Query params: `season`, `vs` (L/R), `park_id`.
   - Map Retrosheet hit-location codes to standardized field coordinates (origin at home plate, y toward CF, feet).
   - Include park wall geometry as `[angle_deg, distance_ft]` control points.
@@ -100,7 +100,7 @@ Acceptance:
 
 ### Backend
 
-- [ ] Add `GET /api/internal/pitch-tunnel/{pitcher_id}` endpoint.
+- [ ] Add `GET /v1/mobile/pitch-tunnel/{pitcher_id}` endpoint.
   - Query params: `season`, `pitch_types` (comma-separated codes).
   - Aggregate pitch data by type: avg velocity, avg spin rate, spin axis, pfx_x, pfx_z, release point, usage %.
   - Return per-type trajectory parameters.
@@ -130,7 +130,7 @@ Acceptance:
 
 ### Backend
 
-- [ ] Add `GET /api/internal/at-bat/{game_id}/{ab_num}` endpoint.
+- [ ] Add `GET /v1/mobile/at-bat/{game_id}/{ab_num}` endpoint.
   - Return batter/pitcher info, pitch sequence (type, speed, location x/z, call, count), and at-bat result.
   - Derive from existing `plays` and `pitches` tables.
 
@@ -181,10 +181,10 @@ Acceptance:
 
 ### Backend
 
-- [ ] Add `GET /api/internal/quiz/situation` endpoint:
+- [ ] Add `GET /v1/mobile/quiz/situation` endpoint:
   - Pull random historical game state (inning, outs, runners, score, count).
   - Include actual outcome and win expectancy from materialized view.
-- [ ] Add `GET /api/internal/quiz/pitch-type` endpoint:
+- [ ] Add `GET /v1/mobile/quiz/pitch-type` endpoint:
   - Pull pitch trajectory data for identification challenge.
   - Include 4 pitch type options with correct answer.
 
@@ -235,7 +235,7 @@ Acceptance:
 ### Standings Endpoint
 
 - [ ] Implement standings view via `GET /v1/mlb/standings?season={year}&standingsTypes=regularSeason`.
-  - Use `GET /v1/mlb/crosswalk/teams?season={year}` for local routing IDs.
+  - Use `GET /v1/meta/crosswalk/teams?season={year}` for local routing IDs.
   - Group by division, enrich with team colors and franchise IDs.
   - Include wins, losses, PCT, GB, wild card GB, streak, run differential, last 10.
   - Cache at 5min TTL.

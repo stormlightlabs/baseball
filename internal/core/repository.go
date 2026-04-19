@@ -220,6 +220,12 @@ type SearchRepository interface {
 	SearchParks(ctx context.Context, filter SearchFilter) ([]Park, error)
 }
 
+// CrosswalkRepository provides identifier crosswalk lookups across local and MLBAM IDs.
+type CrosswalkRepository interface {
+	ListTeamCrosswalk(ctx context.Context, filter TeamCrosswalkFilter) ([]TeamCrosswalkRow, error)
+	ListPlayerCrosswalk(ctx context.Context, filter PlayerCrosswalkFilter) ([]PlayerCrosswalkRow, error)
+}
+
 // UserRepository handles user authentication and management.
 type UserRepository interface {
 	// GetByID retrieves a user by ID

@@ -1769,50 +1769,6 @@ definitions:
       venue:
         $ref: '#/definitions/core.MLBVenueRef'
     type: object
-  core.MLBTeamCrosswalkResponse:
-    properties:
-      local_season:
-        type: integer
-      matched:
-        type: integer
-      requested_season:
-        type: integer
-      rows:
-        items:
-          $ref: '#/definitions/core.MLBTeamCrosswalkRow'
-        type: array
-      unmatched:
-        type: integer
-    type: object
-  core.MLBTeamCrosswalkRow:
-    properties:
-      confidence:
-        type: string
-      local_franchise_id:
-        type: string
-      local_league:
-        type: string
-      local_team_id:
-        type: string
-      local_team_name:
-        type: string
-      match_method:
-        type: string
-      mlb_abbreviation:
-        type: string
-      mlb_club_name:
-        type: string
-      mlb_file_code:
-        type: string
-      mlb_franchise_name:
-        type: string
-      mlb_team_code:
-        type: string
-      mlb_team_id:
-        type: integer
-      mlb_team_name:
-        type: string
-    type: object
   core.MLBTeamRecord:
     properties:
       clinchIndicator:
@@ -2426,6 +2382,36 @@ definitions:
         type: integer
       year:
         type: integer
+    type: object
+  core.PlayerCrosswalkResponse:
+    properties:
+      rows:
+        items:
+          $ref: '#/definitions/core.PlayerCrosswalkRow'
+        type: array
+      total:
+        type: integer
+    type: object
+  core.PlayerCrosswalkRow:
+    properties:
+      bbref_id:
+        type: string
+      confidence:
+        type: string
+      first_name:
+        type: string
+      full_name:
+        type: string
+      last_name:
+        type: string
+      mlbam_id:
+        type: integer
+      player_id:
+        type: string
+      retro_id:
+        type: string
+      source:
+        type: string
     type: object
   core.PlayerFieldingSeason:
     properties:
@@ -3093,6 +3079,52 @@ definitions:
         type: integer
       year:
         type: integer
+    type: object
+  core.TeamCrosswalkResponse:
+    properties:
+      all_seasons:
+        type: boolean
+      rows:
+        items:
+          $ref: '#/definitions/core.TeamCrosswalkRow'
+        type: array
+      season:
+        type: integer
+      total:
+        type: integer
+    type: object
+  core.TeamCrosswalkRow:
+    properties:
+      confidence:
+        type: string
+      franchise_id:
+        type: string
+      league:
+        type: string
+      match_method:
+        type: string
+      mlb_abbreviation:
+        type: string
+      mlb_club_name:
+        type: string
+      mlb_file_code:
+        type: string
+      mlb_franchise_name:
+        type: string
+      mlb_team_code:
+        type: string
+      mlb_team_name:
+        type: string
+      mlbam_team_id:
+        type: integer
+      season:
+        type: integer
+      source:
+        type: string
+      team_id:
+        type: string
+      team_name:
+        type: string
     type: object
   core.TeamFieldingStats:
     properties:
@@ -4930,6 +4962,241 @@ paths:
       summary: wOBA constants
       tags:
       - meta
+  /meta/crosswalk/players:
+    get:
+      consumes:
+      - application/json
+      description: List player ID mappings across local and MLBAM identifiers.
+      parameters:
+      - description: Local player ID filter
+        in: query
+        name: player_id
+        type: string
+      - description: Retrosheet ID filter
+        in: query
+        name: retro_id
+        type: string
+      - description: MLBAM person ID filter
+        in: query
+        name: mlbam_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.PlayerCrosswalkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Player crosswalk list
+      tags:
+      - meta
+  /meta/crosswalk/players/by-mlbam/{mlbam_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get crosswalk mappings for an MLBAM person ID.
+      parameters:
+      - description: MLBAM person ID
+        in: path
+        name: mlbam_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.PlayerCrosswalkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Player crosswalk by MLBAM ID
+      tags:
+      - meta
+  /meta/crosswalk/players/by-player/{player_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get crosswalk mappings for a local player ID.
+      parameters:
+      - description: Local player ID
+        in: path
+        name: player_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.PlayerCrosswalkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Player crosswalk by player_id
+      tags:
+      - meta
+  /meta/crosswalk/players/by-retro/{retro_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get crosswalk mappings for a Retrosheet player ID.
+      parameters:
+      - description: Retrosheet player ID
+        in: path
+        name: retro_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.PlayerCrosswalkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Player crosswalk by retro_id
+      tags:
+      - meta
+  /meta/crosswalk/teams:
+    get:
+      consumes:
+      - application/json
+      description: List team/franchise/MLBAM ID crosswalk rows. Defaults to current
+        season unless all_seasons=true.
+      parameters:
+      - description: Season year (defaults to current year when all_seasons=false)
+        in: query
+        name: season
+        type: integer
+      - description: Return all seasons
+        in: query
+        name: all_seasons
+        type: boolean
+      - description: Local team ID filter
+        in: query
+        name: team_id
+        type: string
+      - description: Local franchise ID filter
+        in: query
+        name: franchise_id
+        type: string
+      - description: MLBAM team ID filter
+        in: query
+        name: mlbam_team_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.TeamCrosswalkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Team crosswalk list
+      tags:
+      - meta
+  /meta/crosswalk/teams/by-franchise/{franchise_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get crosswalk rows for a local franchise ID.
+      parameters:
+      - description: Local franchise ID
+        in: path
+        name: franchise_id
+        required: true
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.TeamCrosswalkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Team crosswalk by franchise_id
+      tags:
+      - meta
+  /meta/crosswalk/teams/by-mlbam/{mlbam_team_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get crosswalk rows for an MLBAM team ID.
+      parameters:
+      - description: MLBAM team ID
+        in: path
+        name: mlbam_team_id
+        required: true
+        type: integer
+      - description: Season year
+        in: query
+        name: season
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.TeamCrosswalkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Team crosswalk by MLBAM team ID
+      tags:
+      - meta
+  /meta/crosswalk/teams/by-team/{team_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get crosswalk rows for a local team ID.
+      parameters:
+      - description: Local team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - description: Season year
+        in: query
+        name: season
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.TeamCrosswalkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Team crosswalk by team_id
+      tags:
+      - meta
   /meta/datasets:
     get:
       consumes:
@@ -5046,31 +5313,6 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
       summary: MLB award by ID
-      tags:
-      - mlb
-  /mlb/crosswalk/teams:
-    get:
-      consumes:
-      - application/json
-      description: Map MLB Stats API team IDs/abbreviations to local team_id and franchise_id
-        for a season.
-      parameters:
-      - description: Season year (defaults to current year)
-        in: query
-        name: season
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/core.MLBTeamCrosswalkResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      summary: MLB team ID crosswalk
       tags:
       - mlb
   /mlb/people:

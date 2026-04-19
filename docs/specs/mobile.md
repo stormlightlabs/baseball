@@ -7,7 +7,7 @@ updated: 2026-04-18
 
 The web dashboard (SvelteKit SPA) covers the full API surface but is constrained by the browser sandbox: no GPU-accelerated custom rendering, no haptic feedback, no platform-native transitions, and limited offline capability. A Flutter app targeting Android and iOS can exploit native GPU canvas, platform gesture systems, and Material You theming to deliver experiences the web cannot — interactive spray charts with park overlays, 3D pitch tunnel exploration, haptic-rich at-bat sequencing, and per-team dynamic color schemes.
 
-The app is not a port of the web dashboard. It is a native companion that focuses on touch-first visualization and baseball education, backed by the same Go API with an additional `api/internal/` namespace for client-specific endpoints.
+The app is not a port of the web dashboard. It is a native companion that focuses on touch-first visualization and baseball education, backed by the same Go API and new public route families for mobile-shaped payloads.
 
 ## Stack
 
@@ -25,16 +25,16 @@ The app is not a port of the web dashboard. It is a native companion that focuse
 
 ### API Surface
 
-The app consumes the existing `/api/v1/` endpoints (80+ routes) and introduces a new `/api/internal/` namespace for mobile-optimized endpoints that aggregate multiple queries or return pre-shaped payloads:
+The app consumes the existing `/api/v1/` endpoints (80+ routes) and introduces a new `/v1/mobile/` namespace for mobile-optimized endpoints that aggregate multiple queries or return pre-shaped payloads:
 
 | Internal Endpoint                             | Purpose                                                                     |
 | --------------------------------------------- | --------------------------------------------------------------------------- |
-| `GET /api/internal/player-card/{id}`          | Aggregated player bio + key stats + recent game log for stat card rendering |
-| `GET /api/internal/spray-chart/{player_id}`   | Batted-ball coordinates with launch angle, exit velocity, and park geometry |
-| `GET /api/internal/pitch-tunnel/{pitcher_id}` | Pitch trajectories with release point, spin vector, and movement profiles   |
-| `GET /api/internal/at-bat/{game_id}/{ab_num}` | Full at-bat sequence: pitch-by-pitch with context, count, and result        |
-| `GET /api/internal/quiz/situation`            | Random game situation for learning mode quizzes                             |
-| `GET /api/internal/quiz/pitch-type`           | Pitch identification challenge with trajectory data                         |
+| `GET /v1/mobile/player-card/{id}`          | Aggregated player bio + key stats + recent game log for stat card rendering |
+| `GET /v1/mobile/spray-chart/{player_id}`   | Batted-ball coordinates with launch angle, exit velocity, and park geometry |
+| `GET /v1/mobile/pitch-tunnel/{pitcher_id}` | Pitch trajectories with release point, spin vector, and movement profiles   |
+| `GET /v1/mobile/at-bat/{game_id}/{ab_num}` | Full at-bat sequence: pitch-by-pitch with context, count, and result        |
+| `GET /v1/mobile/quiz/situation`            | Random game situation for learning mode quizzes                             |
+| `GET /v1/mobile/quiz/pitch-type`           | Pitch identification challenge with trajectory data                         |
 
 These endpoints reduce round-trips and shape data for rendering. They are not authenticated via API keys — they use a client certificate or app-token scheme separate from the public API.
 
@@ -114,7 +114,7 @@ A pitch-by-pitch replay of any plate appearance, showing location, sequence stra
 - Long-press to compare this at-bat's sequence against the pitcher's typical patterns
 - Haptic tick on each pitch arrival (`HapticFeedback.lightImpact`)
 
-**Data source**: `GET /api/internal/at-bat/{game_id}/{ab_num}` returns the full sequence. Falls back to `GET /v1/games/{id}/pitches` filtered to the specific plate appearance.
+**Data source**: `GET /v1/mobile/at-bat/{game_id}/{ab_num}` returns the full sequence. Falls back to `GET /v1/games/{id}/pitches` filtered to the specific plate appearance.
 
 ### 4. Stat Card Generator
 
@@ -149,7 +149,7 @@ An interactive educational module that teaches baseball rules, strategy, and ana
 
 **Pitch identification trainer**: Uses the pitch tunnel renderer in a simplified mode. Shows a pitch trajectory, user selects from 4 options (e.g., four-seam, slider, changeup, curveball). Difficulty scales by reducing tunnel visibility and adding similar pitch types.
 
-**Situation quiz**: Pulls from `GET /api/internal/quiz/situation` which returns a real historical game state. User guesses outcome or win probability. Compares against actual result and historical win expectancy from `GET /v1/win-expectancy`.
+**Situation quiz**: Pulls from `GET /v1/mobile/quiz/situation` which returns a real historical game state. User guesses outcome or win probability. Compares against actual result and historical win expectancy from `GET /v1/win-expectancy`.
 
 **Gamification**: Track correct answers, streaks, and category completion. Store locally (Hive). No server-side leaderboard in v1.
 
@@ -237,12 +237,12 @@ Typography: Google Sans (titles), Google Sans Code (stats/monospace), Inter (bod
 
 ## API Additions (Backend)
 
-New routes registered under `api/internal/` in the Go backend. These are not part of the public API contract and do not require Swagger documentation.
+New routes are registered under `/v1/mobile/*` in the Go backend as public API surface and should be documented in Swagger with typed contracts.
 
 ### Spray Chart Endpoint
 
 ```text
-GET /api/internal/spray-chart/{player_id}?season={year}&vs={L|R}&park_id={id}
+GET /v1/mobile/spray-chart/{player_id}?season={year}&vs={L|R}&park_id={id}
 ```
 
 Returns batted-ball events with field coordinates:
@@ -262,7 +262,7 @@ Coordinates are in a standardized field system (origin at home plate, y-axis tow
 ### Pitch Tunnel Endpoint
 
 ```text
-GET /api/internal/pitch-tunnel/{pitcher_id}?season={year}&pitch_types={FF,SL,CH}
+GET /v1/mobile/pitch-tunnel/{pitcher_id}?season={year}&pitch_types={FF,SL,CH}
 ```
 
 Returns aggregated pitch trajectory parameters grouped by pitch type:
@@ -290,7 +290,7 @@ Returns aggregated pitch trajectory parameters grouped by pitch type:
 ### At-Bat Endpoint
 
 ```text
-GET /api/internal/at-bat/{game_id}/{ab_num}
+GET /v1/mobile/at-bat/{game_id}/{ab_num}
 ```
 
 Returns the full pitch sequence for a specific plate appearance:
@@ -323,21 +323,21 @@ Returns the full pitch sequence for a specific plate appearance:
 ### Quiz Endpoints
 
 ```text
-GET /api/internal/quiz/situation?era={modern|all}
-GET /api/internal/quiz/pitch-type?difficulty={1|2|3}
+GET /v1/mobile/quiz/situation?era={modern|all}
+GET /v1/mobile/quiz/pitch-type?difficulty={1|2|3}
 ```
 
 These pull from existing game data and pitch data, reshaping into quiz-friendly payloads with the correct answer embedded (client reveals after user input).
 
 ## Live & Current-Season Features
 
-The MLB Stats API proxy (`/v1/mlb/*`) provides real-time access to the current season. The app surfaces this data through three primary features that complement the historical Retrosheet-backed views. We expand `/v1/mlb/*` directly (instead of introducing `/api/internal/*`) for UI-optimized live payloads.
+The MLB Stats API proxy (`/v1/mlb/*`) provides real-time access to the current season. The app surfaces this data through three primary features that complement the historical Retrosheet-backed views. We expand `/v1/mlb/*` directly (instead of introducing `/v1/mobile/*`) for UI-optimized live payloads.
 
 ### 6. Live Scoreboard
 
 A real-time scoreboard of today's MLB games, prominently featured on the Home tab.
 
-**Data source**: `GET /v1/mlb/schedule?date={YYYY-MM-DD}&hydrate=linescore,team,probablePitcher` plus `GET /v1/mlb/crosswalk/teams?season={year}` for local franchise mapping.
+**Data source**: `GET /v1/mlb/schedule?date={YYYY-MM-DD}&hydrate=linescore,team,probablePitcher&include=details` plus `GET /v1/meta/crosswalk/teams?season={year}` for canonical team/franchise mapping.
 
 **Response shape**:
 
@@ -392,7 +392,7 @@ A real-time scoreboard of today's MLB games, prominently featured on the Home ta
 
 Division standings with current records, streaks, and wild card positioning.
 
-**Data source**: `GET /v1/mlb/standings?season={year}&standingsTypes=regularSeason` plus `GET /v1/mlb/crosswalk/teams?season={year}` for local franchise IDs and navigation.
+**Data source**: `GET /v1/mlb/standings?season={year}&standingsTypes=regularSeason&include=details` plus `GET /v1/meta/crosswalk/teams?season={year}` for local franchise IDs and navigation.
 
 **Response shape**:
 
@@ -494,7 +494,7 @@ A real-time game view combining MLB live feed data with the app's win probabilit
 
 Current-season stat leaders surfaced on the Home tab below the scoreboard.
 
-**Data source**: `/v1/mlb/stats` calls (`stats=season&group=hitting|pitching&sortStat={stat}&limit=5`) for requested categories, plus local player lookups via `/v1/search/players` for deep linking.
+**Data source**: `/v1/mlb/stats` calls (`stats=season&group=hitting|pitching&sortStat={stat}&limit=5&include=details`) for requested categories, plus `/v1/meta/crosswalk/players` lookup routes as fallback for deep linking.
 
 **Response shape**:
 
@@ -542,22 +542,22 @@ Live MLB endpoints use the same auth and API key policies as the rest of `/v1/*`
 
 | Endpoint                                      | Source                                       | Purpose                                                                     |
 | --------------------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------- |
-| `GET /api/internal/player-card/{id}`          | `/v1/players/*` (aggregated)                 | Aggregated player bio + key stats + recent game log for stat card rendering |
-| `GET /api/internal/spray-chart/{player_id}`   | Retrosheet hit-location data + park geometry | Batted-ball coordinates with launch angle, exit velocity, and park geometry |
-| `GET /api/internal/pitch-tunnel/{pitcher_id}` | Pitch-level data with movement vectors       | Pitch trajectories with release point, spin vector, and movement profiles   |
-| `GET /api/internal/at-bat/{game_id}/{ab_num}` | `plays` + `pitches` tables                   | Full at-bat sequence: pitch-by-pitch with context, count, and result        |
-| `GET /api/internal/quiz/situation`            | Historical game states                       | Random game situation for learning mode quizzes                             |
-| `GET /api/internal/quiz/pitch-type`           | Pitch trajectory data                        | Pitch identification challenge with trajectory data                         |
+| `GET /v1/mobile/player-card/{id}`          | `/v1/players/*` (aggregated)                 | Aggregated player bio + key stats + recent game log for stat card rendering |
+| `GET /v1/mobile/spray-chart/{player_id}`   | Retrosheet hit-location data + park geometry | Batted-ball coordinates with launch angle, exit velocity, and park geometry |
+| `GET /v1/mobile/pitch-tunnel/{pitcher_id}` | Pitch-level data with movement vectors       | Pitch trajectories with release point, spin vector, and movement profiles   |
+| `GET /v1/mobile/at-bat/{game_id}/{ab_num}` | `plays` + `pitches` tables                   | Full at-bat sequence: pitch-by-pitch with context, count, and result        |
+| `GET /v1/mobile/quiz/situation`            | Historical game states                       | Random game situation for learning mode quizzes                             |
+| `GET /v1/mobile/quiz/pitch-type`           | Pitch trajectory data                        | Pitch identification challenge with trajectory data                         |
 | `GET /v1/mlb/schedule`                        | MLB schedule feed                            | Today's games with scores, status, linescore, and team details              |
 | `GET /v1/mlb/standings`                       | MLB standings feed                           | Current standings data by league/division                                   |
-| `GET /v1/mlb/crosswalk/teams`                 | `/v1/mlb/teams` + local team/franchise map   | MLB team ID → local `team_id` / `franchise_id` mapping for navigation       |
+| `GET /v1/meta/crosswalk/teams`                | `team_mlbam_map` + local team/franchise map  | MLB team ID → local `team_id` / `franchise_id` mapping for navigation       |
 | `GET /v1/mlb/live/{gamePk}`                   | MLB game feed + win probability engine       | Real-time game state with play-by-play and win probability                  |
 | `GET /v1/mlb/stats`                           | MLB stats feed                               | Current-season stat leaders and split queries                               |
 | `GET /v1/mlb/people/{mlb_id}`                 | MLB people feed + local search lookups       | Current-season player stats with local player routing                       |
 
 ### ID Crosswalk
 
-Live endpoints bridge MLB Stats API IDs (MLBAM `personId`, `teamId`) to local Retrosheet/Lahman IDs (`player_id`, `team_id`, `franchise_id`). Team mappings are exposed via `GET /v1/mlb/crosswalk/teams`; player mappings use local search/player endpoints server-side so clients avoid managing dual ID spaces.
+Live endpoints bridge MLB Stats API IDs (MLBAM `personId`, `teamId`) to local Retrosheet/Lahman IDs (`player_id`, `team_id`, `franchise_id`). Team/player mappings are exposed via `GET /v1/meta/crosswalk/*`, and `include=details` sidecars on `/v1/mlb/*` responses provide opt-in enrichment for labels and ID maps.
 
 ### Caching Strategy
 

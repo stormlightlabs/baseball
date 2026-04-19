@@ -205,6 +205,32 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 			refreshes,
 			[]string{"salaries"},
 		),
+		r.datasetStatus(
+			"mlbam_players_map",
+			"MLBAM player crosswalk",
+			"https://github.com/chadwickbureau/register",
+			false,
+			map[string]int64{
+				"player_mlbam_map": r.safeCount(ctx, `SELECT COUNT(*) FROM player_mlbam_map`),
+			},
+			nil,
+			nil,
+			refreshes,
+			[]string{"mlbam_players_map"},
+		),
+		r.datasetStatus(
+			"mlbam_teams_map",
+			"MLBAM team crosswalk",
+			"https://statsapi.mlb.com/api/v1/teams",
+			false,
+			map[string]int64{
+				"team_mlbam_map": r.safeCount(ctx, `SELECT COUNT(*) FROM team_mlbam_map`),
+			},
+			nil,
+			nil,
+			refreshes,
+			[]string{"mlbam_teams_map"},
+		),
 	}, nil
 }
 
@@ -248,6 +274,10 @@ func datasetHealthy(id string, tables map[string]int64) bool {
 		return tables["player_bio_extended"] > 0 || tables["player_relatives"] > 0 || tables["coaches"] > 0 || tables["umpires"] > 0
 	case "salary_summary":
 		return tables["salary_summary"] > 0
+	case "mlbam_players_map":
+		return tables["player_mlbam_map"] > 0
+	case "mlbam_teams_map":
+		return tables["team_mlbam_map"] > 0
 	default:
 		return sumCounts(tables) > 0
 	}

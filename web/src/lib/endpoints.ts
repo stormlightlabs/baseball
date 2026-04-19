@@ -8,6 +8,14 @@
 export const EP = {
   meta: '/meta' as const,
   metaDatasets: '/meta/datasets' as const,
+  metaCrosswalkTeams: '/meta/crosswalk/teams' as const,
+  metaCrosswalkPlayers: '/meta/crosswalk/players' as const,
+  metaCrosswalkTeamByTeam: (teamId: string) => `/meta/crosswalk/teams/by-team/${teamId}` as const,
+  metaCrosswalkTeamByFranchise: (franchiseId: string) => `/meta/crosswalk/teams/by-franchise/${franchiseId}` as const,
+  metaCrosswalkTeamByMLBAM: (mlbamTeamId: number | string) => `/meta/crosswalk/teams/by-mlbam/${mlbamTeamId}` as const,
+  metaCrosswalkPlayerByPlayer: (playerId: string) => `/meta/crosswalk/players/by-player/${playerId}` as const,
+  metaCrosswalkPlayerByRetro: (retroId: string) => `/meta/crosswalk/players/by-retro/${retroId}` as const,
+  metaCrosswalkPlayerByMLBAM: (mlbamId: number | string) => `/meta/crosswalk/players/by-mlbam/${mlbamId}` as const,
   health: '/health' as const,
   ready: '/ready' as const,
   metaReadiness: '/meta/readiness' as const,
@@ -111,7 +119,6 @@ export const EP = {
 
   mlb: '/mlb' as const,
   mlbTeams: '/mlb/teams' as const,
-  mlbTeamCrosswalk: '/mlb/crosswalk/teams' as const,
   mlbSchedule: '/mlb/schedule' as const,
   mlbStats: '/mlb/stats' as const,
   mlbStandings: '/mlb/standings' as const

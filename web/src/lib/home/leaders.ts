@@ -102,6 +102,24 @@ export function normalizeMlbTeamsAbbrByID(payload: unknown): Record<number, stri
   return map;
 }
 
+export function normalizeMlbTeamsAbbrByIDFromDetails(payload: unknown): Record<number, string> {
+  const root = toObject(payload);
+  const meta = toObject(root.meta);
+  const details = toObject(meta.details);
+  const mlbamTeams = toObject(details.mlbam_teams);
+
+  const map: Record<number, string> = {};
+  for (const [rawID, rawTeam] of Object.entries(mlbamTeams)) {
+    const id = toNumber(rawID);
+    const team = toObject(rawTeam);
+    const abbr = toString(team.mlb_abbreviation);
+    if (id == null || !abbr) continue;
+    map[id] = abbr.toUpperCase();
+  }
+
+  return map;
+}
+
 export function buildLeaderBoardByCategory(
   hittingPayload: unknown,
   pitchingPayload: unknown,
@@ -156,8 +174,4 @@ export function buildLeaderBoardByCategory(
   }
 
   return categoryRows;
-}
-
-export function normalizeNameForMatch(name: string): string {
-  return name.replaceAll(/[^A-Za-z0-9]/g, '').toLowerCase();
 }

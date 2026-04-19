@@ -4,8 +4,7 @@
   import SegmentControl from '$lib/components/SegmentControl.svelte';
   import { EP } from '$lib/endpoints';
   import {
-    buildFranchiseIDByName,
-    buildMlbTeamAbbrByID,
+    buildMlbTeamAbbrByIDFromDetails,
     buildStandingsRows,
     extractSeasonFromStandings,
     normalizeFranchiseIDByMlbTeamID,
@@ -19,7 +18,7 @@
   type LeagueFilter = 'both' | 'AL' | 'NL';
 
   const DEFAULT_SEASON = new Date().getFullYear();
-  const STANDINGS_HINT = `/v1${EP.mlbStandings}?season=${DEFAULT_SEASON}&standingsTypes=regularSeason`;
+  const STANDINGS_HINT = `/v1${EP.mlbStandings}?season=${DEFAULT_SEASON}&standingsTypes=regularSeason&include=details`;
 
   const LEAGUE_OPTIONS = [
     { id: 'both', label: 'Both' },
@@ -75,17 +74,18 @@
     }
 
     try {
-      const [standingsPayload, teamsPayload, crosswalkPayload, franchisesPayload] = await Promise.all([
-        apiFetch<unknown>(EP.mlbStandings, { season: DEFAULT_SEASON, standingsTypes: 'regularSeason' }),
-        apiFetch<unknown>(EP.mlbTeams, { season: DEFAULT_SEASON }),
-        apiFetch<unknown>(EP.mlbTeamCrosswalk, { season: DEFAULT_SEASON }),
-        apiFetch<unknown>(EP.franchises)
+      const [standingsPayload, crosswalkPayload] = await Promise.all([
+        apiFetch<unknown>(EP.mlbStandings, {
+          season: DEFAULT_SEASON,
+          standingsTypes: 'regularSeason',
+          include: 'details'
+        }),
+        apiFetch<unknown>(EP.metaCrosswalkTeams, { season: DEFAULT_SEASON, include: 'details' })
       ]);
 
-      const teamAbbrByID = buildMlbTeamAbbrByID(teamsPayload);
+      const teamAbbrByID = buildMlbTeamAbbrByIDFromDetails(standingsPayload);
       const franchiseIDByMlbTeamID = normalizeFranchiseIDByMlbTeamID(crosswalkPayload);
-      const franchiseIDByName = buildFranchiseIDByName(franchisesPayload);
-      rows = buildStandingsRows(standingsPayload, teamAbbrByID, franchiseIDByName, franchiseIDByMlbTeamID);
+      rows = buildStandingsRows(standingsPayload, teamAbbrByID, {}, franchiseIDByMlbTeamID);
       season = extractSeasonFromStandings(standingsPayload) ?? DEFAULT_SEASON;
       errorMessage = null;
     } catch (error) {

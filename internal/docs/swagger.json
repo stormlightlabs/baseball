@@ -2234,6 +2234,362 @@
                 }
             }
         },
+        "/meta/crosswalk/players": {
+            "get": {
+                "description": "List player ID mappings across local and MLBAM identifiers.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meta"
+                ],
+                "summary": "Player crosswalk list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Local player ID filter",
+                        "name": "player_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Retrosheet ID filter",
+                        "name": "retro_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "MLBAM person ID filter",
+                        "name": "mlbam_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.PlayerCrosswalkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/meta/crosswalk/players/by-mlbam/{mlbam_id}": {
+            "get": {
+                "description": "Get crosswalk mappings for an MLBAM person ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meta"
+                ],
+                "summary": "Player crosswalk by MLBAM ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "MLBAM person ID",
+                        "name": "mlbam_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.PlayerCrosswalkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/meta/crosswalk/players/by-player/{player_id}": {
+            "get": {
+                "description": "Get crosswalk mappings for a local player ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meta"
+                ],
+                "summary": "Player crosswalk by player_id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Local player ID",
+                        "name": "player_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.PlayerCrosswalkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/meta/crosswalk/players/by-retro/{retro_id}": {
+            "get": {
+                "description": "Get crosswalk mappings for a Retrosheet player ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meta"
+                ],
+                "summary": "Player crosswalk by retro_id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Retrosheet player ID",
+                        "name": "retro_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.PlayerCrosswalkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/meta/crosswalk/teams": {
+            "get": {
+                "description": "List team/franchise/MLBAM ID crosswalk rows. Defaults to current season unless all_seasons=true.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meta"
+                ],
+                "summary": "Team crosswalk list",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year (defaults to current year when all_seasons=false)",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return all seasons",
+                        "name": "all_seasons",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Local team ID filter",
+                        "name": "team_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Local franchise ID filter",
+                        "name": "franchise_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "MLBAM team ID filter",
+                        "name": "mlbam_team_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.TeamCrosswalkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/meta/crosswalk/teams/by-franchise/{franchise_id}": {
+            "get": {
+                "description": "Get crosswalk rows for a local franchise ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meta"
+                ],
+                "summary": "Team crosswalk by franchise_id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Local franchise ID",
+                        "name": "franchise_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.TeamCrosswalkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/meta/crosswalk/teams/by-mlbam/{mlbam_team_id}": {
+            "get": {
+                "description": "Get crosswalk rows for an MLBAM team ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meta"
+                ],
+                "summary": "Team crosswalk by MLBAM team ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "MLBAM team ID",
+                        "name": "mlbam_team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.TeamCrosswalkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/meta/crosswalk/teams/by-team/{team_id}": {
+            "get": {
+                "description": "Get crosswalk rows for a local team ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meta"
+                ],
+                "summary": "Team crosswalk by team_id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Local team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Season year",
+                        "name": "season",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/core.TeamCrosswalkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/meta/datasets": {
             "get": {
                 "description": "Returns dataset ETL metadata and coverage",
@@ -2398,43 +2754,6 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/core.MLBAwardsResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/mlb/crosswalk/teams": {
-            "get": {
-                "description": "Map MLB Stats API team IDs/abbreviations to local team_id and franchise_id for a season.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "mlb"
-                ],
-                "summary": "MLB team ID crosswalk",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Season year (defaults to current year)",
-                        "name": "season",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/core.MLBTeamCrosswalkResponse"
                         }
                     },
                     "500": {
@@ -10710,73 +11029,6 @@
                 }
             }
         },
-        "core.MLBTeamCrosswalkResponse": {
-            "type": "object",
-            "properties": {
-                "local_season": {
-                    "type": "integer"
-                },
-                "matched": {
-                    "type": "integer"
-                },
-                "requested_season": {
-                    "type": "integer"
-                },
-                "rows": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/core.MLBTeamCrosswalkRow"
-                    }
-                },
-                "unmatched": {
-                    "type": "integer"
-                }
-            }
-        },
-        "core.MLBTeamCrosswalkRow": {
-            "type": "object",
-            "properties": {
-                "confidence": {
-                    "type": "string"
-                },
-                "local_franchise_id": {
-                    "type": "string"
-                },
-                "local_league": {
-                    "type": "string"
-                },
-                "local_team_id": {
-                    "type": "string"
-                },
-                "local_team_name": {
-                    "type": "string"
-                },
-                "match_method": {
-                    "type": "string"
-                },
-                "mlb_abbreviation": {
-                    "type": "string"
-                },
-                "mlb_club_name": {
-                    "type": "string"
-                },
-                "mlb_file_code": {
-                    "type": "string"
-                },
-                "mlb_franchise_name": {
-                    "type": "string"
-                },
-                "mlb_team_code": {
-                    "type": "string"
-                },
-                "mlb_team_id": {
-                    "type": "integer"
-                },
-                "mlb_team_name": {
-                    "type": "string"
-                }
-            }
-        },
         "core.MLBTeamRecord": {
             "type": "object",
             "properties": {
@@ -11678,6 +11930,52 @@
                 },
                 "year": {
                     "type": "integer"
+                }
+            }
+        },
+        "core.PlayerCrosswalkResponse": {
+            "type": "object",
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.PlayerCrosswalkRow"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.PlayerCrosswalkRow": {
+            "type": "object",
+            "properties": {
+                "bbref_id": {
+                    "type": "string"
+                },
+                "confidence": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "mlbam_id": {
+                    "type": "integer"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "retro_id": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
                 }
             }
         },
@@ -12647,6 +12945,76 @@
                 },
                 "year": {
                     "type": "integer"
+                }
+            }
+        },
+        "core.TeamCrosswalkResponse": {
+            "type": "object",
+            "properties": {
+                "all_seasons": {
+                    "type": "boolean"
+                },
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.TeamCrosswalkRow"
+                    }
+                },
+                "season": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.TeamCrosswalkRow": {
+            "type": "object",
+            "properties": {
+                "confidence": {
+                    "type": "string"
+                },
+                "franchise_id": {
+                    "type": "string"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "match_method": {
+                    "type": "string"
+                },
+                "mlb_abbreviation": {
+                    "type": "string"
+                },
+                "mlb_club_name": {
+                    "type": "string"
+                },
+                "mlb_file_code": {
+                    "type": "string"
+                },
+                "mlb_franchise_name": {
+                    "type": "string"
+                },
+                "mlb_team_code": {
+                    "type": "string"
+                },
+                "mlb_team_name": {
+                    "type": "string"
+                },
+                "mlbam_team_id": {
+                    "type": "integer"
+                },
+                "season": {
+                    "type": "integer"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "team_name": {
+                    "type": "string"
                 }
             }
         },

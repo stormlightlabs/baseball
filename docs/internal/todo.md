@@ -33,6 +33,8 @@ Games are paginated but the UI doesn't reflect this and asserts that there are o
 The doc file badge (ex. `docs/introduction.md`) should link to the Github source file
 (ex. `https://github.com/stormlightlabs/baseball/blob/main/web/src/routes/docs/introduction.md`)
 
+Featured Queries should link to dashboard pages, not the swagger docs/explorer-redirect
+
 ### Players
 
 Season Log Team column should link to team page, with a tooltip showing the full team name.
@@ -46,3 +48,9 @@ Post-ETL we need to clean-up year specific Play-by-Play & Game log data to keep 
 Slog?
 
 API version should be `ALPHA` (keep the `v1` namespace) while we iron out kinks in the system.
+
+Do we ingest the Chadwick Register more exhaustively to enrich persons data?
+
+Remove `core.MLBTeamCrosswalk* structs` if no longer needed anywhere.
+
+Repository-level unit tests for crosswalk query ambiguity behavior beyond API integration tests.

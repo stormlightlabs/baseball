@@ -339,12 +339,12 @@ Ref: `docs/designs/data-sources.html`
 
 ### Endpoint Map Update
 
-| Page    | New endpoint families                                           |
-| ------- | --------------------------------------------------------------- |
-| Home    | `/v1/mlb/schedule`, `/v1/mlb/stats`, `/v1/mlb/teams`            |
-| Teams   | `/v1/mlb/standings`, `/v1/mlb/teams`, `/v1/mlb/crosswalk/teams` |
-| Games   | `/v1/mlb/live/{gamePk}`                                         |
-| Players | `/v1/mlb/people/{mlb_id}`                                       |
+| Page    | New endpoint families                                            |
+| ------- | ---------------------------------------------------------------- |
+| Home    | `/v1/mlb/schedule`, `/v1/mlb/stats`, `/v1/mlb/teams`             |
+| Teams   | `/v1/mlb/standings`, `/v1/mlb/teams`, `/v1/meta/crosswalk/teams` |
+| Games   | `/v1/mlb/live/{gamePk}`                                          |
+| Players | `/v1/mlb/people/{mlb_id}`                                        |
 
 ## Cross-Cutting
 
@@ -362,15 +362,15 @@ Ref: `docs/designs/data-sources.html`
 
 ## Endpoint Map by Page
 
-| Page         | Endpoint families                                                                                                                                   |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Home         | `/api/v1/meta`, `/api/v1/meta/datasets`, `/api/v1/search/*`, `/v1/mlb/schedule`, `/v1/mlb/stats`, `/v1/mlb/teams`                                   |
-| Players      | `/api/v1/search/players`, `/api/v1/players/*`, computed/derived player endpoints, `/v1/mlb/people/*`                                                |
-| Teams        | `/api/v1/franchises/*`, `/api/v1/search/teams`, `/api/v1/teams/*`, `/api/v1/seasons/{year}/teams/*`, `/v1/mlb/standings`, `/v1/mlb/crosswalk/teams` |
-| Games        | `/api/v1/games*`, `/api/v1/search/games`, `/api/v1/seasons/{year}/*games*`, win-probability/leverage, `/v1/mlb/live/*`                              |
-| Seasons      | `/api/v1/seasons`, `/api/v1/seasons/{year}/teams`, leaders, schedule, awards, postseason                                                            |
-| Leaders      | `/api/v1/stats/*`, `/api/v1/leaders/*/career`, `/api/v1/seasons/{season}/leaders/*advanced*`                                                        |
-| Compare      | Player/team/season endpoints + `/api/v1/win-expectancy*`                                                                                            |
-| API Docs     | Swagger UI docsite at `/api/v1/docs/`                                                                                                               |
-| Data Sources | `/api/v1/meta/datasets`, `/api/v1/win-expectancy/eras`, league-specific families                                                                    |
-| Account      | `/api/v1/auth/*`                                                                                                                                    |
+| Page         | Endpoint families                                                                                                                                    |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home         | `/api/v1/meta`, `/api/v1/meta/datasets`, `/api/v1/search/*`, `/v1/mlb/schedule`, `/v1/mlb/stats`, `/v1/mlb/teams`                                    |
+| Players      | `/api/v1/search/players`, `/api/v1/players/*`, computed/derived player endpoints, `/v1/mlb/people/*`                                                 |
+| Teams        | `/api/v1/franchises/*`, `/api/v1/search/teams`, `/api/v1/teams/*`, `/api/v1/seasons/{year}/teams/*`, `/v1/mlb/standings`, `/v1/meta/crosswalk/teams` |
+| Games        | `/api/v1/games*`, `/api/v1/search/games`, `/api/v1/seasons/{year}/*games*`, win-probability/leverage, `/v1/mlb/live/*`                               |
+| Seasons      | `/api/v1/seasons`, `/api/v1/seasons/{year}/teams`, leaders, schedule, awards, postseason                                                             |
+| Leaders      | `/api/v1/stats/*`, `/api/v1/leaders/*/career`, `/api/v1/seasons/{season}/leaders/*advanced*`                                                         |
+| Compare      | Player/team/season endpoints + `/api/v1/win-expectancy*`                                                                                             |
+| API Docs     | Swagger UI docsite at `/api/v1/docs/`                                                                                                                |
+| Data Sources | `/api/v1/meta/datasets`, `/api/v1/win-expectancy/eras`, league-specific families                                                                     |
+| Account      | `/api/v1/auth/*`                                                                                                                                     |

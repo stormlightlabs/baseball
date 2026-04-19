@@ -277,11 +277,11 @@ Standings panel on the Teams page, alongside the existing franchise/team-season 
 Current-season stat leaders below the scoreboard on the home page.
 
 - Source:
-  - `GET /v1/mlb/stats?stats=season&group=hitting&season={current}&playerPool=qualified`
-  - `GET /v1/mlb/stats?stats=season&group=pitching&season={current}&playerPool=qualified`
+  - `GET /v1/mlb/stats?stats=season&group=hitting&season={current}&playerPool=qualified&include=details`
+  - `GET /v1/mlb/stats?stats=season&group=pitching&season={current}&playerPool=qualified&include=details`
 - Renders as tabbed cards (one tab per stat category)
 - Each card: ranked top-5 list with player name, team, stat value
-- Player names link to `/players/[id]/batting` or `/players/[id]/pitching` via crosswalk
+- Player names link to `/players/[id]/batting` or `/players/[id]/pitching` via MLBAM crosswalk mappings
 - Category tabs: HR, AVG, OPS, RBI, SB | ERA, SO, W, SV, WHIP
 
 ### Live Game Overlay (Games Page)
@@ -305,13 +305,13 @@ When viewing a player who is active in the current season, an additional panel s
 
 ### Endpoints
 
-| Dashboard location | Endpoint family                                         | Refresh  |
-| ------------------ | ------------------------------------------------------- | -------- |
-| Home scoreboard    | `GET /v1/mlb/schedule`                                  | 30s auto |
-| Home leaders       | `GET /v1/mlb/stats` + `GET /v1/mlb/teams`               | manual   |
-| Teams standings    | `GET /v1/mlb/standings` + `GET /v1/mlb/crosswalk/teams` | manual   |
-| Game detail live   | `GET /v1/mlb/live/{gamePk}`                             | 15s auto |
-| Player current     | `GET /v1/mlb/people/{id}` + local search/crosswalk      | manual   |
+| Dashboard location | Endpoint family                                          | Refresh  |
+| ------------------ | -------------------------------------------------------- | -------- |
+| Home scoreboard    | `GET /v1/mlb/schedule`                                   | 30s auto |
+| Home leaders       | `GET /v1/mlb/stats` (`include=details`)                  | manual   |
+| Teams standings    | `GET /v1/mlb/standings` + `GET /v1/meta/crosswalk/teams` | manual   |
+| Game detail live   | `GET /v1/mlb/live/{gamePk}`                              | 15s auto |
+| Player current     | `GET /v1/mlb/people/{id}` + local search/crosswalk       | manual   |
 
 ## API Documentation
 

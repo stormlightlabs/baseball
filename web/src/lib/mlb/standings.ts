@@ -165,6 +165,23 @@ export function buildMlbTeamAbbrByID(payload: unknown): Record<number, string> {
   return map;
 }
 
+export function buildMlbTeamAbbrByIDFromDetails(payload: unknown): Record<number, string> {
+  const root = toObject(payload);
+  const meta = toObject(root.meta);
+  const details = toObject(meta.details);
+  const mlbamTeams = toObject(details.mlbam_teams);
+
+  const map: Record<number, string> = {};
+  for (const [key, value] of Object.entries(mlbamTeams)) {
+    const id = toNumber(key);
+    const row = toObject(value);
+    const abbr = toString(row.mlb_abbreviation);
+    if (id == null || !abbr) continue;
+    map[id] = abbr.toUpperCase();
+  }
+  return map;
+}
+
 export function buildFranchiseIDByName(payload: unknown): Record<string, string> {
   const root = toObject(payload);
   const rows = toArray(root.franchises);
@@ -197,14 +214,48 @@ export function buildFranchiseIDByName(payload: unknown): Record<string, string>
 export function normalizeFranchiseIDByMlbTeamID(payload: unknown): Record<number, string> {
   const root = toObject(payload);
   const rows = toArray(root.rows);
+  const meta = toObject(root.meta);
+  const details = toObject(meta.details);
+  const mlbamTeams = toObject(details.mlbam_teams);
+  const crosswalk = toObject(details.crosswalk);
+  const mlbamTeamToLocal = toObject(crosswalk.mlbam_team_to_local);
+  const teamToFranchise = toObject(crosswalk.team_to_franchise);
 
   const map: Record<number, string> = {};
   for (const entry of rows) {
     const row = toObject(entry);
-    const mlbTeamID = toNumber(row.mlb_team_id);
-    const localFranchiseID = toString(row.local_franchise_id);
-    if (mlbTeamID == null || !localFranchiseID) continue;
-    map[mlbTeamID] = localFranchiseID;
+    const mlbTeamID = toNumber(row.mlbam_team_id) ?? toNumber(row.mlb_team_id);
+    const localFranchiseID = toString(row.franchise_id) ?? toString(row.local_franchise_id);
+    if (mlbTeamID != null && localFranchiseID) {
+      map[mlbTeamID] = localFranchiseID;
+    }
+  }
+
+  for (const [key, value] of Object.entries(mlbamTeams)) {
+    const mlbamTeamID = toNumber(key);
+    const detail = toObject(value);
+    const localTeamID = toString(detail.team_id);
+    const localFranchiseID = toString(detail.franchise_id);
+    if (mlbamTeamID != null && localFranchiseID) {
+      map[mlbamTeamID] = localFranchiseID;
+      continue;
+    }
+    if (mlbamTeamID != null && localTeamID) {
+      const viaCrosswalk = toString(teamToFranchise[localTeamID]);
+      if (viaCrosswalk) {
+        map[mlbamTeamID] = viaCrosswalk;
+      }
+    }
+  }
+
+  for (const [key, value] of Object.entries(mlbamTeamToLocal)) {
+    const mlbamTeamID = toNumber(key);
+    const localTeamID = toString(value);
+    if (mlbamTeamID == null || !localTeamID) continue;
+    const localFranchiseID = toString(teamToFranchise[localTeamID]);
+    if (localFranchiseID) {
+      map[mlbamTeamID] = localFranchiseID;
+    }
   }
 
   return map;
@@ -224,7 +275,7 @@ export function extractSeasonFromStandings(payload: unknown): number | undefined
     }
   }
 
-  return undefined;
+  return;
 }
 
 export function buildStandingsRows(
