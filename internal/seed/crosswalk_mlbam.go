@@ -20,9 +20,14 @@ import (
 )
 
 const (
-	chadwickRegisterURL = "https://raw.githubusercontent.com/chadwickbureau/register/master/data/people.csv"
-	mlbStatsAPIBaseURL  = "https://statsapi.mlb.com/api"
+	chadwickRegisterShardURL = "https://raw.githubusercontent.com/chadwickbureau/register/master/data/people-%s.csv"
+	mlbStatsAPIBaseURL       = "https://statsapi.mlb.com/api"
 )
+
+var chadwickShardKeys = []string{
+	"0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+	"a", "b", "c", "d", "e", "f",
+}
 
 // FetchChadwickRegisterData ensures Chadwick register people.csv is available.
 func FetchChadwickRegisterData(ctx context.Context, dataDir string, force bool) error {
@@ -32,10 +37,105 @@ func FetchChadwickRegisterData(ctx context.Context, dataDir string, force bool) 
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return fmt.Errorf("failed to create %s: %w", dataDir, err)
 	}
-	csvPath := filepath.Join(dataDir, "people.csv")
-	if _, err := downloadIfNeeded(ctx, chadwickRegisterURL, csvPath, force); err != nil {
-		return err
+
+	singlePath := filepath.Join(dataDir, "people.csv")
+	shardPaths := make([]string, 0, len(chadwickShardKeys))
+	for _, shard := range chadwickShardKeys {
+		target := filepath.Join(dataDir, fmt.Sprintf("people-%s.csv", shard))
+		url := fmt.Sprintf(chadwickRegisterShardURL, shard)
+		if _, err := downloadIfNeeded(ctx, url, target, force); err != nil {
+			return fmt.Errorf("failed downloading Chadwick shard %q: %w", shard, err)
+		}
+		shardPaths = append(shardPaths, target)
 	}
+
+	if err := mergeCSVShards(singlePath, shardPaths); err != nil {
+		return fmt.Errorf("failed assembling Chadwick people.csv from shards: %w", err)
+	}
+
+	return nil
+}
+
+func mergeCSVShards(outputPath string, shardPaths []string) error {
+	if len(shardPaths) == 0 {
+		return fmt.Errorf("no shard paths provided")
+	}
+
+	tmpPath := outputPath + ".tmp"
+	out, err := os.Create(tmpPath)
+	if err != nil {
+		return fmt.Errorf("failed creating temporary merged CSV: %w", err)
+	}
+
+	wroteHeader := false
+	var firstErr error
+	writer := csv.NewWriter(out)
+
+	for _, shardPath := range shardPaths {
+		file, openErr := os.Open(shardPath)
+		if openErr != nil {
+			firstErr = fmt.Errorf("failed opening shard %s: %w", shardPath, openErr)
+			break
+		}
+
+		reader := csv.NewReader(file)
+		reader.FieldsPerRecord = -1
+
+		rowNum := 0
+		for {
+			record, readErr := reader.Read()
+			if readErr != nil {
+				if errors.Is(readErr, io.EOF) {
+					break
+				}
+				firstErr = fmt.Errorf("failed reading shard %s: %w", shardPath, readErr)
+				break
+			}
+
+			rowNum++
+			if rowNum == 1 {
+				if wroteHeader {
+					continue
+				}
+				wroteHeader = true
+			}
+
+			if writeErr := writer.Write(record); writeErr != nil {
+				firstErr = fmt.Errorf("failed writing merged CSV: %w", writeErr)
+				break
+			}
+		}
+
+		closeErr := file.Close()
+		if firstErr != nil {
+			_ = closeErr
+			break
+		}
+		if closeErr != nil {
+			firstErr = fmt.Errorf("failed closing shard %s: %w", shardPath, closeErr)
+			break
+		}
+	}
+
+	writer.Flush()
+	if flushErr := writer.Error(); flushErr != nil && firstErr == nil {
+		firstErr = fmt.Errorf("failed flushing merged CSV writer: %w", flushErr)
+	}
+
+	if closeErr := out.Close(); closeErr != nil && firstErr == nil {
+		firstErr = fmt.Errorf("failed closing merged CSV: %w", closeErr)
+	}
+
+	if firstErr != nil {
+		_ = os.Remove(tmpPath)
+		return firstErr
+	}
+
+	if err := os.Rename(tmpPath, outputPath); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed promoting merged CSV to %s: %w", outputPath, err)
+	}
+
 	return nil
 }
 
