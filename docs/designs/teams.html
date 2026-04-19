@@ -56,6 +56,7 @@
       <div class="tab" onclick="switchTab('seasons',this)">All Seasons</div>
       <div class="tab" onclick="switchTab('scatter',this)">RS vs RA</div>
       <div class="tab" onclick="switchTab('attendance',this)">Attendance</div>
+      <div class="tab" onclick="switchTab('standings',this)">Standings <span style="font-size:0.6rem;color:#ef4444;margin-left:4px;">●</span></div>
     </div>
 
     <!-- Overview: wins/losses trend -->
@@ -87,6 +88,67 @@
     <div class="panel" id="tab-attendance" style="display:none">
       <div class="panel-label">Attendance vs wins over time</div>
       <canvas id="attendChart" height="140"></canvas>
+    </div>
+
+    <!-- Current standings -->
+    <div class="panel" id="tab-standings" style="display:none">
+      <div class="panel-label" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Current Standings — 2026 Season <span style="font-size:0.65rem;color:var(--muted);font-weight:400;font-family:'Google Sans Code',monospace;">/api/internal/standings</span></span>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted)">Updated 1:30 PM</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;" id="stdLeagueCtrl">
+        <button class="seg-btn active" onclick="switchStdLeague('al',this)">American League</button>
+        <button class="seg-btn" onclick="switchStdLeague('nl',this)">National League</button>
+      </div>
+      <div id="standings-al">
+        <!-- AL East -->
+        <div style="margin-bottom:16px;">
+          <div style="font-family:'Google Sans',sans-serif;font-size:0.78rem;font-weight:700;color:#f1f5f9;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:6px;">AL East</div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th style="text-align:left">Team</th>
+                <th>W</th><th>L</th><th>PCT</th><th>GB</th><th>WC GB</th><th>Streak</th><th>L10</th><th>R-Diff</th>
+              </tr></thead>
+              <tbody>
+                <tr onclick="void(0)" style="cursor:pointer">
+                  <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#092C5C;margin-right:6px;vertical-align:middle"></span><b>TB</b> Tampa Bay Rays</td>
+                  <td>14</td><td>7</td><td>.667</td><td>—</td><td>+3.0</td><td style="color:var(--accent2)">W4</td><td>7-3</td><td style="color:var(--accent2)">+28</td>
+                </tr>
+                <tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#003087;margin-right:6px;vertical-align:middle"></span><b>NYY</b> New York Yankees</td>
+                  <td>13</td><td>8</td><td>.619</td><td>1.0</td><td>+2.0</td><td style="color:var(--accent2)">W1</td><td>6-4</td><td style="color:var(--accent2)">+14</td>
+                </tr>
+                <tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#BD3039;margin-right:6px;vertical-align:middle"></span><b>BOS</b> Boston Red Sox</td>
+                  <td>11</td><td>10</td><td>.524</td><td>3.0</td><td>+0.5</td><td style="color:var(--accent2)">W2</td><td>6-4</td><td style="color:var(--muted)">+2</td>
+                </tr>
+                <tr style="border-top:1px dashed var(--muted)"><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#134A8E;margin-right:6px;vertical-align:middle"></span><b>TOR</b> Toronto Blue Jays</td>
+                  <td>10</td><td>11</td><td>.476</td><td>4.0</td><td>-0.5</td><td style="color:#ef4444">L2</td><td>4-6</td><td style="color:var(--muted)">-5</td>
+                </tr>
+                <tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#DF4601;margin-right:6px;vertical-align:middle"></span><b>BAL</b> Baltimore Orioles</td>
+                  <td>9</td><td>12</td><td>.429</td><td>5.0</td><td>-1.5</td><td style="color:#ef4444">L3</td><td>3-7</td><td style="color:#ef4444">-17</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- AL Central -->
+        <div style="margin-bottom:16px;">
+          <div style="font-family:'Google Sans',sans-serif;font-size:0.78rem;font-weight:700;color:#f1f5f9;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:6px;">AL Central</div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th style="text-align:left">Team</th><th>W</th><th>L</th><th>PCT</th><th>GB</th><th>Streak</th></tr></thead>
+              <tbody>
+                <tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00a3e0;margin-right:6px;vertical-align:middle"></span><b>CLE</b> Cleveland Guardians</td><td>15</td><td>6</td><td>.714</td><td>—</td><td style="color:var(--accent2)">W5</td></tr>
+                <tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C41E3A;margin-right:6px;vertical-align:middle"></span><b>MIN</b> Minnesota Twins</td><td>12</td><td>9</td><td>.571</td><td>3.0</td><td style="color:#ef4444">L1</td></tr>
+                <tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#002B5C;margin-right:6px;vertical-align:middle"></span><b>KCR</b> Kansas City Royals</td><td>10</td><td>11</td><td>.476</td><td>5.0</td><td style="color:var(--muted)">W1</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="standings-nl" style="display:none">
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.7rem;color:var(--muted);padding:1rem 0;">NL standings — same structure, toggle AL button above to view.</div>
+      </div>
     </div>
   </main>
 
@@ -204,9 +266,15 @@ v1/franchises/NYA" | jq .</div>
   function switchTab(tab,el){
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     el.classList.add('active');
-    ['overview','seasons','scatter','attendance'].forEach(t=>{
+    ['overview','seasons','scatter','attendance','standings'].forEach(t=>{
       document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
     });
+  }
+  function switchStdLeague(league, btn) {
+    document.querySelectorAll('#stdLeagueCtrl .seg-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('standings-al').style.display = league==='al' ? 'block' : 'none';
+    document.getElementById('standings-nl').style.display = league==='nl' ? 'block' : 'none';
   }
   function switchMode(mode,el){
     document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));

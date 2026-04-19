@@ -16,11 +16,24 @@ We should add a settings screen:
 
 Remove api endpoints from Quick Access cards
 
+Mobile needs a way to handle CORS from the backend.
+
 ## Web
 
 This might be applicable to the API as well: we should normalize era labels such that
 they're not abbreviated. This could be under `/meta`
 
-## DevOps
+Games are paginated but the UI doesn't reflect this and asserts that there are only N games (where N is the page size). We should add pagination controls to the UI and update the API to return pagination metadata.
+
+We should remove the `jq` from cURL examples and maybe mention in `routes/docs`. These should
+also be single line.
+
+## Backend
+
+Post-ETL we need to clean-up year specific Play-by-Play & Game log data to keep space lean.
+
+Slog?
+
+### DevOps
 
 We need to add a HEALTHCHECK instruction to the Dockerfile.

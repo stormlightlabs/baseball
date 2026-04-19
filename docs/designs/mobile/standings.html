@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Standings — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f13; --surface: #13161c; --surface2: #1a1e27;
+      --border: #252934; --text: #e2e8f0; --muted: #6b7280;
+      --accent: #3b82f6; --accent2: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    h1,h2,h3 { font-family: 'Google Sans', sans-serif; }
+
+    .status-bar { height: 44px; background: var(--bg); display: flex; align-items: flex-end; justify-content: space-between; padding: 0 20px 8px; flex-shrink: 0; }
+    .sb-time { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .sb-icons { display: flex; gap: 5px; align-items: center; font-size: 0.7rem; color: var(--text); font-family: 'Google Sans Code', monospace; }
+
+    .app { display: flex; flex-direction: column; height: 100%; min-height: 844px; }
+
+    .app-header { padding: 0 16px; height: 52px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .app-title { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
+    .back-btn { color: var(--accent); font-size: 0.85rem; cursor: pointer; }
+    .header-sub { font-family: 'Google Sans Code', monospace; font-size: 0.65rem; color: var(--muted); margin-left: 4px; font-weight: 400; }
+
+    .content { flex: 1; overflow-y: auto; }
+
+    /* Segment control */
+    .seg-wrap { padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .seg-ctrl { display: flex; background: var(--surface2); border-radius: 8px; padding: 3px; border: 1px solid var(--border); }
+    .seg-btn { flex: 1; padding: 7px 0; font-family: 'Google Sans', sans-serif; font-size: 0.8rem; font-weight: 600; background: transparent; border: none; color: var(--muted); cursor: pointer; border-radius: 5px; transition: all 0.15s; }
+    .seg-btn.active { background: var(--accent); color: #fff; }
+
+    /* Column header */
+    .col-header { display: flex; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 2; }
+    .col-team { flex: 1; font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding-left: 10px; }
+    .col-stat { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; width: 30px; text-align: center; }
+    .col-stat.wide { width: 38px; }
+
+    /* Division section */
+    .division { margin-bottom: 2px; }
+    .div-header { padding: 10px 16px; background: var(--surface2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+    .div-name { font-family: 'Google Sans', sans-serif; font-size: 0.8rem; font-weight: 700; color: #f1f5f9; }
+    .div-league { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); }
+    .div-arrow { font-size: 0.7rem; color: var(--muted); }
+
+    /* Team row */
+    .team-row { display: flex; align-items: center; padding: 9px 16px; border-bottom: 1px solid var(--border); background: var(--surface); cursor: pointer; transition: background 0.1s; }
+    .team-row:hover { background: var(--surface2); }
+    .team-rank { font-family: 'Google Sans Code', monospace; font-size: 0.68rem; color: var(--muted); width: 16px; text-align: center; flex-shrink: 0; }
+    .team-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin: 0 6px; }
+    .team-info { flex: 1; min-width: 0; }
+    .team-abbr { font-family: 'Google Sans', sans-serif; font-size: 0.85rem; font-weight: 700; color: #f1f5f9; }
+    .team-name { font-size: 0.62rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .team-stat { font-family: 'Google Sans Code', monospace; font-size: 0.75rem; color: var(--text); width: 30px; text-align: center; flex-shrink: 0; }
+    .team-stat.wide { width: 38px; }
+    .team-stat.pct { color: #f1f5f9; font-weight: 600; }
+    .team-stat.gb-leader { color: var(--muted); }
+    .streak-w { color: var(--accent2); }
+    .streak-l { color: #ef4444; }
+
+    /* Wild card separator */
+    .wc-separator { padding: 4px 16px; background: var(--bg); }
+    .wc-line { border-top: 1px dashed var(--muted); position: relative; }
+    .wc-label { font-family: 'Google Sans Code', monospace; font-size: 0.55rem; color: var(--muted); position: absolute; top: -8px; right: 0; background: var(--bg); padding: 0 4px; }
+
+    /* Division leader badge */
+    .leader-badge { font-family: 'Google Sans Code', monospace; font-size: 0.5rem; color: #f59e0b; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
+
+    /* Tab bar */
+    .tab-bar { height: 64px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: stretch; flex-shrink: 0; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; transition: background 0.15s; }
+    .tab-item:hover { background: var(--surface2); }
+    .tab-icon { font-size: 1.05rem; color: var(--muted); }
+    .tab-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans', sans-serif; }
+    .tab-item.active .tab-icon, .tab-item.active .tab-label { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">1:32</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title">
+      <span class="back-btn">‹</span>
+      Standings
+      <span class="header-sub">2026</span>
+    </div>
+  </div>
+
+  <div class="seg-wrap">
+    <div class="seg-ctrl">
+      <button class="seg-btn active" onclick="switchLeague('al',this)">American League</button>
+      <button class="seg-btn" onclick="switchLeague('nl',this)">National League</button>
+    </div>
+  </div>
+
+  <div class="col-header">
+    <div class="team-rank"> </div>
+    <div class="team-dot" style="opacity:0"></div>
+    <div class="col-team">Team</div>
+    <div class="col-stat">W</div>
+    <div class="col-stat">L</div>
+    <div class="col-stat wide">PCT</div>
+    <div class="col-stat">GB</div>
+    <div class="col-stat wide">STK</div>
+  </div>
+
+  <div class="content">
+
+    <!-- AL East -->
+    <div class="division">
+      <div class="div-header">
+        <div>
+          <div class="div-name">AL East</div>
+          <div class="div-league">American League</div>
+        </div>
+        <div class="div-arrow">▾</div>
+      </div>
+
+      <div class="team-row">
+        <div class="team-rank">1</div>
+        <div class="team-dot" style="background:#092C5C"></div>
+        <div class="team-info">
+          <div class="team-abbr">TB <span class="leader-badge">DIV</span></div>
+          <div class="team-name">Tampa Bay Rays</div>
+        </div>
+        <div class="team-stat">14</div>
+        <div class="team-stat">7</div>
+        <div class="team-stat wide pct">.667</div>
+        <div class="team-stat gb-leader">—</div>
+        <div class="team-stat wide"><span class="streak-w">W4</span></div>
+      </div>
+
+      <div class="team-row">
+        <div class="team-rank">2</div>
+        <div class="team-dot" style="background:#003087"></div>
+        <div class="team-info">
+          <div class="team-abbr">NYY</div>
+          <div class="team-name">New York Yankees</div>
+        </div>
+        <div class="team-stat">13</div>
+        <div class="team-stat">8</div>
+        <div class="team-stat wide pct">.619</div>
+        <div class="team-stat">1.0</div>
+        <div class="team-stat wide"><span class="streak-w">W1</span></div>
+      </div>
+
+      <div class="team-row">
+        <div class="team-rank">3</div>
+        <div class="team-dot" style="background:#BD3039"></div>
+        <div class="team-info">
+          <div class="team-abbr">BOS</div>
+          <div class="team-name">Boston Red Sox</div>
+        </div>
+        <div class="team-stat">11</div>
+        <div class="team-stat">10</div>
+        <div class="team-stat wide pct">.524</div>
+        <div class="team-stat">3.0</div>
+        <div class="team-stat wide"><span class="streak-w">W2</span></div>
+      </div>
+
+      <div class="wc-separator"><div class="wc-line"><span class="wc-label">wild card ↓</span></div></div>
+
+      <div class="team-row">
+        <div class="team-rank">4</div>
+        <div class="team-dot" style="background:#134A8E"></div>
+        <div class="team-info">
+          <div class="team-abbr">TOR</div>
+          <div class="team-name">Toronto Blue Jays</div>
+        </div>
+        <div class="team-stat">10</div>
+        <div class="team-stat">11</div>
+        <div class="team-stat wide pct">.476</div>
+        <div class="team-stat">4.0</div>
+        <div class="team-stat wide"><span class="streak-l">L2</span></div>
+      </div>
+
+      <div class="team-row">
+        <div class="team-rank">5</div>
+        <div class="team-dot" style="background:#DF4601"></div>
+        <div class="team-info">
+          <div class="team-abbr">BAL</div>
+          <div class="team-name">Baltimore Orioles</div>
+        </div>
+        <div class="team-stat">9</div>
+        <div class="team-stat">12</div>
+        <div class="team-stat wide pct">.429</div>
+        <div class="team-stat">5.0</div>
+        <div class="team-stat wide"><span class="streak-l">L3</span></div>
+      </div>
+    </div>
+
+    <!-- AL Central (collapsed) -->
+    <div class="division">
+      <div class="div-header">
+        <div>
+          <div class="div-name">AL Central</div>
+          <div class="div-league">American League</div>
+        </div>
+        <div class="div-arrow">▸</div>
+      </div>
+    </div>
+
+    <!-- AL West (collapsed) -->
+    <div class="division">
+      <div class="div-header">
+        <div>
+          <div class="div-name">AL West</div>
+          <div class="div-league">American League</div>
+        </div>
+        <div class="div-arrow">▸</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item">
+      <div class="tab-icon">⌂</div>
+      <div class="tab-label">Home</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◎</div>
+      <div class="tab-label">Players</div>
+    </div>
+    <div class="tab-item active">
+      <div class="tab-icon">◈</div>
+      <div class="tab-label">Teams</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◷</div>
+      <div class="tab-label">Games</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">≡</div>
+      <div class="tab-label">More</div>
+    </div>
+  </div>
+
+</div>
+<script>
+  function switchLeague(league, btn) {
+    document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>

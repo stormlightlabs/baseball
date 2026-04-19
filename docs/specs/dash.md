@@ -10,8 +10,8 @@ updated: 2026-04-18
 - **Charts**: Chart.js 4 via a thin Svelte wrapper
 - **API docs**: Existing Swagger docsite at `/api/v1/docs/` (source OpenAPI: `internal/docs/swagger.yaml`)
 - **Routing**:
-    - Dashboard SPA at `/`
-    - API namespace is `/v1/*` (current public API surface)
+  - Dashboard SPA at `/`
+  - API namespace is `/v1/*` (current public API surface)
 
 ## API Compatibility Baseline
 
@@ -68,14 +68,14 @@ Should immediately answer: _what can this API do across eras?_
 ### Features
 
 - universal search dispatcher that routes to:
-    - `/v1/search/players`
-    - `/v1/search/teams`
-    - `/v1/search/games`
-    - `/v1/search/parks`
+  - `/v1/search/players`
+  - `/v1/search/teams`
+  - `/v1/search/games`
+  - `/v1/search/parks`
 - featured queries panel that includes at least one query from:
-    - standard stats
-    - derived/computed
-    - league-specific historical routes
+  - standard stats
+  - derived/computed
+  - league-specific historical routes
 - API health + dataset coverage block sourced from meta endpoints
 - era quick-jump chips (fed, nlg, boomer, pitcher, turf, steroid, moneyball, statcast, modern)
 
@@ -95,11 +95,11 @@ Should immediately answer: _what can this API do across eras?_
 - `/v1/players/{id}/salaries`
 - `/v1/players/{id}/relatives`
 - Optional advanced tabs:
-    - `/v1/players/{player_id}/stats/batting/advanced`
-    - `/v1/players/{player_id}/stats/pitching/advanced`
-    - `/v1/players/{player_id}/stats/war`
-    - `/v1/players/{player_id}/splits`
-    - `/v1/players/{player_id}/streaks`
+  - `/v1/players/{player_id}/stats/batting/advanced`
+  - `/v1/players/{player_id}/stats/pitching/advanced`
+  - `/v1/players/{player_id}/stats/war`
+  - `/v1/players/{player_id}/splits`
+  - `/v1/players/{player_id}/streaks`
 
 ### Route and State Contract
 
@@ -107,15 +107,15 @@ Should immediately answer: _what can this API do across eras?_
 - `/players` is the search + empty-state entry route.
 - `/players/[id]` redirects to `/players/[id]/batting`.
 - Main tabs are nested route slugs:
-    - `batting`, `pitching`, `game-logs`, `awards`, `hof`, `teams`, `salaries`, `relatives`
+  - `batting`, `pitching`, `game-logs`, `awards`, `hof`, `teams`, `salaries`, `relatives`
 - Advanced tabs are always routable nested slugs:
-    - `batting-adv`, `pitching-adv`, `war`, `splits`, `streaks`
+  - `batting-adv`, `pitching-adv`, `war`, `splits`, `streaks`
 - Advanced toggle only controls tab visibility in the nav; it does not gate route access.
 - Query params are limited to search + tab-local controls:
-    - shared/search: `q`
-    - pagination: `page`, `per_page`
-    - batting tab: `stat`
-    - game logs tab: `log`
+  - shared/search: `q`
+  - pagination: `page`, `per_page`
+  - batting tab: `stat`
+  - game logs tab: `log`
 - Legacy query tab routing (`/players?id=...&tab=...`) is non-canonical and does not require compatibility redirects pre-release.
 
 ### Implementation Pattern (Reference for Future Sections)
@@ -124,8 +124,8 @@ Should immediately answer: _what can this API do across eras?_
 - Child nested routes own center-pane data loading and rendering.
 - Data loading is route-driven (`onMount` + navigation hooks), not synchronized via cross-tab URL-state effects.
 - Internal navigation uses SvelteKit routing primitives:
-    - links via `href={resolve(...)}`
-    - imperative query updates via `goto(resolve(...), { replaceState: true, noScroll: true, keepFocus: true })`
+  - links via `href={resolve(...)}`
+  - imperative query updates via `goto(resolve(...), { replaceState: true, noScroll: true, keepFocus: true })`
 - Tab outlet transitions use Svelte built-ins (`crossfade` with subtle `fly` fallback) and must respect `prefers-reduced-motion`.
 
 ### Era-specific behavior
@@ -206,9 +206,9 @@ Should immediately answer: _what can this API do across eras?_
 - `/v1/leaders/batting/career`
 - `/v1/leaders/pitching/career`
 - Advanced leaderboards:
-    - `/v1/seasons/{season}/leaders/batting/advanced`
-    - `/v1/seasons/{season}/leaders/pitching/advanced`
-    - `/v1/seasons/{season}/leaders/war`
+  - `/v1/seasons/{season}/leaders/batting/advanced`
+  - `/v1/seasons/{season}/leaders/pitching/advanced`
+  - `/v1/seasons/{season}/leaders/war`
 
 ### Era-specific behavior
 
@@ -245,6 +245,72 @@ Should immediately answer: _what can this API do across eras?_
 - `/v1/win-expectancy`
 - `/v1/win-expectancy/eras`
 
+## Live & Current-Season Data
+
+The dashboard uses the MLB Stats API proxy (`/v1/mlb/*`) and internal endpoints (`/api/internal/*`) to surface current-season data alongside the historical Retrosheet-backed views.
+
+### Live Scoreboard (Home Page)
+
+A scoreboard strip on the home page showing today's games with live scores.
+
+- Source: `GET /api/internal/scoreboard?date={today}`
+- Renders as a horizontal scrollable row of compact game cards
+- Each card: away/home abbreviations, scores, inning/status indicator, team color accents
+- LIVE indicator with subtle animation on in-progress games
+- Auto-refresh via `setInterval` (30s) when games are in progress; stops when all games are final
+- Click a game card → `/games` with the game's Retrosheet ID if crosswalkable, otherwise show an inline detail popover with MLB data
+- Fallback: "No games today" state with next game date
+
+### Current Standings (Teams Page)
+
+Standings panel on the Teams page, alongside the existing franchise/team-season views.
+
+- Source: `GET /api/internal/standings?season={current}`
+- Renders as sortable tables grouped by division
+- Columns: Rank, Team, W, L, PCT, GB, WC GB, Streak, Run Diff, L10
+- Team names link to `/teams/[franchise_id]` with current-season year context
+- Segment control: AL / NL / Both
+- Team color dots next to names
+
+### Today's Leaders (Home Page)
+
+Current-season stat leaders below the scoreboard on the home page.
+
+- Source: `GET /api/internal/leaders?season={current}&categories=HR,AVG,ERA,SO,WAR`
+- Renders as tabbed cards (one tab per stat category)
+- Each card: ranked top-5 list with player name, team, stat value
+- Player names link to `/players/[id]/batting` or `/players/[id]/pitching` via crosswalk
+- Category tabs: HR, AVG, OPS, RBI, SB | ERA, SO, W, SV, WHIP
+
+### Live Game Overlay (Games Page)
+
+When viewing a game that is currently in progress (detected via crosswalk to `gamePk`), the game detail page shows a live overlay.
+
+- Source: `GET /api/internal/live/{gamePk}`
+- Overlay panel above the historical boxscore/events showing: current score, inning, count, runners, current play, win probability chart
+- Auto-refresh 15s during live games
+- Dismissible — user can toggle between live and historical views
+
+### Player Current Season (Player Explorer)
+
+When viewing a player who is active in the current season, an additional panel shows current-season stats from the MLB API.
+
+- Source: `GET /api/internal/player-live/{mlb_id}`
+- Renders as a "Current Season" card above the historical stats tabs
+- Shows key current-season stats (AVG/HR/RBI for hitters, ERA/SO/W for pitchers)
+- "Live data from MLB" attribution badge
+- Only shows when the crosswalk maps the local player ID to an active MLBAM ID
+
+### Endpoints
+
+| Dashboard location | Internal endpoint                  | Refresh  |
+| ------------------ | ---------------------------------- | -------- |
+| Home scoreboard    | `GET /api/internal/scoreboard`     | 30s auto |
+| Home leaders       | `GET /api/internal/leaders`        | manual   |
+| Teams standings    | `GET /api/internal/standings`      | manual   |
+| Game detail live   | `GET /api/internal/live/{gamePk}`  | 15s auto |
+| Player current     | `GET /api/internal/player-live/*`  | manual   |
+
 ## API Documentation
 
 - The dashboard links out to the existing Swagger UI docsite at `/api/v1/docs/`.
@@ -256,7 +322,7 @@ Pre-rendered prose documentation derived from the `docs/` markdown files in the 
 
 ### Rendering strategy
 
-- Use [mdsvex](https://mdsvex.paka.dev/) to pre-render Markdown at build time into Svelte components.
+- Use [mdsvex](https://mdsvex.pngwn.io/docs) to pre-render Markdown at build time into Svelte components.
 - Each `docs/*.md` file becomes a statically generated route under `/docs/[slug]`.
 - No client-side markdown parsing; all HTML is generated at build time via `adapter-static`.
 
@@ -302,18 +368,18 @@ Authenticated area behind `/account`.
 
 ## Page Architecture
 
-| Route           | Page               | Layout     | Auth | Notes                                                  |
-| --------------- | ------------------ | ---------- | ---- | ------------------------------------------------------ |
-| `/`             | Home               | single-col | no   | search + meta + era jump                               |
-| `/players`      | Players            | three-col  | no   | search/empty route                                     |
-|                 |                    |            |      | canonical deep links use `/players/[id]/[tab]`         |
-| `/teams`        | Teams              | three-col  | no   | franchise + team-season + era context                  |
-| `/games`        | Games              | three-col  | no   | finder + game detail + event richness                  |
-| `/seasons`      | Seasons            | three-col  | no   | season hub + awards/postseason                         |
-| `/leaders`      | Leaders            | three-col  | no   | quick leaders + query lab + advanced                   |
-| `/compare`      | Compare            | three-col  | no   | side-by-side + era normalization                       |
-| `/api/v1/docs/` | API Docs (Swagger) | external   | no   | Existing Swagger UI docsite linked from app navigation |
-| `/data`         | Data Sources       | single-col | no   | provenance + era matrix + caveats                      |
-| `/docs`         | Docs               | three-col  | no   | mdsvex pre-rendered prose from `docs/*.md`             |
-| `/docs/[slug]`  | Doc page           | three-col  | no   | individual doc with sidebar nav + TOC                  |
-| `/account`      | Account            | single-col | yes  | API keys + usage                                       |
+| Route           | Page               | Layout     | Auth | Notes                                                     |
+| --------------- | ------------------ | ---------- | ---- | --------------------------------------------------------- |
+| `/`             | Home               | single-col | no   | search + meta + era jump + live scoreboard + leaders      |
+| `/players`      | Players            | three-col  | no   | search/empty route                                        |
+|                 |                    |            |      | canonical deep links use `/players/[id]/[tab]`            |
+| `/teams`        | Teams              | three-col  | no   | franchise + team-season + era context + current standings |
+| `/games`        | Games              | three-col  | no   | finder + game detail + event richness + live overlay      |
+| `/seasons`      | Seasons            | three-col  | no   | season hub + awards/postseason                            |
+| `/leaders`      | Leaders            | three-col  | no   | quick leaders + query lab + advanced                      |
+| `/compare`      | Compare            | three-col  | no   | side-by-side + era normalization                          |
+| `/api/v1/docs/` | API Docs (Swagger) | external   | no   | Existing Swagger UI docsite linked from app navigation    |
+| `/data`         | Data Sources       | single-col | no   | provenance + era matrix + caveats                         |
+| `/docs`         | Docs               | three-col  | no   | mdsvex pre-rendered prose from `docs/*.md`                |
+| `/docs/[slug]`  | Doc page           | three-col  | no   | individual doc with sidebar nav + TOC                     |
+| `/account`      | Account            | single-col | yes  | API keys + usage                                          |

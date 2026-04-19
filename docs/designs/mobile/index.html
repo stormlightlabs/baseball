@@ -197,6 +197,9 @@
       <a href="at-bat.html">At-Bat</a>
       <a href="stat-cards.html">Cards</a>
       <a href="learning.html">Learn</a>
+      <a href="scoreboard.html">Scoreboard</a>
+      <a href="standings.html">Standings</a>
+      <a href="live-game.html">Live</a>
     </nav>
   </header>
 
@@ -434,6 +437,59 @@
         </div>
       </div>
 
+      <!-- Live data features -->
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="scoreboard.html" title="Live Scoreboard screen"></iframe>
+          <a href="scoreboard.html" class="frame-link" title="Open Live Scoreboard screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◷</span>
+          <a href="scoreboard.html">Live Scoreboard</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag accent">live</span>
+          <span class="ftag">/api/internal/scoreboard</span>
+          <span class="ftag">linescore</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="standings.html" title="Current Standings screen"></iframe>
+          <a href="standings.html" class="frame-link" title="Open Current Standings screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◈</span>
+          <a href="standings.html">Current Standings</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag accent">live</span>
+          <span class="ftag">/api/internal/standings</span>
+          <span class="ftag">divisions</span>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="device">
+          <div class="device-notch"></div>
+          <iframe src="live-game.html" title="Live Game Tracker screen"></iframe>
+          <a href="live-game.html" class="frame-link" title="Open Live Game Tracker screen"></a>
+        </div>
+        <div class="frame-label">
+          <span class="fl-icon">◉</span>
+          <a href="live-game.html">Live Game Tracker</a>
+        </div>
+        <div class="frame-tags">
+          <span class="ftag accent">live</span>
+          <span class="ftag">/api/internal/live</span>
+          <span class="ftag">win probability</span>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -462,7 +518,7 @@
 
   <div class="status-bar">
     <div class="stat-item">
-      <div class="stat-value">13</div>
+      <div class="stat-value">16</div>
       <div class="stat-label">Screens</div>
     </div>
     <div class="divider"></div>

@@ -56,7 +56,7 @@
   <title>Big Fly</title>
 </svelte:head>
 
-<div class="flex min-h-dvh flex-col overflow-x-hidden bg-mantle">
+<div class="grid h-dvh min-h-dvh grid-rows-[3.5rem_auto_minmax(0,1fr)] overflow-x-hidden bg-mantle">
   <header class="sticky top-0 z-50 flex h-14 items-center gap-4 border-b border-outline bg-crust px-4 sm:px-6 lg:px-8">
     <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline">Big Fly</a>
     <span class="rounded bg-outline px-2 py-0.5 font-mono text-[0.7rem] text-muted">
@@ -100,7 +100,7 @@
     features. We appreciate your patience and feedback as we work towards a stable release in the coming weeks!
   </div>
 
-  <main class="min-h-0 flex-1">
+  <main class="min-h-0">
     {@render children()}
   </main>
 </div>

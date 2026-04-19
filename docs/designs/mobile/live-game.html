@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Live Game — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f13; --surface: #13161c; --surface2: #1a1e27;
+      --border: #252934; --text: #e2e8f0; --muted: #6b7280;
+      --accent: #3b82f6; --accent2: #10b981; --live: #ef4444;
+      --ball: #3b82f6; --strike: #ef4444; --out: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    h1,h2,h3 { font-family: 'Google Sans', sans-serif; }
+
+    .status-bar { height: 44px; background: var(--bg); display: flex; align-items: flex-end; justify-content: space-between; padding: 0 20px 8px; flex-shrink: 0; }
+    .sb-time { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.85rem; }
+    .sb-icons { display: flex; gap: 5px; align-items: center; font-size: 0.7rem; font-family: 'Google Sans Code', monospace; }
+
+    .app { display: flex; flex-direction: column; height: 100%; min-height: 844px; }
+
+    .app-header { padding: 0 16px; height: 52px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .app-title { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
+    .back-btn { color: var(--accent); font-size: 0.85rem; cursor: pointer; }
+    .live-badge { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--live); background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); padding: 2px 8px; border-radius: 99px; display: flex; align-items: center; gap: 4px; }
+    .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--live); animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+    .content { flex: 1; overflow-y: auto; }
+
+    /* Score header */
+    .score-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px; }
+    .score-row { display: flex; align-items: center; gap: 0; }
+    .score-team { flex: 1; display: flex; align-items: center; gap: 8px; }
+    .score-team.away { justify-content: flex-start; }
+    .score-team.home { justify-content: flex-end; flex-direction: row-reverse; }
+    .score-color-bar { width: 4px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+    .score-abbr { font-family: 'Google Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: #f1f5f9; }
+    .score-record { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); }
+    .score-num { font-family: 'Google Sans', sans-serif; font-size: 2.2rem; font-weight: 700; }
+    .score-num.winning { color: #f1f5f9; }
+    .score-num.losing { color: var(--muted); }
+    .score-divider { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 12px; gap: 3px; }
+    .inning-label { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--live); display: flex; align-items: center; gap: 4px; }
+    .inning-num { font-family: 'Google Sans', sans-serif; font-size: 0.8rem; font-weight: 700; color: #f1f5f9; }
+    .inning-half { font-size: 0.7rem; color: var(--muted); }
+
+    /* Linescore */
+    .linescore-wrap { padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+    .linescore-wrap::-webkit-scrollbar { display: none; }
+    .linescore { display: flex; gap: 0; }
+    .ls-col { display: flex; flex-direction: column; gap: 2px; min-width: 24px; }
+    .ls-head { font-family: 'Google Sans Code', monospace; font-size: 0.55rem; color: var(--muted); text-align: center; padding-bottom: 2px; }
+    .ls-cell { font-family: 'Google Sans Code', monospace; font-size: 0.68rem; color: var(--text); text-align: center; background: var(--surface2); border-radius: 3px; padding: 2px 0; }
+    .ls-cell.active { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .ls-cell.scoring { color: var(--accent2); font-weight: 700; }
+    .ls-divider { width: 1px; background: var(--border); margin: 0 6px; }
+    .ls-rhe { font-family: 'Google Sans Code', monospace; font-size: 0.55rem; color: var(--muted); text-align: center; font-weight: 700; padding-bottom: 2px; }
+
+    /* Situation panel */
+    .situation { margin: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: flex-start; gap: 16px; }
+
+    /* Diamond */
+    .diamond-wrap { flex-shrink: 0; position: relative; width: 88px; height: 88px; }
+    .infield-lines { position: absolute; top: 50%; left: 50%; width: 52px; height: 52px; border: 1.5px solid var(--border); transform: translate(-50%, -50%) rotate(45deg); }
+    .base { position: absolute; width: 14px; height: 14px; transform: rotate(45deg); border: 1.5px solid var(--border); background: var(--surface2); border-radius: 1px; }
+    .base.occupied { background: #f59e0b; border-color: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.5); }
+    .base-2b { top: 4px; left: 37px; }
+    .base-1b { top: 37px; right: 4px; }
+    .base-3b { top: 37px; left: 4px; }
+    .home-plate { bottom: 4px; left: 37px; background: var(--muted); border-color: var(--muted); }
+
+    /* Count and batter */
+    .count-batter { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .count-row { display: flex; gap: 10px; align-items: center; }
+    .count-group { display: flex; flex-direction: column; gap: 4px; }
+    .count-label { font-family: 'Google Sans Code', monospace; font-size: 0.55rem; color: var(--muted); text-transform: uppercase; }
+    .count-dots { display: flex; gap: 3px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--border); }
+    .dot.ball { background: var(--ball); border-color: var(--ball); }
+    .dot.strike { background: var(--strike); border-color: var(--strike); }
+    .dot.out { background: var(--out); border-color: var(--out); }
+    .outs-num { font-family: 'Google Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: #f1f5f9; }
+
+    .batter-pitcher { display: flex; flex-direction: column; gap: 5px; }
+    .bp-row { display: flex; flex-direction: column; gap: 0; }
+    .bp-label { font-family: 'Google Sans Code', monospace; font-size: 0.55rem; color: var(--muted); text-transform: uppercase; }
+    .bp-name { font-family: 'Google Sans', sans-serif; font-size: 0.8rem; font-weight: 600; color: #f1f5f9; }
+    .bp-stat { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); }
+
+    /* Current play */
+    .play-card { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; padding: 12px 14px; }
+    .play-label { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .play-description { font-family: 'Google Sans', sans-serif; font-size: 0.88rem; color: #f1f5f9; line-height: 1.5; }
+    .play-meta { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); margin-top: 5px; }
+
+    /* Win probability */
+    .wp-section { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+    .wp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .wp-label { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .wp-pct { font-family: 'Google Sans', sans-serif; font-size: 0.88rem; font-weight: 700; }
+    .wp-bar-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+    .wp-bar-fill { height: 100%; background: linear-gradient(90deg, #ef4444 0%, #ef4444 38%, #3b82f6 38%, #3b82f6 100%); border-radius: 3px; }
+    .wp-team-labels { display: flex; justify-content: space-between; }
+    .wp-team { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; }
+    .wp-svg { width: 100%; height: 48px; margin-top: 8px; }
+
+    /* Recent plays */
+    .section-header { padding: 14px 16px 8px; }
+    .section-title { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    .play-row { padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: background 0.1s; }
+    .play-row:hover { background: var(--surface2); }
+    .play-inning { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); width: 36px; flex-shrink: 0; padding-top: 1px; }
+    .play-text { font-size: 0.78rem; color: var(--text); flex: 1; line-height: 1.4; }
+    .play-score { font-family: 'Google Sans Code', monospace; font-size: 0.65rem; color: var(--muted); flex-shrink: 0; padding-top: 1px; }
+    .play-text.scoring { color: var(--accent2); }
+
+    /* Tab bar */
+    .tab-bar { height: 64px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: stretch; flex-shrink: 0; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; transition: background 0.15s; }
+    .tab-item:hover { background: var(--surface2); }
+    .tab-icon { font-size: 1.05rem; color: var(--muted); }
+    .tab-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans', sans-serif; }
+    .tab-item.active .tab-icon, .tab-item.active .tab-label { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">1:32</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title">
+      <span class="back-btn">‹</span>
+      LAD @ NYM
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>Live · Bot 4th</div>
+  </div>
+
+  <div class="content">
+
+    <!-- Score header -->
+    <div class="score-header">
+      <div class="score-row">
+        <div class="score-team away">
+          <div class="score-color-bar" style="background:#005A9C"></div>
+          <div>
+            <div class="score-abbr">LAD</div>
+            <div class="score-record">14-7</div>
+          </div>
+        </div>
+        <div style="padding: 0 8px;"><div class="score-num winning">3</div></div>
+        <div class="score-divider">
+          <div class="inning-label"><div class="live-dot"></div>LIVE</div>
+          <div class="inning-num">4th</div>
+          <div class="inning-half">▽ Bot</div>
+        </div>
+        <div style="padding: 0 8px;"><div class="score-num losing">2</div></div>
+        <div class="score-team home">
+          <div class="score-color-bar" style="background:#002D72"></div>
+          <div style="text-align: right;">
+            <div class="score-abbr">NYM</div>
+            <div class="score-record">12-9</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Linescore -->
+    <div class="linescore-wrap">
+      <div class="linescore">
+        <div class="ls-col"><div class="ls-head"> </div><div class="ls-cell">LAD</div><div class="ls-cell">NYM</div></div>
+        <div class="ls-col"><div class="ls-head">1</div><div class="ls-cell">0</div><div class="ls-cell">1</div></div>
+        <div class="ls-col"><div class="ls-head">2</div><div class="ls-cell scoring">2</div><div class="ls-cell">0</div></div>
+        <div class="ls-col"><div class="ls-head">3</div><div class="ls-cell">0</div><div class="ls-cell scoring">1</div></div>
+        <div class="ls-col"><div class="ls-head">4</div><div class="ls-cell active scoring">1</div><div class="ls-cell active">-</div></div>
+        <div class="ls-col"><div class="ls-head">5</div><div class="ls-cell">-</div><div class="ls-cell">-</div></div>
+        <div class="ls-col"><div class="ls-head">6</div><div class="ls-cell">-</div><div class="ls-cell">-</div></div>
+        <div class="ls-col"><div class="ls-head">7</div><div class="ls-cell">-</div><div class="ls-cell">-</div></div>
+        <div class="ls-col"><div class="ls-head">8</div><div class="ls-cell">-</div><div class="ls-cell">-</div></div>
+        <div class="ls-col"><div class="ls-head">9</div><div class="ls-cell">-</div><div class="ls-cell">-</div></div>
+        <div class="ls-divider"></div>
+        <div class="ls-col"><div class="ls-rhe">R</div><div class="ls-cell">3</div><div class="ls-cell">2</div></div>
+        <div class="ls-col"><div class="ls-rhe">H</div><div class="ls-cell">7</div><div class="ls-cell">5</div></div>
+        <div class="ls-col"><div class="ls-rhe">E</div><div class="ls-cell">0</div><div class="ls-cell">1</div></div>
+      </div>
+    </div>
+
+    <!-- Situation: diamond + count + batter -->
+    <div class="situation">
+      <div class="diamond-wrap">
+        <div class="infield-lines"></div>
+        <div class="base base-2b occupied"></div>
+        <div class="base base-1b occupied"></div>
+        <div class="base base-3b"></div>
+        <div class="base home-plate"></div>
+      </div>
+      <div class="count-batter">
+        <div class="count-row">
+          <div class="count-group">
+            <div class="count-label">Balls</div>
+            <div class="count-dots">
+              <div class="dot ball"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </div>
+          </div>
+          <div class="count-group">
+            <div class="count-label">Strikes</div>
+            <div class="count-dots">
+              <div class="dot strike"></div>
+              <div class="dot strike"></div>
+            </div>
+          </div>
+          <div class="count-group">
+            <div class="count-label">Outs</div>
+            <div class="count-dots">
+              <div class="dot out"></div>
+            </div>
+          </div>
+        </div>
+        <div class="batter-pitcher">
+          <div class="bp-row">
+            <div class="bp-label">Batting</div>
+            <div class="bp-name">F. Freeman</div>
+            <div class="bp-stat">.312 / 3 HR / 14 RBI</div>
+          </div>
+          <div class="bp-row">
+            <div class="bp-label">Pitching</div>
+            <div class="bp-name">S. Manaea</div>
+            <div class="bp-stat">3.1 IP · 3 ER · 64 pitches</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current play -->
+    <div class="play-card">
+      <div class="play-label">Current at-bat</div>
+      <div class="play-description">Betts singles to center field. Ohtani and Smith score. Freeman advances to 2nd.</div>
+      <div class="play-meta">Pitch 7 · 1-2 count · Line drive 107 mph</div>
+    </div>
+
+    <!-- Win probability -->
+    <div class="wp-section">
+      <div class="wp-header">
+        <div class="wp-label">Win Probability</div>
+        <div class="wp-pct" style="color:#005A9C">LAD 62%</div>
+      </div>
+      <div class="wp-bar-track"><div class="wp-bar-fill" style="width:100%"></div></div>
+      <div class="wp-team-labels">
+        <div class="wp-team" style="color:#ef4444">NYM 38%</div>
+        <div class="wp-team" style="color:#005A9C">LAD 62%</div>
+      </div>
+      <svg class="wp-svg" viewBox="0 0 320 48" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="wpGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,24 L20,22 L40,26 L60,30 L80,26 L100,28 L120,22 L140,18 L160,20 L180,16 L200,18 L220,19 L240,18 L260,19 L280,18 L320,19" stroke="#3b82f6" stroke-width="1.5" fill="none"/>
+        <path d="M0,24 L20,22 L40,26 L60,30 L80,26 L100,28 L120,22 L140,18 L160,20 L180,16 L200,18 L220,19 L240,18 L260,19 L280,18 L320,19 L320,48 L0,48 Z" fill="url(#wpGrad)"/>
+        <!-- Current position marker -->
+        <circle cx="280" cy="18" r="3" fill="#3b82f6"/>
+      </svg>
+    </div>
+
+    <!-- Recent plays -->
+    <div class="section-header">
+      <div class="section-title">Recent plays</div>
+    </div>
+
+    <div class="play-row">
+      <div class="play-inning">Bot 4</div>
+      <div class="play-text scoring">Betts singles to center. Ohtani and Smith score.</div>
+      <div class="play-score">3-2</div>
+    </div>
+    <div class="play-row">
+      <div class="play-inning">Bot 4</div>
+      <div class="play-text">Ohtani walks. 1st and 2nd loaded.</div>
+      <div class="play-score">1-2</div>
+    </div>
+    <div class="play-row">
+      <div class="play-inning">Top 4</div>
+      <div class="play-text scoring">Lindor doubles to left. Stewart scores.</div>
+      <div class="play-score">1-2</div>
+    </div>
+    <div class="play-row">
+      <div class="play-inning">Top 4</div>
+      <div class="play-text">Stewart walks on 4 pitches.</div>
+      <div class="play-score">1-1</div>
+    </div>
+    <div class="play-row">
+      <div class="play-inning">Top 3</div>
+      <div class="play-text">Nimmo grounds out to second. Inning over.</div>
+      <div class="play-score">1-1</div>
+    </div>
+    <div class="play-row">
+      <div class="play-inning">Bot 2</div>
+      <div class="play-text scoring">Smith 2-run HR (4) to left field.</div>
+      <div class="play-score">2-1</div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item">
+      <div class="tab-icon">⌂</div>
+      <div class="tab-label">Home</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◎</div>
+      <div class="tab-label">Players</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◈</div>
+      <div class="tab-label">Teams</div>
+    </div>
+    <div class="tab-item active">
+      <div class="tab-icon">◷</div>
+      <div class="tab-label">Games</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">≡</div>
+      <div class="tab-label">More</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -63,6 +63,67 @@
 
   <main class="center">
 
+    <!-- Live game overlay (shown when game in progress) -->
+    <div class="panel" id="liveOverlay" style="border-color:rgba(239,68,68,0.4)">
+      <div class="panel-label" style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ef4444;animation:pulse 1.2s infinite"></span>
+          Live · LAD @ NYM — Bot 4th <span style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);font-weight:400;">/api/internal/live/822750</span>
+        </span>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);cursor:pointer" onclick="document.getElementById('liveOverlay').style.display='none'">dismiss ✕</span>
+      </div>
+      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+        <!-- Score + linescore -->
+        <div style="flex:1;min-width:220px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="display:inline-block;width:3px;height:28px;background:#005A9C;border-radius:2px"></span>
+              <span style="font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9">LAD</span>
+              <span style="font-family:'Google Sans',sans-serif;font-size:1.6rem;font-weight:700;color:#f1f5f9">3</span>
+            </div>
+            <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);text-align:center">Bot 4th<br>1 out</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-family:'Google Sans',sans-serif;font-size:1.6rem;font-weight:700;color:var(--muted)">2</span>
+              <span style="font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9">NYM</span>
+              <span style="display:inline-block;width:3px;height:28px;background:#002D72;border-radius:2px"></span>
+            </div>
+          </div>
+          <div style="overflow-x:auto;font-family:'Google Sans Code',monospace;font-size:0.65rem;">
+            <table style="border-collapse:separate;border-spacing:2px 2px;">
+              <thead><tr style="color:var(--muted)"><th> </th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th style="padding-left:6px">R</th><th>H</th><th>E</th></tr></thead>
+              <tbody>
+                <tr><td style="color:var(--muted);padding-right:4px">LAD</td><td>0</td><td style="color:var(--accent2)">2</td><td>0</td><td style="color:var(--accent);background:rgba(59,130,246,0.08);border-radius:2px">1</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td style="padding-left:6px;color:#f1f5f9;font-weight:700">3</td><td>7</td><td>0</td></tr>
+                <tr><td style="color:var(--muted);padding-right:4px">NYM</td><td style="color:var(--accent2)">1</td><td>0</td><td style="color:var(--accent2)">1</td><td style="background:rgba(59,130,246,0.08);border-radius:2px">-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td style="padding-left:6px;color:var(--muted);font-weight:700">2</td><td>5</td><td>1</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Win probability -->
+        <div style="min-width:180px;flex:1;">
+          <div style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;">
+            <span>Win Probability</span>
+            <span style="color:#005A9C;font-weight:700">LAD 62%</span>
+          </div>
+          <div style="height:5px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin-bottom:6px;">
+            <div style="height:100%;background:linear-gradient(90deg,#ef4444 0%,#ef4444 38%,#3b82f6 38%,#3b82f6 100%);border-radius:3px"></div>
+          </div>
+          <div style="font-family:'Google Sans Code',monospace;font-size:0.58rem;display:flex;justify-content:space-between;color:var(--muted);margin-bottom:8px;"><span style="color:#ef4444">NYM 38%</span><span style="color:#005A9C">LAD 62%</span></div>
+          <svg width="100%" height="40" viewBox="0 0 200 40" preserveAspectRatio="none">
+            <polyline points="0,20 20,19 40,22 60,26 80,23 100,25 120,18 140,15 160,17 180,15 200,16" stroke="#3b82f6" stroke-width="1.5" fill="none"/>
+            <line x1="180" y1="0" x2="180" y2="40" stroke="rgba(59,130,246,0.3)" stroke-width="1" stroke-dasharray="3,2"/>
+          </svg>
+          <div style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);margin-top:4px;">
+            Current: Betts batting · 1-2 count · 1B &amp; 2B
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--text);">
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--accent);margin-right:6px;">Last play:</span>
+        Ohtani walks on 4 pitches. Bases loaded.
+      </div>
+    </div>
+    <style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}</style>
+
     <!-- Duration trend chart -->
     <div class="panel">
       <div class="panel-label">Game duration trend (avg minutes by decade)</div>

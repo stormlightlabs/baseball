@@ -215,7 +215,176 @@ Acceptance:
 - [ ] Pitch identification trainer uses actual pitch trajectory rendering.
 - [ ] Progress persists across app sessions.
 
-## Phase 7: Design Updates
+## Phase 7: Internal API Namespace
+
+### Scaffold
+
+- [ ] Create `internal/api/internal.go` with `InternalRoutes` struct and `RegisterRoutes(mux)`.
+- [ ] Add `X-Internal-Token` header authentication middleware for `/api/internal/*` routes.
+- [ ] Register internal routes in `internal/api/server.go` under `/api/internal/` prefix.
+- [ ] Add MLBAM-to-local ID crosswalk helper using existing `id_crosswalk` table.
+- [ ] Add MLB team ID → team color map (30 teams) as a static Go map.
+
+### Scoreboard Endpoint
+
+- [ ] Implement `GET /api/internal/scoreboard?date={YYYY-MM-DD}`.
+    - Proxy to `/v1/mlb/schedule` with `hydrate=linescore,team,probablePitcher`.
+    - Map MLB team IDs to local franchise records for color theming.
+    - Extract game status, scores, linescore, venue, probable pitchers.
+    - Cache at 30s TTL.
+- [ ] Add `core.InternalScoreboardResponse` type with game cards, team colors, and status.
+
+### Standings Endpoint
+
+- [ ] Implement `GET /api/internal/standings?season={year}`.
+    - Proxy to `/v1/mlb/standings` with `hydrate=team&standingsTypes=regularSeason`.
+    - Group by division, enrich with team colors and franchise IDs.
+    - Include wins, losses, PCT, GB, wild card GB, streak, run differential, last 10.
+    - Cache at 5min TTL.
+- [ ] Add `core.InternalStandingsResponse` type.
+
+### Live Game Feed Endpoint
+
+- [ ] Implement `GET /api/internal/live/{gamePk}`.
+    - Proxy to MLB game feed (`/api/v1.1/game/{gamePk}/feed/live`).
+    - Extract linescore, current play, recent plays, runners, count.
+    - Merge with local win-probability engine when play-by-play state permits.
+    - Cache at 15s TTL (or no cache for active games).
+- [ ] Add `core.InternalLiveGameResponse` type.
+
+### Leaders Endpoint
+
+- [ ] Implement `GET /api/internal/leaders?season={year}&categories={HR,AVG,ERA,SO}`.
+    - Call `/v1/mlb/stats` with `stats=season&group=hitting|pitching&sortStat={stat}&limit=5` per category.
+    - Crosswalk MLBAM person IDs to local `player_id` for deep linking.
+    - Merge team colors.
+    - Cache at 15min TTL.
+- [ ] Add `core.InternalLeadersResponse` type.
+
+### Player Live Endpoint
+
+- [ ] Implement `GET /api/internal/player-live/{mlb_id}`.
+    - Fetch current-season stats from `/v1/mlb/people/{id}?hydrate=stats(group=[hitting,pitching],type=season)`.
+    - Crosswalk to local player record for historical context.
+    - Return merged bio + current stats + historical summary.
+    - Cache at 5min TTL.
+- [ ] Add `core.InternalPlayerLiveResponse` type.
+
+### Team Live Endpoint
+
+- [ ] Implement `GET /api/internal/team-live/{mlb_id}`.
+    - Fetch current team info from `/v1/mlb/teams/{id}`.
+    - Crosswalk to local franchise record.
+    - Return merged team info + franchise history + team colors.
+    - Cache at 5min TTL.
+- [ ] Add `core.InternalTeamLiveResponse` type.
+
+Acceptance:
+
+- [ ] All internal endpoints return shaped payloads matching spec response schemas.
+- [ ] MLBAM → local ID crosswalk works for players and teams.
+- [ ] Cache TTLs are respected per endpoint group.
+- [ ] Internal auth middleware rejects requests without valid app token.
+
+## Phase 8: Live Scoreboard (Mobile)
+
+### Frontend
+
+- [ ] Create `ScoreboardWidget` for Home tab:
+    - Horizontal `PageView` of game cards.
+    - Each card shows team abbreviations, scores, inning/status, and linescore row.
+    - Team primary colors as gradient accents on each card.
+    - "LIVE" badge with pulse animation on in-progress games.
+    - "Final" / "Scheduled" badges for completed/upcoming games.
+- [ ] Implement `ScoreboardBloc`:
+    - Fetch from `GET /api/internal/scoreboard?date={today}`.
+    - Auto-refresh every 30s when `games_in_progress > 0`.
+    - Cache last response in Hive for offline display.
+- [ ] Tap game card → navigate to Live Game Tracker (in progress) or Game Detail (final).
+- [ ] Pull-to-refresh gesture.
+- [ ] Haptic tick on score changes between refreshes.
+- [ ] Date picker to view previous/future days.
+
+Acceptance:
+
+- [ ] Scoreboard renders all daily games in a swipeable card view.
+- [ ] Auto-refresh updates scores without user interaction during live games.
+- [ ] Offline mode shows cached scoreboard with "Last updated" indicator.
+
+## Phase 9: Current Standings (Mobile)
+
+### Frontend
+
+- [ ] Create `StandingsScreen` accessible from Teams tab (segment control: Standings / Franchises).
+- [ ] Division-grouped list with collapsible sections:
+    - Row per team: rank, team name (with color dot), W, L, PCT, GB, WC GB, streak, L10.
+    - Division leader indicator.
+    - Wild card separator line.
+- [ ] Segment control: AL / NL / Both.
+- [ ] Sort by any column (tap header).
+- [ ] Implement `StandingsBloc`:
+    - Fetch from `GET /api/internal/standings?season={current}`.
+    - Cache in Hive for offline.
+- [ ] Tap team row → Team Detail with current-season year pre-selected.
+- [ ] Haptic on section collapse/expand.
+
+Acceptance:
+
+- [ ] All 6 divisions render with correct team ordering.
+- [ ] Sorting works on all columns.
+- [ ] Team tap navigates to correct team detail with current season context.
+
+## Phase 10: Live Game Tracker (Mobile)
+
+### Frontend
+
+- [ ] Create `LiveGameScreen`:
+    - Scoreboard header with full linescore grid (innings × team).
+    - Diamond `CustomPainter`: infield diamond with filled/empty base indicators.
+    - Count `CustomPainter`: balls (green dots), strikes (red dots), outs (white dots).
+    - Current play description with animated text transition (`AnimatedSwitcher`).
+    - Win probability sparkline (`fl_chart` `LineChart`) updating in real-time.
+    - Scrollable recent plays list.
+- [ ] Implement `LiveGameBloc`:
+    - Fetch from `GET /api/internal/live/{gamePk}`.
+    - Auto-refresh every 15s during active games.
+    - Stop auto-refresh when game status is Final or Scheduled.
+- [ ] Tap win probability chart → expand to full-screen view.
+- [ ] Tap play in recent list → play detail bottom sheet.
+- [ ] Haptic bump on scoring plays and third outs.
+- [ ] Swipe down or back to return to scoreboard.
+- [ ] Pre-game state: show probable pitchers, venue, weather (if available), first pitch time.
+- [ ] Post-game state: show final score, winning/losing pitcher, save, notable stats.
+
+Acceptance:
+
+- [ ] Diamond and count indicators update correctly with each refresh.
+- [ ] Win probability chart renders and updates smoothly.
+- [ ] Transitions between pre-game, live, and post-game states are handled.
+
+## Phase 11: Today's Leaders (Mobile)
+
+### Frontend
+
+- [ ] Create `LeadersWidget` for Home tab (below scoreboard):
+    - Horizontal `PageView` of stat category cards.
+    - Chip row above cards for category selection.
+    - Each card: ranked list of 5 players with team-colored accent bars.
+    - Hitting categories: HR, AVG, OPS, RBI, SB.
+    - Pitching categories: ERA, SO, W, SV, WHIP.
+- [ ] Implement `LeadersBloc`:
+    - Fetch from `GET /api/internal/leaders?season={current}&categories=HR,AVG,ERA,SO`.
+    - Cache in Hive; refresh on pull-to-refresh.
+- [ ] Tap player row → Player Detail (via crosswalked `player_id`).
+- [ ] Swipe or tap chip to change category.
+
+Acceptance:
+
+- [ ] Leader cards show correct top-5 rankings per category.
+- [ ] Player tap navigates to local player detail when crosswalk exists.
+- [ ] Graceful fallback when crosswalk ID is unavailable (show stats only, no deep link).
+
+## Phase 12: Design Updates
 
 - [ ] Add spray chart screen to `docs/designs/mobile/`:
     - Full-field view with park overlay and hit dots.
@@ -233,9 +402,22 @@ Acceptance:
     - Hub with module tiles.
     - Pitch identification trainer.
     - Situation quiz with diamond visualization.
+- [ ] Add live scoreboard screen:
+    - Horizontal game card carousel with team colors and linescore.
+    - LIVE badge, score display, inning indicator.
+- [ ] Add standings screen:
+    - Division-grouped table with sortable columns.
+    - AL/NL segment control.
+- [ ] Add live game tracker screen:
+    - Linescore grid, diamond with runners, count dots.
+    - Win probability sparkline.
+    - Recent plays list.
+- [ ] Add today's leaders widget:
+    - Stat category cards with ranked player lists.
 - [ ] Update `docs/designs/mobile/index.html` to include new screens in the gallery.
 - [ ] Update `docs/designs/mobile/players.html` to show spray chart and pitch tunnel tabs.
-- [ ] Update `docs/designs/mobile/games.html` to show at-bat sequencer entry point.
+- [ ] Update `docs/designs/mobile/games.html` to show at-bat sequencer and live game tracker entry points.
+- [ ] Update `docs/designs/mobile/home.html` to show scoreboard and leaders widgets.
 
 Acceptance:
 

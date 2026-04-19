@@ -329,6 +329,248 @@ GET /api/internal/quiz/pitch-type?difficulty={1|2|3}
 
 These pull from existing game data and pitch data, reshaping into quiz-friendly payloads with the correct answer embedded (client reveals after user input).
 
+## Live & Current-Season Features
+
+The MLB Stats API proxy (`/v1/mlb/*`) provides real-time access to the current season. The app surfaces this data through three primary features that complement the historical Retrosheet-backed views. New `/api/internal/` endpoints aggregate MLB proxy calls with local data to reduce round-trips and shape payloads for rendering.
+
+### 6. Live Scoreboard
+
+A real-time scoreboard of today's MLB games, prominently featured on the Home tab.
+
+**Data source**: `GET /api/internal/scoreboard?date={YYYY-MM-DD}` aggregates the MLB schedule endpoint (`/v1/mlb/schedule` with `hydrate=linescore,team,probablePitcher`) and maps team IDs to local franchise records for color theming.
+
+**Response shape**:
+
+```json
+{
+  "date": "2026-04-19",
+  "games_in_progress": 3,
+  "games": [
+    {
+      "game_pk": 822750,
+      "status": "In Progress",
+      "inning": 5,
+      "inning_half": "Top",
+      "away": {
+        "mlb_id": 137,
+        "abbreviation": "SF",
+        "name": "Giants",
+        "score": 3,
+        "record": { "wins": 9, "losses": 12 },
+        "probable_pitcher": "Robbie Ray",
+        "primary_color": "#FD5A1E"
+      },
+      "home": {
+        "mlb_id": 120,
+        "abbreviation": "WSH",
+        "name": "Nationals",
+        "score": 1,
+        "record": { "wins": 7, "losses": 14 },
+        "probable_pitcher": "MacKenzie Gore",
+        "primary_color": "#AB0003"
+      },
+      "venue": "Nationals Park",
+      "start_time": "2026-04-19T17:35:00Z",
+      "linescore": { "innings": [...], "balls": 2, "strikes": 1, "outs": 1 }
+    }
+  ]
+}
+```
+
+**Rendering**: Horizontal `PageView` of game cards, each showing team abbreviations, scores, inning indicator, and linescore. Cards use team primary colors as subtle gradient accents. A "LIVE" badge pulses on in-progress games.
+
+**Interactions**:
+
+- Swipe between game cards
+- Tap a game card to navigate to Live Game Tracker (if in progress) or Game Detail (if final)
+- Pull-to-refresh; auto-refresh every 30s when games are in progress
+- Haptic tick on score changes during auto-refresh
+
+**Offline**: Cache last-fetched scoreboard in Hive. Show stale data with "Last updated" timestamp when offline.
+
+### 7. Current Standings
+
+Division standings with current records, streaks, and wild card positioning.
+
+**Data source**: `GET /api/internal/standings?season={year}` aggregates `/v1/mlb/standings` (with `hydrate=team`, `standingsTypes=regularSeason`) and enriches with local team colors and franchise IDs for navigation.
+
+**Response shape**:
+
+```json
+{
+  "season": 2026,
+  "last_updated": "2026-04-19T18:00:00Z",
+  "divisions": [
+    {
+      "id": 201,
+      "name": "AL East",
+      "league": "American League",
+      "teams": [
+        {
+          "mlb_id": 139,
+          "abbreviation": "TB",
+          "name": "Tampa Bay Rays",
+          "wins": 14,
+          "losses": 7,
+          "pct": ".667",
+          "games_back": "-",
+          "wild_card_gb": "+3.0",
+          "streak": "W4",
+          "run_differential": 28,
+          "last_10": { "wins": 7, "losses": 3 },
+          "primary_color": "#092C5C",
+          "franchise_id": "TBD"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Rendering**: Vertical list grouped by division. Each division is a collapsible section with a `SortableTable`-style row per team. Division leader gets a subtle crown indicator. Wild card contenders show a separator line.
+
+**Interactions**:
+
+- Toggle between AL / NL / both (segment control)
+- Tap a team row to navigate to Team Detail with current-season context
+- Sort by W, L, PCT, GB, streak, or run differential
+- Haptic on division header collapse/expand
+
+**Navigation**: Surfaces under the Teams tab as a "Current Standings" segment alongside the existing franchise/historical team views.
+
+### 8. Live Game Tracker
+
+A real-time game view combining MLB live feed data with the app's win probability model.
+
+**Data source**: `GET /api/internal/live/{gamePk}` proxies the MLB game feed (`/api/v1.1/game/{gamePk}/feed/live`) and merges with the local win-probability engine when play-by-play state permits. This endpoint is not cached (or cached at 15s TTL max).
+
+**Response shape**:
+
+```json
+{
+  "game_pk": 822750,
+  "status": "In Progress",
+  "inning": 5,
+  "inning_half": "Top",
+  "away": { "abbreviation": "SF", "score": 3, "hits": 7, "errors": 0 },
+  "home": { "abbreviation": "WSH", "score": 1, "hits": 4, "errors": 1 },
+  "linescore": {
+    "innings": [
+      { "num": 1, "away": { "runs": 0 }, "home": { "runs": 1 } }
+    ]
+  },
+  "current_play": {
+    "description": "Trout doubles to left field",
+    "event": "Double",
+    "count": { "balls": 1, "strikes": 2, "outs": 1 },
+    "runners": ["1B", "3B"]
+  },
+  "recent_plays": [...],
+  "win_probability": 0.62,
+  "win_probability_series": [...]
+}
+```
+
+**Rendering**: Full-screen game view with:
+
+- Scoreboard header with linescore grid
+- Diamond visualization showing runners (filled bases)
+- Count indicator (balls/strikes/outs as filled dots)
+- Current play description with animated transition
+- Win probability sparkline (using `fl_chart`) updating in real time
+- Scrollable recent plays list below
+
+**Interactions**:
+
+- Pull-to-refresh; auto-refresh every 15s during live games
+- Tap the win probability chart to expand to full-screen historical view
+- Tap a play in the recent list to see detail
+- Haptic bump on scoring plays and outs
+- Swipe down to return to scoreboard
+
+**Rendering approach**: The diamond, count dots, and base indicators use a single `CustomPainter` for performance. The linescore is a standard `Row` of styled cells.
+
+### 9. Today's Leaders
+
+Current-season stat leaders surfaced on the Home tab below the scoreboard.
+
+**Data source**: `GET /api/internal/leaders?season={year}&categories={HR,AVG,ERA,SO,WAR}` calls `/v1/mlb/stats` with `stats=season&group=hitting,pitching&sortStat={stat}&limit=5` for each requested category and merges results with local player IDs (via MLBAM crosswalk) for deep linking.
+
+**Response shape**:
+
+```json
+{
+  "season": 2026,
+  "categories": [
+    {
+      "stat": "HR",
+      "label": "Home Runs",
+      "group": "hitting",
+      "leaders": [
+        {
+          "mlb_id": 660271,
+          "name": "Shohei Ohtani",
+          "team_abbr": "LAD",
+          "value": "8",
+          "player_id": "ohtansh01",
+          "primary_color": "#005A9C"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Rendering**: Horizontal `PageView` of leader category cards. Each card shows a ranked list of 5 players with team-colored accent bars. The active stat category is shown as a chip row above the card.
+
+**Interactions**:
+
+- Swipe between stat categories
+- Tap a chip to jump to a specific category
+- Tap a player row to navigate to Player Detail
+- Category chips: HR, AVG, OPS, RBI, SB (hitting) | ERA, SO, W, SV, WHIP (pitching)
+
+## `/api/internal/` Namespace
+
+The internal namespace provides UI-optimized endpoints that are not part of the public API contract. These endpoints aggregate multiple data sources, map IDs across systems, and return pre-shaped payloads for rendering. They do not require Swagger documentation.
+
+### Authentication
+
+Internal endpoints use an app-token scheme (`X-Internal-Token` header) separate from the public API key system. Tokens are provisioned per client (mobile app, web dashboard) and rotated independently.
+
+### Internal Endpoint Catalog
+
+| Endpoint                                      | Source                                        | Purpose                                                                              |
+| --------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `GET /api/internal/player-card/{id}`          | `/v1/players/*` (aggregated)                  | Aggregated player bio + key stats + recent game log for stat card rendering          |
+| `GET /api/internal/spray-chart/{player_id}`   | Retrosheet hit-location data + park geometry  | Batted-ball coordinates with launch angle, exit velocity, and park geometry           |
+| `GET /api/internal/pitch-tunnel/{pitcher_id}` | Pitch-level data with movement vectors        | Pitch trajectories with release point, spin vector, and movement profiles            |
+| `GET /api/internal/at-bat/{game_id}/{ab_num}` | `plays` + `pitches` tables                    | Full at-bat sequence: pitch-by-pitch with context, count, and result                 |
+| `GET /api/internal/quiz/situation`            | Historical game states                        | Random game situation for learning mode quizzes                                      |
+| `GET /api/internal/quiz/pitch-type`           | Pitch trajectory data                         | Pitch identification challenge with trajectory data                                  |
+| `GET /api/internal/scoreboard`                | `/v1/mlb/schedule` + team color map           | Today's games with scores, status, linescore, team colors                            |
+| `GET /api/internal/standings`                 | `/v1/mlb/standings` + franchise map           | Current standings enriched with team colors and franchise IDs                         |
+| `GET /api/internal/live/{gamePk}`             | MLB game feed + win probability engine        | Real-time game state with play-by-play and win probability                           |
+| `GET /api/internal/leaders`                   | `/v1/mlb/stats` + MLBAM crosswalk             | Current-season stat leaders with local player IDs for deep linking                   |
+| `GET /api/internal/player-live/{mlb_id}`      | `/v1/mlb/people/{id}` + `/v1/players/{id}`   | Current-season stats merged with historical player record                            |
+| `GET /api/internal/team-live/{mlb_id}`        | `/v1/mlb/teams/{id}` + `/v1/teams/{id}`      | Current team info merged with franchise history and team colors                       |
+
+### ID Crosswalk
+
+Several internal endpoints must bridge MLB Stats API IDs (MLBAM `personId`, `teamId`) to local Retrosheet/Lahman IDs (`player_id`, `team_id`, `franchise_id`). The crosswalk is maintained in the existing `id_crosswalk` table and exposed via `GET /v1/players/{id}` which includes `mlb_id` when available. Internal endpoints perform this join server-side so clients never need to manage dual ID spaces.
+
+### Caching Strategy
+
+| Endpoint group   | Cache TTL | Rationale                                            |
+| ---------------- | --------- | ---------------------------------------------------- |
+| Scoreboard       | 30s       | Scores update frequently during games                |
+| Standings        | 5min      | Changes only after games complete                    |
+| Live game feed   | 15s       | Near-real-time without overwhelming upstream         |
+| Leaders          | 15min     | Stats update after games; no need for sub-minute     |
+| Player/team live | 5min      | Bio/roster data changes infrequently                 |
+| Spray/tunnel/ab  | 1hr       | Historical data; changes only on data loads          |
+| Quiz             | No cache  | Should return varied results                         |
+
 ## Performance Targets
 
 | Metric                              | Target                        |
@@ -338,6 +580,9 @@ These pull from existing game data and pitch data, reshaping into quiz-friendly 
 | Theme switch (team color change)    | < 300ms transition            |
 | Cold start to interactive           | < 2s on mid-range device      |
 | Offline stat card generation        | Full capability (cached data) |
+| Scoreboard refresh (15 games)       | < 500ms end-to-end            |
+| Live game feed refresh              | < 300ms end-to-end            |
+| Standings render (30 teams)         | < 16ms per frame              |
 | APK size                            | < 25 MB                       |
 
 ## References

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Live Scoreboard — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f13; --surface: #13161c; --surface2: #1a1e27;
+      --border: #252934; --text: #e2e8f0; --muted: #6b7280;
+      --accent: #3b82f6; --accent2: #10b981; --live: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    h1,h2,h3 { font-family: 'Google Sans', sans-serif; }
+
+    .status-bar { height: 44px; background: var(--bg); display: flex; align-items: flex-end; justify-content: space-between; padding: 0 20px 8px; flex-shrink: 0; }
+    .sb-time { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .sb-icons { display: flex; gap: 5px; align-items: center; font-size: 0.7rem; color: var(--text); font-family: 'Google Sans Code', monospace; }
+
+    .app { display: flex; flex-direction: column; height: 100%; min-height: 844px; }
+
+    .app-header { padding: 0 16px; height: 52px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .app-title { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
+    .back-btn { color: var(--accent); font-size: 0.85rem; cursor: pointer; }
+    .header-right { display: flex; align-items: center; gap: 6px; }
+    .live-count { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--live); background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); padding: 2px 8px; border-radius: 99px; display: flex; align-items: center; gap: 4px; }
+    .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--live); animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+    .content { flex: 1; overflow-y: auto; }
+
+    /* Date strip */
+    .date-strip { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .date-strip::-webkit-scrollbar { display: none; }
+    .date-item { padding: 10px 16px; text-align: center; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; flex-shrink: 0; }
+    .date-item.active { border-bottom-color: var(--accent); }
+    .date-day { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans Code', monospace; text-transform: uppercase; margin-bottom: 2px; }
+    .date-num { font-family: 'Google Sans', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--muted); }
+    .date-item.active .date-day, .date-item.active .date-num { color: var(--accent); }
+
+    /* Section label */
+    .section-header { padding: 14px 16px 8px; }
+    .section-title { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    /* Game card */
+    .game-card {
+      margin: 0 16px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .game-card:hover { border-color: var(--accent); }
+    .game-card.live-card { border-color: rgba(239,68,68,0.3); }
+
+    .game-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .game-status { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; }
+    .game-status.live { color: var(--live); display: flex; align-items: center; gap: 5px; }
+    .game-status.final { color: var(--muted); }
+    .game-status.scheduled { color: var(--accent); }
+    .game-venue { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--muted); }
+
+    .game-matchup { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+    .team-row { display: flex; align-items: center; gap: 10px; }
+    .team-color { width: 4px; height: 28px; border-radius: 2px; flex-shrink: 0; }
+    .team-abbr { font-family: 'Google Sans', sans-serif; font-size: 0.9rem; font-weight: 700; color: #f1f5f9; width: 32px; }
+    .team-name-full { font-size: 0.72rem; color: var(--muted); flex: 1; }
+    .team-record { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); margin-right: 4px; }
+    .team-score { font-family: 'Google Sans', sans-serif; font-size: 1.3rem; font-weight: 700; color: #f1f5f9; width: 28px; text-align: right; }
+    .team-score.winning { color: #f1f5f9; }
+    .team-score.losing { color: var(--muted); }
+    .team-score.scheduled { color: var(--muted); font-size: 0.72rem; font-family: 'Google Sans Code', monospace; }
+
+    /* Linescore mini */
+    .linescore-mini { padding: 6px 12px; border-top: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+    .linescore-mini::-webkit-scrollbar { display: none; }
+    .linescore-table { display: flex; gap: 0; }
+    .ls-col { display: flex; flex-direction: column; gap: 2px; min-width: 22px; }
+    .ls-head { font-family: 'Google Sans Code', monospace; font-size: 0.55rem; color: var(--muted); text-align: center; }
+    .ls-cell { font-family: 'Google Sans Code', monospace; font-size: 0.65rem; color: var(--text); text-align: center; background: var(--surface2); border-radius: 3px; padding: 1px 0; }
+    .ls-cell.highlight { color: var(--accent); }
+    .ls-divider { width: 1px; background: var(--border); margin: 0 4px; }
+    .ls-rhe-label { font-family: 'Google Sans Code', monospace; font-size: 0.55rem; color: var(--muted); text-align: center; font-weight: 700; }
+
+    /* Probable pitchers */
+    .pitchers-row { padding: 6px 12px 10px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; }
+    .pitcher-chip { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+    .pitcher-team { color: var(--accent); }
+
+    /* Tab bar */
+    .tab-bar { height: 64px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: stretch; flex-shrink: 0; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; transition: background 0.15s; }
+    .tab-item:hover { background: var(--surface2); }
+    .tab-icon { font-size: 1.05rem; color: var(--muted); }
+    .tab-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans', sans-serif; }
+    .tab-item.active .tab-icon, .tab-item.active .tab-label { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">1:32</span>
+    <div class="sb-icons"><span>▲▲▲</span><span>WiFi</span><span>■■■</span></div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title">
+      <span class="back-btn">‹</span>
+      Scoreboard
+    </div>
+    <div class="header-right">
+      <div class="live-count"><div class="live-dot"></div>3 Live</div>
+    </div>
+  </div>
+
+  <div class="date-strip">
+    <div class="date-item"><div class="date-day">Fri</div><div class="date-num">17</div></div>
+    <div class="date-item"><div class="date-day">Sat</div><div class="date-num">18</div></div>
+    <div class="date-item active"><div class="date-day">Sun</div><div class="date-num">19</div></div>
+    <div class="date-item"><div class="date-day">Mon</div><div class="date-num">20</div></div>
+    <div class="date-item"><div class="date-day">Tue</div><div class="date-num">21</div></div>
+  </div>
+
+  <div class="content">
+
+    <div class="section-header">
+      <div class="section-title">In Progress · 3 of 15 games</div>
+    </div>
+
+    <!-- LIVE: LAD @ NYM -->
+    <div class="game-card live-card">
+      <div class="game-card-header">
+        <div class="game-status live"><div class="live-dot"></div>Bot 4th · 1 out</div>
+        <div class="game-venue">Citi Field</div>
+      </div>
+      <div class="game-matchup">
+        <div class="team-row">
+          <div class="team-color" style="background:#005A9C"></div>
+          <div class="team-abbr">LAD</div>
+          <div class="team-name-full">Los Angeles Dodgers</div>
+          <div class="team-record">14-7</div>
+          <div class="team-score winning">3</div>
+        </div>
+        <div class="team-row">
+          <div class="team-color" style="background:#002D72"></div>
+          <div class="team-abbr">NYM</div>
+          <div class="team-name-full">New York Mets</div>
+          <div class="team-record">12-9</div>
+          <div class="team-score losing">2</div>
+        </div>
+      </div>
+      <div class="linescore-mini">
+        <div class="linescore-table">
+          <div class="ls-col"><div class="ls-head"> </div><div class="ls-cell">LAD</div><div class="ls-cell">NYM</div></div>
+          <div class="ls-col"><div class="ls-head">1</div><div class="ls-cell">0</div><div class="ls-cell">1</div></div>
+          <div class="ls-col"><div class="ls-head">2</div><div class="ls-cell">2</div><div class="ls-cell">0</div></div>
+          <div class="ls-col"><div class="ls-head">3</div><div class="ls-cell">0</div><div class="ls-cell">1</div></div>
+          <div class="ls-col"><div class="ls-head">4</div><div class="ls-cell highlight">1</div><div class="ls-cell">-</div></div>
+          <div class="ls-col"><div class="ls-head">5</div><div class="ls-cell">-</div><div class="ls-cell">-</div></div>
+          <div class="ls-col"><div class="ls-head">6</div><div class="ls-cell">-</div><div class="ls-cell">-</div></div>
+          <div class="ls-col"><div class="ls-head">7</div><div class="ls-cell">-</div><div class="ls-cell">-</div></div>
+          <div class="ls-col"><div class="ls-head">8</div><div class="ls-cell">-</div><div class="ls-cell">-</div></div>
+          <div class="ls-col"><div class="ls-head">9</div><div class="ls-cell">-</div><div class="ls-cell">-</div></div>
+          <div class="ls-divider"></div>
+          <div class="ls-col"><div class="ls-rhe-label">R</div><div class="ls-cell">3</div><div class="ls-cell">2</div></div>
+          <div class="ls-col"><div class="ls-rhe-label">H</div><div class="ls-cell">7</div><div class="ls-cell">5</div></div>
+          <div class="ls-col"><div class="ls-rhe-label">E</div><div class="ls-cell">0</div><div class="ls-cell">1</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE: NYY @ BOS -->
+    <div class="game-card live-card">
+      <div class="game-card-header">
+        <div class="game-status live"><div class="live-dot"></div>Top 7th · 2 outs</div>
+        <div class="game-venue">Fenway Park</div>
+      </div>
+      <div class="game-matchup">
+        <div class="team-row">
+          <div class="team-color" style="background:#003087"></div>
+          <div class="team-abbr">NYY</div>
+          <div class="team-name-full">New York Yankees</div>
+          <div class="team-record">11-10</div>
+          <div class="team-score losing">4</div>
+        </div>
+        <div class="team-row">
+          <div class="team-color" style="background:#BD3039"></div>
+          <div class="team-abbr">BOS</div>
+          <div class="team-name-full">Boston Red Sox</div>
+          <div class="team-record">10-11</div>
+          <div class="team-score winning">6</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Final · 4 games</div>
+    </div>
+
+    <!-- Final: CHC @ STL -->
+    <div class="game-card">
+      <div class="game-card-header">
+        <div class="game-status final">Final</div>
+        <div class="game-venue">Busch Stadium</div>
+      </div>
+      <div class="game-matchup">
+        <div class="team-row">
+          <div class="team-color" style="background:#0E3386"></div>
+          <div class="team-abbr">CHC</div>
+          <div class="team-name-full">Chicago Cubs</div>
+          <div class="team-record">13-8</div>
+          <div class="team-score losing">3</div>
+        </div>
+        <div class="team-row">
+          <div class="team-color" style="background:#C41E3A"></div>
+          <div class="team-abbr">STL</div>
+          <div class="team-name-full">St. Louis Cardinals</div>
+          <div class="team-record">10-11</div>
+          <div class="team-score winning">5</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Upcoming · 8 games</div>
+    </div>
+
+    <!-- Scheduled: SF @ WSH -->
+    <div class="game-card">
+      <div class="game-card-header">
+        <div class="game-status scheduled">1:35 PM ET</div>
+        <div class="game-venue">Nationals Park</div>
+      </div>
+      <div class="game-matchup">
+        <div class="team-row">
+          <div class="team-color" style="background:#FD5A1E"></div>
+          <div class="team-abbr">SF</div>
+          <div class="team-name-full">San Francisco Giants</div>
+          <div class="team-record">9-12</div>
+          <div class="team-score scheduled">—</div>
+        </div>
+        <div class="team-row">
+          <div class="team-color" style="background:#AB0003"></div>
+          <div class="team-abbr">WSH</div>
+          <div class="team-name-full">Washington Nationals</div>
+          <div class="team-record">7-14</div>
+          <div class="team-score scheduled">—</div>
+        </div>
+      </div>
+      <div class="pitchers-row">
+        <div class="pitcher-chip"><span class="pitcher-team">SF</span> R. Ray</div>
+        <div class="pitcher-chip">vs</div>
+        <div class="pitcher-chip"><span class="pitcher-team">WSH</span> M. Gore</div>
+      </div>
+    </div>
+
+    <!-- Scheduled: TB @ HOU -->
+    <div class="game-card">
+      <div class="game-card-header">
+        <div class="game-status scheduled">2:10 PM ET</div>
+        <div class="game-venue">Minute Maid Park</div>
+      </div>
+      <div class="game-matchup">
+        <div class="team-row">
+          <div class="team-color" style="background:#092C5C"></div>
+          <div class="team-abbr">TB</div>
+          <div class="team-name-full">Tampa Bay Rays</div>
+          <div class="team-record">14-7</div>
+          <div class="team-score scheduled">—</div>
+        </div>
+        <div class="team-row">
+          <div class="team-color" style="background:#002D62"></div>
+          <div class="team-abbr">HOU</div>
+          <div class="team-name-full">Houston Astros</div>
+          <div class="team-record">12-9</div>
+          <div class="team-score scheduled">—</div>
+        </div>
+      </div>
+      <div class="pitchers-row">
+        <div class="pitcher-chip"><span class="pitcher-team">TB</span> Z. Eflin</div>
+        <div class="pitcher-chip">vs</div>
+        <div class="pitcher-chip"><span class="pitcher-team">HOU</span> F. Valdez</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item active">
+      <div class="tab-icon">⌂</div>
+      <div class="tab-label">Home</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◎</div>
+      <div class="tab-label">Players</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◈</div>
+      <div class="tab-label">Teams</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◷</div>
+      <div class="tab-label">Games</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">≡</div>
+      <div class="tab-label">More</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

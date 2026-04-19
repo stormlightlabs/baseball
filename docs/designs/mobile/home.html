@@ -108,6 +108,54 @@
     }
     .pill.active { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.08); }
 
+    /* Scoreboard widget */
+    .scoreboard-widget { margin: 0 16px; }
+    .widget-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .widget-title { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    .widget-link { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--accent); cursor: pointer; }
+    .live-pill { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: #ef4444; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); padding: 2px 7px; border-radius: 99px; display: flex; align-items: center; gap: 4px; }
+    .live-dot { width: 5px; height: 5px; border-radius: 50%; background: #ef4444; animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+    .sb-scroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    .sb-scroll::-webkit-scrollbar { display: none; }
+    .sb-card {
+      flex-shrink: 0;
+      width: 180px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+    .sb-card.live-card { border-color: rgba(239,68,68,0.3); }
+    .sb-card-status { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+    .sb-card-status.live { color: #ef4444; }
+    .sb-card-status.final { color: var(--muted); }
+    .sb-card-status.scheduled { color: var(--accent); }
+    .sb-team { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .sb-team-bar { width: 3px; height: 20px; border-radius: 2px; flex-shrink: 0; }
+    .sb-team-abbr { font-family: 'Google Sans', sans-serif; font-size: 0.82rem; font-weight: 700; color: #f1f5f9; flex: 1; }
+    .sb-team-score { font-family: 'Google Sans', sans-serif; font-size: 1.1rem; font-weight: 700; }
+    .sb-team-score.w { color: #f1f5f9; }
+    .sb-team-score.l { color: var(--muted); }
+
+    /* Leaders widget */
+    .leaders-widget { margin: 0 16px; }
+    .leaders-tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-bottom: 8px; }
+    .leaders-tabs::-webkit-scrollbar { display: none; }
+    .leader-tab { font-family: 'Google Sans Code', monospace; font-size: 0.65rem; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .leader-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.08); }
+    .leaders-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .leader-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+    .leader-row:last-child { border-bottom: none; }
+    .leader-row:hover { background: var(--surface2); }
+    .leader-rank { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); width: 14px; text-align: center; }
+    .leader-bar { height: 100%; width: 3px; background: var(--accent); opacity: 0.6; border-radius: 2px; align-self: stretch; min-height: 20px; flex-shrink: 0; }
+    .leader-info { flex: 1; min-width: 0; }
+    .leader-name { font-family: 'Google Sans', sans-serif; font-size: 0.8rem; font-weight: 600; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .leader-team { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); }
+    .leader-val { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #f1f5f9; }
+
     /* Quick access grid */
     .section-header { padding: 20px 16px 10px; }
     .section-title { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
@@ -244,6 +292,123 @@
         <span class="pill">Games</span>
         <span class="pill">Franchises</span>
         <span class="pill">Seasons</span>
+      </div>
+    </div>
+
+    <!-- Scoreboard widget -->
+    <div class="section-header" style="padding-bottom: 8px;">
+      <div class="widget-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="widget-title">Today's Games</div>
+          <div class="live-pill"><div class="live-dot"></div>3 Live</div>
+        </div>
+        <a href="scoreboard.html" class="widget-link">All 15 →</a>
+      </div>
+    </div>
+    <div class="scoreboard-widget">
+      <div class="sb-scroll">
+        <div class="sb-card live-card">
+          <div class="sb-card-status live"><div class="live-dot"></div>Bot 4th · 1 out</div>
+          <div class="sb-team">
+            <div class="sb-team-bar" style="background:#005A9C"></div>
+            <div class="sb-team-abbr">LAD</div>
+            <div class="sb-team-score w">3</div>
+          </div>
+          <div class="sb-team">
+            <div class="sb-team-bar" style="background:#002D72"></div>
+            <div class="sb-team-abbr">NYM</div>
+            <div class="sb-team-score l">2</div>
+          </div>
+        </div>
+        <div class="sb-card live-card">
+          <div class="sb-card-status live"><div class="live-dot"></div>Top 7th · 2 outs</div>
+          <div class="sb-team">
+            <div class="sb-team-bar" style="background:#003087"></div>
+            <div class="sb-team-abbr">NYY</div>
+            <div class="sb-team-score l">4</div>
+          </div>
+          <div class="sb-team">
+            <div class="sb-team-bar" style="background:#BD3039"></div>
+            <div class="sb-team-abbr">BOS</div>
+            <div class="sb-team-score w">6</div>
+          </div>
+        </div>
+        <div class="sb-card">
+          <div class="sb-card-status final">Final</div>
+          <div class="sb-team">
+            <div class="sb-team-bar" style="background:#0E3386"></div>
+            <div class="sb-team-abbr">CHC</div>
+            <div class="sb-team-score l">3</div>
+          </div>
+          <div class="sb-team">
+            <div class="sb-team-bar" style="background:#C41E3A"></div>
+            <div class="sb-team-abbr">STL</div>
+            <div class="sb-team-score w">5</div>
+          </div>
+        </div>
+        <div class="sb-card">
+          <div class="sb-card-status scheduled">1:35 PM ET</div>
+          <div class="sb-team">
+            <div class="sb-team-bar" style="background:#FD5A1E"></div>
+            <div class="sb-team-abbr">SF</div>
+            <div class="sb-team-score" style="color:var(--muted);font-size:0.75rem">—</div>
+          </div>
+          <div class="sb-team">
+            <div class="sb-team-bar" style="background:#AB0003"></div>
+            <div class="sb-team-abbr">WSH</div>
+            <div class="sb-team-score" style="color:var(--muted);font-size:0.75rem">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaders widget -->
+    <div class="section-header" style="padding-bottom: 8px; padding-top: 20px;">
+      <div class="widget-header">
+        <div class="widget-title">2026 Leaders</div>
+        <a href="leaders.html" class="widget-link">More →</a>
+      </div>
+    </div>
+    <div class="leaders-widget">
+      <div class="leaders-tabs">
+        <div class="leader-tab active">HR</div>
+        <div class="leader-tab">AVG</div>
+        <div class="leader-tab">OPS</div>
+        <div class="leader-tab">RBI</div>
+        <div class="leader-tab">ERA</div>
+        <div class="leader-tab">SO</div>
+      </div>
+      <div class="leaders-card">
+        <div class="leader-row">
+          <div class="leader-rank">1</div>
+          <div class="leader-bar" style="opacity:1"></div>
+          <div class="leader-info"><div class="leader-name">Shohei Ohtani</div><div class="leader-team">LAD</div></div>
+          <div class="leader-val">8</div>
+        </div>
+        <div class="leader-row">
+          <div class="leader-rank">2</div>
+          <div class="leader-bar" style="opacity:0.75"></div>
+          <div class="leader-info"><div class="leader-name">Aaron Judge</div><div class="leader-team">NYY</div></div>
+          <div class="leader-val">7</div>
+        </div>
+        <div class="leader-row">
+          <div class="leader-rank">3</div>
+          <div class="leader-bar" style="opacity:0.55"></div>
+          <div class="leader-info"><div class="leader-name">Yordan Alvarez</div><div class="leader-team">HOU</div></div>
+          <div class="leader-val">6</div>
+        </div>
+        <div class="leader-row">
+          <div class="leader-rank">4</div>
+          <div class="leader-bar" style="opacity:0.4"></div>
+          <div class="leader-info"><div class="leader-name">Pete Alonso</div><div class="leader-team">NYM</div></div>
+          <div class="leader-val">6</div>
+        </div>
+        <div class="leader-row">
+          <div class="leader-rank">5</div>
+          <div class="leader-bar" style="opacity:0.25"></div>
+          <div class="leader-info"><div class="leader-name">Vladimir Guerrero Jr.</div><div class="leader-team">TOR</div></div>
+          <div class="leader-val">5</div>
+        </div>
       </div>
     </div>
 
