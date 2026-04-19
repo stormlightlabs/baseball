@@ -1,3 +1,5 @@
+import { toArray, toBoolean, toNumber, toObject, toString } from '$lib/common/converters';
+
 export type LeagueCode = 'AL' | 'NL' | 'OTHER';
 
 export type StandingsSortKey =
@@ -36,43 +38,13 @@ export type StandingsRow = {
   localFranchiseID?: string;
 };
 
-function toObject(value: unknown): Record<string, unknown> {
-  if (value != null && typeof value === 'object' && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  return {};
-}
-
-function toArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
-function toString(value: unknown): string | undefined {
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  }
-  if (typeof value === 'number') return String(value);
-  return undefined;
-}
-
-function toNumber(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  if (trimmed.length === 0) return undefined;
-  const parsed = Number(trimmed);
-  if (Number.isFinite(parsed)) return parsed;
-  return undefined;
-}
-
 function toBool(value: unknown): boolean {
-  if (typeof value === 'boolean') return value;
+  const parsed = toBoolean(value);
+  if (parsed != null) return parsed;
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
-    return normalized === 'true' || normalized === '1' || normalized === 'yes';
+    return normalized === 'yes';
   }
-  if (typeof value === 'number') return value !== 0;
   return false;
 }
 

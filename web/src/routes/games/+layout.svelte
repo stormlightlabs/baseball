@@ -279,14 +279,14 @@
 
     <div class="mb-3 grid grid-cols-2 gap-1.5">
       <button
-        class="rounded border px-2 py-1.5 font-display text-[0.76rem] transition-colors {finderMode === 'filters'
+        class="rounded border px-2 py-1.5 font-display text-xs transition-colors {finderMode === 'filters'
           ? 'border-primary/40 bg-surface text-foreground'
           : 'border-outline text-muted hover:border-primary/40 hover:text-foreground'}"
         onclick={() => setFinderMode('filters')}>
         Filter mode
       </button>
       <button
-        class="rounded border px-2 py-1.5 font-display text-[0.76rem] transition-colors {finderMode === 'nl'
+        class="rounded border px-2 py-1.5 font-display text-xs transition-colors {finderMode === 'nl'
           ? 'border-primary/40 bg-surface text-foreground'
           : 'border-outline text-muted hover:border-primary/40 hover:text-foreground'}"
         onclick={() => setFinderMode('nl')}>
@@ -300,27 +300,27 @@
         bind:value={naturalQueryInput}
         placeholder="e.g. yankees red sox 2004 alcs game 7"
         onsubmit={runNaturalSearch} />
-      <p class="mt-2 font-mono text-[0.65rem] text-muted">
+      <p class="mt-2 font-mono text-xxs text-muted">
         Uses <code>/v1/search/games</code> natural-language parsing.
       </p>
     {:else}
       <div class="mb-2 grid grid-cols-3 gap-1.5">
         <button
-          class="rounded border px-2 py-1.5 font-mono text-[0.67rem] transition-colors {family === 'mlb'
+          class="rounded border px-2 py-1.5 font-mono text-xxs transition-colors {family === 'mlb'
             ? 'border-primary/40 bg-surface text-foreground'
             : 'border-outline text-muted hover:border-primary/40 hover:text-foreground'}"
           onclick={() => setFamily('mlb')}>
           MLB
         </button>
         <button
-          class="rounded border px-2 py-1.5 font-mono text-[0.67rem] transition-colors {family === 'fed'
+          class="rounded border px-2 py-1.5 font-mono text-xxs transition-colors {family === 'fed'
             ? 'border-primary/40 bg-surface text-foreground'
             : 'border-outline text-muted hover:border-primary/40 hover:text-foreground'}"
           onclick={() => setFamily('fed')}>
           Federal
         </button>
         <button
-          class="rounded border px-2 py-1.5 font-mono text-[0.67rem] transition-colors {family === 'nlg'
+          class="rounded border px-2 py-1.5 font-mono text-xxs transition-colors {family === 'nlg'
             ? 'border-primary/40 bg-surface text-foreground'
             : 'border-outline text-muted hover:border-primary/40 hover:text-foreground'}"
           onclick={() => setFamily('nlg')}>

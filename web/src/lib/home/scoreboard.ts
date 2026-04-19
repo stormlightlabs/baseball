@@ -1,3 +1,4 @@
+import { toArray, toBoolean, toNumber, toObject, toString } from '$lib/common/converters';
 import { teamPrimaryHexFor } from '$lib/mlb/team-branding';
 
 export type ScoreboardTeam = {
@@ -31,47 +32,6 @@ export type ScoreboardSnapshot = {
   gamesInProgress: number;
   games: ScoreboardGame[];
 };
-
-function toObject(value: unknown): Record<string, unknown> {
-  if (value != null && typeof value === 'object' && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  return {};
-}
-
-function toArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
-function toString(value: unknown): string | undefined {
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  }
-  if (typeof value === 'number') {
-    return String(value);
-  }
-  return undefined;
-}
-
-function toNumber(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string' && value.trim().length > 0) {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return undefined;
-}
-
-function toBoolean(value: unknown): boolean | undefined {
-  if (typeof value === 'boolean') return value;
-  if (typeof value === 'string') {
-    const lower = value.toLowerCase();
-    if (lower === 'true') return true;
-    if (lower === 'false') return false;
-  }
-  return undefined;
-}
 
 function normalizeColor(value: unknown): string | undefined {
   const raw = toString(value);

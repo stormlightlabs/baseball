@@ -21,13 +21,13 @@
     }
   });
 
-  const sizeCls = $derived(size === 'xs' ? 'text-[0.6rem] px-1 py-px' : 'text-[0.65rem] px-1.5 py-0.5');
+  const sizeCls = $derived(size === 'xs' ? 'text-xxs px-1 py-px' : 'text-xs px-1.5 py-0.5');
   const fullLabel = $derived(meta.data?.era_labels?.[era.code] ?? era.label);
   const displayLabel = $derived(fullLabel.endsWith(' Era') ? fullLabel.slice(0, -4) : fullLabel);
 </script>
 
 <span
-  class="inline-block rounded border font-mono leading-none font-medium {colorCls} {sizeCls}"
+  class="inline-block rounded border font-sans leading-none font-medium {colorCls} {sizeCls}"
   title="{fullLabel} ({era.from}–{era.to}){era.caveat ? ' · ' + era.caveat : ''}">
   {displayLabel}
 </span>

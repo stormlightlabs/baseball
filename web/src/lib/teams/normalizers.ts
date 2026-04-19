@@ -1,4 +1,5 @@
 import type { PaginatedResponse } from '$lib/api';
+import { toNumber as toNum, toString as toStr } from '$lib/common/converters';
 import type {
   FranchiseProfile,
   RunDifferentialSeries,
@@ -20,19 +21,6 @@ function toTeamName(team: ApiTeamPayload): string {
   const combined = [location, nickname].filter(Boolean).join(' ').trim();
   if (combined) return combined;
   return String(team.id ?? '?');
-}
-
-function toStr(v: unknown): string | undefined {
-  return v != null && v !== '' ? String(v) : undefined;
-}
-
-function toNum(v: unknown): number | undefined {
-  if (typeof v === 'number') return v;
-  if (typeof v === 'string') {
-    const n = Number(v);
-    return Number.isNaN(n) ? undefined : n;
-  }
-  return undefined;
 }
 
 export function normalizeTeamResult(team: ApiTeamPayload): TeamResult {

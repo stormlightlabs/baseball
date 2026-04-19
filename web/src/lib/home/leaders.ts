@@ -1,3 +1,5 @@
+import { toArray, toNumber, toObject, toString } from '$lib/common/converters';
+
 export type LeaderGroup = 'hitting' | 'pitching';
 
 export type LeaderCategory = {
@@ -30,36 +32,6 @@ export const LEADER_CATEGORIES: LeaderCategory[] = [
   { id: 'SV', label: 'SV', group: 'pitching', statKey: 'saves', descending: true, fallbackDisplay: '0' },
   { id: 'WHIP', label: 'WHIP', group: 'pitching', statKey: 'whip', descending: false, fallbackDisplay: '0.00' }
 ];
-
-function toObject(value: unknown): Record<string, unknown> {
-  if (value != null && typeof value === 'object' && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  return {};
-}
-
-function toArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
-function toString(value: unknown): string | undefined {
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  }
-  if (typeof value === 'number') return String(value);
-  return undefined;
-}
-
-function toNumber(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  if (trimmed.length === 0) return undefined;
-  const parsed = Number(trimmed);
-  if (Number.isFinite(parsed)) return parsed;
-  return undefined;
-}
 
 function normalizeRateDisplay(value: string): string {
   if (value.startsWith('.')) return value;

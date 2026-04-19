@@ -1,4 +1,5 @@
 import type { PaginatedResponse } from '$lib/api';
+import { toBoolean, toNumber, toObject, toString, toStringArray } from '$lib/common/converters';
 import type {
   GameBoxscore,
   GamePaginatedResponse,
@@ -13,45 +14,6 @@ import type {
   WinProbabilityCurve,
   WinProbabilityPoint
 } from '$lib/games/types';
-
-function toObject(value: unknown): Record<string, unknown> {
-  if (value && typeof value === 'object') {
-    return value as Record<string, unknown>;
-  }
-  return {};
-}
-
-function toString(value: unknown): string | undefined {
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  }
-  if (typeof value === 'number') return String(value);
-  return undefined;
-}
-
-function toNumber(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string' && value.trim().length > 0) {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return undefined;
-}
-
-function toBoolean(value: unknown): boolean | undefined {
-  if (typeof value === 'boolean') return value;
-  if (typeof value === 'string') {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-  }
-  return undefined;
-}
-
-function toStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.map((entry) => toString(entry)).filter((entry): entry is string => entry != null);
-}
 
 function normalizeLineupPlayer(raw: unknown): LineupPlayer {
   const row = toObject(raw);

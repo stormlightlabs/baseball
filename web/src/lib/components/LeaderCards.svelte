@@ -1,6 +1,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { apiFetch } from '$lib/api';
+  import { toObject, toString } from '$lib/common/converters';
   import { EP } from '$lib/endpoints';
   import {
     buildLeaderBoardByCategory,
@@ -104,20 +105,6 @@
       return `/players/${encodeURIComponent(localID)}/batting`;
     }
     return `/players?q=${encodeURIComponent(row.playerName)}`;
-  }
-
-  function toObject(value: unknown): Record<string, unknown> {
-    if (value != null && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
-    return {};
-  }
-
-  function toString(value: unknown): string | undefined {
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      return trimmed.length > 0 ? trimmed : undefined;
-    }
-    if (typeof value === 'number') return String(value);
-    return undefined;
   }
 
   function extractPlayerCrosswalkByMLBID(payload: unknown): Record<number, string> {

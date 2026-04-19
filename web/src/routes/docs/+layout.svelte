@@ -100,8 +100,8 @@
     </section>
 
     <aside
-      class="sticky top-19 max-h-[calc(100vh-6rem)] self-start overflow-auto rounded-xl border border-outline bg-crust p-[0.8rem] px-3 max-[74rem]:hidden max-[56rem]:static max-[56rem]:max-h-none">
-      <h2 class="mb-2 font-mono text-[0.65rem] tracking-[0.08em] text-muted uppercase">On this page</h2>
+      class="sticky max-h-[calc(100vh-6rem)] self-start overflow-auto rounded-xl border border-outline bg-crust p-[0.8rem] px-3 max-[74rem]:hidden max-[56rem]:static max-[56rem]:max-h-none">
+      <h2 class="mb-2 font-mono text-xxs tracking-[0.08em] text-muted uppercase">On this page</h2>
       <nav class="flex flex-col gap-[0.3rem]">
         {#if activeDocData.toc?.length}
           {#each activeDocData.toc as item (`${item.id}-${item.depth}`)}

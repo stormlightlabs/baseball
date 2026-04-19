@@ -183,20 +183,20 @@ Ref: `docs/designs/games.html`
 
 Ref: `docs/designs/seasons.html`
 
-- [ ] Season list from `GET /api/v1/seasons`.
-- [ ] Team table from `GET /api/v1/seasons/{year}/teams`.
-- [ ] Leaders snapshot from:
+- [x] Season list from `GET /api/v1/seasons`.
+- [x] Team table from `GET /api/v1/seasons/{year}/teams`.
+- [x] Leaders snapshot from:
   - `GET /api/v1/seasons/{year}/leaders/batting`
   - `GET /api/v1/seasons/{year}/leaders/pitching`
-- [ ] Schedule/calendar from:
+- [x] Schedule/calendar from:
   - `GET /api/v1/seasons/{year}/schedule`
   - `GET /api/v1/seasons/{year}/dates/{date}/games`
-- [ ] Awards/postseason modules from:
+- [x] Awards/postseason modules from:
   - `GET /api/v1/seasons/{year}/awards`
   - `GET /api/v1/seasons/{year}/postseason/series`
   - `GET /api/v1/seasons/{year}/postseason/games`
-- [ ] Park factors snapshot from `GET /api/v1/seasons/{season}/park-factors`.
-- [ ] Era headline for selected season.
+- [x] Park factors snapshot from `GET /api/v1/seasons/{season}/park-factors`.
+- [x] Era headline for selected season.
 
 ## Stat Leaders (`/leaders`)
 
