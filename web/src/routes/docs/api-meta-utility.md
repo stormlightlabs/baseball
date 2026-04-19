@@ -4,13 +4,13 @@ These lightweight endpoints power monitoring and discovery functionality for the
 
 ## Summary
 
-| Endpoint                | Dataset | Highlights                                                            |
-| ----------------------- | ------- | --------------------------------------------------------------------- |
-| `GET /v1/health`        | -       | Liveness probe that confirms the API process is responding.           |
-| `GET /v1/ready`         | Mixed   | Readiness probe for the core dataset set required by the API.         |
-| `GET /v1/meta`          | Mixed   | Reports API build metadata plus dataset freshness and coverage.       |
-| `GET /v1/meta/datasets` | Mixed   | Enumerates core and supplemental datasets currently loaded.           |
-| `GET /v1/meta/readiness`| Mixed   | Returns the same readiness payload without a readiness status code.   |
+| Endpoint                 | Dataset | Highlights                                                          |
+| ------------------------ | ------- | ------------------------------------------------------------------- |
+| `GET /v1/health`         | -       | Liveness probe that confirms the API process is responding.         |
+| `GET /v1/ready`          | Mixed   | Readiness probe for the core dataset set required by the API.       |
+| `GET /v1/meta`           | Mixed   | Reports API build metadata plus dataset freshness and coverage.     |
+| `GET /v1/meta/datasets`  | Mixed   | Enumerates core and supplemental datasets currently loaded.         |
+| `GET /v1/meta/readiness` | Mixed   | Returns the same readiness payload without a readiness status code. |
 
 ## Endpoint Details
 

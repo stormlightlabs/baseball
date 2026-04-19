@@ -1,6 +1,6 @@
 # Derived & Advanced Endpoints Overview
 
-Companion to Section 9 of `docs/ROADMAP.md`. These advanced endpoints layer analytics on top of Lahman + Retrosheet feeds and rely on precomputed streak/split aggregates.
+These advanced endpoints layer analytics on top of Lahman + Retrosheet feeds and rely on precomputed streak/split aggregates.
 
 ## Summary
 

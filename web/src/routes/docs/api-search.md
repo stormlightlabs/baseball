@@ -1,6 +1,6 @@
 # Search & Lookup API Overview
 
-Supplement for Section 8 of `docs/ROADMAP.md`, describing fuzzy lookup helpers.
+This section describes fuzzy lookup helpers.
 
 ## Summary
 

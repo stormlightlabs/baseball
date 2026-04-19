@@ -15,6 +15,6 @@
 ## Endpoint Details
 
 - Award endpoints leverage Lahman data so they stay synchronized with yearly releases;
-    - Filters include `award_id`, `league`, and `from`/`to` for multi-year dashboards.
+  - Filters include `award_id`, `league`, and `from`/`to` for multi-year dashboards.
 - Postseason series/games include bracket order, series type, and coverage of tiebreaker games which often differ from regular-season scheduling.
 - All-Star endpoints expose both Lahman and Retrosheet identifiers, enabling links into `/v1/games/{game_id}` or `/v1/players/{player_id}` for rosters.

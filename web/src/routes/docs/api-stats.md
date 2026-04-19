@@ -1,6 +1,6 @@
 # Stats & Leaderboards API Overview
 
-Details for Section 6 of `docs/ROADMAP.md`. These Lahman-backed endpoints power stat tables, player cards, and leaderboard pages.
+These Lahman-backed endpoints power stat tables, player cards, and leaderboard pages.
 
 ## Career & Season Stats
 

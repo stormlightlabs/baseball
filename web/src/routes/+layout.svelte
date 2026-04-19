@@ -23,7 +23,8 @@
     { href: '/seasons', label: 'Seasons' },
     { href: '/leaders', label: 'Leaders' },
     { href: '/compare', label: 'Compare' },
-    { href: '/data', label: 'Data' }
+    { href: '/data', label: 'Data' },
+    { href: '/docs', label: 'About' }
   ] as const;
 
   const API_DOCS_ROUTE = '/explorer' as const;
@@ -37,6 +38,7 @@
     '/leaders': 'leaders',
     '/compare': 'compare',
     '/data': 'data sources',
+    '/docs': 'about',
     '/account': 'account'
   };
 
@@ -77,7 +79,7 @@
       target="_blank"
       rel="noreferrer"
       class="ml-2 rounded px-2.5 py-1 text-[0.8rem] text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground">
-      API Docs
+      API docs
     </a>
     <a
       href={resolve('/account')}

@@ -18,8 +18,8 @@ Focuses on global game search, summaries, and per-season schedule utilities.
 ## Endpoint Details
 
 - Every endpoint emits a normalized `game` object (Retrosheet `GAME_ID`, Lahman team IDs, timestamps)
-so an API client/consumers can deep-link without additional lookups.
+  so an API client/consumers can deep-link without additional lookups.
 - `GET /v1/games` supports advanced filters like `day_night`, `park_id`, `doubleheader`, and `postseason` to cut down on local filtering.
 - Boxscore payloads embed both batting and pitching lines, derived win probabilities (when available), and
-reference IDs needed to join into `/v1/plays`.
+  reference IDs needed to join into `/v1/plays`.
 - Season/date/park schedule listings include `status` (scheduled, completed)

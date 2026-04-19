@@ -49,6 +49,7 @@
     "@fontsource-variable/google-sans-code": "^5.2.3",
     "@fontsource-variable/inter": "^5.2.8",
     "chart.js": "^4.5.1",
+    "github-slugger": "^2.0.0",
     "mdsvex": "^0.12.7"
   }
 }

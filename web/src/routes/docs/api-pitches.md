@@ -1,15 +1,15 @@
 # Pitch-Level API Overview
 
 Pitch routes expose individual Retrosheet pitch sequences so advanced tooling can reason about counts, sequencing, and leverage in a single request.
-See [pitches](./pitches.md) for deeper details on Retrosheet encoding and parsing rules referenced below.
+See [pitches](/docs/pitches) for deeper details on Retrosheet encoding and parsing rules referenced below.
 
 ## Summary
 
-| Endpoint                                          | Dataset | Highlights                                                                                                  |
-| ------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
-| `GET /v1/pitches`                                 | R       | Global pitch search with batter/pitcher/team/date filters plus count- or pitch-type constrained queries.    |
-| `GET /v1/games/{game_id}/pitches`                 | R       | Chronological slice of every pitch in a single game with pagination for long contests.                      |
-| `GET /v1/games/{game_id}/plays/{play_num}/pitches`| R       | Returns all pitches for one plate appearance, useful when drilling into a single event from `/v1/plays`.    |
+| Endpoint                                           | Dataset | Highlights                                                                                               |
+| -------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------- |
+| `GET /v1/pitches`                                  | R       | Global pitch search with batter/pitcher/team/date filters plus count- or pitch-type constrained queries. |
+| `GET /v1/games/{game_id}/pitches`                  | R       | Chronological slice of every pitch in a single game with pagination for long contests.                   |
+| `GET /v1/games/{game_id}/plays/{play_num}/pitches` | R       | Returns all pitches for one plate appearance, useful when drilling into a single event from `/v1/plays`. |
 
 ## Endpoint Details
 
@@ -27,4 +27,4 @@ See [pitches](./pitches.md) for deeper details on Retrosheet encoding and parsin
 ### `GET /v1/games/{game_id}/plays/{play_num}/pitches`
 
 - Returns a compact `{ "data": [...] }` payload of every pitch parsed for a single plate appearance.
-- No pagination because plate appearances typically contain <10 pitches; callers must supply both `game_id` and `play_num`.
+- No pagination because plate appearances typically contain \<10 pitches; callers must supply both `game_id` and `play_num`.

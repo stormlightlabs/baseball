@@ -1,6 +1,6 @@
 # Players API Overview
 
-Expands on Section 1 of `docs/ROADMAP.md`. Covers core Lahman-backed biographical data along with Retrosheet game-level joins.
+Covers core Lahman-backed biographical data along with Retrosheet game-level joins.
 
 ## Player & Career Endpoints
 
@@ -17,7 +17,7 @@ Expands on Section 1 of `docs/ROADMAP.md`. Covers core Lahman-backed biographica
 ### Details
 
 - Collection endpoints accept `page`, `per_page`, and optional `sort` fields
-    - single-player endpoints share a consistent envelope with `player_id`, Lahman IDs, and stat aggregates.
+  - Single-player endpoints share a consistent envelope with `player_id`, Lahman IDs, and stat aggregates.
 - Award/HOF/salary feeds reuse Lahman table IDs
 
 ## Retrosheet Player Game Interfaces

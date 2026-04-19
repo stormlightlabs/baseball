@@ -1,4 +1,3 @@
-
 # Statistical Methodology
 
 ## Advanced Stats Implementation
@@ -24,7 +23,7 @@ Our WAR calculation differs from both FanGraphs (fWAR) and Baseball Reference (b
 **Components:**
 
 1. **Batting Runs**: wRAA (weighted runs above average) - Matches FanGraphs ✓
-2. **Base Running**: $wSB$ only ($SB × run_{sb} + CS × run_{cs}$)
+2. **Base Running**: `wSB` only (`SB × run_sb + CS × run_cs`)
    - **FanGraphs**: Includes UBR (ultimate base running) from play-by-play
    - **Baseball Reference**: More comprehensive base running metrics
    - **Our approach**: Simplified - stolen bases only
@@ -48,7 +47,7 @@ Our WAR calculation differs from both FanGraphs (fWAR) and Baseball Reference (b
 
 **Implementation**: Range factor methodology
 
-- **Formula**: $\frac{(PO + A)}{Games}$, compared to league average at position
+- **Formula**: `(PO + A) / Games`, compared to league average at position
 - **Runs conversion**: 0.1 runs per play above/below average
 - **FanGraphs**: Uses UZR (requires batted ball tracking data)
 - **Baseball Reference**: Uses Total Zone Rating

@@ -47,10 +47,10 @@ The parser maintains a running count of balls and strikes for each pitch in the 
 
 1. Start with 0-0 count
 2. For each pitch character:
-    - Record current ball and strike count
-    - Classify pitch type (ball, strike, in play)
-    - Update count based on pitch type
-    - Foul balls do not add strikes after 2 strikes
+   - Record current ball and strike count
+   - Classify pitch type (ball, strike, in play)
+   - Update count based on pitch type
+   - Foul balls do not add strikes after 2 strikes
 3. Skip modifier characters (not pitches)
 4. Continue until sequence ends
 
@@ -127,27 +127,27 @@ Each pitch includes full context from the parent play:
 
 ```json
 {
-    "game_id": "SDN202403200",
-    "play_num": 1,
-    "inning": 1,
-    "top_bot": 0,
-    "bat_team": "LAN",
-    "pit_team": "SDN",
-    "date": "20240320",
-    "batter": "bettm001",
-    "pitcher": "darvy001",
-    "bat_hand": "R",
-    "pit_hand": "R",
-    "outs_pre": 0,
-    "seq_num": 3,
-    "pitch_type": "B",
-    "ball_count": 1,
-    "strike_count": 1,
-    "is_in_play": false,
-    "is_strike": false,
-    "is_ball": true,
-    "description": "Ball",
-    "event": null
+  "game_id": "SDN202403200",
+  "play_num": 1,
+  "inning": 1,
+  "top_bot": 0,
+  "bat_team": "LAN",
+  "pit_team": "SDN",
+  "date": "20240320",
+  "batter": "bettm001",
+  "pitcher": "darvy001",
+  "bat_hand": "R",
+  "pit_hand": "R",
+  "outs_pre": 0,
+  "seq_num": 3,
+  "pitch_type": "B",
+  "ball_count": 1,
+  "strike_count": 1,
+  "is_in_play": false,
+  "is_strike": false,
+  "is_ball": true,
+  "description": "Ball",
+  "event": null
 }
 ```
 
