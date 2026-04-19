@@ -24,9 +24,9 @@ Adds enhanced game-level metadata including weather, wind, DH usage, and field c
 ### Examples
 
 ```sh
-curl -s "http://localhost:8080/v1/games/ARI202404010" | jq '{id, date, home_team, temp_f, sky, wind_direction, wind_speed_mph, precip, start_time, used_dh}'
+curl -s "https://api.bigfly.tech/v1/games/ARI202404010"
 
-curl -s "http://localhost:8080/v1/games/BAL202404010" | jq '{id, date, home_team, temp_f, sky, wind_direction, wind_speed_mph, precip, field_condition, start_time, used_dh}'
+curl -s "https://api.bigfly.tech/v1/games/BAL202404010"
 ```
 
 ```json

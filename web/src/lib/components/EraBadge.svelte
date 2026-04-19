@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Era } from '$lib/eras';
+  import { meta } from '$lib/meta.svelte';
 
   let { era, size = 'sm' }: { era: Era; size?: 'xs' | 'sm' } = $props();
 
@@ -21,10 +22,12 @@
   });
 
   const sizeCls = $derived(size === 'xs' ? 'text-[0.6rem] px-1 py-px' : 'text-[0.65rem] px-1.5 py-0.5');
+  const fullLabel = $derived(meta.data?.era_labels?.[era.code] ?? era.label);
+  const displayLabel = $derived(fullLabel.endsWith(' Era') ? fullLabel.slice(0, -4) : fullLabel);
 </script>
 
 <span
   class="inline-block rounded border font-mono leading-none font-medium {colorCls} {sizeCls}"
-  title="{era.label} ({era.from}–{era.to}){era.caveat ? ' · ' + era.caveat : ''}">
-  {era.code}
+  title="{fullLabel} ({era.from}–{era.to}){era.caveat ? ' · ' + era.caveat : ''}">
+  {displayLabel}
 </span>

@@ -282,7 +282,9 @@ Ref: `docs/designs/data-sources.html`
   - LIVE badge with CSS animation on in-progress games.
   - "No games today" empty state with next game date.
 - [ ] Fetch from `GET /api/internal/scoreboard?date={today}`.
-- [ ] Auto-refresh via `setInterval` (30s) when `games_in_progress > 0`; clear interval when all final.
+- [ ] Auto-refresh via `setInterval` (60s) when `games_in_progress > 0` & tab is focused; clear interval when all final.
+  - Refresh button
+  - Pause auto-refresh toggle
 - [ ] Click game card → navigate to `/games` with Retrosheet game ID (if crosswalkable) or show inline MLB detail popover.
 - [ ] Add scoreboard strip to Home page above existing featured queries panel.
 
@@ -314,6 +316,7 @@ Ref: `docs/designs/data-sources.html`
   - Panel showing current score, inning, count, runners, current play description.
   - Win probability line chart (Chart.js) updating with each refresh.
   - "Live data from MLB" attribution badge.
+    - Render the copyright attribution
   - Dismissible toggle to switch between live overlay and historical view.
 - [ ] Detect live game: when viewing a game detail, check if the game crosswalks to an active `gamePk`.
 - [ ] Fetch from `GET /api/internal/live/{gamePk}`.
@@ -326,6 +329,7 @@ Ref: `docs/designs/data-sources.html`
   - Hitters: AVG, HR, RBI, OPS, SB.
   - Pitchers: ERA, SO, W-L, WHIP, IP.
   - "Live data from MLB" badge.
+  - Render the copyright attribution
 - [ ] On Player Detail load, check if player has an active `mlb_id` via crosswalk.
 - [ ] If active, fetch from `GET /api/internal/player-live/{mlb_id}`.
 - [ ] Render above historical stats tabs.

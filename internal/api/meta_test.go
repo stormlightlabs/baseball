@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"stormlightlabs.org/baseball/internal/core"
+	"stormlightlabs.org/baseball/internal/seed"
 )
 
 func TestMetaEndpoints(t *testing.T) {
@@ -40,6 +41,22 @@ func TestMetaEndpoints(t *testing.T) {
 
 		if resp.SchemaHashes == nil {
 			t.Error("expected schema_hashes to be set")
+		}
+
+		if resp.EraLabels == nil {
+			t.Error("expected era_labels to be set")
+		}
+
+		if got := resp.EraLabels["fed"]; got != "Federal League Era" {
+			t.Errorf("expected fed era label to be %q, got %q", "Federal League Era", got)
+		}
+
+		if got := resp.EraLabels["nlg"]; got != "Negro Leagues Era" {
+			t.Errorf("expected nlg era label to be %q, got %q", "Negro Leagues Era", got)
+		}
+
+		if len(resp.EraLabels) != len(seed.GetAllEras()) {
+			t.Errorf("expected %d era labels, got %d", len(seed.GetAllEras()), len(resp.EraLabels))
 		}
 
 		if resp.Datasets == nil {

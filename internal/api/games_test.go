@@ -35,7 +35,7 @@ func TestGameEndpoints(t *testing.T) {
 	})
 
 	t.Run("GET /v1/games with date filter", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/games?date=2023-04-01", nil)
+		req := httptest.NewRequest(http.MethodGet, "/v1/games?date_from=2023-04-01&date_to=2023-04-01", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -51,7 +51,7 @@ func TestGameEndpoints(t *testing.T) {
 	})
 
 	t.Run("GET /v1/games with team filter", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/games?team_id=NYA", nil)
+		req := httptest.NewRequest(http.MethodGet, "/v1/games?home_team=NYA", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -121,8 +121,9 @@ func TestGameEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/games/date/{date}", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/games/date/2023-09-10", nil)
+	t.Run("GET /v1/seasons/{year}/dates/{date}/games", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/seasons/2023/dates/2023-09-10/games", nil)
+		req.SetPathValue("year", "2023")
 		req.SetPathValue("date", "2023-09-10")
 		w := httptest.NewRecorder()
 
@@ -133,9 +134,9 @@ func TestGameEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/teams/{id}/{year}/games", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/teams/NYA/2023/games", nil)
-		req.SetPathValue("id", "NYA")
+	t.Run("GET /v1/seasons/{year}/teams/{team_id}/games", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/seasons/2023/teams/NYA/games", nil)
+		req.SetPathValue("team_id", "NYA")
 		req.SetPathValue("year", "2023")
 		w := httptest.NewRecorder()
 

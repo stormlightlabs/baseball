@@ -27,6 +27,7 @@ export type MetaResponse = {
   version: string;
   generated_at: string;
   coverage: Record<string, DatasetCoverage>;
+  era_labels?: Record<string, string>;
   schema_hashes: Record<string, string>;
   datasets: DatasetStatus[];
 };

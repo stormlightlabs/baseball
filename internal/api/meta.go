@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
+	"stormlightlabs.org/baseball/internal/seed"
 )
 
 const apiVersion = "1.0.0"
@@ -31,6 +32,7 @@ type metaResponse struct {
 	Version      string                     `json:"version"`
 	GeneratedAt  time.Time                  `json:"generated_at"`
 	Coverage     map[string]datasetCoverage `json:"coverage"`
+	EraLabels    map[string]string          `json:"era_labels"`
 	SchemaHashes map[string]string          `json:"schema_hashes"`
 	Datasets     []core.DatasetStatus       `json:"datasets"`
 }
@@ -43,7 +45,7 @@ type datasetCoverage struct {
 // handleMeta godoc
 //
 //	@Summary		API metadata
-//	@Description	Returns API version, dataset freshness, coverage, and schema fingerprints
+//	@Description	Returns API version, dataset freshness, coverage, era label mappings, and schema fingerprints
 //	@Tags			meta
 //	@Accept			json
 //	@Produce		json
@@ -78,11 +80,21 @@ func (mr *MetaRoutes) handleMeta(w http.ResponseWriter, r *http.Request) {
 			"lahman":     makeCoverage(minLahman, maxLahman),
 			"retrosheet": makeCoverage(minRetro, maxRetro),
 		},
+		EraLabels:    eraLabelsMap(),
 		SchemaHashes: schemaHashes,
 		Datasets:     datasets,
 	}
 
 	writeJSON(w, http.StatusOK, resp)
+}
+
+func eraLabelsMap() map[string]string {
+	eras := seed.GetAllEras()
+	labels := make(map[string]string, len(eras))
+	for _, era := range eras {
+		labels[era.ShortName] = era.Name
+	}
+	return labels
 }
 
 // handleDatasetStatus godoc

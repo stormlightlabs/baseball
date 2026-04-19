@@ -38,7 +38,6 @@ tasks:
       - swag init --dir ./internal/api --generalInfo server.go --output
         ./internal/docs --parseDependency --parseInternal --md ./internal/api
       - task: swagger:fix
-      - task: dash:sync-spec
     sources:
       - "internal/**/*.go"
     generates:

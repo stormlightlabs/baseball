@@ -19,6 +19,7 @@
   } from '$lib/games/normalizers';
   import type { GameBoxscore, GameRecord, GameSummary } from '$lib/games/types';
   import { eraForYear } from '$lib/eras';
+  import { meta } from '$lib/meta.svelte';
   import { AsyncValueResource } from '$lib/players/resources.svelte';
   import { onMount } from 'svelte';
 
@@ -295,7 +296,9 @@
 
     {#if selectedEra.caveat}
       <div class="mt-3">
-        <EraDisclaimer eras={[selectedEra]} message={`${selectedEra.code}: ${selectedEra.caveat}`} />
+        <EraDisclaimer
+          eras={[selectedEra]}
+          message={`${meta.data?.era_labels?.[selectedEra.code] ?? selectedEra.label}: ${selectedEra.caveat}`} />
       </div>
     {/if}
   </div>

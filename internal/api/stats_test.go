@@ -10,8 +10,8 @@ import (
 )
 
 func TestStatsEndpoints(t *testing.T) {
-	t.Run("GET /v1/stats/batting/leaders", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/stats/batting/leaders?stat=hr&year=2023", nil)
+	t.Run("GET /v1/seasons/{year}/leaders/batting", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/seasons/2023/leaders/batting?stat=hr", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -21,8 +21,8 @@ func TestStatsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/stats/batting/leaders with min plate appearances", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/stats/batting/leaders?stat=avg&year=2023&min_pa=100", nil)
+	t.Run("GET /v1/seasons/{year}/leaders/batting with pagination", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/seasons/2023/leaders/batting?stat=avg&per_page=5", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -32,8 +32,8 @@ func TestStatsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/stats/pitching/leaders", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/stats/pitching/leaders?stat=era&year=2023", nil)
+	t.Run("GET /v1/seasons/{year}/leaders/pitching", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/seasons/2023/leaders/pitching?stat=era", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -43,8 +43,8 @@ func TestStatsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/stats/pitching/leaders with min innings", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/stats/pitching/leaders?stat=era&year=2023&min_ip=50", nil)
+	t.Run("GET /v1/seasons/{year}/leaders/pitching with pagination", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/seasons/2023/leaders/pitching?stat=era&per_page=5", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -54,8 +54,8 @@ func TestStatsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/stats/batting/query", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/stats/batting/query?year=2023", nil)
+	t.Run("GET /v1/stats/batting", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/stats/batting?season=2023", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -65,8 +65,8 @@ func TestStatsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/stats/pitching/query", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/stats/pitching/query?year=2023", nil)
+	t.Run("GET /v1/stats/pitching", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/stats/pitching?season=2023", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -76,8 +76,8 @@ func TestStatsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/stats/fielding/query", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/stats/fielding/query?year=2023", nil)
+	t.Run("GET /v1/stats/fielding", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/stats/fielding?season=2023", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -87,8 +87,8 @@ func TestStatsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/stats/batting/career/leaders", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/stats/batting/career/leaders?stat=hr", nil)
+	t.Run("GET /v1/leaders/batting/career", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/leaders/batting/career?stat=hr", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -98,8 +98,8 @@ func TestStatsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/stats/pitching/career/leaders", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/stats/pitching/career/leaders?stat=w", nil)
+	t.Run("GET /v1/leaders/pitching/career", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/leaders/pitching/career?stat=w", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -157,8 +157,8 @@ func TestStatsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/stats/batting/query with league filter", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/stats/batting/query?year=2023&league=AL", nil)
+	t.Run("GET /v1/stats/batting with league filter", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/stats/batting?season=2023&league=AL", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)
@@ -168,8 +168,8 @@ func TestStatsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /v1/stats/batting/query with team filter", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/v1/stats/batting/query?year=2023&team_id=NYA", nil)
+	t.Run("GET /v1/stats/batting with team filter", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/stats/batting?season=2023&team_id=NYA", nil)
 		w := httptest.NewRecorder()
 
 		testServer.ServeHTTP(w, req)

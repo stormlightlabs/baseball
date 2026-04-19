@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Era } from '$lib/eras';
+  import { meta } from '$lib/meta.svelte';
 
   type Props = {
     /** Specific eras that triggered this disclaimer. When empty, shows a generic historical-data warning. */
@@ -10,7 +11,12 @@
   let { eras = [], message }: Props = $props();
 
   const hasCaveats = $derived(eras.some((e) => e.caveat));
-  const eraCodes = $derived(eras.map((e) => e.code).join(', '));
+
+  function eraLabel(era: Era): string {
+    return meta.data?.era_labels?.[era.code] ?? era.label;
+  }
+
+  const eraLabels = $derived(eras.map((e) => eraLabel(e)).join(', '));
 </script>
 
 <div class="flex items-start gap-2.5 rounded-md border border-warning/30 bg-warning/8 px-3 py-2.5">
@@ -20,7 +26,7 @@
       <p class="text-[0.78rem] text-warning/90">{message}</p>
     {:else if eras.length > 0 && hasCaveats}
       <p class="text-[0.78rem] text-warning/90">
-        <span class="font-medium">{eraCodes}:</span> play-event density and data coverage vary for this era. Cross-era comparisons
+        <span class="font-medium">{eraLabels}:</span> play-event density and data coverage vary for this era. Cross-era comparisons
         may not be directly meaningful.
       </p>
     {:else}
@@ -33,7 +39,7 @@
       <ul class="mt-1 space-y-0.5">
         {#each eras.filter((e) => e.caveat) as era (era.code)}
           <li class="font-mono text-[0.65rem] text-warning/70">
-            <span class="font-medium">{era.code}</span>: {era.caveat}
+            <span class="font-medium">{eraLabel(era)}</span>: {era.caveat}
           </li>
         {/each}
       </ul>
