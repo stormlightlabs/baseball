@@ -94,9 +94,9 @@
   </nav>
 </header>
 
-<div class="border-b border-warning/40 bg-warning/10 px-8 py-2 font-mono text-[0.72rem] text-warning">
-  Preview notice: Big Fly is still in active development and is not officially ready for production use. Data coverage,
-  API responses, and endpoint behavior may change without notice.
+<div class="border-b border-white bg-rose-500 px-8 py-2 font-mono text-sm text-white">
+  Preview notice: Big Fly is in early alpha for the next few weeks. Expect bugs, breaking changes, and incomplete
+  features. We appreciate your patience and feedback as we work towards a stable release in the coming weeks!
 </div>
 
 {@render children()}
