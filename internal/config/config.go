@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -109,7 +110,8 @@ func Load(configPath string) (*Config, error) {
 	v.BindEnv("oauth.codeberg.client_secret", "CODEBERG_CLIENT_SECRET")
 
 	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		var notFoundErr viper.ConfigFileNotFoundError
+		if !errors.As(err, &notFoundErr) && !errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("failed to read config file: %w", err)
 		}
 
