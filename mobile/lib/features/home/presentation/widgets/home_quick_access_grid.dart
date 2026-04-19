@@ -16,16 +16,16 @@ class HomeQuickAccessGrid extends StatelessWidget {
       itemCount: links.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 1,
-        mainAxisSpacing: 1,
-        childAspectRatio: 1.85,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.55,
       ),
       itemBuilder: (context, index) {
         final link = links[index];
         return InkWell(
           onTap: () => onTapLink(link),
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               border: Border.all(color: Theme.of(context).dividerColor),
               borderRadius: BorderRadius.circular(12),
@@ -33,12 +33,18 @@ class HomeQuickAccessGrid extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Icon(link.icon, size: 20),
                 const SizedBox(height: 6),
                 Text(link.title, style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 2),
-                Text(link.subtitle, style: Theme.of(context).extension<AppTypography>()?.code),
+                Text(
+                  link.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).extension<AppTypography>()?.code,
+                ),
               ],
             ),
           ),
