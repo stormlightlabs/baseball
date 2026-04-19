@@ -12,6 +12,7 @@ void main() {
         playerRepository: FakePlayerRepository(),
         teamRepository: FakeTeamRepository(),
         gameRepository: FakeGameRepository(),
+        moreRepository: FakeMoreRepository(),
         useDynamicColor: false,
       ),
     );
@@ -38,6 +39,7 @@ void main() {
         playerRepository: FakePlayerRepository(),
         teamRepository: FakeTeamRepository(),
         gameRepository: FakeGameRepository(detailError: Exception('detail failed')),
+        moreRepository: FakeMoreRepository(),
         useDynamicColor: false,
       ),
     );

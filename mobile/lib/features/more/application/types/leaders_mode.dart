@@ -1,0 +1,1 @@
+enum LeadersMode { batting, pitching }

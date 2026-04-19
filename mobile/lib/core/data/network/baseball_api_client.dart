@@ -7,6 +7,8 @@ class BaseballApiClient {
 
   Future<Map<String, dynamic>> getMeta() => _getMap('/api/v1/meta');
 
+  Future<List<dynamic>> getMetaDatasets() => _getList('/api/v1/meta/datasets');
+
   Future<Map<String, dynamic>> searchPlayers({required String query, int page = 1, int perPage = 12}) =>
       _getMap('/api/v1/search/players', query: <String, dynamic>{'q': query, 'page': page, 'per_page': perPage});
 
@@ -23,6 +25,61 @@ class BaseballApiClient {
 
   Future<List<dynamic>> getSeasons() => _getList('/api/v1/seasons');
 
+  Future<Map<String, dynamic>> getSeasonBattingLeaders({
+    required int year,
+    required String stat,
+    String? league,
+    int page = 1,
+    int perPage = 10,
+  }) => _getMap(
+    '/api/v1/seasons/$year/leaders/batting',
+    query: <String, dynamic>{
+      'stat': stat,
+      if (league != null && league.isNotEmpty) 'league': league,
+      'page': page,
+      'per_page': perPage,
+    },
+  );
+
+  Future<Map<String, dynamic>> getSeasonPitchingLeaders({
+    required int year,
+    required String stat,
+    String? league,
+    int page = 1,
+    int perPage = 10,
+  }) => _getMap(
+    '/api/v1/seasons/$year/leaders/pitching',
+    query: <String, dynamic>{
+      'stat': stat,
+      if (league != null && league.isNotEmpty) 'league': league,
+      'page': page,
+      'per_page': perPage,
+    },
+  );
+
+  Future<Map<String, dynamic>> getCareerBattingLeaders({required String stat, int page = 1, int perPage = 10}) =>
+      _getMap(
+        '/api/v1/leaders/batting/career',
+        query: <String, dynamic>{'stat': stat, 'page': page, 'per_page': perPage},
+      );
+
+  Future<Map<String, dynamic>> getCareerPitchingLeaders({required String stat, int page = 1, int perPage = 10}) =>
+      _getMap(
+        '/api/v1/leaders/pitching/career',
+        query: <String, dynamic>{'stat': stat, 'page': page, 'per_page': perPage},
+      );
+
+  Future<Map<String, dynamic>> getSeasonAwards({required int year, int page = 1, int perPage = 20}) =>
+      _getMap('/api/v1/seasons/$year/awards', query: <String, dynamic>{'page': page, 'per_page': perPage});
+
+  Future<Map<String, dynamic>> getSeasonPostseasonSeries({required int year}) =>
+      _getMap('/api/v1/seasons/$year/postseason/series');
+
+  Future<Map<String, dynamic>> getTeamBattingStats({required int season, int page = 1, int perPage = 60}) => _getMap(
+    '/api/v1/stats/teams/batting',
+    query: <String, dynamic>{'season': season, 'page': page, 'per_page': perPage},
+  );
+
   Future<Map<String, dynamic>> getPlayer(String id) => _getMap('/api/v1/players/$id');
 
   Future<Map<String, dynamic>> getPlayerSeasons(String id) => _getMap('/api/v1/players/$id/seasons');
@@ -31,6 +88,10 @@ class BaseballApiClient {
       _getMap('/api/v1/players/$id/awards', query: <String, dynamic>{'page': page, 'per_page': perPage});
 
   Future<Map<String, dynamic>> getPlayerHallOfFame(String id) => _getMap('/api/v1/players/$id/hall-of-fame');
+
+  Future<Map<String, dynamic>> getPlayerBattingStats(String id) => _getMap('/api/v1/players/$id/stats/batting');
+
+  Future<Map<String, dynamic>> getPlayerPitchingStats(String id) => _getMap('/api/v1/players/$id/stats/pitching');
 
   Future<Map<String, dynamic>> getTeamSeason(String teamId, {required int year}) =>
       _getMap('/api/v1/teams/$teamId', query: <String, dynamic>{'year': year});

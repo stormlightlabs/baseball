@@ -1,8 +1,8 @@
 import 'package:bigfly_mobile/app/navigation/navigation_state.dart';
 import 'package:bigfly_mobile/features/games/presentation/tabs/games_tab.dart';
 import 'package:bigfly_mobile/features/home/presentation/tabs/home_tab.dart';
+import 'package:bigfly_mobile/features/more/presentation/tabs/more_tab.dart';
 import 'package:bigfly_mobile/features/players/presentation/tabs/players_tab.dart';
-import 'package:bigfly_mobile/features/shared/placeholder_tab.dart';
 import 'package:bigfly_mobile/features/teams/presentation/tabs/teams_tab.dart';
 import 'package:flutter/material.dart';
 
@@ -23,5 +23,5 @@ final Map<AppTab, Widget> appTabViews = <AppTab, Widget>{
   AppTab.players: const PlayersTab(),
   AppTab.teams: const TeamsTab(),
   AppTab.games: const GamesTab(),
-  AppTab.more: const PlaceholderTab(title: 'More', description: 'More baseball tools and extras.'),
+  AppTab.more: const MoreTab(),
 };

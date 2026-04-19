@@ -1,0 +1,1 @@
+enum LeadersScope { season, career }

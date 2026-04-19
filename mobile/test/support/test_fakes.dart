@@ -4,6 +4,19 @@ import 'package:bigfly_mobile/features/games/data/repositories/game_repository.d
 import 'package:bigfly_mobile/features/home/application/home_types.dart';
 import 'package:bigfly_mobile/features/home/data/models/meta_models.dart';
 import 'package:bigfly_mobile/features/home/data/repositories/home_repository.dart';
+import 'package:bigfly_mobile/features/more/application/types/leaders_mode.dart';
+import 'package:bigfly_mobile/features/more/application/types/leaders_scope.dart';
+import 'package:bigfly_mobile/features/more/data/models/compare_batting_career.dart';
+import 'package:bigfly_mobile/features/more/data/models/compare_pitching_career.dart';
+import 'package:bigfly_mobile/features/more/data/models/compare_player_snapshot.dart';
+import 'package:bigfly_mobile/features/more/data/models/data_sources_snapshot.dart';
+import 'package:bigfly_mobile/features/more/data/models/leaderboard_entry.dart';
+import 'package:bigfly_mobile/features/more/data/models/leaders_snapshot.dart';
+import 'package:bigfly_mobile/features/more/data/models/postseason_series_record.dart';
+import 'package:bigfly_mobile/features/more/data/models/season_award_item.dart';
+import 'package:bigfly_mobile/features/more/data/models/season_snapshot.dart';
+import 'package:bigfly_mobile/features/more/data/models/season_summary_record.dart';
+import 'package:bigfly_mobile/features/more/data/repositories/more_repository.dart';
 import 'package:bigfly_mobile/features/players/data/models/player_models.dart';
 import 'package:bigfly_mobile/features/players/data/repositories/player_repository.dart';
 import 'package:bigfly_mobile/features/teams/data/models/team_models.dart';
@@ -274,6 +287,104 @@ class FakeGameRepository implements GameRepository {
   }
 }
 
+class FakeMoreRepository implements MoreRepository {
+  FakeMoreRepository({
+    List<SeasonSummaryRecord>? seasons,
+    SeasonSnapshot? seasonSnapshot,
+    LeadersSnapshot? leadersSnapshot,
+    ComparePlayerSnapshot? playerA,
+    ComparePlayerSnapshot? playerB,
+    DataSourcesSnapshot? dataSourcesSnapshot,
+    this.seasonsError,
+    this.seasonError,
+    this.leadersError,
+    this.compareError,
+    this.dataSourcesError,
+  }) : seasons = seasons ?? defaultSeasonSummaries,
+       seasonSnapshot = seasonSnapshot ?? defaultSeasonSnapshot,
+       leadersSnapshot = leadersSnapshot ?? defaultLeadersSnapshot,
+       playerA = playerA ?? defaultComparePlayerA,
+       playerB = playerB ?? defaultComparePlayerB,
+       dataSourcesSnapshot = dataSourcesSnapshot ?? defaultDataSourcesSnapshot;
+
+  final List<SeasonSummaryRecord> seasons;
+  final SeasonSnapshot seasonSnapshot;
+  final LeadersSnapshot leadersSnapshot;
+  final ComparePlayerSnapshot playerA;
+  final ComparePlayerSnapshot playerB;
+  final DataSourcesSnapshot dataSourcesSnapshot;
+  final Object? seasonsError;
+  final Object? seasonError;
+  final Object? leadersError;
+  final Object? compareError;
+  final Object? dataSourcesError;
+
+  @override
+  Future<SeasonSnapshot> fetchSeasonSnapshot({required int year, required String leagueFilter}) async {
+    if (seasonError != null) {
+      throw seasonError!;
+    }
+    return seasonSnapshot;
+  }
+
+  @override
+  Future<List<SeasonSummaryRecord>> listSeasons() async {
+    if (seasonsError != null) {
+      throw seasonsError!;
+    }
+    return seasons;
+  }
+
+  @override
+  Future<LeadersSnapshot> fetchLeaders({
+    required LeadersMode mode,
+    required LeadersScope scope,
+    required int season,
+    required String stat,
+    String? league,
+    int page = 1,
+    int perPage = 15,
+  }) async {
+    if (leadersError != null) {
+      throw leadersError!;
+    }
+    return leadersSnapshot;
+  }
+
+  @override
+  Future<List<PlayerSearchResult>> searchPlayers(String query, {int limit = 8}) async {
+    if (compareError != null) {
+      throw compareError!;
+    }
+    return const <PlayerSearchResult>[
+      PlayerSearchResult(id: 'mayswi01', name: 'Willie Mays', subtitle: 'mayswi01 · OF · 1951–1973'),
+      PlayerSearchResult(id: 'ruthba01', name: 'Babe Ruth', subtitle: 'ruthba01 · OF · 1914–1935'),
+    ];
+  }
+
+  @override
+  Future<ComparePlayerSnapshot> fetchComparePlayer(String playerId) async {
+    if (compareError != null) {
+      throw compareError!;
+    }
+    if (playerId == playerA.profile.id) {
+      return playerA;
+    }
+    if (playerId == playerB.profile.id) {
+      return playerB;
+    }
+    return playerA;
+  }
+
+  @override
+  Future<DataSourcesSnapshot> fetchDataSources() async {
+    if (dataSourcesError != null) {
+      throw dataSourcesError!;
+    }
+    return dataSourcesSnapshot;
+  }
+}
+
 final MetaSnapshot defaultMetaSnapshot = MetaSnapshot(
   version: '1.0.0',
   generatedAt: DateTime.parse('2026-04-18T00:00:00Z'),
@@ -489,4 +600,136 @@ const GameCardDetail defaultGameDetail = GameCardDetail(
       runs: 2,
     ),
   ],
+);
+
+const List<SeasonSummaryRecord> defaultSeasonSummaries = <SeasonSummaryRecord>[
+  SeasonSummaryRecord(year: 2025, leagues: <String>['AL', 'NL'], teamCount: 30),
+  SeasonSummaryRecord(year: 2024, leagues: <String>['AL', 'NL'], teamCount: 30),
+];
+
+const LeadersSnapshot defaultLeadersSnapshot = LeadersSnapshot(
+  stat: 'hr',
+  page: 1,
+  perPage: 15,
+  total: 3,
+  entries: <LeaderboardEntry>[
+    LeaderboardEntry(
+      playerId: 'judgear01',
+      playerName: 'Aaron Judge',
+      teamId: 'NYA',
+      league: 'AL',
+      year: 2024,
+      rawValue: 58,
+      displayValue: '58',
+    ),
+    LeaderboardEntry(
+      playerId: 'ohtansh01',
+      playerName: 'Shohei Ohtani',
+      teamId: 'LAN',
+      league: 'NL',
+      year: 2024,
+      rawValue: 54,
+      displayValue: '54',
+    ),
+    LeaderboardEntry(
+      playerId: 'olsonma02',
+      playerName: 'Matt Olson',
+      teamId: 'ATL',
+      league: 'NL',
+      year: 2024,
+      rawValue: 49,
+      displayValue: '49',
+    ),
+  ],
+);
+
+const SeasonSnapshot defaultSeasonSnapshot = SeasonSnapshot(
+  year: 2024,
+  teams: <TeamSeasonRecord>[defaultTeamSeason],
+  totalHomeRuns: 5450,
+  leagueAverage: 0.244,
+  avgGamesPerTeam: 162,
+  hrLeaders: <LeaderboardEntry>[
+    LeaderboardEntry(
+      playerId: 'judgear01',
+      playerName: 'Aaron Judge',
+      teamId: 'NYA',
+      league: 'AL',
+      year: 2024,
+      rawValue: 58,
+      displayValue: '58',
+    ),
+  ],
+  avgLeaders: <LeaderboardEntry>[
+    LeaderboardEntry(
+      playerId: 'arrealu01',
+      playerName: 'Luis Arraez',
+      teamId: 'MIA',
+      league: 'NL',
+      year: 2024,
+      rawValue: 0.331,
+      displayValue: '.331',
+    ),
+  ],
+  awards: <SeasonAwardItem>[SeasonAwardItem(awardId: 'MVP', playerId: 'judgear01', year: 2024, league: 'AL')],
+  postseasonSeries: <PostseasonSeriesRecord>[
+    PostseasonSeriesRecord(round: 'WS', winnerTeam: 'LAN', loserTeam: 'NYA', wins: 4, losses: 2, ties: 0),
+  ],
+);
+
+const ComparePlayerSnapshot defaultComparePlayerA = ComparePlayerSnapshot(
+  profile: PlayerProfile(
+    id: 'mayswi01',
+    firstName: 'Willie',
+    lastName: 'Mays',
+    birthYear: 1931,
+    birthMonth: null,
+    birthDay: null,
+    birthCity: null,
+    birthState: null,
+    bats: 'R',
+    throwsHand: 'R',
+    debut: null,
+    finalGame: null,
+    latestSeason: 1973,
+    latestTeam: 'SFN',
+    positions: 'OF',
+  ),
+  battingCareer: CompareBattingCareer(hr: 660, avg: 0.302, ops: 0.941, rbi: 1903, sb: 338, hits: 3283, ab: 10881),
+  pitchingCareer: ComparePitchingCareer(wins: 0, losses: 0, era: 0, strikeouts: 0, whip: 0, kPer9: 0, ipOuts: 0),
+);
+
+const ComparePlayerSnapshot defaultComparePlayerB = ComparePlayerSnapshot(
+  profile: PlayerProfile(
+    id: 'ruthba01',
+    firstName: 'Babe',
+    lastName: 'Ruth',
+    birthYear: 1895,
+    birthMonth: null,
+    birthDay: null,
+    birthCity: null,
+    birthState: null,
+    bats: 'L',
+    throwsHand: 'L',
+    debut: null,
+    finalGame: null,
+    latestSeason: 1935,
+    latestTeam: 'BOS',
+    positions: 'OF,P',
+  ),
+  battingCareer: CompareBattingCareer(hr: 714, avg: 0.342, ops: 1.164, rbi: 2213, sb: 123, hits: 2873, ab: 8399),
+  pitchingCareer: ComparePitchingCareer(
+    wins: 94,
+    losses: 46,
+    era: 2.28,
+    strikeouts: 488,
+    whip: 1.16,
+    kPer9: 3.46,
+    ipOuts: 3661,
+  ),
+);
+
+final DataSourcesSnapshot defaultDataSourcesSnapshot = DataSourcesSnapshot(
+  meta: defaultMetaSnapshot,
+  datasets: defaultMetaSnapshot.datasets,
 );
