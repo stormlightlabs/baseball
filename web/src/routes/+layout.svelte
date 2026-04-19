@@ -62,7 +62,8 @@
     {badge}
   </span>
   {#if meta.data}
-    <span class="font-mono text-[0.65rem] text-muted opacity-60">v{meta.version}</span>
+    <!-- <span class="font-mono text-[0.65rem] text-muted opacity-60">v{meta.version}</span> -->
+    <span class="font-mono text-[0.65rem] text-muted opacity-60">ALPHA</span>
   {/if}
   <nav class="ml-auto flex items-center gap-1">
     {#each LINKS as { href, label } (href)}
@@ -92,5 +93,10 @@
     </a>
   </nav>
 </header>
+
+<div class="border-b border-warning/40 bg-warning/10 px-8 py-2 font-mono text-[0.72rem] text-warning">
+  Preview notice: Big Fly is still in active development and is not officially ready for production use. Data coverage,
+  API responses, and endpoint behavior may change without notice.
+</div>
 
 {@render children()}

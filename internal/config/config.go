@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
@@ -172,6 +173,10 @@ func Load(configPath string) (*Config, error) {
 		},
 	}
 
+	if shouldPreferContainerServiceNetworking() {
+		cfg.Redis.URL = normalizeRedisURLForContainer(cfg.Redis.URL)
+	}
+
 	globalConfig = cfg
 	return cfg, nil
 }
@@ -199,6 +204,33 @@ func normalizedStringList(values []string, raw string) []string {
 		}
 	}
 	return result
+}
+
+func shouldPreferContainerServiceNetworking() bool {
+	// Coolify/runtime deployments usually provide at least one of these.
+	return strings.TrimSpace(os.Getenv("COOLIFY_RESOURCE_UUID")) != "" ||
+		strings.TrimSpace(os.Getenv("POSTGRES_DB")) != "" ||
+		strings.TrimSpace(os.Getenv("POSTGRES_PASSWORD")) != ""
+}
+
+func normalizeRedisURLForContainer(redisURL string) string {
+	trimmed := strings.TrimSpace(redisURL)
+	if trimmed == "" {
+		return "redis://redis:6379/0"
+	}
+
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return trimmed
+	}
+
+	host := strings.ToLower(strings.TrimSpace(parsed.Hostname()))
+	switch host {
+	case "localhost", "127.0.0.1", "::1":
+		return "redis://redis:6379/0"
+	default:
+		return trimmed
+	}
 }
 
 // Get returns the global configuration

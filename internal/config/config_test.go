@@ -41,3 +41,32 @@ func TestLoad_MissingExplicitConfigPathFallsBackToDefaults(t *testing.T) {
 	}
 }
 
+func TestLoad_ContainerModeRewritesLocalhostRedisURL(t *testing.T) {
+	t.Setenv("POSTGRES_DB", "baseball")
+	t.Setenv("REDIS_URL", "redis://localhost:6379/0")
+
+	missingPath := filepath.Join(t.TempDir(), "conf.toml")
+	cfg, err := Load(missingPath)
+	if err != nil {
+		t.Fatalf("Load returned error: %v", err)
+	}
+
+	if cfg.Redis.URL != "redis://redis:6379/0" {
+		t.Fatalf("expected localhost redis URL to be rewritten, got %q", cfg.Redis.URL)
+	}
+}
+
+func TestLoad_ContainerModeKeepsNonLocalRedisURL(t *testing.T) {
+	t.Setenv("POSTGRES_DB", "baseball")
+	t.Setenv("REDIS_URL", "redis://cache.example.internal:6379/1")
+
+	missingPath := filepath.Join(t.TempDir(), "conf.toml")
+	cfg, err := Load(missingPath)
+	if err != nil {
+		t.Fatalf("Load returned error: %v", err)
+	}
+
+	if cfg.Redis.URL != "redis://cache.example.internal:6379/1" {
+		t.Fatalf("expected external redis URL to be kept, got %q", cfg.Redis.URL)
+	}
+}
