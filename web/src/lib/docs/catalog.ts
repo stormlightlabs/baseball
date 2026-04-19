@@ -153,11 +153,18 @@ builtDocs.sort((a, b) => {
 export const DOCS = builtDocs;
 export const DOC_SLUGS = DOCS.map((doc) => doc.slug);
 export const DOCS_BY_SLUG: Record<string, DocEntry> = Object.fromEntries(DOCS.map((doc) => [doc.slug, doc]));
-export const FIRST_DOC_SLUG = DOCS_BY_SLUG.introduction
-  ? 'introduction'
-  : (DOCS_BY_SLUG['api-players']
-    ? 'api-players'
-    : (DOCS[0]?.slug ?? 'api-players'));
+export const FIRST_DOC_SLUG = (function () {
+  if (DOCS_BY_SLUG.introduction) {
+    return 'introduction';
+  } else if (DOCS_BY_SLUG['api-players']) {
+    return 'api-players';
+  } else if (DOCS.length > 0) {
+    return DOCS[0].slug;
+  } else {
+    return 'api-players';
+  }
+})();
+
 export const DOC_GROUPS: Array<{ group: DocGroup; docs: DocEntry[] }> = GROUP_ORDER.map((group) => ({
   group,
   docs: DOCS.filter((doc) => doc.group === group)

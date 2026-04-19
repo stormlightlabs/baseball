@@ -5,8 +5,8 @@
   import { apiFetch } from '$lib/api';
   import { BATTING_STATS } from '$lib/common/constants';
   import Chart from '$lib/components/Chart.svelte';
-  import EraBadge from '$lib/components/EraBadge.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
+  import SortableTable from '$lib/components/SortableTable.svelte';
   import { EP } from '$lib/endpoints';
   import { eraForYear } from '$lib/eras';
   import { createBattingChartConfig } from '$lib/players/charts';
@@ -25,7 +25,50 @@
   const battingResource = new AsyncPaginatedListResource<BattingSeason>();
   let lastKey = '';
 
-  let battingRows = $derived(battingResource.items.map((s) => ({ ...s, team: s.team ?? s.team_id ?? '?' })));
+  let battingRows = $derived(
+    battingResource.items.map((season) => {
+      const teamId = season.team_id?.trim() ?? '';
+      const teamName = season.team_name?.trim() ?? '';
+      const team = season.team?.trim() ?? '';
+      const teamDisplay = team || teamId || '?';
+      const era = eraForYear(season.year);
+
+      return {
+        ...season,
+        team: teamDisplay,
+        team_display: teamDisplay,
+        team_lookup: teamId || teamDisplay,
+        team_tooltip: teamName || teamDisplay,
+        era_label: era?.label ?? '—'
+      };
+    })
+  );
+
+  const battingColumns = [
+    { key: 'year', label: 'Year', sortable: true, href: (value: unknown) => `/seasons?year=${value}` },
+    {
+      key: 'team_display',
+      label: 'Team',
+      sortable: true,
+      href: (_value: unknown, row: Record<string, unknown>) => {
+        const lookup = String(row.team_lookup ?? '').trim();
+        if (!lookup) return;
+        return `/teams?${new URLSearchParams({ q: lookup }).toString()}`;
+      },
+      tooltip: (_value: unknown, row: Record<string, unknown>) => String(row.team_tooltip ?? '')
+    },
+    { key: 'era_label', label: 'Era', sortable: true },
+    { key: 'g', label: 'G', sortable: true },
+    { key: 'ab', label: 'AB', sortable: true },
+    { key: 'h', label: 'H', sortable: true },
+    { key: 'hr', label: 'HR', sortable: true },
+    { key: 'rbi', label: 'RBI', sortable: true },
+    { key: 'avg', label: 'AVG', sortable: true, format: (value: unknown) => fmtAvg(value as number | undefined) },
+    { key: 'sb', label: 'SB', sortable: true, format: (value: unknown) => fmtNum(value as number | undefined) },
+    { key: 'obp', label: 'OBP', sortable: true, format: (value: unknown) => fmtAvg(value as number | undefined) },
+    { key: 'slg', label: 'SLG', sortable: true, format: (value: unknown) => fmtAvg(value as number | undefined) }
+  ];
+
   let battingChartConfig = $derived(createBattingChartConfig(battingRows, batStat));
 
   const fmtAvg = (v: number | undefined) => (v != null ? Number(v).toFixed(3) : '—');
@@ -86,45 +129,7 @@
 
   <div class="rounded-lg border border-outline bg-crust p-4">
     <div class="panel-label mb-3">Season log</div>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-[0.75rem]">
-        <thead>
-          <tr>
-            {#each ['Year', 'Team', 'Era', 'G', 'AB', 'H', 'HR', 'RBI', 'AVG', 'SB', 'OBP', 'SLG'] as col (col)}
-              <th
-                class="border-b border-outline px-2 py-1.5 text-left font-sans text-xs font-medium whitespace-nowrap text-muted">
-                {col}
-              </th>
-            {/each}
-          </tr>
-        </thead>
-        <tbody>
-          {#each battingRows as row (`${row.year}-${row.team}`)}
-            {@const era = eraForYear(row.year)}
-            <tr class="border-b border-outline last:border-b-0 hover:[&>td]:bg-surface">
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">
-                <a href={resolve(`/seasons?year=${row.year}`)} class="text-primary hover:underline">
-                  {row.year}
-                </a>
-              </td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.team}</td>
-              <td class="px-2 py-1.5">
-                {#if era}<EraBadge {era} size="xs" />{:else}<span class="text-muted">—</span>{/if}
-              </td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.g}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.ab}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.h}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.hr}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.rbi}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtAvg(row.avg)}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtNum(row.sb)}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtAvg(row.obp)}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtAvg(row.slg)}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <SortableTable columns={battingColumns} rows={battingRows} />
 
     {#if battingResource.total > perPage}
       <div class="mt-4">

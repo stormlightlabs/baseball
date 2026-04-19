@@ -1,7 +1,18 @@
 <script lang="ts">
-  type Column = { label: string; key: string; sortable?: boolean; format?: (value: unknown) => string; rank?: boolean };
+  import { resolve } from '$app/paths';
+  import Tooltip from './Tooltip.svelte';
 
   type Row = Record<string, unknown>;
+
+  type Column = {
+    label: string;
+    key: string;
+    sortable?: boolean;
+    format?: (value: unknown) => string;
+    rank?: boolean;
+    href?: (value: unknown, row: Row) => string | undefined;
+    tooltip?: (value: unknown, row: Row) => string | undefined;
+  };
 
   let {
     columns,
@@ -21,8 +32,9 @@
   let sorted = $derived(
     sort.key
       ? [...rows].toSorted((a, b) => {
-          const av = a[sort.key];
-          const bv = b[sort.key];
+          const activeCol = columns.find((col) => col.key === sort.key);
+          const av = activeCol ? a[activeCol.key] : a[sort.key];
+          const bv = activeCol ? b[activeCol.key] : b[sort.key];
           let cmp = 0;
           if (av == null && bv == null) cmp = 0;
           else if (av == null) cmp = -1;
@@ -41,6 +53,16 @@
   function display(col: Column, row: Row): string {
     const val = row[col.key];
     return col.format ? col.format(val) : String(val ?? '');
+  }
+
+  function cellHref(col: Column, row: Row): string | undefined {
+    const value = row[col.key];
+    return col.href?.(value, row);
+  }
+
+  function cellTooltip(col: Column, row: Row): string | undefined {
+    const value = row[col.key];
+    return col.tooltip?.(value, row);
   }
 </script>
 
@@ -81,7 +103,21 @@
                   <span>{display(col, row)}</span>
                 </div>
               {:else}
-                {display(col, row)}
+                {@const href = cellHref(col, row)}
+                {@const tooltip = cellTooltip(col, row)}
+                {#if href && tooltip}
+                  <Tooltip text={tooltip}>
+                    <a href={resolve(href as '/')} class="text-primary hover:underline">{display(col, row)}</a>
+                  </Tooltip>
+                {:else if href}
+                  <a href={resolve(href as '/')} class="text-primary hover:underline">{display(col, row)}</a>
+                {:else if tooltip}
+                  <Tooltip text={tooltip}>
+                    <span class="cursor-help">{display(col, row)}</span>
+                  </Tooltip>
+                {:else}
+                  {display(col, row)}
+                {/if}
               {/if}
             </td>
           {/each}

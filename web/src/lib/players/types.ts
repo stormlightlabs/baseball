@@ -58,6 +58,7 @@ export type BattingSeason = {
   year: number;
   team?: string;
   team_id?: string;
+  team_name?: string;
   g: number;
   ab: number;
   h: number;
@@ -74,6 +75,7 @@ export type PitchingSeason = {
   year: number;
   team?: string;
   team_id?: string;
+  team_name?: string;
   g: number;
   gs?: number;
   w: number;

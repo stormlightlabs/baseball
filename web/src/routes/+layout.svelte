@@ -3,6 +3,7 @@
   import { page } from '$app/state';
   import favicon from '$lib/assets/favicon.svg';
   import AppFooter from '$lib/components/AppFooter.svelte';
+  import DataNavigationMenu from '$lib/components/DataNavigationMenu.svelte';
   import { meta } from '$lib/meta.svelte.js';
   import '@fontsource-variable/google-sans';
   import '@fontsource-variable/google-sans-code';
@@ -14,21 +15,32 @@
 
   onMount(() => meta.init());
 
-  type AppPath = (typeof LINKS)[number]['href'] | '/account';
-
-  const LINKS = [
+  const MAIN_LINKS = [
     { href: '/', label: 'Home' },
+    { href: '/compare', label: 'Compare' },
+    { href: '/docs', label: 'About' }
+  ] as const;
+
+  const DATA_LINKS = [
     { href: '/players', label: 'Players' },
     { href: '/teams', label: 'Teams' },
     { href: '/games', label: 'Games' },
     { href: '/seasons', label: 'Seasons' },
     { href: '/leaders', label: 'Leaders' },
-    { href: '/compare', label: 'Compare' },
-    { href: '/data', label: 'Data' },
-    { href: '/docs', label: 'About' }
-  ] as const;
+    { href: '/data', label: 'Sources' }
+  ] as const satisfies Array<{ href: string; label: string }>;
+
+  const DATA_MENU_ITEMS = [
+    { href: '/players', label: 'Players', description: 'Player search, profiles, splits, streaks, and season logs.' },
+    { href: '/teams', label: 'Teams', description: 'Team/franchise lookup, rosters, schedules, and run differential.' },
+    { href: '/games', label: 'Games', description: 'Game explorer with events, plays, pitches, and win probability.' },
+    { href: '/seasons', label: 'Seasons', description: 'Season schedules, awards, postseason, and park factors.' },
+    { href: '/leaders', label: 'Leaders', description: 'Batting, pitching, and advanced leaderboard endpoints.' },
+    { href: '/data', label: 'Sources', description: 'Dataset provenance, ingestion notes, and source metadata.' }
+  ];
 
   const API_DOCS_ROUTE = '/explorer' as const;
+  type AppPath = (typeof MAIN_LINKS)[number]['href'] | (typeof DATA_LINKS)[number]['href'] | '/account';
 
   const BADGES: Record<AppPath, string> = {
     '/': 'home',
@@ -38,17 +50,27 @@
     '/seasons': 'seasons',
     '/leaders': 'leaders',
     '/compare': 'compare',
-    '/data': 'data sources',
+    '/data': 'sources',
     '/docs': 'about',
     '/account': 'account'
   };
 
-  let pathname = $derived(page.url.pathname as AppPath);
-  let badge = $derived(BADGES[pathname] ?? 'dashboard');
+  let pathname = $derived(page.url.pathname);
+  let badge = $derived.by(() => {
+    if (pathname.startsWith('/account')) return BADGES['/account'];
+    const match =
+      MAIN_LINKS.find((link) => isActivePath(link.href)) ?? DATA_LINKS.find((link) => isActivePath(link.href));
+    if (!match) return 'dashboard';
+    return BADGES[match.href];
+  });
+
+  function isActivePath(href: string): boolean {
+    if (href === '/') return pathname === '/';
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
 
   function isActive(href: string): boolean {
-    if (href === '/') return pathname === '/';
-    return pathname.startsWith(href);
+    return isActivePath(href);
   }
 </script>
 
@@ -67,7 +89,7 @@
       <span class="font-mono text-[0.65rem] text-muted opacity-60">v{meta.version}</span>
     {/if}
     <nav class="ml-auto flex items-center gap-1">
-      {#each LINKS as { href, label } (href)}
+      {#each MAIN_LINKS as { href, label } (href)}
         <a
           href={resolve(href)}
           class="rounded px-2.5 py-1 text-[0.8rem] no-underline transition-colors duration-150 {isActive(href)
@@ -76,6 +98,9 @@
           {label}
         </a>
       {/each}
+
+      <DataNavigationMenu label="Dashboard" items={DATA_MENU_ITEMS} {pathname} />
+
       <div class="border-l border-outline px-2">
         <a
           href={resolve(API_DOCS_ROUTE)}

@@ -4,7 +4,7 @@
   let { tabs, active }: { tabs: Array<{ id: string; label: string; href: string }>; active: string } = $props();
 </script>
 
-<div class="mb-4 flex gap-1" role="tablist" aria-label="Player sections">
+<div class="mb-4 flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Player sections">
   {#each tabs as tab (`${tab.id}:${tab.label}`)}
     <a
       role="tab"
@@ -13,7 +13,7 @@
       class="rounded border px-3 py-1.25 font-display text-[0.78rem] no-underline transition-all duration-150 {active ===
       tab.id
         ? 'border-outline bg-surface text-foreground'
-        : 'border-transparent text-muted hover:text-foreground'}">
+        : 'border-transparent text-muted hover:text-foreground'} whitespace-nowrap">
       {tab.label}
     </a>
   {/each}

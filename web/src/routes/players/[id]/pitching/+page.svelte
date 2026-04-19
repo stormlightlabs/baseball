@@ -4,8 +4,8 @@
   import { page } from '$app/state';
   import { apiFetch } from '$lib/api';
   import Chart from '$lib/components/Chart.svelte';
-  import EraBadge from '$lib/components/EraBadge.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
+  import SortableTable from '$lib/components/SortableTable.svelte';
   import { EP } from '$lib/endpoints';
   import { eraForYear } from '$lib/eras';
   import { createPitchingChartConfig } from '$lib/players/charts';
@@ -23,7 +23,61 @@
   const pitchingResource = new AsyncPaginatedListResource<PitchingSeason>();
   let lastKey = '';
 
-  let pitchingRows = $derived(pitchingResource.items.map((s) => ({ ...s, team: s.team ?? s.team_id ?? '?' })));
+  let pitchingRows = $derived(
+    pitchingResource.items.map((season) => {
+      const teamId = season.team_id?.trim() ?? '';
+      const teamName = season.team_name?.trim() ?? '';
+      const team = season.team?.trim() ?? '';
+      const teamDisplay = team || teamId || '?';
+      const era = eraForYear(season.year);
+
+      return {
+        ...season,
+        team: teamDisplay,
+        team_display: teamDisplay,
+        team_lookup: teamId || teamDisplay,
+        team_tooltip: teamName || teamDisplay,
+        era_label: era?.label ?? '—'
+      };
+    })
+  );
+
+  const pitchingColumns = [
+    { key: 'year', label: 'Year', sortable: true, href: (value: unknown) => `/seasons?year=${value}` },
+    {
+      key: 'team_display',
+      label: 'Team',
+      sortable: true,
+      href: (_value: unknown, row: Record<string, unknown>) => {
+        const lookup = String(row.team_lookup ?? '').trim();
+        if (!lookup) return;
+        return `/teams?${new URLSearchParams({ q: lookup }).toString()}`;
+      },
+      tooltip: (_value: unknown, row: Record<string, unknown>) => String(row.team_tooltip ?? '')
+    },
+    { key: 'era_label', label: 'Era', sortable: true },
+    { key: 'g', label: 'G', sortable: true },
+    { key: 'gs', label: 'GS', sortable: true, format: (value: unknown) => fmtNum(value as number | undefined) },
+    { key: 'w', label: 'W', sortable: true },
+    { key: 'l', label: 'L', sortable: true },
+    { key: 'sv', label: 'SV', sortable: true, format: (value: unknown) => fmtNum(value as number | undefined) },
+    { key: 'ip', label: 'IP', sortable: true },
+    { key: 'so', label: 'SO', sortable: true, format: (value: unknown) => fmtNum(value as number | undefined) },
+    { key: 'bb', label: 'BB', sortable: true, format: (value: unknown) => fmtNum(value as number | undefined) },
+    {
+      key: 'era',
+      label: 'ERA',
+      sortable: true,
+      format: (value: unknown) => (value == null ? '—' : Number(value).toFixed(2))
+    },
+    {
+      key: 'whip',
+      label: 'WHIP',
+      sortable: true,
+      format: (value: unknown) => (value == null ? '—' : Number(value).toFixed(2))
+    }
+  ];
+
   let pitchingChartConfig = $derived(createPitchingChartConfig(pitchingRows));
 
   const fmtNum = (v: number | undefined) => (v != null ? String(v) : '—');
@@ -73,48 +127,7 @@
 
   <div class="rounded-lg border border-outline bg-crust p-4">
     <div class="panel-label mb-3">Season log</div>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-[0.75rem]">
-        <thead>
-          <tr>
-            {#each ['Year', 'Team', 'Era', 'G', 'GS', 'W', 'L', 'SV', 'IP', 'SO', 'BB', 'ERA', 'WHIP'] as col (col)}
-              <th
-                class="border-b border-outline px-2 py-1.5 text-left font-sans text-xs font-medium whitespace-nowrap text-muted">
-                {col}
-              </th>
-            {/each}
-          </tr>
-        </thead>
-        <tbody>
-          {#each pitchingRows as row (`${row.year}-${row.team}`)}
-            {@const era = eraForYear(row.year)}
-            <tr class="border-b border-outline last:border-b-0 hover:[&>td]:bg-surface">
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">
-                <a href={resolve(`/seasons?year=${row.year}`)} class="text-primary hover:underline">
-                  {row.year}
-                </a>
-              </td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.team}</td>
-              <td class="px-2 py-1.5">
-                {#if era}<EraBadge {era} size="xs" />{:else}<span class="text-muted">—</span>{/if}
-              </td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.g}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtNum(row.gs)}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.w}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.l}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtNum(row.sv)}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{row.ip}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtNum(row.so)}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{fmtNum(row.bb)}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">{Number(row.era).toFixed(2)}</td>
-              <td class="px-2 py-1.5 font-mono text-xs text-foreground">
-                {row.whip != null ? Number(row.whip).toFixed(2) : '—'}
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <SortableTable columns={pitchingColumns} rows={pitchingRows} />
 
     {#if pitchingResource.total > perPage}
       <div class="mt-4">

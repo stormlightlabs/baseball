@@ -98,11 +98,13 @@
   }
 </script>
 
-<div class="mb-1 flex flex-wrap items-center gap-2">
-  <TabRow {tabs} active={activeTab} />
+<div class="mb-1 flex items-start gap-2">
+  <div class="min-w-0 grow">
+    <TabRow {tabs} active={activeTab} />
+  </div>
   <button
     onclick={toggleAdvanced}
-    class="ml-auto shrink-0 rounded border px-2.5 py-1 font-mono text-[0.68rem] transition-colors {showAdvanced
+    class="mt-1 shrink-0 rounded border px-2.5 py-1 font-mono text-[0.68rem] transition-colors {showAdvanced
       ? 'border-primary/40 text-primary hover:border-primary'
       : 'border-outline text-muted hover:border-primary hover:text-foreground'}">
     {showAdvanced ? 'Hide advanced' : 'Show advanced'}
