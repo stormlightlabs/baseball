@@ -11,7 +11,9 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: host=${POSTGRES_HOST:-postgres} port=${POSTGRES_PORT:-5432} user=${POSTGRES_USER:-postgres} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB:-baseball} sslmode=${POSTGRES_SSLMODE:-disable}
-      REDIS_URL: ${REDIS_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      SERVER_HOST: ${SERVER_HOST:-0.0.0.0}
+      SERVER_BASE_URL: ${SERVER_BASE_URL:-https://api.bigfly.tech/v1/}
     expose:
       - "8080"
     command: ["server", "start"]
