@@ -19,13 +19,14 @@ RUN adduser --disabled-password --gecos "" app && \
 
 WORKDIR /home/app
 COPY --from=build /baseball /usr/local/bin/baseball
-COPY --from=build --chown=app:app /app/data /home/app/data
+RUN mkdir -p /home/app/tools/data && chown -R app:app /home/app/tools
 
 USER app
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD ["/usr/local/bin/baseball", "server", "health"]
 
 ENV DATABASE_URL=postgres://postgres:postgres@postgres:5432/baseball_dev?sslmode=disable
+ENV BASEBALL_DATA_ROOT=/home/app/tools/data
 
 ENTRYPOINT ["/usr/local/bin/baseball"]
 CMD ["server", "start"]

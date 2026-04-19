@@ -51,7 +51,7 @@ func LoadLahman(ctx context.Context, database *db.DB, opts LahmanOptions) (int64
 
 	csvDir := opts.CSVDir
 	if csvDir == "" {
-		csvDir = filepath.Join("data", "lahman", "csv")
+		csvDir = LahmanCSVDir("")
 	}
 
 	tables := opts.Tables
@@ -99,7 +99,7 @@ func LoadLahman(ctx context.Context, database *db.DB, opts LahmanOptions) (int64
 func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions) (RetrosheetResult, error) {
 	dataDir := opts.DataDir
 	if dataDir == "" {
-		dataDir = filepath.Join("data", "retrosheet")
+		dataDir = RetrosheetDir("")
 	}
 
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
@@ -400,7 +400,7 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 // This updates existing games with weather data (temperature, wind, sky conditions, etc.).
 func LoadWeatherData(ctx context.Context, database *db.DB, csvPath string) (int64, error) {
 	if csvPath == "" {
-		csvPath = filepath.Join("data", "retrosheet", "gameinfo.csv")
+		csvPath = RetrosheetGameInfoCSV("")
 	}
 
 	if _, err := os.Stat(csvPath); errors.Is(err, os.ErrNotExist) {
@@ -683,7 +683,7 @@ func extractAndZipFile(zipFile *zip.File, destZip string) error {
 // This provides per-team-season appearances with granular positional data including pitcher roles (starter/reliever) and exact game date ranges.
 func LoadRetrosheetPlayers(ctx context.Context, database *db.DB, csvPath string) (int64, error) {
 	if csvPath == "" {
-		csvPath = filepath.Join("data", "retrosheet", "allplayers.csv")
+		csvPath = RetrosheetAllPlayersCSV("")
 	}
 
 	if _, err := os.Stat(csvPath); errors.Is(err, os.ErrNotExist) {
@@ -815,7 +815,7 @@ func LoadRetrosheetPlayers(ctx context.Context, database *db.DB, csvPath string)
 // This enriches the Lahman Salaries table with additional modern salary data.
 func LoadSalaryData(ctx context.Context, database *db.DB, dataDir string) (int64, error) {
 	if dataDir == "" {
-		dataDir = filepath.Join("data", "salaries")
+		dataDir = SalariesDir("")
 	}
 
 	if _, err := os.Stat(dataDir); errors.Is(err, os.ErrNotExist) {

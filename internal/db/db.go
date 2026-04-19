@@ -211,7 +211,7 @@ func (db *DB) CopyCSV(ctx context.Context, tableName, csvPath string) (int64, er
 
 // NormalizeBattingNumericNulls coerces nullable batting numeric stats to 0.
 // Lahman historical files leave many trailing numeric values blank, and COPY
-// with NULL '' maps those blanks to NULL.
+// with NULL ” maps those blanks to NULL.
 func (db *DB) NormalizeBattingNumericNulls(ctx context.Context) error {
 	query := `
 		UPDATE "Batting"
@@ -1472,7 +1472,7 @@ func (db *DB) LoadGameInfo(ctx context.Context, csvPath string) (int64, error) {
 // The provided directory should contain gameinfo.csv and plays.csv extracted from Retrosheet.
 func (db *DB) LoadNegroLeaguesData(ctx context.Context, dataDir string) (int64, int64, error) {
 	if dataDir == "" {
-		dataDir = filepath.Join("data", "retrosheet", "negroleagues")
+		dataDir = filepath.Join(resolveDataRoot(), "retrosheet", "negroleagues")
 	}
 
 	var gameRows, playRows int64
@@ -1500,6 +1500,19 @@ func (db *DB) LoadNegroLeaguesData(ctx context.Context, dataDir string) (int64, 
 	}
 
 	return gameRows, playRows, nil
+}
+
+func resolveDataRoot() string {
+	if env := strings.TrimSpace(os.Getenv("BASEBALL_DATA_ROOT")); env != "" {
+		return env
+	}
+	if info, err := os.Stat("tools/data"); err == nil && info.IsDir() {
+		return "tools/data"
+	}
+	if info, err := os.Stat("data"); err == nil && info.IsDir() {
+		return "data"
+	}
+	return "tools/data"
 }
 
 // LoadSalarySummary loads salary summary data (year, total, average, median) into the database.

@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
+	"stormlightlabs.org/baseball/internal/seed"
 )
 
 // EtlStatusCmd creates the status command
@@ -26,6 +27,7 @@ func EtlStatusCmd() *cobra.Command {
 func status(cmd *cobra.Command, args []string) error {
 	echo.Header("Data Status")
 	ctx := cmd.Context()
+	dataRoot := resolveDataRoot(cmd)
 
 	archiveChecks := []struct {
 		label string
@@ -34,22 +36,23 @@ func status(cmd *cobra.Command, args []string) error {
 	}{
 		{
 			label: "Lahman CSVs",
-			path:  filepath.Join("data", "lahman", "csv"),
+			path:  seed.LahmanCSVDir(dataRoot),
 			hint:  "Use `baseball etl fetch lahman` to scaffold/download the dataset",
 		},
 		{
 			label: "Retrosheet game logs",
-			path:  filepath.Join("data", "retrosheet", "gamelogs"),
+			path:  filepath.Join(seed.RetrosheetDir(dataRoot), "gamelogs"),
 			hint:  "Use `baseball etl fetch retrosheet` to download seasonal game logs",
 		},
 		{
 			label: "Retrosheet plays",
-			path:  filepath.Join("data", "retrosheet", "plays"),
+			path:  filepath.Join(seed.RetrosheetDir(dataRoot), "plays"),
 			hint:  "Use `baseball etl fetch retrosheet` to download parsed play-by-play archives",
 		},
 	}
 
 	echo.Info("Local archives:")
+	echo.Infof("  Data root: %s", dataRoot)
 	for _, check := range archiveChecks {
 		exists, fileCount, latestChange, err := dirSnapshot(check.path)
 		if err != nil {

@@ -32,7 +32,7 @@ var chadwickShardKeys = []string{
 // FetchChadwickRegisterData ensures Chadwick register people.csv is available.
 func FetchChadwickRegisterData(ctx context.Context, dataDir string, force bool) error {
 	if dataDir == "" {
-		dataDir = filepath.Join("data", "chadwick")
+		dataDir = ChadwickDir("")
 	}
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return fmt.Errorf("failed to create %s: %w", dataDir, err)
@@ -141,7 +141,7 @@ func mergeCSVShards(outputPath string, shardPaths []string) error {
 
 func ensureChadwickRegisterCSV(ctx context.Context, dataDir string) (string, error) {
 	if dataDir == "" {
-		dataDir = filepath.Join("data", "chadwick")
+		dataDir = ChadwickDir("")
 	}
 	csvPath := filepath.Join(dataDir, "people.csv")
 	if _, err := os.Stat(csvPath); err == nil {

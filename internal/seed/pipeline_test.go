@@ -1,6 +1,8 @@
 package seed
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -62,6 +64,65 @@ func TestNormalizePipelineOptionsRejectsUnknownEra(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected error for unknown era")
+	}
+}
+
+func TestNormalizePipelineOptionsUsesResolvedDataRoot(t *testing.T) {
+	withTempWorkingDir(t)
+	t.Setenv(DataRootEnvVar, "")
+	if err := os.MkdirAll(DefaultDataRoot, 0755); err != nil {
+		t.Fatalf("mkdir default data root: %v", err)
+	}
+
+	opts, err := NormalizePipelineOptions(PipelineOptions{
+		Profile: PipelineProfileDev,
+		Mode:    PipelineModeIncremental,
+		Years:   []int{2024},
+	})
+	if err != nil {
+		t.Fatalf("NormalizePipelineOptions returned error: %v", err)
+	}
+
+	if opts.DataRoot != DefaultDataRoot {
+		t.Fatalf("expected data root %q, got %q", DefaultDataRoot, opts.DataRoot)
+	}
+	if opts.LahmanCSVDir != filepath.Join(DefaultDataRoot, "lahman", "csv") {
+		t.Fatalf("unexpected Lahman CSV dir: %s", opts.LahmanCSVDir)
+	}
+	if opts.RetrosheetDataDir != filepath.Join(DefaultDataRoot, "retrosheet") {
+		t.Fatalf("unexpected Retrosheet dir: %s", opts.RetrosheetDataDir)
+	}
+	if opts.FanGraphsDir != filepath.Join(DefaultDataRoot, "fangraphs") {
+		t.Fatalf("unexpected FanGraphs dir: %s", opts.FanGraphsDir)
+	}
+	if opts.ChadwickDataDir != filepath.Join(DefaultDataRoot, "chadwick") {
+		t.Fatalf("unexpected Chadwick dir: %s", opts.ChadwickDataDir)
+	}
+	if opts.SalaryDataDir != filepath.Join(DefaultDataRoot, "salaries") {
+		t.Fatalf("unexpected salaries dir: %s", opts.SalaryDataDir)
+	}
+}
+
+func TestNormalizePipelineOptionsHonorsExplicitDataRoot(t *testing.T) {
+	withTempWorkingDir(t)
+	t.Setenv(DataRootEnvVar, filepath.Join("ignored", "env"))
+
+	opts, err := NormalizePipelineOptions(PipelineOptions{
+		Profile:  PipelineProfileDev,
+		Mode:     PipelineModeIncremental,
+		Years:    []int{2024},
+		DataRoot: filepath.Join("custom", "root"),
+	})
+	if err != nil {
+		t.Fatalf("NormalizePipelineOptions returned error: %v", err)
+	}
+
+	wantRoot := filepath.Join("custom", "root")
+	if opts.DataRoot != wantRoot {
+		t.Fatalf("expected data root %q, got %q", wantRoot, opts.DataRoot)
+	}
+	if opts.LahmanCSVDir != filepath.Join(wantRoot, "lahman", "csv") {
+		t.Fatalf("unexpected Lahman CSV dir: %s", opts.LahmanCSVDir)
 	}
 }
 

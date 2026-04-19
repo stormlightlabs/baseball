@@ -34,6 +34,7 @@ type PipelineOptions struct {
 	Mode              PipelineMode
 	Years             []int
 	EraNames          []string
+	DataRoot          string
 	LahmanCSVDir      string
 	RetrosheetDataDir string
 	ChadwickDataDir   string
@@ -94,20 +95,21 @@ func NormalizePipelineOptions(opts PipelineOptions) (PipelineOptions, error) {
 	if opts.Mode == "" {
 		opts.Mode = PipelineModeIncremental
 	}
+	opts.DataRoot = ResolveDataRoot(opts.DataRoot)
 	if opts.LahmanCSVDir == "" {
-		opts.LahmanCSVDir = filepath.Join("data", "lahman", "csv")
+		opts.LahmanCSVDir = LahmanCSVDir(opts.DataRoot)
 	}
 	if opts.RetrosheetDataDir == "" {
-		opts.RetrosheetDataDir = filepath.Join("data", "retrosheet")
+		opts.RetrosheetDataDir = RetrosheetDir(opts.DataRoot)
 	}
 	if opts.FanGraphsDir == "" {
-		opts.FanGraphsDir = filepath.Join("data", "fangraphs")
+		opts.FanGraphsDir = FanGraphsDir(opts.DataRoot)
 	}
 	if opts.ChadwickDataDir == "" {
-		opts.ChadwickDataDir = filepath.Join("data", "chadwick")
+		opts.ChadwickDataDir = ChadwickDir(opts.DataRoot)
 	}
 	if opts.SalaryDataDir == "" {
-		opts.SalaryDataDir = filepath.Join("data", "salaries")
+		opts.SalaryDataDir = SalariesDir(opts.DataRoot)
 	}
 
 	if opts.Profile != PipelineProfileDev && opts.Profile != PipelineProfileProd {
@@ -133,8 +135,9 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	}
 
 	params := map[string]any{
-		"years": opts.Years,
-		"eras":  opts.EraNames,
+		"years":     opts.Years,
+		"eras":      opts.EraNames,
+		"data_root": opts.DataRoot,
 	}
 
 	runID, err := database.StartETLRun(ctx, string(opts.Profile), string(opts.Mode), params)

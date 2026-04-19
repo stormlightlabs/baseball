@@ -20,7 +20,7 @@ var buildLeagueConstantsSQL string
 // LoadFanGraphsData loads FanGraphs constants and park factors.
 func LoadFanGraphsData(ctx context.Context, database *db.DB, dataDir string) (int64, error) {
 	if dataDir == "" {
-		dataDir = filepath.Join("data", "fangraphs")
+		dataDir = FanGraphsDir("")
 	}
 
 	wobaFile := filepath.Join(dataDir, "woba.csv")
@@ -77,7 +77,7 @@ func rebuildLeagueConstants(ctx context.Context, database *db.DB) (int64, error)
 // LoadNegroLeagues loads Negro Leagues gameinfo and plays files.
 func LoadNegroLeagues(ctx context.Context, database *db.DB, dataDir string) (int64, error) {
 	if dataDir == "" {
-		dataDir = filepath.Join("data", "retrosheet", "negroleagues")
+		dataDir = RetrosheetNegroLeaguesDir("")
 	}
 
 	gameinfoPath := filepath.Join(dataDir, "gameinfo.csv")
@@ -125,7 +125,7 @@ func LoadParksData(ctx context.Context, database *db.DB) (int64, error) {
 // LoadAllStarData loads all-star gameinfo and plays from allstar.zip.
 func LoadAllStarData(ctx context.Context, database *db.DB, zipPath string) (int64, error) {
 	if zipPath == "" {
-		zipPath = filepath.Join("data", "retrosheet", "allstar", "allstar.zip")
+		zipPath = RetrosheetAllStarZip("")
 	}
 	if _, err := os.Stat(zipPath); errors.Is(err, os.ErrNotExist) {
 		return 0, fmt.Errorf("allstar.zip not found at %s", zipPath)

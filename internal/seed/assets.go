@@ -18,7 +18,7 @@ import (
 // FetchRetrosheetData downloads Retrosheet archives needed by the ETL pipeline.
 func FetchRetrosheetData(ctx context.Context, dataDir string, years []int, force bool) error {
 	if dataDir == "" {
-		dataDir = filepath.Join("data", "retrosheet")
+		dataDir = RetrosheetDir("")
 	}
 	if len(years) == 0 {
 		years = defaultRetrosheetYears()
@@ -104,7 +104,7 @@ func FetchRetrosheetData(ctx context.Context, dataDir string, years []int, force
 // FetchNegroLeaguesData downloads and extracts the Retrosheet Negro Leagues archive.
 func FetchNegroLeaguesData(ctx context.Context, dataDir string, force bool) error {
 	if dataDir == "" {
-		dataDir = filepath.Join("data", "retrosheet", "negroleagues")
+		dataDir = RetrosheetNegroLeaguesDir("")
 	}
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return fmt.Errorf("failed to create %s: %w", dataDir, err)
@@ -160,7 +160,7 @@ func FetchNegroLeaguesData(ctx context.Context, dataDir string, force bool) erro
 // EnsureRetrosheetPlayersCSV returns an extracted allplayers CSV path.
 func EnsureRetrosheetPlayersCSV(dataDir string) (string, error) {
 	if dataDir == "" {
-		dataDir = filepath.Join("data", "retrosheet")
+		dataDir = RetrosheetDir("")
 	}
 
 	csvPath := filepath.Join(dataDir, "allplayers.csv")
@@ -183,7 +183,7 @@ func EnsureRetrosheetPlayersCSV(dataDir string) (string, error) {
 // ExtractBiodataArchive extracts biodata CSV files into a temporary directory.
 func ExtractBiodataArchive(dataDir string) (string, func(), error) {
 	if dataDir == "" {
-		dataDir = filepath.Join("data", "retrosheet")
+		dataDir = RetrosheetDir("")
 	}
 
 	zipPath := filepath.Join(dataDir, "biodata.zip")

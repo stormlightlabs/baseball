@@ -22,6 +22,7 @@ func DbCmd() *cobra.Command {
 		Short: "Database operations",
 		Long:  "Database migration and management operations.",
 	}
+	cmd.PersistentFlags().String("data-root", "", "Base dataset root (default resolution: --data-root, BASEBALL_DATA_ROOT, tools/data, data)")
 	cmd.AddCommand(DbMigrateCmd())
 	cmd.AddCommand(DbResetCmd())
 	cmd.AddCommand(DbRepopulateCmd())
@@ -53,9 +54,9 @@ func DbResetCmd() *cobra.Command {
 			return resetDatabase(cmd, csvDir, dataDir, yearsFlag)
 		},
 	}
-	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
+	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to <data-root>/lahman/csv)")
 	cmd.Flags().StringVar(&yearsFlag, "years", "", fmt.Sprintf("Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all (defaults to %s)", defaultRetrosheetYears))
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
+	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to <data-root>/retrosheet)")
 	return cmd
 }
 
@@ -94,9 +95,9 @@ func DbRepopulateCmd() *cobra.Command {
 	cmd.AddCommand(DbRepopulateLahmanCmd())
 	cmd.AddCommand(DbRepopulateRetrosheetCmd())
 	cmd.AddCommand(DbRepopulateAllCmd())
-	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
+	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to <data-root>/lahman/csv)")
 	cmd.Flags().StringVar(&yearsFlag, "years", "", fmt.Sprintf("Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all (defaults to %s)", defaultRetrosheetYears))
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
+	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to <data-root>/retrosheet)")
 	return cmd
 }
 
@@ -131,7 +132,7 @@ func DbRepopulateLahmanCmd() *cobra.Command {
 			return repopulateLahman(cmd, csvDir)
 		},
 	}
-	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
+	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to <data-root>/lahman/csv)")
 	return cmd
 }
 
@@ -153,7 +154,7 @@ func DbRepopulateRetrosheetCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&eraFlag, "era", "", retrosheetEraHelp())
 	cmd.Flags().StringVar(&yearsFlag, "years", "", fmt.Sprintf("Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all (defaults to %s when --era is omitted)", defaultRetrosheetYears))
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
+	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to <data-root>/retrosheet)")
 	cmd.Flags().BoolVar(&force, "force", false, "Force reload even if data already exists")
 	return cmd
 }
@@ -173,9 +174,9 @@ func DbRepopulateAllCmd() *cobra.Command {
 			return runPopulateAll(cmd, csvDir, dataDir, yearsFlag)
 		},
 	}
-	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to data/lahman/csv)")
+	cmd.Flags().StringVar(&csvDir, "csv-dir", "", "Path to Lahman CSV directory (defaults to <data-root>/lahman/csv)")
 	cmd.Flags().StringVar(&yearsFlag, "years", "", fmt.Sprintf("Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all (defaults to %s)", defaultRetrosheetYears))
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to data/retrosheet)")
+	cmd.Flags().StringVar(&dataDir, "data-dir", "", "Base dir for Retrosheet data (defaults to <data-root>/retrosheet)")
 	return cmd
 }
 
@@ -191,6 +192,10 @@ func repopulateLahman(cmd *cobra.Command, csvDir string) error {
 
 	echo.Success("✓ Connected to database")
 
+	if csvDir == "" {
+		csvDir = seed.LahmanCSVDir(resolveDataRoot(cmd))
+	}
+
 	ctx := cmd.Context()
 	_, err = seed.LoadLahman(ctx, database, seed.LahmanOptions{CSVDir: csvDir})
 	return err
@@ -198,6 +203,10 @@ func repopulateLahman(cmd *cobra.Command, csvDir string) error {
 
 func repopulateRetrosheet(cmd *cobra.Command, dataDir, eraFlag, yearsFlag string, force bool) error {
 	echo.Header("Seeding Retrosheet Data")
+
+	if dataDir == "" {
+		dataDir = seed.RetrosheetDir(resolveDataRoot(cmd))
+	}
 
 	var years []int
 	var err error

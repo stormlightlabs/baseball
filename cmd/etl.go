@@ -26,6 +26,7 @@ func ETLCmd() *cobra.Command {
 		},
 	}
 	addPipelineFlags(cmd, opts)
+	cmd.PersistentFlags().String("data-root", "", "Base dataset root (default resolution: --data-root, BASEBALL_DATA_ROOT, tools/data, data)")
 	cmd.AddCommand(EtlFetchCmd())
 	cmd.AddCommand(EtlLoadCmd())
 	cmd.AddCommand(EtlStatusCmd())
@@ -292,6 +293,7 @@ func runETLPipeline(cmd *cobra.Command, opts *pipelineCLIOptions) error {
 		Mode:     seed.PipelineMode(strings.ToLower(strings.TrimSpace(opts.mode))),
 		Years:    years,
 		EraNames: eras,
+		DataRoot: resolveDataRoot(cmd),
 	})
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
@@ -402,7 +404,7 @@ func parseEraFlagList(raw string) ([]string, error) {
 
 func fetchLahman(cmd *cobra.Command, args []string) error {
 	echo.Header("Lahman Database Download Instructions")
-	dataDir := "data/lahman"
+	dataDir := seed.LahmanDir(resolveDataRoot(cmd))
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return fmt.Errorf("error: failed to create data directory: %w", err)
 	}
@@ -428,7 +430,7 @@ func fetchLahman(cmd *cobra.Command, args []string) error {
 
 func fetchNegroLeagues(cmd *cobra.Command, args []string) error {
 	echo.Header("Fetching Negro Leagues Data")
-	dataDir := filepath.Join("data", "retrosheet", "negroleagues")
+	dataDir := seed.RetrosheetNegroLeaguesDir(resolveDataRoot(cmd))
 	if err := seed.FetchNegroLeaguesData(cmd.Context(), dataDir, false); err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -439,7 +441,7 @@ func fetchNegroLeagues(cmd *cobra.Command, args []string) error {
 
 func fetchChadwick(cmd *cobra.Command, args []string) error {
 	echo.Header("Fetching Chadwick Register Data")
-	dataDir := filepath.Join("data", "chadwick")
+	dataDir := seed.ChadwickDir(resolveDataRoot(cmd))
 	if err := seed.FetchChadwickRegisterData(cmd.Context(), dataDir, false); err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -459,7 +461,7 @@ func fetchRetrosheet(cmd *cobra.Command, yearsFlag string, force bool) error {
 		years = []int{2023, 2024, 2025}
 	}
 
-	dataDir := filepath.Join("data", "retrosheet")
+	dataDir := seed.RetrosheetDir(resolveDataRoot(cmd))
 	if err := seed.FetchRetrosheetData(cmd.Context(), dataDir, years, force); err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -491,7 +493,7 @@ func loadLahman(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	dataDir := "data/lahman"
+	dataDir := seed.LahmanDir(resolveDataRoot(cmd))
 	csvDir := filepath.Join(dataDir, "csv")
 
 	if _, err := seed.LoadLahman(cmd.Context(), database, seed.LahmanOptions{CSVDir: csvDir}); err != nil {
@@ -543,7 +545,7 @@ func loadRetrosheet(cmd *cobra.Command, eraFlag, yearsFlag string) error {
 
 	echo.Success("✓ Connected to database")
 
-	dataDir := "data/retrosheet"
+	dataDir := seed.RetrosheetDir(resolveDataRoot(cmd))
 	gameLogsDir := filepath.Join(dataDir, "gamelogs")
 
 	ctx := cmd.Context()
@@ -604,7 +606,7 @@ func loadRetrosheet(cmd *cobra.Command, eraFlag, yearsFlag string) error {
 
 	if len(emptyPlayYears) > 0 {
 		if eraFlag == "nlg" {
-			echo.Info("  Retrosheet annual play-by-play zips for Negro Leagues are empty; plays are loaded from data/retrosheet/negroleagues/plays.csv.")
+			echo.Infof("  Retrosheet annual play-by-play zips for Negro Leagues are empty; plays are loaded from %s.", filepath.Join(dataDir, "negroleagues", "plays.csv"))
 		} else {
 			echo.Infof("  No play-by-play rows found for: %s", strings.Join(emptyPlayYears, ", "))
 		}
@@ -692,7 +694,7 @@ func loadFanGraphs(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	rows, err := seed.LoadFanGraphsData(cmd.Context(), database, filepath.Join("data", "fangraphs"))
+	rows, err := seed.LoadFanGraphsData(cmd.Context(), database, seed.FanGraphsDir(resolveDataRoot(cmd)))
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -715,7 +717,7 @@ func loadNegroLeagues(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	totalRows, err := seed.LoadNegroLeagues(cmd.Context(), database, filepath.Join("data", "retrosheet", "negroleagues"))
+	totalRows, err := seed.LoadNegroLeagues(cmd.Context(), database, seed.RetrosheetNegroLeaguesDir(resolveDataRoot(cmd)))
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -740,7 +742,7 @@ func loadWeatherData(cmd *cobra.Command, args []string) error {
 
 	ctx := cmd.Context()
 
-	csvPath := "data/retrosheet/gameinfo.csv"
+	csvPath := seed.RetrosheetGameInfoCSV(resolveDataRoot(cmd))
 	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
 		return fmt.Errorf(`error: gameinfo.csv not found at %s
 
@@ -771,7 +773,7 @@ func loadRetrosheetPlayers(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	csvPath, err := seed.EnsureRetrosheetPlayersCSV(filepath.Join("data", "retrosheet"))
+	csvPath, err := seed.EnsureRetrosheetPlayersCSV(seed.RetrosheetDir(resolveDataRoot(cmd)))
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -801,7 +803,7 @@ func loadSalaryData(cmd *cobra.Command, args []string) error {
 	echo.Success("✓ Connected to database")
 
 	ctx := cmd.Context()
-	dataDir := "data/salaries"
+	dataDir := seed.SalariesDir(resolveDataRoot(cmd))
 
 	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
 		return fmt.Errorf(`error: salary data directory not found: %s
@@ -863,7 +865,7 @@ func loadAllStar(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	totalRows, err := seed.LoadAllStarData(cmd.Context(), database, filepath.Join("data", "retrosheet", "allstar", "allstar.zip"))
+	totalRows, err := seed.LoadAllStarData(cmd.Context(), database, seed.RetrosheetAllStarZip(resolveDataRoot(cmd)))
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -896,7 +898,7 @@ func loadBiodata(cmd *cobra.Command, args []string) error {
 
 	echo.Success("✓ Connected to database")
 
-	tmpDir, cleanup, err := seed.ExtractBiodataArchive(filepath.Join("data", "retrosheet"))
+	tmpDir, cleanup, err := seed.ExtractBiodataArchive(seed.RetrosheetDir(resolveDataRoot(cmd)))
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -933,7 +935,7 @@ func loadMLBAMCrosswalk(cmd *cobra.Command, yearsFlag string) error {
 		years = []int{time.Now().Year()}
 	}
 
-	playerRows, err := seed.LoadPlayerMLBAMMappings(cmd.Context(), database, filepath.Join("data", "chadwick"))
+	playerRows, err := seed.LoadPlayerMLBAMMappings(cmd.Context(), database, seed.ChadwickDir(resolveDataRoot(cmd)))
 	if err != nil {
 		return fmt.Errorf("error loading player MLBAM mappings: %w", err)
 	}

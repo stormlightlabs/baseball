@@ -39,6 +39,16 @@ task build
 
 For the full non-optional loading contract, see [data-loading.md](./docs/internal/data-loading.md).
 
+Dataset root resolution for `etl` and `db` commands:
+
+1. `--data-root`
+2. `BASEBALL_DATA_ROOT`
+3. `tools/data`
+4. legacy `data`
+
+The standalone `baseball-data` scaffold lives at `tools/data`
+(`uv run --project tools/data baseball-data <sync|build|verify>`).
+
 Quick local example for a complete representative slice:
 
 ```bash
@@ -62,6 +72,17 @@ For exhaustive production-style ingestion:
 Retrosheet `--era` values: `fed`, `nlg`, `boomer`, `pitcher`, `turf`, `steroid`, `moneyball`, `statcast`, `modern`.
 
 The full ETL command also accepts `--years` and `--era` to customize the Retrosheet window.
+It also accepts `--data-root` when snapshots are mounted/cloned outside defaults.
+
+Production-style temp clone + cleanup:
+
+```bash
+tmpdir="$(mktemp -d)"
+git clone --depth=1 <baseball-data-repo-url> "$tmpdir/baseball-data"
+./tmp/baseball etl --profile=prod --mode=full --data-root "$tmpdir/baseball-data"
+./tmp/baseball etl validate --profile=prod --data-root "$tmpdir/baseball-data"
+rm -rf "$tmpdir"
+```
 
 ### Server
 

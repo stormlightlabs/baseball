@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/seed"
 )
@@ -164,4 +165,16 @@ func uniqueInts(values []int) []int {
 	}
 
 	return result
+}
+
+func resolveDataRoot(cmd *cobra.Command) string {
+	if cmd == nil {
+		return seed.ResolveDataRoot("")
+	}
+
+	value, err := cmd.Flags().GetString("data-root")
+	if err == nil {
+		return seed.ResolveDataRoot(value)
+	}
+	return seed.ResolveDataRoot("")
 }

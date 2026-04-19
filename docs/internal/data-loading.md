@@ -31,6 +31,16 @@ Shared pipeline flags:
 - `--mode incremental|full`
 - `--years <year-list|range|all>`
 - `--era <comma-separated-era-list>`
+- `--data-root <path>`
+
+Data root resolution order:
+
+1. `--data-root`
+2. `BASEBALL_DATA_ROOT`
+3. `tools/data`
+4. legacy `data`
+
+The same `--data-root` flag is available for `db` commands.
 
 ## Recommended Flows
 
@@ -88,6 +98,16 @@ curl http://localhost:8080/v1/meta/datasets
 curl http://localhost:8080/v1/health
 ```
 
+### 5) Production-style external clone flow
+
+```bash
+tmpdir="$(mktemp -d)"
+git clone --depth=1 <baseball-data-repo-url> "$tmpdir/baseball-data"
+<BASEBALL> etl --profile prod --mode full --data-root "$tmpdir/baseball-data"
+<BASEBALL> etl validate --profile prod --data-root "$tmpdir/baseball-data"
+rm -rf "$tmpdir"
+```
+
 ## Stage Commands (First-Class, Composable)
 
 These commands are still supported for partial runs, debugging, and CI:
@@ -112,8 +132,8 @@ These commands are still supported for partial runs, debugging, and CI:
 | --------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------ |
 | `<BASEBALL> etl` / `<BASEBALL> etl run` | Full ETL orchestration (extract, transform, load, validate)  | Downloads archives, loads core + supplemental datasets, refreshes materialized views, validates | Reachable Postgres |
 | `<BASEBALL> etl validate --profile <P>` | Profile-aware ETL completeness validation                    | Read-only                                                                                       | Reachable Postgres |
-| `<BASEBALL> etl fetch retrosheet`       | Download Retrosheet game logs, plays, and auxiliary archives | Writes files under `data/retrosheet`                                                            | Network access     |
-| `<BASEBALL> etl fetch negroleagues`     | Download and extract Negro Leagues archives                  | Writes files under `data/retrosheet/negroleagues`                                               | Network access     |
+| `<BASEBALL> etl fetch retrosheet`       | Download Retrosheet game logs, plays, and auxiliary archives | Writes files under `<data-root>/retrosheet`                                                     | Network access     |
+| `<BASEBALL> etl fetch negroleagues`     | Download and extract Negro Leagues archives                  | Writes files under `<data-root>/retrosheet/negroleagues`                                        | Network access     |
 | `<BASEBALL> etl load <dataset>`         | Execute a specific load stage                                | Dataset-dependent inserts/updates/truncation                                                    | Source files ready |
 | `<BASEBALL> etl status`                 | Show core + supplemental dataset freshness and health        | Read-only                                                                                       | Reachable Postgres |
 | `<BASEBALL> db migrate`                 | Apply SQL migrations                                         | Schema create/alter only                                                                        | Reachable Postgres |

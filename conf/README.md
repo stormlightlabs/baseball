@@ -34,6 +34,7 @@ The repo ships two Compose files in `conf/`:
 | ------------------- | --------------------------------------------------------------- | -------------------------------- |
 | `DATABASE_URL`      | `postgres://postgres:pw@postgres:5432/baseball?sslmode=disable` | Host is the Compose service name |
 | `REDIS_URL`         | `redis://redis:6379/0`                                          |                                  |
+| `BASEBALL_DATA_ROOT`| `/home/app/tools/data`                                          | Mount or clone snapshot data here |
 | `POSTGRES_PASSWORD` | _(strong password)_                                             | Mark as sensitive                |
 | `POSTGRES_DB`       | `baseball`                                                      |                                  |
 
@@ -53,6 +54,13 @@ docker compose exec app baseball db migrate
 docker compose exec app baseball etl run --profile dev --years 2022-2025
 docker compose exec app baseball etl validate --profile dev --years 2022-2025
 docker compose exec app baseball etl status
+```
+
+If your snapshot data is mounted/cloned outside the default root:
+
+```bash
+docker compose exec app baseball etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
+docker compose exec app baseball etl validate --profile dev --years 2022-2025 --data-root /path/to/baseball-data
 ```
 
 First-time full historical setup (production profile):
@@ -84,6 +92,16 @@ For new seasons:
 docker compose exec app baseball etl run --profile prod --years 2026
 docker compose exec app baseball etl validate --profile prod --years 2026
 docker compose exec app baseball etl status
+```
+
+Production temp-clone pattern:
+
+```bash
+tmpdir="$(mktemp -d)"
+git clone --depth=1 <baseball-data-repo-url> "$tmpdir/baseball-data"
+docker compose exec app baseball etl run --profile prod --years 2026 --data-root "$tmpdir/baseball-data"
+docker compose exec app baseball etl validate --profile prod --years 2026 --data-root "$tmpdir/baseball-data"
+rm -rf "$tmpdir"
 ```
 
 ## Scaling

@@ -34,6 +34,18 @@ AGENTS.md
 tmp/
 data/retrosheet/
 data/**/*.zip
+data/lahman/**/*.csv
+data/fangraphs/**/*.csv
+data/salaries/*.csv
+data/chadwick/*.csv
+
+# Snapshot artifacts should live in the standalone baseball-data repo/submodule.
+tools/data/retrosheet/**/*.zip
+tools/data/retrosheet/**/*.csv
+tools/data/chadwick/people-*.csv
+tools/data/salaries/*.csv
+tools/data/fangraphs/**/*.csv
+tools/data/lahman/**/*.csv
 .task/
 sandbox/
 conf.toml
