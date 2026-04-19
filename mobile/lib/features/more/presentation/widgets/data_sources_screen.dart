@@ -166,11 +166,28 @@ class _DatasetCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Chip(label: Text(dataset.name)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Chip(
+                        label: Text(dataset.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        dataset.source,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(width: 8),
-                Text(dataset.source, style: Theme.of(context).textTheme.labelSmall),
-                const Spacer(),
                 Icon(
                   dataset.healthy ? Icons.check_circle_outline : Icons.error_outline,
                   color: dataset.healthy ? Colors.green : Theme.of(context).colorScheme.error,

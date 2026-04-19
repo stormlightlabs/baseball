@@ -2,28 +2,16 @@
 title: Parking Lot
 ---
 
-Team IDs shouldn't be case sensitive, i.e
+## Mobile
 
-```sh
-curl http://localhost:8080/api/v1/teams/sea
-```
+Default Player should be `ohtansh01` (Shohei Ohtani).
 
-returns
+Default Team should be `LAN` (Los Angeles Dodgers).
 
-```json
-{
-"error": "team season not found"
-}
-```
+We should add a settings screen:
+    - disable animations
+    - change default player
+    - change default team
+    - remove color hue (team color) or set default color
 
-Also, why is 2025 missing?
-
-```sh
-curl http://localhost:8080/api/v1/teams/SEA?year=2024
-```
-
-works because 2024 is the default but 2025 should be populated.
-
----
-
-2026 should be populated via the stats api.
+Remove api endpoints from Quick Access cards
