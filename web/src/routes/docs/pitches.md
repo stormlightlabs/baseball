@@ -1,6 +1,6 @@
 # Pitch Sequencing
 
-The Baseball API parses Retrosheet pitch sequence data to provide individual pitch-level access through the `/v1/pitches` endpoint. This document explains how pitch sequences are encoded, parsed, and served.
+The Big Fly API parses Retrosheet pitch sequence data to provide individual pitch-level access through the `/v1/pitches` endpoint. This document explains how pitch sequences are encoded, parsed, and served.
 
 ## Pitch Sequence Format
 

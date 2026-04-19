@@ -367,9 +367,16 @@ func startServer(cmd *cobra.Command, args []string) error {
 		handler = api.OptionalAuthMiddleware(userRepo, tokenRepo, apiKeyRepo)(handler)
 	}
 
+	handler = middleware.CORS(cfg.Server.CORS.AllowedOrigins)(handler)
+
 	echo.Info("✓ Request logging enabled")
 	echo.Info("✓ Metrics tracking enabled (/debug/vars)")
 	echo.Info("✓ Request tracing enabled (X-Trace-ID)")
+	if len(cfg.Server.CORS.AllowedOrigins) > 0 {
+		echo.Infof("✓ CORS enabled (%d allowed origin(s))", len(cfg.Server.CORS.AllowedOrigins))
+	} else {
+		echo.Info("⚠ CORS disabled (no allowed origins configured)")
+	}
 
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	echo.Info(fmt.Sprintf("ℹ Starting server on %s...", addr))

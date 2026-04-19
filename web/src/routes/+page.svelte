@@ -156,7 +156,7 @@
 
 <main class="min-h-[calc(100vh-3.5rem)] bg-mantle pb-0">
   <section class="mx-auto max-w-3xl px-8 pt-14 pb-8 text-center">
-    <h1 class="mb-3 font-display text-3xl font-bold text-foreground">Baseball API</h1>
+    <h1 class="mb-3 font-display text-3xl font-bold text-foreground">Big Fly</h1>
     <p class="mb-8 text-[0.9rem] text-muted">
       Historical baseball data from 1871 to present — players, teams, games, and stats.
       <br />Lahman · Retrosheet · MLB StatsAPI

@@ -57,7 +57,7 @@
 </svelte:head>
 
 <header class="sticky top-0 z-50 flex h-14 items-center gap-4 border-b border-outline bg-crust px-8">
-  <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline"> Baseball API </a>
+  <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline">Big Fly</a>
   <span class="rounded bg-outline px-2 py-0.5 font-mono text-[0.7rem] text-muted">
     {badge}
   </span>

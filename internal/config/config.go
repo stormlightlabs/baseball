@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -23,6 +24,12 @@ type ServerConfig struct {
 	Port      int
 	BaseURL   string
 	DebugMode bool
+	CORS      CORSConfig
+}
+
+// CORSConfig contains cross-origin request settings.
+type CORSConfig struct {
+	AllowedOrigins []string
 }
 
 // DatabaseConfig contains database connection settings
@@ -86,6 +93,7 @@ func Load(configPath string) (*Config, error) {
 	v.SetDefault("server.port", 8080)
 	v.SetDefault("server.base_url", "http://localhost:8080/v1/")
 	v.SetDefault("server.debug_mode", false)
+	v.SetDefault("server.cors_allowed_origins", []string{"http://localhost:5173", "http://127.0.0.1:5173"})
 	v.SetDefault("database.url", "postgres://postgres:postgres@localhost:5432/baseball_dev?sslmode=disable")
 	v.SetDefault("redis.url", "redis://localhost:6379/0")
 
@@ -104,6 +112,7 @@ func Load(configPath string) (*Config, error) {
 	v.BindEnv("server.port", "PORT")
 	v.BindEnv("server.base_url", "SERVER_BASE_URL")
 	v.BindEnv("server.debug_mode", "DEBUG_MODE")
+	v.BindEnv("server.cors_allowed_origins", "CORS_ALLOWED_ORIGINS")
 	v.BindEnv("cache.enabled", "CACHE_ENABLED")
 	v.BindEnv("cache.version", "CACHE_VERSION")
 	v.BindEnv("oauth.github.client_id", "GITHUB_CLIENT_ID")
@@ -126,6 +135,9 @@ func Load(configPath string) (*Config, error) {
 			Port:      v.GetInt("server.port"),
 			BaseURL:   v.GetString("server.base_url"),
 			DebugMode: v.GetBool("server.debug_mode"),
+			CORS: CORSConfig{
+				AllowedOrigins: normalizedStringList(v.GetStringSlice("server.cors_allowed_origins"), v.GetString("server.cors_allowed_origins")),
+			},
 		},
 		Database: DatabaseConfig{
 			URL: v.GetString("database.url"),
@@ -162,6 +174,28 @@ func Load(configPath string) (*Config, error) {
 
 	globalConfig = cfg
 	return cfg, nil
+}
+
+func normalizedStringList(values []string, raw string) []string {
+	entries := values
+	if len(entries) == 0 && strings.TrimSpace(raw) != "" {
+		entries = strings.Split(raw, ",")
+	}
+
+	result := make([]string, 0, len(entries))
+	seen := make(map[string]struct{}, len(entries))
+	for _, entry := range entries {
+		value := strings.TrimSpace(entry)
+		if value == "" {
+			continue
+		}
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	return result
 }
 
 // Get returns the global configuration

@@ -63,4 +63,3 @@ func waitForRetrosheetDownloadSlot(ctx context.Context) error {
 		return nil
 	}
 }
-
