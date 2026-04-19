@@ -58,9 +58,9 @@ export const FEATURED_QUERIES: FeaturedQuery[] = [
 ];
 
 export const FEATURED_GROUPS: Array<{ key: FeaturedQueryGroup; label: string }> = [
-  { key: 'standard', label: 'Standard stats' },
-  { key: 'derived', label: 'Derived / computed' },
-  { key: 'historical', label: 'Historical leagues' }
+  { key: 'standard', label: 'Standard' },
+  { key: 'derived', label: 'Derived' },
+  { key: 'historical', label: 'Historical' }
 ];
 
 export const ALL_ENDPOINTS = [

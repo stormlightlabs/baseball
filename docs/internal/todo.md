@@ -25,8 +25,8 @@ they're not abbreviated. This could be under `/meta`
 
 Games are paginated but the UI doesn't reflect this and asserts that there are only N games (where N is the page size). We should add pagination controls to the UI and update the API to return pagination metadata.
 
-We should remove the `jq` from cURL examples and maybe mention in `routes/docs`. These should
-also be single line.
+The doc file badge (ex. `docs/introduction.md`) should link to the Github source file
+(ex. `https://github.com/stormlightlabs/baseball/blob/main/web/src/routes/docs/introduction.md`)
 
 ## Backend
 

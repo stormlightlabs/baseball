@@ -2,6 +2,7 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import favicon from '$lib/assets/favicon.svg';
+  import AppFooter from '$lib/components/AppFooter.svelte';
   import { meta } from '$lib/meta.svelte.js';
   import '@fontsource-variable/google-sans';
   import '@fontsource-variable/google-sans-code';
@@ -56,7 +57,7 @@
   <title>Big Fly</title>
 </svelte:head>
 
-<div class="grid h-dvh min-h-dvh grid-rows-[3.5rem_auto_minmax(0,1fr)] overflow-x-hidden bg-mantle">
+<div class="grid h-dvh min-h-dvh grid-rows-[3.5rem_auto_minmax(0,1fr)_auto] overflow-x-hidden bg-mantle">
   <header class="sticky top-0 z-50 flex h-14 items-center gap-4 border-b border-outline bg-crust px-4 sm:px-6 lg:px-8">
     <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline">Big Fly</a>
     <span class="rounded bg-outline px-2 py-0.5 font-mono text-[0.7rem] text-muted">
@@ -76,22 +77,30 @@
           {label}
         </a>
       {/each}
-      <a
-        href={resolve(API_DOCS_ROUTE)}
-        target="_blank"
-        rel="noreferrer"
-        class="ml-2 rounded px-2.5 py-1 text-[0.8rem] text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground">
-        API docs
-      </a>
-      <a
-        href={resolve('/account')}
-        class="rounded px-2.5 py-1 text-[0.8rem] no-underline transition-colors duration-150 {pathname.startsWith(
-          '/account'
-        )
-          ? 'bg-outline text-foreground'
-          : 'text-muted hover:bg-outline hover:text-foreground'}">
-        Account
-      </a>
+      <div class="border-l border-outline px-2">
+        <a
+          href={resolve(API_DOCS_ROUTE)}
+          target="_blank"
+          rel="noreferrer"
+          class="rounded px-2.5 py-1 text-[0.8rem] text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground">
+          API
+          <span class="ml-1 inline-flex items-center gap-0.5 text-[0.65rem]">
+            <i class="i-tabler-external-link"></i>
+          </span>
+        </a>
+        <a
+          href={resolve('/account')}
+          class="rounded px-2.5 py-1 text-[0.8rem] no-underline transition-colors duration-150 {pathname.startsWith(
+            '/account'
+          )
+            ? 'bg-outline text-foreground'
+            : 'text-muted hover:bg-outline hover:text-foreground'}">
+          Account
+          <span class="ml-1 inline-flex items-center gap-0.5 text-[0.65rem]">
+            <i class="i-tabler-user"></i>
+          </span>
+        </a>
+      </div>
     </nav>
   </header>
 
@@ -100,7 +109,9 @@
     features. We appreciate your patience and feedback as we work towards a stable release in the coming weeks!
   </div>
 
-  <main class="min-h-0">
+  <main class="min-h-0 overflow-x-hidden overflow-y-auto">
     {@render children()}
   </main>
+
+  <AppFooter />
 </div>
