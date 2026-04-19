@@ -55,7 +55,8 @@
   <span class="mpill" onclick="setMode('franchise-era',this)">Franchise Era</span>
 </div>
 
-<div class="content">
+<div style="display:flex;gap:0;align-items:flex-start">
+<div class="content" style="flex:1;min-width:0">
 
   <!-- Example comparisons -->
   <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
@@ -97,6 +98,27 @@
     <canvas id="trajChart" height="100"></canvas>
   </div>
 
+</div>
+<aside style="width:300px;flex-shrink:0;padding:1.5rem 1.5rem 0;display:flex;flex-direction:column;gap:1.25rem;position:sticky;top:56px;max-height:calc(100vh - 56px);overflow-y:auto">
+  <div>
+    <div style="font-family:'Google Sans Code',monospace;font-size:0.55rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;text-align:center;margin-bottom:6px">Advertisement</div>
+    <a href="#" onclick="return false" style="display:block">
+      <img src="https://placehold.co/300x250/1a1e27/4b5563?text=300×250+Ad%0Abaseball.example.com" width="300" height="250" alt="Advertisement" style="width:100%;height:auto;border-radius:6px;display:block;border:1px solid #252934" />
+    </a>
+  </div>
+  <div>
+    <div style="font-family:'Google Sans Code',monospace;font-size:0.55rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;text-align:center;margin-bottom:6px">Sponsored</div>
+    <a href="#" onclick="return false" style="display:block">
+      <img src="https://placehold.co/300x600/13161c/374151?text=300×600%0ASponsor+Content%0Afanshop.example.com" width="300" height="600" alt="Sponsored" style="width:100%;height:auto;border-radius:6px;display:block;border:1px solid #252934" />
+    </a>
+  </div>
+  <div>
+    <div style="font-family:'Google Sans Code',monospace;font-size:0.55rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;text-align:center;margin-bottom:6px">Advertisement</div>
+    <a href="#" onclick="return false" style="display:block">
+      <img src="https://placehold.co/300x250/1a1e27/374151?text=300×250+Ad%0Aget-the-app.example.com" width="300" height="250" alt="Advertisement" style="width:100%;height:auto;border-radius:6px;display:block;border:1px solid #252934" />
+    </a>
+  </div>
+</aside>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
