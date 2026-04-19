@@ -65,10 +65,8 @@ class _PlayersTabState extends State<PlayersTab> {
       child: BlocBuilder<PlayersCubit, PlayersState>(
         builder: (context, state) {
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
             children: <Widget>[
-              Text('Players', style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 10),
               PlayerSearchBar(controller: _searchController, state: state),
               if (state.searchError != null) ...<Widget>[
                 const SizedBox(height: 8),

@@ -1,4 +1,4 @@
-package com.example.bigfly_mobile
+package org.stormlightlabs.bigfly
 
 import io.flutter.embedding.android.FlutterActivity
 

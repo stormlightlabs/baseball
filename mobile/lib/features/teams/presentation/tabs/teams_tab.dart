@@ -50,10 +50,8 @@ class _TeamsTabState extends State<TeamsTab> {
       child: BlocBuilder<TeamsCubit, TeamsState>(
         builder: (context, state) {
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
             children: <Widget>[
-              Text('Teams', style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 10),
               TeamSearchBar(controller: _searchController, state: state),
               if (state.searchError != null) ...<Widget>[
                 const SizedBox(height: 8),

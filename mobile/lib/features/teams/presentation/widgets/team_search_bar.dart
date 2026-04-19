@@ -11,26 +11,49 @@ class TeamSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: TextField(
-            controller: controller,
-            onChanged: context.read<TeamsCubit>().setSearchQuery,
-            onSubmitted: (_) => context.read<TeamsCubit>().runSearch(),
-            decoration: const InputDecoration(
-              hintText: 'Franchise, city, abbreviation...',
-              border: OutlineInputBorder(),
-              isDense: true,
-            ),
+    final colorScheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: 44,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          border: Border.all(color: colorScheme.outlineVariant),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  onChanged: context.read<TeamsCubit>().setSearchQuery,
+                  onSubmitted: (_) => context.read<TeamsCubit>().runSearch(),
+                  decoration: const InputDecoration(
+                    hintText: 'Franchise, city, abbreviation...',
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                    minimumSize: const Size(56, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: state.searchLoading ? null : () => context.read<TeamsCubit>().runSearch(),
+                  child: const Icon(Icons.arrow_forward),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 8),
-        FilledButton(
-          onPressed: state.searchLoading ? null : () => context.read<TeamsCubit>().runSearch(),
-          child: const Icon(Icons.arrow_forward),
-        ),
-      ],
+      ),
     );
   }
 }
