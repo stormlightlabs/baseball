@@ -25,19 +25,19 @@ Acceptance:
 
 ### Home
 
-- [ ] Search bar with entity-type pill filters (Players, Teams, Games, Franchises, Seasons).
-- [ ] Quick access grid (2×3) with icons linking to core sections.
-- [ ] API health strip sourced from `/api/v1/meta`.
-- [ ] Era chips for quick navigation.
+- [x] Search bar with entity-type pill filters (Players, Teams, Games, Franchises, Seasons).
+- [x] Quick access grid (2×3) with icons linking to core sections.
+- [x] API health strip sourced from `/api/v1/meta`.
+- [x] Era chips for quick navigation.
 
 ### Player Detail
 
-- [ ] Bio card with pixel-art avatar placeholder, name, metadata, bio-stats grid.
-- [ ] Horizontal scrollable tabs: Batting, Pitching, Awards, HOF.
-- [ ] Career chart (line chart, selectable stats) using `fl_chart`
-- [ ] Season log table with sortable columns.
-- [ ] Awards section.
-- [ ] Dynamic theme: set `ColorScheme.fromSeed(team.primaryColor)` when player loads.
+- [x] Bio card with pixel-art avatar placeholder, name, metadata, bio-stats grid.
+- [x] Horizontal scrollable tabs: Batting, Pitching, Awards, HOF.
+- [x] Career chart (line chart, selectable stats) using `fl_chart`
+- [x] Season log table with sortable columns.
+- [x] Awards section.
+- [x] Dynamic theme: set `ColorScheme.fromSeed(team.primaryColor)` when player loads.
 
 ### Team Detail
 

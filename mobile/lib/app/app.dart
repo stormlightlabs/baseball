@@ -2,9 +2,13 @@ import 'package:bigfly_mobile/app/navigation/navigation_cubit.dart';
 import 'package:bigfly_mobile/app/theme/app_typography.dart';
 import 'package:bigfly_mobile/app/theme/theme_cubit.dart';
 import 'package:bigfly_mobile/data/local/cache_store.dart';
-import 'package:bigfly_mobile/data/repositories/health_repository.dart';
-import 'package:bigfly_mobile/features/home/health_cubit.dart';
+import 'package:bigfly_mobile/data/repositories/home_repository.dart';
+import 'package:bigfly_mobile/data/repositories/player_repository.dart';
+import 'package:bigfly_mobile/features/home/home_cubit.dart';
 import 'package:bigfly_mobile/features/home/home_tab.dart';
+import 'package:bigfly_mobile/features/players/player_selection_cubit.dart';
+import 'package:bigfly_mobile/features/players/players_cubit.dart';
+import 'package:bigfly_mobile/features/players/players_tab.dart';
 import 'package:bigfly_mobile/features/shared/placeholder_tab.dart';
 import 'package:bigfly_mobile/features/teams/teams_tab.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -12,10 +16,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BigFlyApp extends StatelessWidget {
-  const BigFlyApp({super.key, required this.cacheStore, required this.healthRepository, this.useDynamicColor = true});
+  const BigFlyApp({
+    super.key,
+    required this.cacheStore,
+    required this.homeRepository,
+    required this.playerRepository,
+    this.useDynamicColor = true,
+  });
 
   final CacheStore cacheStore;
-  final HealthRepository healthRepository;
+  final HomeRepository homeRepository;
+  final PlayerRepository playerRepository;
   final bool useDynamicColor;
 
   @override
@@ -35,7 +46,9 @@ class BigFlyApp extends StatelessWidget {
       providers: <BlocProvider<dynamic>>[
         BlocProvider<NavigationCubit>(create: (_) => NavigationCubit()),
         BlocProvider<ThemeCubit>(create: (_) => ThemeCubit(cacheStore)),
-        BlocProvider<HealthCubit>(create: (_) => HealthCubit(healthRepository)..loadHealth()),
+        BlocProvider<PlayerSelectionCubit>(create: (_) => PlayerSelectionCubit()),
+        BlocProvider<HomeCubit>(create: (_) => HomeCubit(homeRepository)..initialize()),
+        BlocProvider<PlayersCubit>(create: (_) => PlayersCubit(playerRepository)),
       ],
       child: _AppView(dynamicLightColor: dynamicLightColor, dynamicDarkColor: dynamicDarkColor),
     );
@@ -84,20 +97,19 @@ class _AppView extends StatelessWidget {
 class _RootShell extends StatelessWidget {
   const _RootShell();
 
-  static const List<Widget> _tabs = <Widget>[
-    HomeTab(),
-    PlaceholderTab(title: 'Players', description: 'Player profiles, career stats, and trends.'),
-    TeamsTab(),
-    PlaceholderTab(title: 'Games', description: 'Schedules, matchups, and game details.'),
-    PlaceholderTab(title: 'More', description: 'More baseball tools and extras.'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final tabIndex = context.watch<NavigationCubit>().state;
+    final tabs = <Widget>[
+      const HomeTab(),
+      const PlayersTab(),
+      const TeamsTab(),
+      const PlaceholderTab(title: 'Games', description: 'Schedules, matchups, and game details.'),
+      const PlaceholderTab(title: 'More', description: 'More baseball tools and extras.'),
+    ];
 
     return Scaffold(
-      body: IndexedStack(index: tabIndex, children: _tabs),
+      body: IndexedStack(index: tabIndex, children: tabs),
       bottomNavigationBar: NavigationBar(
         selectedIndex: tabIndex,
         destinations: const <NavigationDestination>[

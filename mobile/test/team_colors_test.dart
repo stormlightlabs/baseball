@@ -13,4 +13,10 @@ void main() {
     expect(cubs!.primaryHex, '#0E3386');
     expect(teamPrimaryColor('CHC'), isNotNull);
   });
+
+  test('legacy team codes normalize to modern team colors', () {
+    expect(normalizeMlbTeamCode('NYA'), 'NYY');
+    expect(normalizeMlbTeamCode('CAL'), 'LAA');
+    expect(teamPrimaryColor('SFN'), isNotNull);
+  });
 }

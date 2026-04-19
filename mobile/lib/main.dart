@@ -1,7 +1,8 @@
 import 'package:bigfly_mobile/app/app.dart';
 import 'package:bigfly_mobile/data/local/cache_store.dart';
-import 'package:bigfly_mobile/data/network/bigfly_api.dart';
-import 'package:bigfly_mobile/data/repositories/health_repository.dart';
+import 'package:bigfly_mobile/data/network/baseball_api_client.dart';
+import 'package:bigfly_mobile/data/repositories/home_repository.dart';
+import 'package:bigfly_mobile/data/repositories/player_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -16,10 +17,12 @@ Future<void> main() async {
 
   final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 5), receiveTimeout: const Duration(seconds: 5)));
 
-  final api = BigFlyApi(dio, baseUrl: _resolveBaseUrl());
-  final healthRepository = ApiHealthRepository(api, cacheStore);
+  dio.options.baseUrl = _resolveBaseUrl();
+  final apiClient = BaseballApiClient(dio);
+  final homeRepository = ApiHomeRepository(apiClient);
+  final playerRepository = ApiPlayerRepository(apiClient, cacheStore);
 
-  runApp(BigFlyApp(cacheStore: cacheStore, healthRepository: healthRepository));
+  runApp(BigFlyApp(cacheStore: cacheStore, homeRepository: homeRepository, playerRepository: playerRepository));
 }
 
 String _resolveBaseUrl() {

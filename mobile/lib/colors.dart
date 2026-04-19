@@ -41,11 +41,12 @@ enum MlbTeam {
   Color get primaryColor => colorFromHex(primaryHex);
 
   static MlbTeam? fromCode(String? code) {
-    if (code == null) {
+    final normalized = normalizeMlbTeamCode(code);
+    if (normalized == null) {
       return null;
     }
     for (final team in MlbTeam.values) {
-      if (team.code == code) {
+      if (team.code == normalized) {
         return team;
       }
     }
@@ -58,6 +59,43 @@ final Map<String, String> mlbTeamPrimaryHex = Map<String, String>.unmodifiable(<
 });
 
 Color? teamPrimaryColor(String? teamCode) => MlbTeam.fromCode(teamCode)?.primaryColor;
+
+const Map<String, String> _teamCodeAliases = <String, String>{
+  'ANA': 'LAA',
+  'CAL': 'LAA',
+  'CHA': 'CWS',
+  'CHN': 'CHC',
+  'CLN': 'CLE',
+  'FLO': 'MIA',
+  'KCA': 'KC',
+  'KCN': 'KC',
+  'LAN': 'LAD',
+  'BRO': 'LAD',
+  'MON': 'WSH',
+  'NYA': 'NYY',
+  'NYN': 'NYM',
+  'PHA': 'ATH',
+  'OAK': 'ATH',
+  'SDN': 'SD',
+  'SFN': 'SF',
+  'SLN': 'STL',
+  'TBA': 'TB',
+  'TBD': 'TB',
+  'WAS': 'WSH',
+  'WSN': 'WSH',
+};
+
+String? normalizeMlbTeamCode(String? rawTeamCode) {
+  if (rawTeamCode == null || rawTeamCode.isEmpty) {
+    return null;
+  }
+
+  final code = rawTeamCode.trim().toUpperCase();
+  if (mlbTeamPrimaryHex.containsKey(code)) {
+    return code;
+  }
+  return _teamCodeAliases[code];
+}
 
 Color colorFromHex(String hexColor) {
   final normalized = hexColor.replaceFirst('#', '');
