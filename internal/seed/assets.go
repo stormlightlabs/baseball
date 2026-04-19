@@ -10,12 +10,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"stormlightlabs.org/baseball/internal/echo"
 )
 
 // FetchRetrosheetData downloads Retrosheet archives needed by the ETL pipeline.
-func FetchRetrosheetData(_ context.Context, dataDir string, years []int, force bool) error {
+func FetchRetrosheetData(ctx context.Context, dataDir string, years []int, force bool) error {
 	if dataDir == "" {
 		dataDir = filepath.Join("data", "retrosheet")
 	}
@@ -34,18 +35,33 @@ func FetchRetrosheetData(_ context.Context, dataDir string, years []int, force b
 		}
 	}
 
-	for _, year := range years {
+	totalYears := len(years)
+	echo.Infof("Preparing Retrosheet archives for %d year(s)...", totalYears)
+	for i, year := range years {
+		gameStatus := "cached"
+		playsStatus := "cached"
+
 		gamelogFile := filepath.Join(gameLogsDir, fmt.Sprintf("GL%d.zip", year))
 		gamelogURL := fmt.Sprintf("https://www.retrosheet.org/gamelogs/gl%d.zip", year)
-		if err := downloadIfNeeded(gamelogURL, gamelogFile, force); err != nil {
+		downloaded, err := downloadIfNeeded(ctx, gamelogURL, gamelogFile, force)
+		if err != nil {
+			gameStatus = "failed"
 			echo.Infof("  ⚠ Retrosheet game log download failed for %d: %v", year, err)
+		} else if downloaded {
+			gameStatus = "downloaded"
 		}
 
 		playsFile := filepath.Join(playsDir, fmt.Sprintf("%dplays.zip", year))
 		playsURL := fmt.Sprintf("https://www.retrosheet.org/downloads/plays/%dplays.zip", year)
-		if err := downloadIfNeeded(playsURL, playsFile, force); err != nil {
+		downloaded, err = downloadIfNeeded(ctx, playsURL, playsFile, force)
+		if err != nil {
+			playsStatus = "failed"
 			echo.Infof("  ⚠ Retrosheet plays download failed for %d: %v", year, err)
+		} else if downloaded {
+			playsStatus = "downloaded"
 		}
+
+		echo.Infof("  [%d/%d] %d: gamelog=%s plays=%s", i+1, totalYears, year, gameStatus, playsStatus)
 	}
 
 	downloads := []struct {
@@ -60,8 +76,15 @@ func FetchRetrosheetData(_ context.Context, dataDir string, years []int, force b
 	}
 
 	for _, file := range downloads {
-		if err := downloadIfNeeded(file.url, file.destPath, force); err != nil {
+		downloaded, err := downloadIfNeeded(ctx, file.url, file.destPath, force)
+		if err != nil {
 			echo.Infof("  ⚠ Download failed for %s: %v", filepath.Base(file.destPath), err)
+			continue
+		}
+		if downloaded {
+			echo.Infof("  ✓ Downloaded %s", filepath.Base(file.destPath))
+		} else {
+			echo.Infof("  ✓ Using cached %s", filepath.Base(file.destPath))
 		}
 	}
 
@@ -79,7 +102,7 @@ func FetchRetrosheetData(_ context.Context, dataDir string, years []int, force b
 }
 
 // FetchNegroLeaguesData downloads and extracts the Retrosheet Negro Leagues archive.
-func FetchNegroLeaguesData(_ context.Context, dataDir string, force bool) error {
+func FetchNegroLeaguesData(ctx context.Context, dataDir string, force bool) error {
 	if dataDir == "" {
 		dataDir = filepath.Join("data", "retrosheet", "negroleagues")
 	}
@@ -88,7 +111,7 @@ func FetchNegroLeaguesData(_ context.Context, dataDir string, force bool) error 
 	}
 
 	zipPath := filepath.Join(dataDir, "negroleagues.zip")
-	if err := downloadIfNeeded("https://www.retrosheet.org/downloads/negroleagues.zip", zipPath, force); err != nil {
+	if _, err := downloadIfNeeded(ctx, "https://www.retrosheet.org/downloads/negroleagues.zip", zipPath, force); err != nil {
 		return err
 	}
 
@@ -214,18 +237,49 @@ func ExtractBiodataArchive(dataDir string) (string, func(), error) {
 	return tmpDir, cleanup, nil
 }
 
-func downloadIfNeeded(url, destPath string, force bool) error {
+func downloadIfNeeded(ctx context.Context, url, destPath string, force bool) (bool, error) {
 	if !force {
 		if _, err := os.Stat(destPath); err == nil {
-			return nil
+			return false, nil
 		}
 	}
 
 	if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+		return false, err
+	}
+
+	const maxAttempts = 3
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		if err := downloadToFile(ctx, url, destPath); err == nil {
+			return true, nil
+		} else {
+			lastErr = err
+		}
+
+		if attempt == maxAttempts {
+			break
+		}
+
+		backoff := time.Duration(attempt*attempt) * time.Second
+		select {
+		case <-ctx.Done():
+			return false, ctx.Err()
+		case <-time.After(backoff):
+		}
+	}
+
+	return false, fmt.Errorf("download failed after %d attempts for %s: %w", maxAttempts, url, lastErr)
+}
+
+func downloadToFile(ctx context.Context, url, destPath string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
 		return err
 	}
 
-	resp, err := http.Get(url)
+	client := &http.Client{Timeout: 5 * time.Minute}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -241,8 +295,11 @@ func downloadIfNeeded(url, destPath string, force bool) error {
 	}
 	defer out.Close()
 
-	_, err = io.Copy(out, resp.Body)
-	return err
+	if _, err = io.Copy(out, resp.Body); err != nil {
+		_ = os.Remove(destPath)
+		return err
+	}
+	return nil
 }
 
 func extractZipEntry(zipPath, entryName, destPath string) error {
