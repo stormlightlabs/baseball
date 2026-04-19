@@ -1,6 +1,7 @@
 import 'package:bigfly_mobile/app/app.dart';
 import 'package:bigfly_mobile/core/data/local/cache_store.dart';
 import 'package:bigfly_mobile/core/data/network/baseball_api_client.dart';
+import 'package:bigfly_mobile/features/games/data/repositories/game_repository.dart';
 import 'package:bigfly_mobile/features/home/data/repositories/home_repository.dart';
 import 'package:bigfly_mobile/features/players/data/repositories/player_repository.dart';
 import 'package:bigfly_mobile/features/teams/data/repositories/team_repository.dart';
@@ -23,6 +24,7 @@ Future<void> main() async {
   final homeRepository = ApiHomeRepository(apiClient);
   final playerRepository = ApiPlayerRepository(apiClient, cacheStore);
   final teamRepository = ApiTeamRepository(apiClient);
+  final gameRepository = ApiGameRepository(apiClient);
 
   runApp(
     BigFlyApp(
@@ -30,6 +32,7 @@ Future<void> main() async {
       homeRepository: homeRepository,
       playerRepository: playerRepository,
       teamRepository: teamRepository,
+      gameRepository: gameRepository,
     ),
   );
 }

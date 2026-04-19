@@ -11,6 +11,7 @@ void main() {
         homeRepository: FakeHomeRepository(),
         playerRepository: FakePlayerRepository(),
         teamRepository: FakeTeamRepository(),
+        gameRepository: FakeGameRepository(),
         useDynamicColor: false,
       ),
     );
@@ -42,6 +43,7 @@ void main() {
         homeRepository: FakeHomeRepository(),
         playerRepository: FakePlayerRepository(),
         teamRepository: FakeTeamRepository(detailError: Exception('boom')),
+        gameRepository: FakeGameRepository(),
         useDynamicColor: false,
       ),
     );

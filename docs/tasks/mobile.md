@@ -50,9 +50,9 @@ Acceptance:
 
 ### Games
 
-- [ ] Filter strip: season, team, quick chips (Extra innings, Doubleheaders, Postseason).
-- [ ] Expandable game cards with score, metadata, and detail panel.
-- [ ] Win probability bar visualization.
+- [x] Filter strip: season, team, quick chips (Extra innings, Doubleheaders, Postseason).
+- [x] Expandable game cards with score, metadata, and detail panel.
+- [x] Win probability bar visualization.
 
 ### Seasons, Leaders, Compare, Data Sources
 

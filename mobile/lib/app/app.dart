@@ -3,6 +3,8 @@ import 'package:bigfly_mobile/app/shell/root_shell.dart';
 import 'package:bigfly_mobile/app/theme/app_typography.dart';
 import 'package:bigfly_mobile/app/theme/theme_cubit.dart';
 import 'package:bigfly_mobile/core/data/local/cache_store.dart';
+import 'package:bigfly_mobile/features/games/application/games_cubit.dart';
+import 'package:bigfly_mobile/features/games/data/repositories/game_repository.dart';
 import 'package:bigfly_mobile/features/home/application/home_cubit.dart';
 import 'package:bigfly_mobile/features/home/data/repositories/home_repository.dart';
 import 'package:bigfly_mobile/features/players/application/player_selection_cubit.dart';
@@ -21,6 +23,7 @@ class BigFlyApp extends StatelessWidget {
     required this.homeRepository,
     required this.playerRepository,
     required this.teamRepository,
+    required this.gameRepository,
     this.useDynamicColor = true,
   });
 
@@ -28,6 +31,7 @@ class BigFlyApp extends StatelessWidget {
   final HomeRepository homeRepository;
   final PlayerRepository playerRepository;
   final TeamRepository teamRepository;
+  final GameRepository gameRepository;
   final bool useDynamicColor;
 
   @override
@@ -51,6 +55,7 @@ class BigFlyApp extends StatelessWidget {
         BlocProvider<HomeCubit>(create: (_) => HomeCubit(homeRepository)..initialize()),
         BlocProvider<PlayersCubit>(create: (_) => PlayersCubit(playerRepository)),
         BlocProvider<TeamsCubit>(create: (_) => TeamsCubit(teamRepository)),
+        BlocProvider<GamesCubit>(create: (_) => GamesCubit(gameRepository)),
       ],
       child: _AppView(dynamicLightColor: dynamicLightColor, dynamicDarkColor: dynamicDarkColor),
     );

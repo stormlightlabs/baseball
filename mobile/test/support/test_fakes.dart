@@ -1,4 +1,6 @@
 import 'package:bigfly_mobile/core/data/local/cache_store.dart';
+import 'package:bigfly_mobile/features/games/data/models/game_models.dart';
+import 'package:bigfly_mobile/features/games/data/repositories/game_repository.dart';
 import 'package:bigfly_mobile/features/home/application/home_types.dart';
 import 'package:bigfly_mobile/features/home/data/models/meta_models.dart';
 import 'package:bigfly_mobile/features/home/data/repositories/home_repository.dart';
@@ -209,6 +211,69 @@ class FakeTeamRepository implements TeamRepository {
   }
 }
 
+class FakeGameRepository implements GameRepository {
+  FakeGameRepository({
+    this.seasons,
+    this.teams,
+    this.games,
+    this.seasonsError,
+    this.teamsError,
+    this.gamesError,
+    this.detailError,
+    Map<String, GameCardDetail>? gameDetails,
+  }) : gameDetails = gameDetails ?? <String, GameCardDetail>{defaultGames.first.id: defaultGameDetail};
+
+  final List<int>? seasons;
+  final List<GameTeamOption>? teams;
+  final List<GameSummaryRecord>? games;
+  final Object? seasonsError;
+  final Object? teamsError;
+  final Object? gamesError;
+  final Object? detailError;
+  final Map<String, GameCardDetail> gameDetails;
+
+  int? lastRequestedSeason;
+  String? lastRequestedTeamId;
+  String? lastRequestedDetailGameId;
+
+  @override
+  Future<List<int>> listAvailableSeasons() async {
+    if (seasonsError != null) {
+      throw seasonsError!;
+    }
+    return seasons ?? defaultGameSeasons;
+  }
+
+  @override
+  Future<List<GameTeamOption>> listTeamsForSeason(int season) async {
+    if (teamsError != null) {
+      throw teamsError!;
+    }
+    lastRequestedSeason = season;
+    return teams ?? defaultGameTeams;
+  }
+
+  @override
+  Future<GameListResponse> fetchGames({required int season, String? teamId, int perPage = 120}) async {
+    if (gamesError != null) {
+      throw gamesError!;
+    }
+    lastRequestedSeason = season;
+    lastRequestedTeamId = teamId;
+    final rows = games ?? defaultGames;
+    return GameListResponse(games: rows, total: rows.length);
+  }
+
+  @override
+  Future<GameCardDetail> fetchGameDetail(GameSummaryRecord game) async {
+    if (detailError != null) {
+      throw detailError!;
+    }
+    lastRequestedDetailGameId = game.id;
+    return gameDetails[game.id] ?? defaultGameDetail;
+  }
+}
+
 final MetaSnapshot defaultMetaSnapshot = MetaSnapshot(
   version: '1.0.0',
   generatedAt: DateTime.parse('2026-04-18T00:00:00Z'),
@@ -360,4 +425,68 @@ final TeamDetailBundle defaultTeamDetail = TeamDetailBundle(
     games: <RunDifferentialGamePoint>[RunDifferentialGamePoint(date: null, differential: 3, cumulativeDiff: 3)],
   ),
   themeTeamCode: 'NYY',
+);
+
+const List<int> defaultGameSeasons = <int>[2025, 2024, 2023];
+
+const List<GameTeamOption> defaultGameTeams = <GameTeamOption>[
+  GameTeamOption(teamId: 'CHN', name: 'Chicago Cubs'),
+  GameTeamOption(teamId: 'SLN', name: 'St. Louis Cardinals'),
+];
+
+final List<GameSummaryRecord> defaultGames = <GameSummaryRecord>[
+  GameSummaryRecord(
+    id: '199809270SLN',
+    season: 1998,
+    date: DateTime.parse('1998-09-27'),
+    awayTeam: 'CHN',
+    homeTeam: 'SLN',
+    awayScore: 3,
+    homeScore: 6,
+    innings: 9,
+    attendance: 47994,
+    durationMin: 178,
+    parkName: 'Busch Stadium',
+    isPostseason: false,
+  ),
+  GameSummaryRecord(
+    id: '199807121BOS',
+    season: 1998,
+    date: DateTime.parse('1998-07-12'),
+    awayTeam: 'NYA',
+    homeTeam: 'BOS',
+    awayScore: 5,
+    homeScore: 4,
+    innings: 14,
+    attendance: 33871,
+    durationMin: 205,
+    parkName: 'Fenway Park',
+    isPostseason: false,
+  ),
+];
+
+const GameCardDetail defaultGameDetail = GameCardDetail(
+  awayWinProbability: 0.35,
+  homeWinProbability: 0.65,
+  keyPlays: <GameEvent>[
+    GameEvent(playNum: 12, inning: 3, topBot: 1, scoreVis: 1, scoreHome: 1, event: 'Sosa homers to left.', runs: 1),
+    GameEvent(
+      playNum: 24,
+      inning: 5,
+      topBot: 1,
+      scoreVis: 2,
+      scoreHome: 2,
+      event: 'McGwire homers to center.',
+      runs: 1,
+    ),
+    GameEvent(
+      playNum: 33,
+      inning: 7,
+      topBot: 1,
+      scoreVis: 3,
+      scoreHome: 5,
+      event: 'McGwire doubles home two runs.',
+      runs: 2,
+    ),
+  ],
 );

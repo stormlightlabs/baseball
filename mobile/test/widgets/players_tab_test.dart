@@ -13,6 +13,7 @@ void main() {
         homeRepository: FakeHomeRepository(),
         playerRepository: FakePlayerRepository(),
         teamRepository: FakeTeamRepository(),
+        gameRepository: FakeGameRepository(),
         useDynamicColor: false,
       ),
     );
@@ -39,6 +40,7 @@ void main() {
           ],
         ),
         teamRepository: FakeTeamRepository(),
+        gameRepository: FakeGameRepository(),
         useDynamicColor: false,
       ),
     );

@@ -67,6 +67,38 @@ class BaseballApiClient {
     query: <String, dynamic>{'season': season, 'windows': windows.join(',')},
   );
 
+  Future<Map<String, dynamic>> getSeasonTeams({required int year, int page = 1, int perPage = 50}) =>
+      _getMap('/api/v1/seasons/$year/teams', query: <String, dynamic>{'page': page, 'per_page': perPage});
+
+  Future<Map<String, dynamic>> getGames({
+    required int season,
+    String? homeTeam,
+    String? awayTeam,
+    String? parkId,
+    String? dateFrom,
+    String? dateTo,
+    int page = 1,
+    int perPage = 120,
+  }) => _getMap(
+    '/api/v1/games',
+    query: <String, dynamic>{
+      'season': season,
+      if (homeTeam != null && homeTeam.isNotEmpty) 'home_team': homeTeam,
+      if (awayTeam != null && awayTeam.isNotEmpty) 'away_team': awayTeam,
+      if (parkId != null && parkId.isNotEmpty) 'park_id': parkId,
+      if (dateFrom != null && dateFrom.isNotEmpty) 'date_from': dateFrom,
+      if (dateTo != null && dateTo.isNotEmpty) 'date_to': dateTo,
+      'page': page,
+      'per_page': perPage,
+    },
+  );
+
+  Future<Map<String, dynamic>> getGameEvents(String gameId, {int page = 1, int perPage = 200}) =>
+      _getMap('/api/v1/games/$gameId/events', query: <String, dynamic>{'page': page, 'per_page': perPage});
+
+  Future<Map<String, dynamic>> getGameWinProbabilitySummary(String gameId) =>
+      _getMap('/api/v1/games/$gameId/win-probability/summary');
+
   Future<Map<String, dynamic>> _getMap(String path, {Map<String, dynamic>? query}) async {
     final response = await _dio.get<dynamic>(path, queryParameters: query);
     final data = response.data;
