@@ -141,9 +141,9 @@
 </script>
 
 {#if franchiseResource.loading}
-  <p class="mt-4 font-mono text-[0.78rem] text-muted">Loading…</p>
+  <p class="mt-4 font-mono text-xs text-muted">Loading…</p>
 {:else if franchiseResource.error}
-  <p class="mt-4 font-mono text-[0.78rem] text-warning">{franchiseResource.error}</p>
+  <p class="mt-4 font-mono text-xs text-warning">{franchiseResource.error}</p>
 {:else if franchiseResource.value}
   <div class="rounded-lg border border-outline bg-crust p-4">
     <div class="panel-label mb-3">Franchise</div>
@@ -209,24 +209,25 @@
         <EraDisclaimer eras={franchiseEras} message={comparisonGapMessage} />
       </div>
     {/if}
-
-    <p class="mt-4 border-t border-outline pt-3 font-mono text-[0.68rem] text-muted">
-      Use <code>franchise_id</code> for <code>/api/v1/franchises/{'{id}'}</code>; use <code>team_id</code> for
-      <code>/api/v1/teams/{'{id}'}</code> and <code>/api/v1/seasons/{'{year}'}/teams/{'{team_id}'}/…</code>.
-    </p>
   </div>
 
   {#if year}
     <div class="mt-4 rounded-lg border border-outline bg-crust p-4">
-      <div class="mb-3 flex items-center gap-2">
-        <div class="panel-label">{year} Season</div>
-        {#if seasonEra}<EraBadge era={seasonEra} size="xs" />{/if}
+      <div class="panel-label">
+        <div class="flex items-center justify-between">
+          <span>
+            {year} season
+          </span>
+          <span>
+            Era: {#if seasonEra}<EraBadge era={seasonEra} size="xs" />{/if}
+          </span>
+        </div>
       </div>
 
       {#if seasonResource.loading}
-        <p class="font-mono text-[0.78rem] text-muted">Loading season data…</p>
+        <p class="font-mono text-xs text-muted">Loading season data…</p>
       {:else if seasonResource.error}
-        <p class="font-mono text-[0.78rem] text-warning">{seasonResource.error}</p>
+        <p class="font-mono text-xs text-warning">{seasonResource.error}</p>
       {:else if seasonResource.value}
         <div class="grid grid-cols-2 gap-x-6 gap-y-2 font-mono text-xs">
           <div>
@@ -271,12 +272,12 @@
           {/if}
         </div>
       {:else}
-        <p class="font-mono text-[0.78rem] text-muted">No season data found for {year}.</p>
+        <p class="font-mono text-xs text-muted">No season data found for {year}.</p>
       {/if}
     </div>
   {:else}
     <div class="mt-4 rounded-lg border border-outline bg-crust p-4">
-      <p class="font-mono text-[0.78rem] text-muted">Enter a season year in the sidebar to view team-season details.</p>
+      <p class="font-mono text-xs text-muted">Enter a year in the sidebar to view team-season details.</p>
     </div>
   {/if}
 {/if}

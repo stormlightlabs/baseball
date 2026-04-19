@@ -131,7 +131,7 @@
     const overrides: Record<string, string> = {};
     if (q.trim()) overrides.q = q.trim();
     if (year) overrides.year = year;
-    const franchiseLookupId = nextFranchiseId?.trim() || franchiseId.trim();
+    const franchiseLookupId = nextFranchiseId?.trim();
     if (franchiseLookupId) overrides.franchise_id = franchiseLookupId;
     const qs = new URLSearchParams(overrides).toString();
     return qs ? `?${qs}` : '';
@@ -264,12 +264,17 @@
     {#if searchResource.items.length > 0}
       <div class="mt-4 panel-label">Results</div>
       <div class="flex flex-col gap-0.5">
-        {#each searchResource.items as result (result.id)}
+        <!-- TODO: we need to append the year as well -->
+        {#each searchResource.items as result, idx (`${result.id}:${result.franchise_id ?? ''}:${result.year ?? ''}:${idx}`)}
+          {@const isMatch =
+            teamId === result.id &&
+            year === (result.year ?? '').toString() &&
+            franchiseId === (result.franchise_id ?? '')}
           <a
             href={resolve(
               `/teams/${encodeURIComponent(result.id)}/overview${teamQuerySuffix(result.franchise_id)}` as `/teams/${string}/overview`
             )}
-            class="rounded-md px-3 py-2 text-left no-underline transition-colors hover:bg-surface {teamId === result.id
+            class="rounded-md px-3 py-2 text-left no-underline transition-colors hover:bg-surface {isMatch
               ? 'bg-surface'
               : ''}">
             <div class="font-display text-[0.8rem] text-foreground">{result.name}</div>
@@ -289,7 +294,7 @@
       {:else if franchisesResource.items.length > 0}
         <div class="mt-4 panel-label">All Franchises</div>
         <div class="flex flex-col gap-0.5">
-          {#each franchisesResource.items as franchise (franchise.id)}
+          {#each franchisesResource.items as franchise (`${franchise.id}:${franchise.team_id}`)}
             <a
               href={resolve(
                 `/teams/${encodeURIComponent(franchise.id)}/overview${teamQuerySuffix(franchise.id)}` as `/teams/${string}/overview`
