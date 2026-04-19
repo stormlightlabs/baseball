@@ -1,16 +1,13 @@
 import 'package:bigfly_mobile/app/navigation/navigation_cubit.dart';
+import 'package:bigfly_mobile/app/shell/root_shell.dart';
 import 'package:bigfly_mobile/app/theme/app_typography.dart';
 import 'package:bigfly_mobile/app/theme/theme_cubit.dart';
-import 'package:bigfly_mobile/data/local/cache_store.dart';
-import 'package:bigfly_mobile/data/repositories/home_repository.dart';
-import 'package:bigfly_mobile/data/repositories/player_repository.dart';
-import 'package:bigfly_mobile/features/home/home_cubit.dart';
-import 'package:bigfly_mobile/features/home/home_tab.dart';
-import 'package:bigfly_mobile/features/players/player_selection_cubit.dart';
-import 'package:bigfly_mobile/features/players/players_cubit.dart';
-import 'package:bigfly_mobile/features/players/players_tab.dart';
-import 'package:bigfly_mobile/features/shared/placeholder_tab.dart';
-import 'package:bigfly_mobile/features/teams/teams_tab.dart';
+import 'package:bigfly_mobile/core/data/local/cache_store.dart';
+import 'package:bigfly_mobile/features/home/application/home_cubit.dart';
+import 'package:bigfly_mobile/features/home/data/repositories/home_repository.dart';
+import 'package:bigfly_mobile/features/players/application/player_selection_cubit.dart';
+import 'package:bigfly_mobile/features/players/application/players_cubit.dart';
+import 'package:bigfly_mobile/features/players/data/repositories/player_repository.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -80,7 +77,7 @@ class _AppView extends StatelessWidget {
       themeMode: ThemeMode.dark,
       theme: _buildTheme(lightScheme),
       darkTheme: _buildTheme(darkScheme),
-      home: const _RootShell(),
+      home: const RootShell(),
     );
   }
 
@@ -90,41 +87,6 @@ class _AppView extends StatelessWidget {
     return base.copyWith(
       textTheme: buildAppTextTheme(base.textTheme),
       extensions: <ThemeExtension<dynamic>>[AppTypography.fallback(colorScheme)],
-    );
-  }
-}
-
-class _RootShell extends StatelessWidget {
-  const _RootShell();
-
-  @override
-  Widget build(BuildContext context) {
-    final tabIndex = context.watch<NavigationCubit>().state;
-    final tabs = <Widget>[
-      const HomeTab(),
-      const PlayersTab(),
-      const TeamsTab(),
-      const PlaceholderTab(title: 'Games', description: 'Schedules, matchups, and game details.'),
-      const PlaceholderTab(title: 'More', description: 'More baseball tools and extras.'),
-    ];
-
-    return Scaffold(
-      body: IndexedStack(index: tabIndex, children: tabs),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: tabIndex,
-        destinations: const <NavigationDestination>[
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Players'),
-          NavigationDestination(icon: Icon(Icons.shield_outlined), selectedIcon: Icon(Icons.shield), label: 'Teams'),
-          NavigationDestination(
-            icon: Icon(Icons.sports_baseball_outlined),
-            selectedIcon: Icon(Icons.sports_baseball),
-            label: 'Games',
-          ),
-          NavigationDestination(icon: Icon(Icons.more_horiz), selectedIcon: Icon(Icons.more), label: 'More'),
-        ],
-        onDestinationSelected: context.read<NavigationCubit>().setIndex,
-      ),
     );
   }
 }

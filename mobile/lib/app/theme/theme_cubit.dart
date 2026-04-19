@@ -1,5 +1,5 @@
 import 'package:bigfly_mobile/colors.dart';
-import 'package:bigfly_mobile/data/local/cache_store.dart';
+import 'package:bigfly_mobile/core/data/local/cache_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

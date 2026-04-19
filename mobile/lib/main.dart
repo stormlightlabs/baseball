@@ -1,8 +1,8 @@
 import 'package:bigfly_mobile/app/app.dart';
-import 'package:bigfly_mobile/data/local/cache_store.dart';
-import 'package:bigfly_mobile/data/network/baseball_api_client.dart';
-import 'package:bigfly_mobile/data/repositories/home_repository.dart';
-import 'package:bigfly_mobile/data/repositories/player_repository.dart';
+import 'package:bigfly_mobile/core/data/local/cache_store.dart';
+import 'package:bigfly_mobile/core/data/network/baseball_api_client.dart';
+import 'package:bigfly_mobile/features/home/data/repositories/home_repository.dart';
+import 'package:bigfly_mobile/features/players/data/repositories/player_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';

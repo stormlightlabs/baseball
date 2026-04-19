@@ -1,7 +1,10 @@
+import 'package:bigfly_mobile/app/navigation/navigation_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class NavigationCubit extends Cubit<int> {
-  NavigationCubit() : super(0);
+class NavigationCubit extends Cubit<NavigationState> {
+  NavigationCubit() : super(const NavigationState.initial());
 
-  void setIndex(int index) => emit(index);
+  void setTab(AppTab tab) => emit(state.copyWith(tab: tab));
+
+  void setIndex(int index) => setTab(appTabFromIndex(index));
 }
