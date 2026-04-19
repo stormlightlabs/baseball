@@ -269,22 +269,38 @@ func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir strin
 		SELECT
 			s.mlbam_id,
 			CASE
-				WHEN p_retro."playerID" IS NOT NULL AND p_bbref."playerID" IS NOT NULL AND p_retro."playerID" <> p_bbref."playerID" THEN NULL
-				ELSE COALESCE(p_retro."playerID", p_bbref."playerID")
-			END as lahman_id,
+				WHEN COALESCE(cardinality(r.retro_matches), 0) > 1 THEN NULL
+				WHEN COALESCE(cardinality(b.bbref_matches), 0) > 1 THEN NULL
+				WHEN COALESCE(cardinality(r.retro_matches), 0) = 1
+					AND COALESCE(cardinality(b.bbref_matches), 0) = 1
+					AND r.retro_matches[1] <> b.bbref_matches[1] THEN NULL
+				ELSE COALESCE(r.retro_matches[1], b.bbref_matches[1])
+			END AS lahman_id,
 			s.retro_id,
 			s.bbref_id,
 			s.full_name,
 			'chadwick',
 			CASE
-				WHEN p_retro."playerID" IS NOT NULL AND p_bbref."playerID" IS NOT NULL AND p_retro."playerID" <> p_bbref."playerID" THEN 'none'
-				WHEN COALESCE(p_retro."playerID", p_bbref."playerID") IS NOT NULL THEN 'high'
+				WHEN COALESCE(cardinality(r.retro_matches), 0) > 1 THEN 'none'
+				WHEN COALESCE(cardinality(b.bbref_matches), 0) > 1 THEN 'none'
+				WHEN COALESCE(cardinality(r.retro_matches), 0) = 1
+					AND COALESCE(cardinality(b.bbref_matches), 0) = 1
+					AND r.retro_matches[1] <> b.bbref_matches[1] THEN 'none'
+				WHEN COALESCE(r.retro_matches[1], b.bbref_matches[1]) IS NOT NULL THEN 'high'
 				ELSE 'none'
 			END,
 			NOW()
 		FROM chadwick_player_stage s
-		LEFT JOIN "People" p_retro ON s.retro_id IS NOT NULL AND p_retro."retroID" = s.retro_id
-		LEFT JOIN "People" p_bbref ON s.bbref_id IS NOT NULL AND p_bbref."bbrefID" = s.bbref_id
+		LEFT JOIN LATERAL (
+			SELECT ARRAY_AGG(DISTINCT p."playerID") FILTER (WHERE p."playerID" IS NOT NULL) AS retro_matches
+			FROM "People" p
+			WHERE s.retro_id IS NOT NULL AND p."retroID" = s.retro_id
+		) r ON TRUE
+		LEFT JOIN LATERAL (
+			SELECT ARRAY_AGG(DISTINCT p."playerID") FILTER (WHERE p."playerID" IS NOT NULL) AS bbref_matches
+			FROM "People" p
+			WHERE s.bbref_id IS NOT NULL AND p."bbrefID" = s.bbref_id
+		) b ON TRUE
 	`)
 	if err != nil {
 		return 0, fmt.Errorf("failed to build player_mlbam_map: %w", err)
