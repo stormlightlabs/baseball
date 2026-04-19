@@ -239,14 +239,14 @@ Ref: `docs/designs/compare.html`
 
 Ref: `docs/designs/docs.html`
 
-- [ ] Install and configure mdsvex in the SvelteKit project.
-- [ ] Add `docs/` as a source directory for mdsvex pre-rendering (copy or symlink `docs/*.md` into the SvelteKit source tree, or configure mdsvex glob to reach them).
-- [ ] Generate a static route per doc file: `/docs/[slug]` from each `*.md` filename.
-- [ ] Build three-column docs layout (`/docs/+layout.svelte`): sidebar nav, center prose outlet, right TOC.
-- [ ] Left sidebar: grouped doc list (API Reference / Data & Architecture / Project) with search filter.
-- [ ] Right column: on-this-page TOC extracted from rendered heading tree at build time.
-- [ ] Apply prose stylesheet matching dark dashboard theme (headings, tables, code blocks, inline code).
-- [ ] Redirect `/docs` to first doc (e.g. `/docs/README` or `/docs/api-players`).
+- [x] Install and configure mdsvex in the SvelteKit project.
+- [x] Add `docs/` as a source directory for mdsvex pre-rendering (copy or symlink `docs/*.md` into the SvelteKit source tree, or configure mdsvex glob to reach them).
+- [x] Generate a static route per doc file: `/docs/[slug]` from each `*.md` filename.
+- [x] Build three-column docs layout (`/docs/+layout.svelte`): sidebar nav, center prose outlet, right TOC.
+- [x] Left sidebar: grouped doc list (API Reference / Data & Architecture / Project) with search filter.
+- [x] Right column: on-this-page TOC extracted from rendered heading tree at build time.
+- [x] Apply prose stylesheet matching dark dashboard theme (headings, tables, code blocks, inline code).
+- [x] Redirect `/docs` to first doc (e.g. `/docs/README` or `/docs/api-players`).
 
 ## Data Sources (`/data`)
 
@@ -276,17 +276,17 @@ Ref: `docs/designs/data-sources.html`
 
 ### Home: Live Scoreboard
 
-- [ ] Create `ScoreboardStrip` component:
+- [x] Create `ScoreboardStrip` component:
   - Horizontal scrollable row of compact game cards.
   - Each card: away/home team abbreviations, scores, inning/status, team color accents.
   - LIVE badge with CSS animation on in-progress games.
   - "No games today" empty state with next game date.
-- [ ] Fetch from `GET /api/internal/scoreboard?date={today}`.
-- [ ] Auto-refresh via `setInterval` (60s) when `games_in_progress > 0` & tab is focused; clear interval when all final.
+- [x] Fetch from `GET /v1/mlb/schedule?date={today}&hydrate=linescore,team` (proxy-first implementation for live scoreboard).
+- [x] Auto-refresh via `setInterval` (30s) when `games_in_progress > 0` & tab is focused; clear interval when all final.
   - Refresh button
   - Pause auto-refresh toggle
-- [ ] Click game card → navigate to `/games` with Retrosheet game ID (if crosswalkable) or show inline MLB detail popover.
-- [ ] Add scoreboard strip to Home page above existing featured queries panel.
+- [x] Click game card → navigate to `/games` with Retrosheet game ID (if crosswalkable) or show inline MLB detail popover.
+- [x] Add scoreboard strip to Home page above existing featured queries panel.
 
 ### Home: Today's Leaders
 

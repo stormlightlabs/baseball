@@ -226,7 +226,8 @@ func (mr *MLBRoutes) handleMLBTeam(w http.ResponseWriter, r *http.Request) {
 //	@Param			teamId	query		string	false	"Team filter"
 //	@Param			season	query		string	false	"Season year"
 //	@Param			date	query		string	false	"Specific date (YYYY-MM-DD)"
-//	@Success		200		{object}	core.MLBScheduleResponse
+//	@Param			hydrate	query		string	false	"Hydrate payload sections (e.g. linescore,team)"
+//	@Success		200		{object}	map[string]any
 //	@Failure		500		{object}	ErrorResponse
 //	@Router			/mlb/schedule [get]
 func (mr *MLBRoutes) handleMLBSchedule(w http.ResponseWriter, r *http.Request) {
@@ -242,7 +243,7 @@ func (mr *MLBRoutes) handleMLBSchedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var result core.MLBScheduleResponse
+	var result map[string]any
 	if err := json.Unmarshal(body, &result); err != nil {
 		writeInternalServerError(w, fmt.Errorf("failed to parse MLB API response: %w", err))
 		return

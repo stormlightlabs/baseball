@@ -2546,13 +2546,20 @@ const docTemplate = `{
                         "description": "Specific date (YYYY-MM-DD)",
                         "name": "date",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Hydrate payload sections (e.g. linescore,team)",
+                        "name": "hydrate",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/core.MLBScheduleResponse"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "500": {
@@ -8098,7 +8105,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "coach_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "seasons": {
@@ -8146,7 +8152,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "manager_id": {
-                    "description": "Manager identifier",
                     "type": "string"
                 },
                 "seasons": {
@@ -8256,7 +8261,6 @@ const docTemplate = `{
                     }
                 },
                 "year": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 }
             }
@@ -8276,11 +8280,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "from": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 },
                 "to": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 }
             }
@@ -8398,7 +8400,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "pu": {
@@ -8418,7 +8419,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
+                    "description": "nil for multi-team lines",
                     "type": "string"
                 },
                 "triples": {
@@ -8502,7 +8503,6 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "r": {
@@ -8519,7 +8519,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "war": {
@@ -8603,7 +8602,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "description": "Award identifier",
                     "type": "string"
                 },
                 "name": {
@@ -8623,11 +8621,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "league": {
-                    "description": "League identifier (AL, NL, etc.)",
                     "type": "string"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "sb": {
@@ -8638,7 +8634,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 }
             }
@@ -8659,14 +8654,12 @@ const docTemplate = `{
                     "$ref": "#/definitions/core.TeamGameStats"
                 },
                 "away_team": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "date": {
                     "type": "string"
                 },
                 "game_id": {
-                    "description": "Retrosheet game identifier",
                     "type": "string"
                 },
                 "home_lineup": {
@@ -8682,7 +8675,6 @@ const docTemplate = `{
                     "$ref": "#/definitions/core.TeamGameStats"
                 },
                 "home_team": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 }
             }
@@ -8694,14 +8686,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "last_name": {
                     "type": "string"
                 },
                 "retro_id": {
-                    "description": "Retrosheet player identifier",
                     "type": "string"
                 }
             }
@@ -8716,22 +8706,18 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "retro_id": {
-                    "description": "Retrosheet player identifier",
                     "type": "string"
                 },
                 "role": {
                     "type": "string"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "year": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 }
             }
@@ -8740,11 +8726,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "coverage_from": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 },
                 "coverage_to": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 },
                 "healthy": {
@@ -8795,7 +8779,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "league": {
-                    "description": "League identifier (AL, NL, etc.)",
                     "type": "string"
                 },
                 "league_avg_rf": {
@@ -8803,7 +8786,6 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "position": {
@@ -8821,7 +8803,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 }
             }
@@ -8853,11 +8834,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "away_league": {
-                    "description": "League identifier (AL, NL, etc.)",
                     "type": "string"
                 },
                 "away_manager_id": {
-                    "description": "Manager identifier",
                     "type": "string"
                 },
                 "away_manager_name": {
@@ -8867,7 +8846,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "away_team": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "date": {
@@ -8891,11 +8869,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "home_league": {
-                    "description": "League identifier (AL, NL, etc.)",
                     "type": "string"
                 },
                 "home_manager_id": {
-                    "description": "Manager identifier",
                     "type": "string"
                 },
                 "home_manager_name": {
@@ -8905,11 +8881,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "home_team": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "id": {
-                    "description": "Retrosheet game identifier",
                     "type": "string"
                 },
                 "innings": {
@@ -8928,7 +8902,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "park_id": {
-                    "description": "Park identifier",
                     "type": "string"
                 },
                 "park_name": {
@@ -8948,7 +8921,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "season": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 },
                 "series_id": {
@@ -8967,42 +8939,36 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "ump_first": {
-                    "description": "Umpire identifier",
                     "type": "string"
                 },
                 "ump_first_name": {
                     "type": "string"
                 },
                 "ump_home": {
-                    "description": "Umpire identifier",
                     "type": "string"
                 },
                 "ump_home_name": {
                     "type": "string"
                 },
                 "ump_left": {
-                    "description": "Umpire identifier",
                     "type": "string"
                 },
                 "ump_left_name": {
                     "type": "string"
                 },
                 "ump_right": {
-                    "description": "Umpire identifier",
                     "type": "string"
                 },
                 "ump_right_name": {
                     "type": "string"
                 },
                 "ump_second": {
-                    "description": "Umpire identifier",
                     "type": "string"
                 },
                 "ump_second_name": {
                     "type": "string"
                 },
                 "ump_third": {
-                    "description": "Umpire identifier",
                     "type": "string"
                 },
                 "ump_third_name": {
@@ -9032,7 +8998,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "away_team": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "biggest_negative_swing": {
@@ -9042,11 +9007,9 @@ const docTemplate = `{
                     "$ref": "#/definitions/core.PlateAppearanceLeverage"
                 },
                 "game_id": {
-                    "description": "Retrosheet game identifier",
                     "type": "string"
                 },
                 "home_team": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "home_win_prob_end": {
@@ -9090,7 +9053,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "league": {
-                    "description": "League identifier (AL, NL, etc.)",
+                    "description": "AL or NL",
                     "type": "string"
                 },
                 "replacement_pa": {
@@ -9135,7 +9098,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "position": {
@@ -9210,26 +9172,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "core.MLBGame": {
-            "type": "object",
-            "properties": {
-                "gameDate": {
-                    "type": "string"
-                },
-                "gamePk": {
-                    "type": "integer"
-                },
-                "gameType": {
-                    "type": "string"
-                },
-                "link": {
-                    "type": "string"
-                },
-                "season": {
                     "type": "string"
                 }
             }
@@ -9456,62 +9398,6 @@ const docTemplate = `{
             "properties": {
                 "status": {
                     "type": "string"
-                }
-            }
-        },
-        "core.MLBScheduleDate": {
-            "type": "object",
-            "properties": {
-                "date": {
-                    "type": "string"
-                },
-                "events": {
-                    "type": "array",
-                    "items": {}
-                },
-                "games": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/core.MLBGame"
-                    }
-                },
-                "totalEvents": {
-                    "type": "integer"
-                },
-                "totalGames": {
-                    "type": "integer"
-                },
-                "totalGamesInProgress": {
-                    "type": "integer"
-                },
-                "totalItems": {
-                    "type": "integer"
-                }
-            }
-        },
-        "core.MLBScheduleResponse": {
-            "type": "object",
-            "properties": {
-                "copyright": {
-                    "type": "string"
-                },
-                "dates": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/core.MLBScheduleDate"
-                    }
-                },
-                "totalEvents": {
-                    "type": "integer"
-                },
-                "totalGames": {
-                    "type": "integer"
-                },
-                "totalGamesInProgress": {
-                    "type": "integer"
-                },
-                "totalItems": {
-                    "type": "integer"
                 }
             }
         },
@@ -9903,7 +9789,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "description": "Manager identifier",
                     "type": "string"
                 },
                 "last_game": {
@@ -9913,7 +9798,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "use_name": {
@@ -9931,21 +9815,18 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "manager_id": {
-                    "description": "Manager identifier",
                     "type": "string"
                 },
                 "rank": {
                     "type": "integer"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "w": {
                     "type": "integer"
                 },
                 "year": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 }
             }
@@ -9963,7 +9844,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "id": {
-                    "description": "Park identifier",
                     "type": "string"
                 },
                 "name": {
@@ -10090,7 +9970,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
+                    "description": "team playing at this park",
                     "type": "string"
                 }
             }
@@ -10106,7 +9986,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "batter_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "description": {
@@ -10118,7 +9997,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "game_id": {
-                    "description": "Retrosheet game identifier",
                     "type": "string"
                 },
                 "home_score_before": {
@@ -10135,7 +10013,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "pitcher_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "top_of_inning": {
@@ -10167,11 +10044,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "bat_team": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "batter": {
-                    "description": "Retrosheet player identifier",
                     "type": "string"
                 },
                 "batter_name": {
@@ -10188,7 +10063,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "game_id": {
-                    "description": "Retrosheet game identifier",
                     "type": "string"
                 },
                 "game_type": {
@@ -10220,11 +10094,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "pit_team": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "pitcher": {
-                    "description": "Retrosheet player identifier",
                     "type": "string"
                 },
                 "pitcher_name": {
@@ -10240,15 +10112,12 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "runner1_pre": {
-                    "description": "Retrosheet player identifier",
                     "type": "string"
                 },
                 "runner2_pre": {
-                    "description": "Retrosheet player identifier",
                     "type": "string"
                 },
                 "runner3_pre": {
-                    "description": "Retrosheet player identifier",
                     "type": "string"
                 },
                 "runs": {
@@ -10442,19 +10311,15 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "league": {
-                    "description": "League identifier (AL, NL, etc.)",
                     "type": "string"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "year": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 }
             }
@@ -10566,7 +10431,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "league": {
-                    "description": "League identifier (AL, NL, etc.)",
                     "type": "string"
                 },
                 "pb": {
@@ -10574,7 +10438,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "po": {
@@ -10590,11 +10453,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "year": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 }
             }
@@ -10635,11 +10496,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "wpa": {
@@ -10754,7 +10613,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "related_player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "related_retro_id": {
@@ -10769,22 +10627,18 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "league": {
-                    "description": "League identifier (AL, NL, etc.)",
                     "type": "string"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "salary": {
                     "type": "integer"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "year": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 }
             }
@@ -10799,22 +10653,18 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "league": {
-                    "description": "League identifier (AL, NL, etc.)",
                     "type": "string"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "team_name": {
                     "type": "string"
                 },
                 "year": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 }
             }
@@ -10843,7 +10693,6 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "player_id": {
-                    "description": "Lahman player identifier",
                     "type": "string"
                 },
                 "positional_runs": {
@@ -10853,7 +10702,6 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "team_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "war": {
@@ -10986,14 +10834,12 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "game_id": {
-                    "description": "Retrosheet game identifier",
                     "type": "string"
                 },
                 "home": {
                     "type": "boolean"
                 },
                 "opponent_id": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "runs_allowed": {
@@ -11076,7 +10922,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "end_game_id": {
-                    "description": "Retrosheet game identifier",
                     "type": "string"
                 },
                 "games_in_window": {
@@ -11107,7 +10952,6 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "year": {
-                    "description": "A baseball season year",
                     "type": "integer"
                 }
             }
@@ -11131,6 +10975,64 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "core.SplitDimension": {
+            "type": "string",
+            "enum": [
+                "home_away",
+                "batter_handed",
+                "pitcher_handed",
+                "month",
+                "batting_order",
+                "inning",
+                "day_night",
+                "before_after_asg",
+                "ground_balls_flys"
+            ],
+            "x-enum-comments": {
+                "SplitDimBatterHanded": "vs RHP/LHP by batter side",
+                "SplitDimBattingOrder": "lineup spot 1–9",
+                "SplitDimBeforeAfterASG": "before/after all-star break",
+                "SplitDimDayNight": "day vs night games",
+                "SplitDimGroundBallsFlys": "batted ball type",
+                "SplitDimHomeAway": "home vs away",
+                "SplitDimInning": "inning number",
+                "SplitDimMonth": "calendar or season month",
+                "SplitDimPitcherHanded": "pitcher side"
+            },
+            "x-enum-descriptions": [
+                "home vs away",
+                "vs RHP/LHP by batter side",
+                "pitcher side",
+                "calendar or season month",
+                "lineup spot 1–9",
+                "inning number",
+                "day vs night games",
+                "before/after all-star break",
+                "batted ball type"
+            ],
+            "x-enum-varnames": [
+                "SplitDimHomeAway",
+                "SplitDimBatterHanded",
+                "SplitDimPitcherHanded",
+                "SplitDimMonth",
+                "SplitDimBattingOrder",
+                "SplitDimInning",
+                "SplitDimDayNight",
+                "SplitDimBeforeAfterASG",
+                "SplitDimGroundBallsFlys"
+            ]
+        },
+        "core.SplitEntityType": {
+            "type": "string",
+            "enum": [
+                "player",
+                "team"
+            ],
+            "x-enum-varnames": [
+                "SplitEntityPlayer",
+                "SplitEntityTeam"
+            ]
         },
         "core.SplitGroup": {
             "type": "object",
@@ -11190,7 +11092,11 @@ const docTemplate = `{
             "properties": {
                 "dimension": {
                     "description": "home_away, month, etc.",
-                    "type": "string"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/core.SplitDimension"
+                        }
+                    ]
                 },
                 "entity_id": {
                     "description": "PlayerID or TeamID",
@@ -11198,7 +11104,11 @@ const docTemplate = `{
                 },
                 "entity_type": {
                     "description": "player or team",
-                    "type": "string"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/core.SplitEntityType"
+                        }
+                    ]
                 },
                 "groups": {
                     "description": "one per split bucket",
@@ -11216,7 +11126,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "league": {
-                    "description": "League identifier (AL, NL, etc.)",
+                    "description": "\"AL\",\"NL\", etc.",
                     "type": "string"
                 },
                 "park_neutral": {
@@ -11225,17 +11135,45 @@ const docTemplate = `{
                 },
                 "provider": {
                     "description": "fangraphs, bbref, internal",
-                    "type": "string"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/core.StatProvider"
+                        }
+                    ]
                 },
                 "regular_season": {
                     "description": "true = reg season, false = postseason/mix",
                     "type": "boolean"
                 },
                 "season": {
-                    "description": "A baseball season year",
+                    "description": "0 if multi-year or career",
                     "type": "integer"
                 }
             }
+        },
+        "core.StatProvider": {
+            "type": "string",
+            "enum": [
+                "unknown",
+                "fangraphs",
+                "baseball_reference",
+                "internal"
+            ],
+            "x-enum-comments": {
+                "StatProviderInternal": "your own"
+            },
+            "x-enum-descriptions": [
+                "",
+                "",
+                "",
+                "your own"
+            ],
+            "x-enum-varnames": [
+                "StatProviderUnknown",
+                "StatProviderFanGraphs",
+                "StatProviderBBRef",
+                "StatProviderInternal"
+            ]
         },
         "core.Streak": {
             "type": "object",
@@ -11244,7 +11182,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "end_game_id": {
-                    "description": "Retrosheet game identifier",
                     "type": "string"
                 },
                 "entity_id": {
@@ -11253,7 +11190,11 @@ const docTemplate = `{
                 },
                 "entity_type": {
                     "description": "player or team",
-                    "type": "string"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/core.StreakEntityType"
+                        }
+                    ]
                 },
                 "id": {
                     "description": "internal identifier for the streak",
@@ -11261,7 +11202,11 @@ const docTemplate = `{
                 },
                 "kind": {
                     "description": "hitting, scoreless_innings",
-                    "type": "string"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/core.StreakKind"
+                        }
+                    ]
                 },
                 "label": {
                     "description": "human-readable label",
@@ -11292,6 +11237,36 @@ const docTemplate = `{
                 }
             }
         },
+        "core.StreakEntityType": {
+            "type": "string",
+            "enum": [
+                "player",
+                "team"
+            ],
+            "x-enum-varnames": [
+                "StreakEntityPlayer",
+                "StreakEntityTeam"
+            ]
+        },
+        "core.StreakKind": {
+            "type": "string",
+            "enum": [
+                "hitting",
+                "scoreless_innings"
+            ],
+            "x-enum-comments": {
+                "StreakKindHitting": "Hitting streak: consecutive games with at least one hit.",
+                "StreakKindScorelessInnings": "Scoreless innings streak for a pitcher or team staff."
+            },
+            "x-enum-descriptions": [
+                "Hitting streak: consecutive games with at least one hit.",
+                "Scoreless innings streak for a pitcher or team staff."
+            ],
+            "x-enum-varnames": [
+                "StreakKindHitting",
+                "StreakKindScorelessInnings"
+            ]
+        },
         "core.StreakPoint": {
             "type": "object",
             "properties": {
@@ -11303,7 +11278,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "game_id": {
-                    "description": "Retrosheet game identifier",
                     "type": "string"
                 },
                 "h": {
@@ -11656,7 +11630,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "description": "Umpire identifier",
                     "type": "string"
                 },
                 "last_game": {
@@ -11797,15 +11770,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "away_team": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "game_id": {
-                    "description": "Retrosheet game identifier",
                     "type": "string"
                 },
                 "home_team": {
-                    "description": "Lahman team identifier (teamID). This can differ from franchiseID.",
                     "type": "string"
                 },
                 "points": {

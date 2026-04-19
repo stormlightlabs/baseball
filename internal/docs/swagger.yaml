@@ -59,7 +59,6 @@ definitions:
   api.CoachSeasonsResponse:
     properties:
       coach_id:
-        description: Lahman player identifier
         type: string
       seasons:
         items:
@@ -90,7 +89,6 @@ definitions:
   api.ManagerSeasonsResponse:
     properties:
       manager_id:
-        description: Manager identifier
         type: string
       seasons:
         items:
@@ -162,7 +160,6 @@ definitions:
           $ref: '#/definitions/core.PostseasonSeries'
         type: array
       year:
-        description: A baseball season year
         type: integer
     type: object
   api.SalarySummaryResponse:
@@ -175,10 +172,8 @@ definitions:
   api.datasetCoverage:
     properties:
       from:
-        description: A baseball season year
         type: integer
       to:
-        description: A baseball season year
         type: integer
     type: object
   api.metaResponse:
@@ -259,7 +254,6 @@ definitions:
       pa:
         type: integer
       player_id:
-        description: Lahman player identifier
         type: string
       pu:
         description: pop-ups
@@ -273,7 +267,7 @@ definitions:
       so:
         type: integer
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
+        description: nil for multi-team lines
         type: string
       triples:
         type: integer
@@ -333,7 +327,6 @@ definitions:
       k_per_9:
         type: number
       player_id:
-        description: Lahman player identifier
         type: string
       r:
         type: integer
@@ -345,7 +338,6 @@ definitions:
       so:
         type: integer
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       war:
         description: Total WAR from chosen provider (FG, BR, etc.).
@@ -401,7 +393,6 @@ definitions:
       description:
         type: string
       id:
-        description: Award identifier
         type: string
       name:
         type: string
@@ -415,10 +406,8 @@ definitions:
         description: caught stealing
         type: integer
       league:
-        description: League identifier (AL, NL, etc.)
         type: string
       player_id:
-        description: Lahman player identifier
         type: string
       sb:
         description: stolen bases
@@ -426,7 +415,6 @@ definitions:
       season:
         type: integer
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
     type: object
   core.Boxscore:
@@ -440,12 +428,10 @@ definitions:
       away_stats:
         $ref: '#/definitions/core.TeamGameStats'
       away_team:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       date:
         type: string
       game_id:
-        description: Retrosheet game identifier
         type: string
       home_lineup:
         items:
@@ -456,7 +442,6 @@ definitions:
       home_stats:
         $ref: '#/definitions/core.TeamGameStats'
       home_team:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
     type: object
   core.Coach:
@@ -464,12 +449,10 @@ definitions:
       first_name:
         type: string
       id:
-        description: Lahman player identifier
         type: string
       last_name:
         type: string
       retro_id:
-        description: Retrosheet player identifier
         type: string
     type: object
   core.CoachSeasonRecord:
@@ -479,27 +462,21 @@ definitions:
       last_game:
         type: string
       player_id:
-        description: Lahman player identifier
         type: string
       retro_id:
-        description: Retrosheet player identifier
         type: string
       role:
         type: string
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       year:
-        description: A baseball season year
         type: integer
     type: object
   core.DatasetStatus:
     properties:
       coverage_from:
-        description: A baseball season year
         type: integer
       coverage_to:
-        description: A baseball season year
         type: integer
       healthy:
         type: boolean
@@ -534,13 +511,11 @@ definitions:
         description: games at this position
         type: integer
       league:
-        description: League identifier (AL, NL, etc.)
         type: string
       league_avg_rf:
         description: league average RF for position
         type: number
       player_id:
-        description: Lahman player identifier
         type: string
       position:
         description: primary position
@@ -553,7 +528,6 @@ definitions:
       season:
         type: integer
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
     type: object
   core.Franchise:
@@ -574,17 +548,14 @@ definitions:
       attendance:
         type: integer
       away_league:
-        description: League identifier (AL, NL, etc.)
         type: string
       away_manager_id:
-        description: Manager identifier
         type: string
       away_manager_name:
         type: string
       away_score:
         type: integer
       away_team:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       date:
         type: string
@@ -601,20 +572,16 @@ definitions:
       game_in_series:
         type: integer
       home_league:
-        description: League identifier (AL, NL, etc.)
         type: string
       home_manager_id:
-        description: Manager identifier
         type: string
       home_manager_name:
         type: string
       home_score:
         type: integer
       home_team:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       id:
-        description: Retrosheet game identifier
         type: string
       innings:
         type: integer
@@ -627,7 +594,6 @@ definitions:
       park_city:
         type: string
       park_id:
-        description: Park identifier
         type: string
       park_name:
         type: string
@@ -641,7 +607,6 @@ definitions:
       save_pitcher_name:
         type: string
       season:
-        description: A baseball season year
         type: integer
       series_id:
         type: string
@@ -655,32 +620,26 @@ definitions:
         description: Temperature in Fahrenheit
         type: integer
       ump_first:
-        description: Umpire identifier
         type: string
       ump_first_name:
         type: string
       ump_home:
-        description: Umpire identifier
         type: string
       ump_home_name:
         type: string
       ump_left:
-        description: Umpire identifier
         type: string
       ump_left_name:
         type: string
       ump_right:
-        description: Umpire identifier
         type: string
       ump_right_name:
         type: string
       ump_second:
-        description: Umpire identifier
         type: string
       ump_second_name:
         type: string
       ump_third:
-        description: Umpire identifier
         type: string
       ump_third_name:
         type: string
@@ -701,17 +660,14 @@ definitions:
   core.GameWinProbabilitySummary:
     properties:
       away_team:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       biggest_negative_swing:
         $ref: '#/definitions/core.PlateAppearanceLeverage'
       biggest_positive_swing:
         $ref: '#/definitions/core.PlateAppearanceLeverage'
       game_id:
-        description: Retrosheet game identifier
         type: string
       home_team:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       home_win_prob_end:
         type: number
@@ -740,7 +696,7 @@ definitions:
   core.LeagueConstant:
     properties:
       league:
-        description: League identifier (AL, NL, etc.)
+        description: AL or NL
         type: string
       replacement_pa:
         description: replacement level runs per PA
@@ -772,7 +728,6 @@ definitions:
       name:
         type: string
       player_id:
-        description: Lahman player identifier
         type: string
       position:
         type: integer
@@ -821,19 +776,6 @@ definitions:
       link:
         type: string
       name:
-        type: string
-    type: object
-  core.MLBGame:
-    properties:
-      gameDate:
-        type: string
-      gamePk:
-        type: integer
-      gameType:
-        type: string
-      link:
-        type: string
-      season:
         type: string
     type: object
   core.MLBHandedness:
@@ -982,43 +924,6 @@ definitions:
     properties:
       status:
         type: string
-    type: object
-  core.MLBScheduleDate:
-    properties:
-      date:
-        type: string
-      events:
-        items: {}
-        type: array
-      games:
-        items:
-          $ref: '#/definitions/core.MLBGame'
-        type: array
-      totalEvents:
-        type: integer
-      totalGames:
-        type: integer
-      totalGamesInProgress:
-        type: integer
-      totalItems:
-        type: integer
-    type: object
-  core.MLBScheduleResponse:
-    properties:
-      copyright:
-        type: string
-      dates:
-        items:
-          $ref: '#/definitions/core.MLBScheduleDate'
-        type: array
-      totalEvents:
-        type: integer
-      totalGames:
-        type: integer
-      totalGamesInProgress:
-        type: integer
-      totalItems:
-        type: integer
     type: object
   core.MLBSeason:
     properties:
@@ -1274,14 +1179,12 @@ definitions:
       full_name:
         type: string
       id:
-        description: Manager identifier
         type: string
       last_game:
         type: string
       last_name:
         type: string
       player_id:
-        description: Lahman player identifier
         type: string
       use_name:
         type: string
@@ -1293,17 +1196,14 @@ definitions:
       l:
         type: integer
       manager_id:
-        description: Manager identifier
         type: string
       rank:
         type: integer
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       w:
         type: integer
       year:
-        description: A baseball season year
         type: integer
     type: object
   core.Park:
@@ -1315,7 +1215,6 @@ definitions:
       end_year:
         type: integer
       id:
-        description: Park identifier
         type: string
       name:
         type: string
@@ -1407,7 +1306,7 @@ definitions:
       season:
         type: integer
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
+        description: team playing at this park
         type: string
     type: object
   core.PlateAppearanceLeverage:
@@ -1418,7 +1317,6 @@ definitions:
         description: '"100", "011", etc.'
         type: string
       batter_id:
-        description: Lahman player identifier
         type: string
       description:
         description: Result summary.
@@ -1427,7 +1325,6 @@ definitions:
         description: index within game
         type: integer
       game_id:
-        description: Retrosheet game identifier
         type: string
       home_score_before:
         type: integer
@@ -1439,7 +1336,6 @@ definitions:
       outs_before:
         type: integer
       pitcher_id:
-        description: Lahman player identifier
         type: string
       top_of_inning:
         type: boolean
@@ -1461,10 +1357,8 @@ definitions:
       bat_hand:
         type: string
       bat_team:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       batter:
-        description: Retrosheet player identifier
         type: string
       batter_name:
         type: string
@@ -1476,7 +1370,6 @@ definitions:
         description: The play description
         type: string
       game_id:
-        description: Retrosheet game identifier
         type: string
       game_type:
         type: string
@@ -1498,10 +1391,8 @@ definitions:
       pit_hand:
         type: string
       pit_team:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       pitcher:
-        description: Retrosheet player identifier
         type: string
       pitcher_name:
         type: string
@@ -1512,13 +1403,10 @@ definitions:
       rbi:
         type: integer
       runner1_pre:
-        description: Retrosheet player identifier
         type: string
       runner2_pre:
-        description: Retrosheet player identifier
         type: string
       runner3_pre:
-        description: Retrosheet player identifier
         type: string
       runs:
         type: integer
@@ -1654,16 +1542,12 @@ definitions:
       gs:
         type: integer
       league:
-        description: League identifier (AL, NL, etc.)
         type: string
       player_id:
-        description: Lahman player identifier
         type: string
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       year:
-        description: A baseball season year
         type: integer
     type: object
   core.PlayerBattingSeason:
@@ -1738,13 +1622,11 @@ definitions:
         description: or innings * 3
         type: integer
       league:
-        description: League identifier (AL, NL, etc.)
         type: string
       pb:
         description: catchers
         type: integer
       player_id:
-        description: Lahman player identifier
         type: string
       po:
         type: integer
@@ -1755,10 +1637,8 @@ definitions:
       sb:
         type: integer
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       year:
-        description: A baseball season year
         type: integer
     type: object
   core.PlayerLeverageSummary:
@@ -1787,10 +1667,8 @@ definitions:
         description: 0.85 <= LI <= 2.0
         type: integer
       player_id:
-        description: Lahman player identifier
         type: string
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       wpa:
         type: number
@@ -1867,7 +1745,6 @@ definitions:
       related_last_name:
         type: string
       related_player_id:
-        description: Lahman player identifier
         type: string
       related_retro_id:
         type: string
@@ -1877,18 +1754,14 @@ definitions:
   core.PlayerSalary:
     properties:
       league:
-        description: League identifier (AL, NL, etc.)
         type: string
       player_id:
-        description: Lahman player identifier
         type: string
       salary:
         type: integer
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       year:
-        description: A baseball season year
         type: integer
     type: object
   core.PlayerTeamSeason:
@@ -1898,18 +1771,14 @@ definitions:
       games_started:
         type: integer
       league:
-        description: League identifier (AL, NL, etc.)
         type: string
       player_id:
-        description: Lahman player identifier
         type: string
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       team_name:
         type: string
       year:
-        description: A baseball season year
         type: integer
     type: object
   core.PlayerWARSummary:
@@ -1929,14 +1798,12 @@ definitions:
         description: Alternate view for pitchers.
         type: number
       player_id:
-        description: Lahman player identifier
         type: string
       positional_runs:
         type: number
       replacement_runs:
         type: number
       team_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       war:
         description: Total WAR (position-player + pitcher if two-way).
@@ -2025,12 +1892,10 @@ definitions:
         description: single-game RS - RA
         type: integer
       game_id:
-        description: Retrosheet game identifier
         type: string
       home:
         type: boolean
       opponent_id:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       runs_allowed:
         type: integer
@@ -2088,7 +1953,6 @@ definitions:
         description: YYYY-MM-DD
         type: string
       end_game_id:
-        description: Retrosheet game identifier
         type: string
       games_in_window:
         type: integer
@@ -2109,7 +1973,6 @@ definitions:
       total:
         type: number
       year:
-        description: A baseball season year
         type: integer
     type: object
   core.Season:
@@ -2125,6 +1988,56 @@ definitions:
       year:
         type: integer
     type: object
+  core.SplitDimension:
+    enum:
+    - home_away
+    - batter_handed
+    - pitcher_handed
+    - month
+    - batting_order
+    - inning
+    - day_night
+    - before_after_asg
+    - ground_balls_flys
+    type: string
+    x-enum-comments:
+      SplitDimBatterHanded: vs RHP/LHP by batter side
+      SplitDimBattingOrder: lineup spot 1–9
+      SplitDimBeforeAfterASG: before/after all-star break
+      SplitDimDayNight: day vs night games
+      SplitDimGroundBallsFlys: batted ball type
+      SplitDimHomeAway: home vs away
+      SplitDimInning: inning number
+      SplitDimMonth: calendar or season month
+      SplitDimPitcherHanded: pitcher side
+    x-enum-descriptions:
+    - home vs away
+    - vs RHP/LHP by batter side
+    - pitcher side
+    - calendar or season month
+    - lineup spot 1–9
+    - inning number
+    - day vs night games
+    - before/after all-star break
+    - batted ball type
+    x-enum-varnames:
+    - SplitDimHomeAway
+    - SplitDimBatterHanded
+    - SplitDimPitcherHanded
+    - SplitDimMonth
+    - SplitDimBattingOrder
+    - SplitDimInning
+    - SplitDimDayNight
+    - SplitDimBeforeAfterASG
+    - SplitDimGroundBallsFlys
+  core.SplitEntityType:
+    enum:
+    - player
+    - team
+    type: string
+    x-enum-varnames:
+    - SplitEntityPlayer
+    - SplitEntityTeam
   core.SplitGroup:
     properties:
       ab:
@@ -2164,14 +2077,16 @@ definitions:
   core.SplitResult:
     properties:
       dimension:
+        allOf:
+        - $ref: '#/definitions/core.SplitDimension'
         description: home_away, month, etc.
-        type: string
       entity_id:
         description: PlayerID or TeamID
         type: string
       entity_type:
+        allOf:
+        - $ref: '#/definitions/core.SplitEntityType'
         description: player or team
-        type: string
       groups:
         description: one per split bucket
         items:
@@ -2183,40 +2098,61 @@ definitions:
   core.StatContext:
     properties:
       league:
-        description: League identifier (AL, NL, etc.)
+        description: '"AL","NL", etc.'
         type: string
       park_neutral:
         description: already park-adjusted?
         type: boolean
       provider:
+        allOf:
+        - $ref: '#/definitions/core.StatProvider'
         description: fangraphs, bbref, internal
-        type: string
       regular_season:
         description: true = reg season, false = postseason/mix
         type: boolean
       season:
-        description: A baseball season year
+        description: 0 if multi-year or career
         type: integer
     type: object
+  core.StatProvider:
+    enum:
+    - unknown
+    - fangraphs
+    - baseball_reference
+    - internal
+    type: string
+    x-enum-comments:
+      StatProviderInternal: your own
+    x-enum-descriptions:
+    - ""
+    - ""
+    - ""
+    - your own
+    x-enum-varnames:
+    - StatProviderUnknown
+    - StatProviderFanGraphs
+    - StatProviderBBRef
+    - StatProviderInternal
   core.Streak:
     properties:
       end_date:
         type: string
       end_game_id:
-        description: Retrosheet game identifier
         type: string
       entity_id:
         description: PlayerID or TeamID (as string)
         type: string
       entity_type:
+        allOf:
+        - $ref: '#/definitions/core.StreakEntityType'
         description: player or team
-        type: string
       id:
         description: internal identifier for the streak
         type: string
       kind:
+        allOf:
+        - $ref: '#/definitions/core.StreakKind'
         description: hitting, scoreless_innings
-        type: string
       label:
         description: human-readable label
         type: string
@@ -2241,6 +2177,28 @@ definitions:
           $ref: '#/definitions/core.StreakPoint'
         type: array
     type: object
+  core.StreakEntityType:
+    enum:
+    - player
+    - team
+    type: string
+    x-enum-varnames:
+    - StreakEntityPlayer
+    - StreakEntityTeam
+  core.StreakKind:
+    enum:
+    - hitting
+    - scoreless_innings
+    type: string
+    x-enum-comments:
+      StreakKindHitting: 'Hitting streak: consecutive games with at least one hit.'
+      StreakKindScorelessInnings: Scoreless innings streak for a pitcher or team staff.
+    x-enum-descriptions:
+    - 'Hitting streak: consecutive games with at least one hit.'
+    - Scoreless innings streak for a pitcher or team staff.
+    x-enum-varnames:
+    - StreakKindHitting
+    - StreakKindScorelessInnings
   core.StreakPoint:
     properties:
       ab:
@@ -2249,7 +2207,6 @@ definitions:
         description: YYYY-MM-DD
         type: string
       game_id:
-        description: Retrosheet game identifier
         type: string
       h:
         type: integer
@@ -2484,7 +2441,6 @@ definitions:
       first_name:
         type: string
       id:
-        description: Umpire identifier
         type: string
       last_game:
         type: string
@@ -2583,13 +2539,10 @@ definitions:
   core.WinProbabilityCurve:
     properties:
       away_team:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       game_id:
-        description: Retrosheet game identifier
         type: string
       home_team:
-        description: Lahman team identifier (teamID). This can differ from franchiseID.
         type: string
       points:
         description: One point per play/event, ordered by EventIndex ascending.
@@ -4357,13 +4310,18 @@ paths:
         in: query
         name: date
         type: string
+      - description: Hydrate payload sections (e.g. linescore,team)
+        in: query
+        name: hydrate
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/core.MLBScheduleResponse'
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
           schema:

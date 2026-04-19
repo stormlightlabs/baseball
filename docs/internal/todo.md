@@ -20,6 +20,8 @@ Mobile needs a way to handle CORS from the backend.
 
 ## Web
 
+System health should actually display Database & API health.
+
 This might be applicable to the API as well: we should normalize era labels such that
 they're not abbreviated. This could be under `/meta`
 

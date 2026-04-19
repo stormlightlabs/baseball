@@ -6,6 +6,7 @@
   import CoverageBar from '$lib/components/CoverageBar.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
   import Pill from '$lib/components/Pill.svelte';
+  import ScoreboardStrip from '$lib/components/ScoreboardStrip.svelte';
   import SearchInput from '$lib/components/SearchInput.svelte';
   import { STATIC_ERAS } from '$lib/eras';
   import {
@@ -185,6 +186,10 @@
     </div>
   </section>
 
+  <section class="mx-auto max-w-6xl px-8 pb-6">
+    <ScoreboardStrip />
+  </section>
+
   <div class="mx-auto max-w-6xl px-8 pb-6">
     <div class="grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-outline">
       <div class="bg-crust p-5">
@@ -283,13 +288,13 @@
             <div>
               <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">datasets</div>
               <div class="font-mono text-sm text-foreground">
-                {meta.healthyDatasetCount}/{meta.datasets.length || '—'} healthy
+                {meta.healthyDatasetCount}/{meta.datasets.length || '-'} healthy
               </div>
             </div>
             <div>
               <div class="mb-0.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">required</div>
               <div class="font-mono text-sm text-foreground">
-                {meta.requiredHealthyCount}/{meta.requiredDatasets.length || '—'} healthy
+                {meta.requiredHealthyCount}/{meta.requiredDatasets.length || '-'} healthy
               </div>
             </div>
             <div>
