@@ -12,6 +12,8 @@ import (
 	"slices"
 	"strings"
 
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"stormlightlabs.org/baseball/internal/echo"
 )
 
@@ -175,18 +177,9 @@ func cloneDataSnapshotRepo(ctx context.Context, repoURL, ref string) (string, fu
 	cleanup := func() { _ = os.RemoveAll(tmpDir) }
 	targetDir := filepath.Join(tmpDir, "repo")
 
-	args := []string{"clone", "--depth", "1"}
-	if ref != "" {
-		args = append(args, "--branch", ref)
-	}
-	args = append(args, repoURL, targetDir)
-
-	cloneCmd := exec.CommandContext(ctx, "git", args...)
-	cloneCmd.Env = append(os.Environ(), "GIT_LFS_SKIP_SMUDGE=1")
-	cloneOutput, err := cloneCmd.CombinedOutput()
-	if err != nil {
+	if err := cloneWithGoGit(ctx, repoURL, ref, targetDir); err != nil {
 		cleanup()
-		return "", nil, fmt.Errorf("failed to clone %s: %w\n%s", repoURL, err, strings.TrimSpace(string(cloneOutput)))
+		return "", nil, err
 	}
 
 	lfsCmd := exec.CommandContext(ctx, "git", "-C", targetDir, "lfs", "pull")
@@ -209,6 +202,92 @@ func cloneDataSnapshotRepo(ctx context.Context, repoURL, ref string) (string, fu
 	}
 
 	return targetDir, cleanup, nil
+}
+
+func cloneWithGoGit(ctx context.Context, repoURL, ref, targetDir string) error {
+	if ref == "" {
+		_, err := git.PlainCloneContext(ctx, targetDir, false, &git.CloneOptions{
+			URL:   repoURL,
+			Depth: 1,
+			Tags:  git.NoTags,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to clone %s: %w", repoURL, err)
+		}
+		return nil
+	}
+
+	if looksLikeCommitHash(ref) {
+		repo, err := git.PlainCloneContext(ctx, targetDir, false, &git.CloneOptions{
+			URL:        repoURL,
+			NoCheckout: true,
+			Tags:       git.NoTags,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to clone %s for commit checkout %q: %w", repoURL, ref, err)
+		}
+
+		worktree, err := repo.Worktree()
+		if err != nil {
+			return fmt.Errorf("failed to get worktree for %s: %w", repoURL, err)
+		}
+		if err := worktree.Checkout(&git.CheckoutOptions{
+			Hash:  plumbing.NewHash(ref),
+			Force: true,
+		}); err != nil {
+			return fmt.Errorf("failed to checkout %s at commit %q: %w", repoURL, ref, err)
+		}
+		return nil
+	}
+
+	referenceNames := []plumbing.ReferenceName{}
+	if strings.HasPrefix(ref, "refs/") {
+		referenceNames = append(referenceNames, plumbing.ReferenceName(ref))
+	} else {
+		referenceNames = append(referenceNames,
+			plumbing.NewBranchReferenceName(ref),
+			plumbing.NewTagReferenceName(ref),
+		)
+	}
+
+	errs := make([]string, 0, len(referenceNames))
+	for _, referenceName := range referenceNames {
+		tagsMode := git.NoTags
+		if strings.HasPrefix(referenceName.String(), "refs/tags/") {
+			tagsMode = git.AllTags
+		}
+
+		_ = os.RemoveAll(targetDir)
+		_, err := git.PlainCloneContext(ctx, targetDir, false, &git.CloneOptions{
+			URL:           repoURL,
+			Depth:         1,
+			SingleBranch:  true,
+			ReferenceName: referenceName,
+			Tags:          tagsMode,
+		})
+		if err == nil {
+			return nil
+		}
+		errs = append(errs, fmt.Sprintf("%s: %v", referenceName, err))
+	}
+
+	return fmt.Errorf("failed to clone %s at ref %q: %s", repoURL, ref, strings.Join(errs, "; "))
+}
+
+func looksLikeCommitHash(ref string) bool {
+	if len(ref) != 40 {
+		return false
+	}
+	for _, ch := range ref {
+		switch {
+		case ch >= '0' && ch <= '9':
+		case ch >= 'a' && ch <= 'f':
+		case ch >= 'A' && ch <= 'F':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func hasGitLFSPointers(root string) (bool, error) {

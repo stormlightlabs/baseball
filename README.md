@@ -32,7 +32,9 @@ The CLI handles ETL, database, and server operations so you can rebuild the stac
 
 ```bash
 task build
+task build:etl
 ./tmp/baseball --help
+./tmp/baseball-etl --help
 ```
 
 ### Complete Slice Loading
@@ -43,35 +45,11 @@ Dataset root resolution for `etl` and `db` commands:
 
 1. `--data-root`
 2. `BASEBALL_DATA_ROOT`
-3. `tools/data`
+3. `tools/data` (if present, e.g. bind-mounted snapshot workspace)
 4. legacy `data`
 
-The standalone `baseball-data` scaffold lives at `tools/data`
-(`uv run --project tools/data baseball-data <sync|build|verify>`).
-
-### Data Warehouse Sync (`tools/data`)
-
-When snapshot content changes, update and push `tools/data` first, then bump the
-submodule pointer in this repo.
-
-```bash
-# 1) Update data repo
-cd tools/data
-git pull
-git lfs install
-uv run baseball-data sync
-uv run baseball-data build
-uv run baseball-data verify
-git add .
-git commit -m "Sync snapshot data"
-git push
-
-# 2) Bump submodule pointer in parent repo
-cd ../..
-git add tools/data .gitmodules
-git commit -m "Bump tools/data submodule"
-git push
-```
+Snapshot data is not vendored as a git submodule. ETL can auto-clone the
+snapshot repo into a temporary directory when required files are missing.
 
 Quick local example for a complete representative slice:
 
@@ -79,16 +57,16 @@ Quick local example for a complete representative slice:
 cp conf/conf.example.toml conf.toml
 ./tmp/baseball db recreate --config conf.toml
 ./tmp/baseball db migrate --config conf.toml
-./tmp/baseball etl --profile=dev
-./tmp/baseball etl validate --profile=dev
-./tmp/baseball etl status
+./tmp/baseball-etl run --profile=dev
+./tmp/baseball-etl validate --profile=dev
+./tmp/baseball-etl status
 ```
 
 For large Retrosheet slices, keep migration and recomputation separate:
 
 ```bash
 ./tmp/baseball db migrate --config conf.toml
-./tmp/baseball etl --profile=dev --years=2023-2025
+./tmp/baseball-etl run --profile=dev --years=2023-2025
 ./tmp/baseball db refresh-views player_game_batting_stats player_game_pitching_stats player_game_fielding_stats team_game_stats
 ./tmp/baseball db refresh-views no_hitters cycles multi_hr_games triple_plays extra_inning_games
 ./tmp/baseball db refresh-views season_batting_leaders season_pitching_leaders career_batting_leaders career_pitching_leaders
@@ -97,13 +75,13 @@ For large Retrosheet slices, keep migration and recomputation separate:
 
 `db migrate` is structural/idempotent; treat materialized view refresh as an explicit incremental operation.
 
-`./tmp/baseball etl run` is an explicit alias for `./tmp/baseball etl`.
+`./tmp/baseball-etl run` is the canonical full ETL entrypoint.
 
 For exhaustive production-style ingestion:
 
 ```bash
-./tmp/baseball etl --profile=prod --mode=full
-./tmp/baseball etl validate --profile=prod
+./tmp/baseball-etl run --profile=prod --mode=full
+./tmp/baseball-etl validate --profile=prod
 ```
 
 Retrosheet `--era` values: `fed`, `nlg`, `boomer`, `pitcher`, `turf`, `steroid`, `moneyball`, `statcast`, `modern`.
@@ -114,7 +92,7 @@ It also accepts `--data-root` when snapshots are mounted/cloned outside defaults
 Automatic snapshot bootstrap (when default `tools/data` is empty/incomplete):
 
 ```bash
-./tmp/baseball etl --profile=prod --mode=full
+./tmp/baseball-etl run --profile=prod --mode=full
 ```
 
 When required files are missing under `tools/data` (or `/home/app/tools/data` in Docker),

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"stormlightlabs.org/baseball/commands"
+	cli "stormlightlabs.org/baseball/internal/cli"
 )
 
 func main() {
-	if err := commands.NewETLRootCmd().Execute(); err != nil {
+	if err := cli.NewETLRootCmd().Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}

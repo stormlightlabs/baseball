@@ -5,7 +5,7 @@ updated: 2026-04-20
 
 ## Problem
 
-The current system runs API and ETL from the same `baseball` CLI/runtime. In practice, ETL is executed inside the `app` container (`docker compose exec app baseball etl ...`), so API traffic and ETL contend for:
+The current deployment topology still runs API and ETL from the same container runtime. In practice, ETL is commonly executed inside the `app` container (`docker compose exec app baseball-etl ...`), so API traffic and ETL contend for:
 
 - CPU and memory
 - DB pool capacity (`DB_MAX_OPEN_CONNS` is shared)
@@ -20,6 +20,7 @@ This is the main operational risk for performance-sensitive runs.
 - `plays` is already date-partitioned by migration; `games` is not partitioned.
 - Force reload path is year-bounded and transaction-scoped per year (already hardened).
 - Materialized views are still globally refreshed in ETL pipeline steps (non-concurrent by default in ETL).
+- Snapshot data is no longer vendored as a git submodule; ETL bootstraps from `BASEBALL_DATA_REPO_URL` when local defaults are incomplete.
 - Compose has no dedicated ETL service today (`app`, `postgres`, `redis`, optional `caddy` only).
 
 ## Design Decisions
@@ -56,10 +57,11 @@ Key rules:
 
 Introduce a dedicated ETL executable while preserving shared packages:
 
-- New entrypoint: `cli/etl/main.go`
+- New entrypoint: `cmd/baseball-etl/main.go`
 - Binary name: `baseball-etl`
 - Command surface: `run`, `validate`, `status`, `fetch`, `load`
-- Keep existing `baseball` binary unchanged for API/server workflows
+- Command implementation package: `internal/cli`
+- Keep existing `baseball` binary for API/server/db/cache workflows until ETL surface removal is completed
 
 This is a runtime split, not a logic rewrite. `internal/seed` remains the orchestration core.
 

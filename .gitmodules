@@ -1,3 +1,0 @@
-[submodule "tools/data"]
-	path = tools/data
-	url = https://github.com/stormlightlabs/bigflydata.git
