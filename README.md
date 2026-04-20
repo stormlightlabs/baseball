@@ -144,464 +144,57 @@ Think of `baseball server fetch` as a built-in, auth-aware `curl`. It:
 
 ### HTTP API
 
-The REST API lives at `/v1` (or the host/port defined in `conf.toml`). Interactive Swagger UI is served by the API binary at `/v1/docs/` for request/response schemas.
-
-<details>
-<summary>
-Endpoints
-</summary>
-
-- **Authentication**: API keys (`Authorization: Bearer sk_...`) or OAuth session tokens from the web account page; start the server with `--debug` while iterating locally to skip auth.
-- **Health**: `GET /v1/health` is a liveness probe, while `GET /v1/ready`
-  mirrors what `baseball server health` checks for dataset readiness.
-- **Primary resources**:
-  - `/v1/players`
-  - `/v1/teams`
-  - `/v1/stats`
-  - `/v1/games`
-  - `/v1/plays`
-  - `/v1/awards`
-  - `/v1/postseason`
-  - `/v1/allstar`
-  - `/v1/managers`
-  - `/v1/parks`
-  - `/v1/umpires`
-  - `/v1/ejections`
-  - `/v1/pitches`
-- **Other**:
-  - `/v1/meta` (dataset refresh metadata)
-  - `/v1/search/*` for fuzzy finding &. natural-language lookup.
-- **Authentication flows**:
-  - `/v1/auth/github` and `/v1/auth/codeberg` drive OAuth
-  - `/account` in the web app lets you mint API keys after login.
-
-</details>
-
-<details>
-<summary>
-Examples
-</summary>
-
-```bash
-# Query players with fuzzy matching
-curl "/v1/players?name=babe%20ruth&season=1927"
-
-# Inspect a specific team season
-curl "/v1/teams/NYY?year=2024"
-
-# Fetch postseason metadata and recent plays
-curl "/v1/postseason/series?year=2024"
-curl "/v1/plays?game_id=NYN202410010"
-
-# Retrieve dataset refresh info
-curl "/v1/meta/datasets"
-```
-
-</details>
+The REST API lives at `/v1` (or the host/port defined in `conf.toml`), covering players, teams, stats, games, events, pitches, search, metadata, and auth.
 
 ### Pitch-Level Data
 
-Query individual pitches derived from Retrosheet play-by-play pitch sequences. Each pitch includes the count, pitch type, and full game context.
-
-**Endpoint:** `GET /v1/pitches`
-
-<details>
-<summary>
-Examples
-</summary>
-
-```bash
-# Get all pitches from a specific pitcher
-curl "/v1/pitches?pitcher=darvy001&per_page=50"
-
-# Find all 3-2 count pitches
-curl "/v1/pitches?ball_count=3&strike_count=2"
-
-# Get only balls in play
-curl "/v1/pitches?pitch_type=X"
-
-# Filter by matchup
-curl "/v1/pitches?pitcher=darvy001&batter=ohtas001"
-
-# Get all pitches from a game
-curl "/v1/games/SDN202403200/pitches"
-
-# Get pitches from a specific plate appearance
-curl "/v1/games/SDN202403200/plays/1/pitches"
-```
-
-</details>
-
-<details>
-<summary>
-Params
-</summary>
-
-- `batter` - Retrosheet batter ID
-- `pitcher` - Retrosheet pitcher ID
-- `bat_team` - Batting team ID
-- `pit_team` - Pitching team ID
-- `date` - Game date (YYYYMMDD)
-- `date_from` / `date_to` - Date range (YYYYMMDD)
-- `inning` - Inning number
-- `pitch_type` - Pitch type code (B, C, F, S, X, etc.)
-- `ball_count` - Filter by ball count (0-3)
-- `strike_count` - Filter by strike count (0-2)
-- `is_in_play` - Only pitches in play (X)
-- `is_strike` - Only strikes
-- `is_ball` - Only balls
-
-</details>
-
-See [pitching](./docs/pitches.md) for implementation details
+Query individual pitches derived from Retrosheet sequences, including count state and game context.
+See [Pitch-Level API docs](./web/src/routes/docs/api-pitches.md) and [Pitch sequencing internals](./web/src/routes/docs/pitches.md).
 
 ### Derived & Advanced Analytics
 
-Access advanced baseball analytics computed from play-by-play data. These endpoints provide streaks, run differential analysis, and win probability curves.
-
-#### Player Streaks
-
-Track hitting streaks or scoreless innings streaks for players.
-
-**Endpoint:** `GET /v1/players/{player_id}/streaks`
-
-<details>
-<summary>
-Params
-</summary>
-
-- `kind` (required) - Streak type: `hitting` or `scoreless_innings`
-- `season` (required) - Season year (e.g., `2024`)
-- `min_length` (optional) - Minimum streak length (default: `5`)
-
-</details>
-
-<details>
-<summary>
-Examples
-</summary>
-
-```bash
-# Find hitting streaks of 10+ games for a player in 2024
-curl "/v1/players/reynb001/streaks?kind=hitting&season=2024&min_length=10"
-
-# Find scoreless innings streaks of 15+ innings for a pitcher
-curl "/v1/players/flord002/streaks?kind=scoreless_innings&season=2024&min_length=15"
-```
-
-Response includes streak metadata with start/end dates, game IDs, and length.
-
-</details>
-
-#### Team Run Differential
-
-Analyze season run differential with per-game details and rolling windows.
-
-**Endpoint:** `GET /v1/teams/{team_id}/run-differential`
-
-<details>
-<summary>
-Params
-</summary>
-
-- `season` (required) - Season year (e.g., `2024`)
-- `windows` (optional) - Comma-separated rolling window sizes (default: `10,20,30`)
-
-</details>
-
-<details>
-<summary>
-Examples
-</summary>
-
-```bash
-# Get Yankees 2024 run differential with default windows (10, 20, 30 games)
-curl "/v1/teams/NYA/run-differential?season=2024"
-
-# Custom rolling windows
-curl "/v1/teams/LAN/run-differential?season=2024&windows=5,10,15"
-```
-
-Response includes:
-
-- Season totals (games played, runs scored/allowed, differential)
-- Per-game breakdown with cumulative differential
-- Rolling window stats for trend analysis
-
-</details>
-
-#### Game Win Probability
-
-Get play-by-play win probability curves showing how leverage shifted throughout a game. Win probabilities are calculated using **historical game state data** from 2023-2025, providing statistically accurate probabilities based on actual outcomes.
-
-**Endpoint:** `GET /v1/games/{game_id}/win-probability`
-
-<details>
-<summary>
-Examples
-</summary>
-
-```bash
-# Get win probability curve for a specific game
-curl "/v1/games/BAL202404010/win-probability"
-```
-
-Response includes each event with:
-
-- Event index, inning, and game state (score, outs, bases)
-- Home/away win probabilities (0.0-1.0) based on historical data
-- Play description
-
-Try the demo script:
-
-```bash
-./sandbox/test_win_probability.sh
-```
-
-</details>
-
-<details>
-<summary>
-Implementation
-</summary>
-
-Win probabilities are calculated from the `win_expectancy_historical` table, which contains win rates for 2,143 unique game states (inning, outs, runners, score differential) computed from actual game outcomes.
-
-The system falls back to a simplified linear model only when historical data is unavailable for a specific game state.
-
-</details>
-
-#### Win Expectancy
-
-Query historical win expectancy data for any game situation. Win expectancy represents the probability that the home team wins from a specific game state, based on analysis of actual game outcomes.
-
-**Endpoints:**
-
-- `GET /v1/win-expectancy` - Look up win probability for a game state
-- `GET /v1/win-expectancy/eras` - List available historical eras
-
-<details>
-<summary>
-Parameters
-</summary>
-
-**Required:**
-
-- `inning` - Inning number (1-9)
-- `is_bottom` - Bottom of inning (`true`/`false`)
-- `outs` - Number of outs (0-2)
-- `runners` - Base state (e.g., `___`, `1__`, `12_`, `123`)
-- `score_diff` - Score differential from home team perspective (-11 to +11)
-
-**Optional:**
-
-- `start_year` - Filter by historical era start year
-- `end_year` - Filter by historical era end year
-
-</details>
-
-<details>
-<summary>
-Examples
-</summary>
-
-```bash
-# Bottom 9th, 2 outs, bases empty, tied game
-curl "/v1/win-expectancy?inning=9&is_bottom=true&outs=2&runners=___&score_diff=0"
-# → 52.4% home win probability (437 samples)
-
-# Bottom 9th, bases loaded, no outs, tied game
-curl "/v1/win-expectancy?inning=9&is_bottom=true&outs=0&runners=123&score_diff=0"
-# → 93.0% home win probability (57 samples)
-
-# Bottom 1st, 1 out, bases empty, tied
-curl "/v1/win-expectancy?inning=1&is_bottom=true&outs=1&runners=___&score_diff=0"
-# → 55.0% home win probability (3,618 samples)
-
-# List available historical eras
-curl "/v1/win-expectancy/eras"
-# → [{"label":"2023-2025 Era","state_count":2143,"total_sample":501834}]
-```
-
-</details>
-
-<details>
-<summary>
-Implementation
-</summary>
-
-Derived analytics are computed on-demand from play-by-play data using:
-
-- **Historical win expectancy** lookups for accurate probability calculations
-- **Gaps and islands** technique for streak identification
-- **Window functions** for rolling aggregates
-- **Fallback models** when historical data is unavailable
-
-</details>
-
-#### Splits
-
-Access batting statistics split by various dimensions like home/away, pitcher handedness, and calendar month.
-
-**Endpoint:** `GET /v1/players/{player_id}/splits`
-
-<details>
-<summary>
-Parameters
-</summary>
-
-- `dimension` (required) - Split dimension: `home_away`, `pitcher_handed`, or `month`
-- `season` (required) - Season year (e.g., `2024`)
-
-</details>
-
-<details>
-<summary>
-Examples
-</summary>
-
-```bash
-# Get home/away splits for a player in 2024
-curl "/v1/players/judga001/splits?dimension=home_away&season=2024"
-
-# Get splits vs left/right handed pitchers
-curl "/v1/players/sotoj001/splits?dimension=pitcher_handed&season=2024"
-
-# Get monthly performance breakdown
-curl "/v1/players/ohtas001/splits?dimension=month&season=2024"
-```
-
-Response includes split groups with:
-
-- Basic counting stats (Games, PA, AB, H, HR, BB, SO)
-- Slash line (AVG, OBP, SLG, OPS)
-- Dimension-specific metadata
-
-</details>
-
-<details>
-<summary>
-Available Dimensions
-</summary>
-
-- **home_away**: Home vs Away games
-- **pitcher_handed**: vs LHP (left-handed pitchers) vs RHP (right-handed pitchers)
-- **month**: Performance by calendar month (March through November)
-
-</details>
+Derived endpoints provide streak detection, player splits, run differential windows, game win probability curves, and win expectancy lookups.
+See [Derived & Advanced docs](./web/src/routes/docs/api-derived-advanced.md).
 
 ### Natural Language Game Search
 
-<details>
-<summary>
-Search for games using natural language queries. The search understands team names, years, series keywords, and game numbers.
-</summary>
+Search supports natural language parsing for games (teams, season, postseason context, aliases).
+See [Search docs](./web/src/routes/docs/api-search.md).
 
-- Team names and common aliases (e.g., "yankees", "red sox", "dodgers")
-- Years (any 4-digit year)
-- Postseason keywords ("world series", "playoffs", "postseason", "alcs", "nlcs", etc.)
-- All-Star games ("all-star", "all star", "midsummer classic")
-- Flexible query formats with automatic fuzzy matching
+## Documentation
 
-</details>
+- API docs in web app: `/docs` (or `/docs/{slug}`)
+- Swagger/OpenAPI explorer: `/explorer`
 
-**Endpoint:** `GET /v1/search/games?q={query}&limit={limit}`
+Recommended docs entry points:
 
-<details>
-<summary>
-Examples
-</summary>
+- [Introduction](./web/src/routes/docs/introduction.md)
+- [API Overview](./web/src/routes/docs/api-overview.md)
+- [Auth](./web/src/routes/docs/api-auth.md)
+- [Meta & Utility](./web/src/routes/docs/api-meta-utility.md)
+- [Search](./web/src/routes/docs/api-search.md)
+- [Players](./web/src/routes/docs/api-players.md)
+- [Teams](./web/src/routes/docs/api-teams.md)
+- [Games](./web/src/routes/docs/api-games.md)
+- [Stats](./web/src/routes/docs/api-stats.md)
+- [Pitches](./web/src/routes/docs/api-pitches.md)
+- [Derived & Advanced](./web/src/routes/docs/api-derived-advanced.md)
+- [Computed & Advanced](./web/src/routes/docs/api-computed.md)
+- [Attribution](./web/src/routes/docs/attribution.md)
 
-```bash
-# Find 2024 World Series games
-curl "/v1/search/games?q=world%20series%202024"
+## Development Notes
 
-# Find Yankees vs Red Sox games in 2024
-curl "/v1/search/games?q=yankees%20red%20sox%202024"
-
-# Find 2024 All-Star game
-curl "/v1/search/games?q=all%20star%202024"
-
-# Find Dodgers games in 2024 with limit
-curl "/v1/search/games?q=dodgers%202024&limit=10"
-```
-
-</details>
-
-<details>
-<summary>Implementation</summary>
-
-The natural language search is powered by a three-layer approach:
-
-1. **PostgreSQL Full-Text Search**: Uses `tsvector` and `tsquery` with GIN indexes for efficient text matching
-2. **Fuzzy Matching**: Trigram indexes (`pg_trgm`) provide flexible substring matching
-3. **Team Alias Resolution**: 77+ team name variations mapped to official team IDs with historical date ranges
-
-#### Schema
-
-- `games.search_text`: Precomputed searchable text including team names, dates, and keywords
-- `games.search_tsv`: Full-text search vector automatically maintained via trigger
-- `team_aliases`: Maps common team names to official IDs (e.g., "yankees" → "NYA")
-
-#### Searching
-
-1. Query hits indexed `search_text` column for instant results
-2. PostgreSQL ranks matches by relevance using `ts_rank`
-3. Results sorted by structured filters (when detected) then text relevance then date
-
-#### Performance
-
-- GIN indexes enable sub-millisecond search across 9000+ games
-- Trigger-maintained search columns keep data synchronized on insert/update
-- No runtime text processing required
-
-</details>
-
-## Development
-
-### Swagger/OpenAPI Documentation
-
-This project uses [swaggo/swag](https://github.com/swaggo/swag) for API documentation generation.
-
-<details>
-<summary>
-Generating Docs
-</summary>
-
-Use the task command to generate swagger documentation:
+- Generate Swagger docs after endpoint/comment changes:
 
 ```bash
 task swagger:generate
 ```
 
-This will:
+- Discover available tasks:
 
-1. Generate swagger docs from your API annotations
-2. Automatically fix known compatibility issues
-
-</details>
-
-<details>
-<summary>
-Notes
-</summary>
-
-#### Known Issues
-
-##### LeftDelim/RightDelim Build Errors
-
-When generating swagger docs, swag may generate `LeftDelim` and `RightDelim` fields in `internal/docs/docs.go` that are incompatible with the current version of the swag library, causing build failures:
-
-```log
-internal/docs/docs.go:1085:2: unknown field LeftDelim in struct literal of type "github.com/swaggo/swag".Spec
-internal/docs/docs.go:1086:2: unknown field RightDelim in struct literal of type "github.com/swaggo/swag".Spec
+```bash
+task --list
 ```
-
-</details>
-
-### Available Tasks
-
-Run `task --list` to see all available tasks.
 
 ## Attribution
 

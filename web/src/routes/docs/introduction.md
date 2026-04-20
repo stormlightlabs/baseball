@@ -22,7 +22,9 @@ Use these docs to understand coverage, query patterns, and authentication (to ma
 
 1. [About](/docs/about) for scope, data sources, and architecture.
 2. [Apps](/docs/apps) for practical client usage patterns.
-3. API reference pages for concrete request/response contracts.
+3. [API Overview](/docs/api-overview) for endpoint families and starter calls.
+4. [Attribution](/docs/attribution) for dataset and constants sourcing notes.
+5. API reference pages for concrete request/response contracts.
 
 ## Notes
 

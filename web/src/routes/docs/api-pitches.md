@@ -28,3 +28,41 @@ See [pitches](/docs/pitches) for deeper details on Retrosheet encoding and parsi
 
 - Returns a compact `{ "data": [...] }` payload of every pitch parsed for a single plate appearance.
 - No pagination because plate appearances typically contain \<10 pitches; callers must supply both `game_id` and `play_num`.
+
+## Query Parameters (`GET /v1/pitches`)
+
+- `batter`: Retrosheet batter ID
+- `pitcher`: Retrosheet pitcher ID
+- `bat_team`: batting team ID
+- `pit_team`: pitching team ID
+- `date`: game date (`YYYYMMDD`)
+- `date_from` / `date_to`: date range (`YYYYMMDD`)
+- `inning`: inning number
+- `pitch_type`: pitch/event code (`B`, `C`, `F`, `S`, `X`, etc.)
+- `ball_count`: ball count filter (`0-3`)
+- `strike_count`: strike count filter (`0-2`)
+- `is_in_play`: only balls in play
+- `is_strike`: only strikes
+- `is_ball`: only balls
+
+## Examples
+
+```bash
+# Get all pitches from a specific pitcher
+curl "/v1/pitches?pitcher=darvy001&per_page=50"
+
+# Find all full-count pitches
+curl "/v1/pitches?ball_count=3&strike_count=2"
+
+# Filter to balls in play
+curl "/v1/pitches?pitch_type=X"
+
+# Filter by pitcher/batter matchup
+curl "/v1/pitches?pitcher=darvy001&batter=ohtas001"
+
+# Get all pitches from a game
+curl "/v1/games/SDN202403200/pitches"
+
+# Get pitches from a single plate appearance
+curl "/v1/games/SDN202403200/plays/1/pitches"
+```
