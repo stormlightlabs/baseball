@@ -1,39 +1,62 @@
 ---
-title: ETL Binary + Container Architecture
+title: ETL Binary + Data Product Architecture
 updated: 2026-04-20
 ---
 
 ## Problem
 
-The current deployment topology still runs API and ETL from the same container runtime. In practice, ETL is commonly executed inside the `app` container (`docker compose exec app baseball-etl ...`), so API traffic and ETL contend for:
+The current deployment still runs API and ETL from the same runtime surface, and ETL remains responsible for too much upstream data handling (archive fetch/decompress/parse + DB writes).
 
-- CPU and memory
-- DB pool capacity (`DB_MAX_OPEN_CONNS` is shared)
-- Postgres write/read headroom during large loads and view refreshes
+For performance-sensitive runs, this causes avoidable contention:
 
-This is the main operational risk for performance-sensitive runs.
+- CPU/memory pressure from archive-heavy preprocessing
+- long and variable ETL wall-clock time from network + decompression
+- increased DB stress windows when transform + load happen in one process path
 
-## Current System Reality
+## Architectural Direction
 
-- ETL orchestration already exists in `internal/seed/pipeline.go` with tracked runs in `etl_runs`, `etl_run_steps`, and `etl_step_events`.
-- Bulk ingest is already `COPY`-based (`games_temp`, `plays_temp`, etc.), not row-by-row inserts.
-- `plays` is already date-partitioned by migration; `games` is not partitioned.
-- Force reload path is year-bounded and transaction-scoped per year (already hardened).
-- Materialized views are still globally refreshed in ETL pipeline steps (non-concurrent by default in ETL).
-- Snapshot data is no longer vendored as a git submodule; ETL bootstraps from `BASEBALL_DATA_REPO_URL` when local defaults are incomplete.
-- Compose has no dedicated ETL service today (`app`, `postgres`, `redis`, optional `caddy` only).
+Adopt a two-system model with strict responsibilities:
 
-## Design Decisions
+1. `bigflydata` is the upstream dataset factory.
+2. `baseball-etl` is the downstream ingestion/runtime loader.
 
-| Recommendation                                   | Current system                               | Decision                                                          |
-| ------------------------------------------------ | -------------------------------------------- | ----------------------------------------------------------------- |
-| Separate ETL worker from API runtime             | Not isolated yet                             | Adopt now: dedicated ETL binary + container                       |
-| Use `COPY` + staging                             | Already true via temp staging per load       | Keep and standardize across ETL stages                            |
-| Idempotent run metadata/checkpoints              | `etl_runs` + step events exist               | Extend with lock + watermarks for resumability                    |
-| Partition heavy fact tables                      | `plays` partitioned, `games` non-partitioned | Keep `plays`; evaluate `games` partitioning behind migration gate |
-| Incremental serving refresh (not full every run) | Full refresh groups currently                | Move to affected-year/affected-artifact refresh plan              |
+Core decisions:
 
-## Target Architecture
+- Snapshot source files should be tracked in VCS as extracted raw tabular data (not zip archives as primary artifacts).
+- Zip archives are transitional only and should be removed from steady-state snapshot storage.
+- Heavy transforms move to Python data tooling in `bigflydata` using Polars + NumPy (no pandas).
+- Heavy derivation work moves upstream into `bigflydata`; Go ETL remains an ingestion runtime.
+- Serving materialization is no longer the target strategy; partitioned table ingestion is preferred.
+- `baseball-etl` focuses on pull/read/upsert/validate and DB-side safety.
+
+## Responsibility Split
+
+| Concern               | `bigflydata`                                           | `baseball-etl`                                            |
+| --------------------- | ------------------------------------------------------ | --------------------------------------------------------- |
+| Source acquisition    | Owns download/sync from upstream providers             | Does not fetch provider archives directly in steady state |
+| Raw preservation      | Owns canonical raw snapshots in VCS/LFS                | Reads raw/prepared data via cloned snapshot root          |
+| Transform logic       | Owns normalization/enrichment and ingest-ready outputs | Only lightweight mapping needed for upsert                |
+| Snapshot metadata     | Owns manifest + schema contract metadata               | Verifies manifest/contract before load                    |
+| Database writes       | None                                                   | Owns COPY/upsert/load + validation                        |
+| Runtime observability | Optional build metrics                                 | Owns ETL run/step/refresh events                          |
+
+## Snapshot Contract (V1 Target)
+
+`bigflydata` should publish a deterministic contract under repo root:
+
+- `snapshot.manifest.json`: file hashes, sizes, and snapshot timestamp
+- `docs/spec.md`: contract version and dataset semantics
+- `raw/`: extracted source-of-record tabular files
+- `prepared/`: ingest-ready outputs optimized for Go loader throughput
+
+Target prepared principles:
+
+- stable file paths per dataset/stage
+- explicit schema versioning
+- deterministic row ordering where applicable
+- no provider zip parsing required in `baseball-etl`
+
+## Runtime Topology
 
 ```text
 [Traefik in prod / Caddy in dev] -> [api container: baseball server start]
@@ -43,107 +66,70 @@ This is the main operational risk for performance-sensitive runs.
                      ^
                      |
        [etl container: baseball-etl run/validate/status]
+                     ^
+                     |
+          [clone/pull bigflydata snapshot ref]
 ```
 
-Key rules:
+Deployment rules:
 
 - API and ETL run in separate containers.
-- Both may use the same Docker image artifact.
-- ETL has its own resource limits and DB pool limits.
-- ETL container exposes no HTTP port.
-- ETL runs are single-active via DB lock guard.
-
-## Binary Split Plan
-
-Introduce a dedicated ETL executable while preserving shared packages:
-
-- New entrypoint: `cmd/baseball-etl/main.go`
-- Binary name: `baseball-etl`
-- Command surface: `run`, `validate`, `status`, `fetch`, `load`
-- Command implementation package: `internal/cli`
-- Keep existing `baseball` binary for API/server/db/cache workflows until ETL surface removal is completed
-
-This is a runtime split, not a logic rewrite. `internal/seed` remains the orchestration core.
-
-## Container Plan (Same Image, Separate Service)
-
-Add `etl` service in `conf/docker-compose.dev.yml` and `conf/docker-compose.prod.yml`:
-
-- image: same as `app` (`baseball-app:latest`)
-- command: ETL binary entrypoint (`baseball-etl ...`)
-- depends_on: `postgres` (not `redis`, unless future ETL stage requires it)
-- no ports exposed
-- dedicated limits (`mem_limit`, `cpus`, `pids_limit`)
-- dedicated env for ETL DB pool (`DB_MAX_OPEN_CONNS`, `DB_MAX_IDLE_CONNS`, lifetime/idle)
-- shared data root mount (`/home/app/tools/data`) between `app` and `etl`
-
-Operational mode:
-
-- Default: one-shot ETL jobs (`docker compose run --rm etl ...`)
-- Optional later: scheduled ETL worker/cron trigger
+- Both may use the same image artifact.
+- ETL exposes no HTTP port.
+- ETL uses independent resource and DB pool limits.
+- ETL runs are single-active via lock guard.
 
 Ingress note:
 
-- Production ingress is Traefik via Coolify.
-- Caddy is development-only (`docker-compose.dev.yml`).
+- Production ingress uses Traefik via Coolify.
+- Caddy is development-only.
 
-## Performance and Safety Requirements
+## Performance Contract
 
-- Single active ETL run lock (DB advisory lock or `etl_run_locks` table)
-- Bounded stage timeouts with cancellation propagation
-- Backpressure controls when DB latency/WAL pressure rises
-- Year-scoped recompute for heavy artifacts; avoid full global refresh on every run
-- Post-load `ANALYZE` on heavily changed tables/partitions
-- Maintain phase-level telemetry (`etl_step_events`, `materialized_view_refresh_events`)
+- No archive decompression in steady-state ETL hot path.
+- ETL reads ingest-ready files and performs bounded upsert batches.
+- Keep force/year writes year-bounded and resumable.
+- Avoid materialized-view rebuild loops in steady-state ETL.
+- Keep partition maintenance explicit and bounded.
+- Maintain ETL telemetry (`etl_runs`, `etl_run_steps`, `etl_step_events`), treating MV refresh events as legacy transition telemetry only.
 
-## Database Workstreams
+## Migration Strategy
 
-### Operational safety and crash prevention
+### Phase A: Upstream data-product hardening (`bigflydata`)
 
-- Host-level alerting for low disk and WAL growth thresholds
-- Runbook actions for WAL pressure (pause ETL, archive/prune strategy, checkpoint analysis)
-- Periodic `pg_stat_bgwriter` capture for `checkpoints_req` and `checkpoints_timed`
-- ETL concurrency guard (single active ETL run lock)
-- Per-step timeout and cancellation policy for heavy operations
-- Off-peak scheduling recommendations and safe defaults for large force/year ranges
-- Optional load-shed mode for non-critical endpoints during ETL windows
-- Documented emergency toggles (disable heavy refresh groups, pause force mode)
-- Operational resume/recovery checklist after interruption
+- Keep current sync/build/verify working.
+- Add raw/prepared contract with explicit schema version.
+- Add transform pipeline on Polars + NumPy.
 
-### Force/year write-path performance
+### Phase B: Ingestion cutover (`baseball-etl`)
 
-- Keep force-clear Retrosheet deletes year-bounded and date-index-friendly for `plays` and `games`
-- Emit per-year delete telemetry (rows and duration by table)
-- Keep per-year transactional boundaries for resumability
-- Keep crosswalk refresh lock-friendly (`DELETE` path, avoid full-table `TRUNCATE`)
-- Add indexes/constraints for incremental upsert paths
-- Maintain ETL performance baselines for range-force runs (runtime, WAL growth, checkpoint frequency)
+- Add prepared-data loader path as primary route.
+- Keep legacy archive-centric path as fallback only during transition.
+- Add manifest/contract preflight validation before DB writes.
 
-### Hybrid incremental materialization and cutover
+### Phase C: Simplification
 
-- Finalize heavy artifact list for replacement (`player_game_*`, `team_game_stats`, `season_*_leaders`, `career_*_leaders`)
-- Define source-of-truth model per artifact (`MV`, incremental table, or mixed)
-- Define incremental keys/invalidation units (season/year/team/player)
-- Define cutover SLOs (max refresh time, max lock time, acceptable staleness)
-- Add structural migrations for incremental target tables (no historical rewrite)
-- Add `etl_watermarks` / `materialization_state` for resumable progress tracking
-- Replace full-refresh ETL steps with year/season-bounded recompute + upsert steps
-- Make force/year runs recompute only affected years/seasons
-- Add phase-level ETL events and row-count metrics per artifact update step
-- Add retry-safe transactional boundaries and resumability markers
-- Add runbook queries for slow phases and stale watermarks
-- Compare ETL runtime baseline before/after cutover
-- Keep migration sets structural and idempotent only (`IF NOT EXISTS`, guarded DDL)
+- Remove archive-first ETL assumptions from runbook and command surface.
+- Keep `baseball-etl` focused on load/validate/status workflows.
+- Remove serving materialization assumptions from ingestion runbooks and ETL hot path.
 
-## Non-Goals (For This Plan)
+## Database Workstreams (Still In Scope)
+
+- Single-active ETL lock and cancellation policy
+- post-load analyze/backpressure hooks
+- partition management and retention policy
+- year/season-scoped upsert + recompute where needed
+- operator runbooks for WAL/checkpoint pressure and resume/recovery
+
+## Non-Goals (Current Scope)
 
 - No immediate full schema rewrite to `raw/core/serving` schemas
-- No immediate replacement of all materialized views with denormalized serving tables
 - No API contract changes
 
 ## Acceptance Criteria
 
-- API remains available while ETL runs in separate container.
-- ETL cannot starve API DB connections by configuration.
-- ETL runs are observable, cancellable, and single-active.
-- Heavy refresh work is scoped to affected data where feasible.
+- ETL runtime no longer depends on provider zip parsing for steady-state runs.
+- `bigflydata` snapshot ref + manifest deterministically reproduce ETL inputs.
+- API availability is preserved during ETL windows with isolated resources.
+- ETL remains observable, cancellable, and single-active.
+- Heavy recompute work is moved upstream and bounded to affected data where feasible.
