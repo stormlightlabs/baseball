@@ -9,7 +9,8 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /baseball ./cli
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /baseball ./cmd/baseball && \
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /baseball-etl ./cmd/baseball-etl
 
 FROM debian:bookworm-slim
 
@@ -20,13 +21,13 @@ RUN adduser --disabled-password --gecos "" app && \
 
 WORKDIR /home/app
 COPY --from=build /baseball /usr/local/bin/baseball
+COPY --from=build /baseball-etl /usr/local/bin/baseball-etl
 RUN mkdir -p /home/app/tools/data && chown -R app:app /home/app/tools
 
 USER app
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD ["/usr/local/bin/baseball", "server", "health"]
 
-ENV DATABASE_URL=postgres://postgres:postgres@postgres:5432/baseball_dev?sslmode=disable
 ENV BASEBALL_DATA_ROOT=/home/app/tools/data
 
 ENTRYPOINT ["/usr/local/bin/baseball"]

@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -94,12 +95,79 @@ func Connect(connStr string) (*DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
+	configureConnectionPool(sqlDB)
 
 	if err := sqlDB.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
 	return &DB{DB: sqlDB, connStr: connStr}, nil
+}
+
+type connectionPoolSettings struct {
+	maxOpenConns    int
+	maxIdleConns    int
+	connMaxLifetime time.Duration
+	connMaxIdleTime time.Duration
+}
+
+func configureConnectionPool(sqlDB *sql.DB) {
+	settings := connectionPoolSettingsFromEnv()
+	sqlDB.SetMaxOpenConns(settings.maxOpenConns)
+	sqlDB.SetMaxIdleConns(settings.maxIdleConns)
+	sqlDB.SetConnMaxLifetime(settings.connMaxLifetime)
+	sqlDB.SetConnMaxIdleTime(settings.connMaxIdleTime)
+}
+
+func connectionPoolSettingsFromEnv() connectionPoolSettings {
+	settings := connectionPoolSettings{
+		maxOpenConns:    envInt("DB_MAX_OPEN_CONNS", 20),
+		maxIdleConns:    envInt("DB_MAX_IDLE_CONNS", 10),
+		connMaxLifetime: envDuration("DB_CONN_MAX_LIFETIME", 30*time.Minute),
+		connMaxIdleTime: envDuration("DB_CONN_MAX_IDLE_TIME", 5*time.Minute),
+	}
+
+	if settings.maxOpenConns < 1 {
+		settings.maxOpenConns = 1
+	}
+	if settings.maxIdleConns < 0 {
+		settings.maxIdleConns = 0
+	}
+	if settings.maxIdleConns > settings.maxOpenConns {
+		settings.maxIdleConns = settings.maxOpenConns
+	}
+	if settings.connMaxLifetime < 0 {
+		settings.connMaxLifetime = 0
+	}
+	if settings.connMaxIdleTime < 0 {
+		settings.connMaxIdleTime = 0
+	}
+
+	return settings
+}
+
+func envInt(key string, defaultVal int) int {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return defaultVal
+	}
+	v, err := strconv.Atoi(raw)
+	if err != nil {
+		return defaultVal
+	}
+	return v
+}
+
+func envDuration(key string, defaultVal time.Duration) time.Duration {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return defaultVal
+	}
+	v, err := time.ParseDuration(raw)
+	if err != nil {
+		return defaultVal
+	}
+	return v
 }
 
 // ensureMigrationsTable creates the schema_migrations table if it doesn't exist.

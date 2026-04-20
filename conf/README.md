@@ -36,6 +36,7 @@ Production Postgres tuning is applied via `command: ["postgres", "-c", ...]` ent
 | Variable                   | Example                                                         | Notes                             |
 | -------------------------- | --------------------------------------------------------------- | --------------------------------- |
 | `DATABASE_URL`             | `postgres://postgres:pw@postgres:5432/baseball?sslmode=disable` | Host is the Compose service name  |
+| `SERVER_HOST`              | `0.0.0.0`                                                       | Bind API server to all interfaces |
 | `REDIS_URL`                | `redis://redis:6379/0`                                          |                                   |
 | `BASEBALL_DATA_ROOT`       | `/home/app/tools/data`                                          | Default data root checked by ETL  |
 | `BASEBALL_DATA_REPO_URL`   | `https://github.com/stormlightlabs/bigflydata.git`              | Optional snapshot clone override  |
@@ -43,6 +44,12 @@ Production Postgres tuning is applied via `command: ["postgres", "-c", ...]` ent
 | `BASEBALL_DATA_AUTO_CLONE` | `true`                                                          | Set `false` to disable auto clone |
 | `POSTGRES_PASSWORD`        | _(strong password)_                                             | Mark as sensitive                 |
 | `POSTGRES_DB`              | `baseball`                                                      |                                   |
+| `DB_MAX_OPEN_CONNS`        | `20`                                                            | App DB pool hard cap              |
+| `DB_MAX_IDLE_CONNS`        | `10`                                                            | App DB pool idle cap              |
+| `DB_CONN_MAX_LIFETIME`     | `30m`                                                           | App DB connection lifetime        |
+| `DB_CONN_MAX_IDLE_TIME`    | `5m`                                                            | App DB idle connection timeout    |
+| `GOMEMLIMIT`               | `900MiB`                                                        | Go runtime heap soft limit        |
+| `GOMAXPROCS`               | `2`                                                             | Go runtime CPU concurrency cap    |
 
 Optional: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `CODEBERG_CLIENT_ID`, `CODEBERG_CLIENT_SECRET`, `CACHE_ENABLED`, `CACHE_VERSION`.
 
@@ -138,6 +145,12 @@ ETL window checks:
 - If logs show `checkpoints are occurring too frequently`, increase `max_wal_size`.
 - Inspect `checkpoints_req` vs `checkpoints_timed` in `pg_stat_bgwriter`.
 - Monitor checkpoint interval and WAL churn during force/year rewrites.
+
+4 GB VM crash-prevention baseline:
+
+- Keep compose resource limits enabled for `app`, `postgres`, and `redis`.
+- Keep app DB pool bounded (`DB_MAX_OPEN_CONNS=20`, `DB_MAX_IDLE_CONNS=10`) unless load tests justify raising.
+- Keep Postgres parallelism conservative during ETL (`max_parallel_workers_per_gather=1`).
 
 ## Backup and recovery
 

@@ -86,51 +86,17 @@ See the dedicated Data Coverage docs for the newly completed endpoints:
 - **Filtered indexes** - Create partial indexes for specific league + date combinations if query patterns show benefit
 - **Composite partition key** - Repartition by (league, year) only if league-specific queries dominate and current performance is insufficient
 
-### 14. Production Deployment (Coolify/Hostinger KVM2)
+### 13. Release
 
-Target: ~100 GB HDD VPS, 4 GB RAM, Coolify dashboard with Traefik for TLS/routing.
+Release planning for ETL safety/performance now lives in:
 
-#### Blocking - Dockerfile & Compose
+- [ETL Architecture Spec](../specs/etl.md)
+- [ETL Task List](../tasks/etl.md)
 
-- [ ] Copy templates and static assets into Docker image (`internal/api/templates/`, `internal/api/static/` are loaded at runtime but not included in the build stage)
-- [ ] Bind server to `0.0.0.0` inside the container (config default is `localhost`, unreachable through Traefik)
-- [ ] Fix Postgres tuning: `POSTGRES_SHARED_BUFFERS` etc. are env-var no-ops on the official image; pass via `command: postgres -c shared_buffers=1GB ...` or mount a `postgresql.conf`
-- [ ] Remove hardcoded dev `DATABASE_URL` from Dockerfile ENV (leaks creds into image layer, confusing if runtime env is missing)
-- [ ] Add `GITHUB_REDIRECT_URL`, `CODEBERG_REDIRECT_URL` to prod compose and README env table (defaults are `localhost`)
-- [ ] Add `HOST=0.0.0.0` to prod compose environment
+Use those two docs as the source of truth for ETL database work, container/binary split, and hybrid materialization execution phases.
 
-#### Blocking - Auth & Security
+#### Deferred after ETL release scope
 
-- [ ] Fix middleware ordering: rate limiter runs before auth, so `api_key` context is always nil and all requests hit the 10 req/min unauthenticated limit
-- [ ] Fix session cookie `Secure` flag: behind Traefik, `req.TLS` is always nil; check `X-Forwarded-Proto == "https"` or force `Secure: true` in non-debug mode
-- [ ] Add security headers middleware: `Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy`, `Referrer-Policy`
-- [ ] Add CORS middleware for cross-origin API consumers
-
-#### Blocking - README accuracy
-
-- [ ] Document all required env vars: `HOST`, `DEBUG_MODE`, `GITHUB_REDIRECT_URL`, `CODEBERG_REDIRECT_URL`
-- [ ] Clarify which seed data is checked in (Lahman, FanGraphs, salaries) vs fetched at runtime (Retrosheet)
-- [ ] Tune Postgres for 4 GB RAM: `shared_buffers=1GB`, `effective_cache_size=2GB`, `work_mem=64MB`
-
-#### SEO
-
-- [ ] Add `robots.txt` handler (allow `/`, `/docs/`, `/examples`; disallow `/v1/auth/`, `/debug/`)
-- [ ] Add `sitemap.xml` handler (static entries for home, examples, docs, login)
-- [ ] Add `<meta name="description">`, OpenGraph tags (`og:title`, `og:description`, `og:type`, `og:url`), and `<link rel="canonical">` to `base.html`
-- [ ] Add JSON-LD structured data (`WebAPI` / `WebApplication` schema) to `home.html`
-
-#### Post-deploy ETL sequence
-
-- [ ] Draft a shell script that runs all the ETL steps
-
-### 15. Technical Debt
-
-- [ ] Custom error types: Replace `strings.Contains(err.Error(), "not found")` with typed errors
-- [x] Fix `writeError` infinite recursion: `api/helpers.go:47` calls itself instead of `writeInternalServerError` — any non-`NotFoundError` triggers a stack overflow crash
-- [ ] Remove global config state: `config.Get()` panics, refactor to dependency injection
-- [x] Standardize cache integration: Measure and add caching to Stats/Awards/Manager repos
-- [x] Standardize query building: Pick one pattern for dynamic WHERE clauses
-- [ ] Complete TODOs: cache/repository.go:121, core/mlb.go:164, api/plays_test.go:504, repository/computed.go:144
-- [ ] Improve godoc coverage: Document all exported functions
-- [ ] Extract filter parsing helpers: Reduce duplication in handler filter building
-- [ ] Add structured logging: Replace fmt.Printf with proper charmbracelet/log & slog
+- Open API access model changes (auth/CORS/rate-limiter policy changes)
+- General web SEO/discovery tasks (`robots.txt`, `sitemap.xml`, metadata/JSON-LD)
+- Broad backend tech-debt cleanup and non-ETL refactors
