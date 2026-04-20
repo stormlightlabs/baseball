@@ -49,8 +49,8 @@ API version should be `ALPHA` (keep the `v1` namespace) while we iron out kinks 
 
 Do we ingest the Chadwick Register more exhaustively to enrich persons data?
 
-Add a plan to enrich our local warehouse from the full Chadwick register (names/links/people shards), not just MLBAM crosswalk keys. Evaluate vendoring `chadwickbureau/register` as a git submodule (or equivalent snapshot mirror) so ETL is less dependent on upstream file-layout changes.
-
 Remove `core.MLBTeamCrosswalk* structs` if no longer needed anywhere.
 
 Repository-level unit tests for crosswalk query ambiguity behavior beyond API integration tests.
+
+Slog for prod, "pretty" charmbracelet/log for dev

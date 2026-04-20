@@ -32,25 +32,22 @@ Production Postgres tuning is applied via `command: ["postgres", "-c", ...]` ent
 6. Set the health check path to `/v1/health`.
 7. Configure environment variables in Coolify's UI:
 
-| Variable                   | Example                                                         | Notes                             |
-| -------------------------- | --------------------------------------------------------------- | --------------------------------- |
-| `DATABASE_URL`             | `postgres://postgres:pw@postgres:5432/baseball?sslmode=disable` | Host is the Compose service name  |
-| `SERVER_HOST`              | `0.0.0.0`                                                       | Bind API server to all interfaces |
-| `REDIS_URL`                | `redis://redis:6379/0`                                          |                                   |
-| `BASEBALL_DATA_ROOT`       | `/home/app/tools/data`                                          | Default data root checked by ETL  |
-| `BASEBALL_DATA_REPO_URL`   | `https://github.com/stormlightlabs/bigflydata.git`              | Optional snapshot clone override  |
-| `BASEBALL_DATA_REPO_REF`   | `main`                                                          | Optional branch/tag/SHA override  |
-| `BASEBALL_DATA_AUTO_CLONE` | `true`                                                          | Set `false` to disable auto clone |
-| `POSTGRES_PASSWORD`        | _(strong password)_                                             | Mark as sensitive                 |
-| `POSTGRES_DB`              | `baseball`                                                      |                                   |
-| `DB_MAX_OPEN_CONNS`        | `20`                                                            | App DB pool hard cap              |
-| `DB_MAX_IDLE_CONNS`        | `10`                                                            | App DB pool idle cap              |
-| `DB_CONN_MAX_LIFETIME`     | `30m`                                                           | App DB connection lifetime        |
-| `DB_CONN_MAX_IDLE_TIME`    | `5m`                                                            | App DB idle connection timeout    |
-| `GOMEMLIMIT`               | `900MiB`                                                        | Go runtime heap soft limit        |
-| `GOMAXPROCS`               | `2`                                                             | Go runtime CPU concurrency cap    |
+    | Variable                | Example                                                         | Notes                             |
+    | ----------------------- | --------------------------------------------------------------- | --------------------------------- |
+    | `DATABASE_URL`          | `postgres://postgres:pw@postgres:5432/baseball?sslmode=disable` | Host is the Compose service name  |
+    | `SERVER_HOST`           | `0.0.0.0`                                                       | Bind API server to all interfaces |
+    | `REDIS_URL`             | `redis://redis:6379/0`                                          |                                   |
+    | `BASEBALL_DATA_ROOT`    | `/home/app/data`                                                | Default data root checked by ETL  |
+    | `POSTGRES_PASSWORD`     | _(strong password)_                                             | Mark as sensitive                 |
+    | `POSTGRES_DB`           | `baseball`                                                      |                                   |
+    | `DB_MAX_OPEN_CONNS`     | `20`                                                            | App DB pool hard cap              |
+    | `DB_MAX_IDLE_CONNS`     | `10`                                                            | App DB pool idle cap              |
+    | `DB_CONN_MAX_LIFETIME`  | `30m`                                                           | App DB connection lifetime        |
+    | `DB_CONN_MAX_IDLE_TIME` | `5m`                                                            | App DB idle connection timeout    |
+    | `GOMEMLIMIT`            | `900MiB`                                                        | Go runtime heap soft limit        |
+    | `GOMAXPROCS`            | `2`                                                             | Go runtime CPU concurrency cap    |
 
-Optional: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `CODEBERG_CLIENT_ID`, `CODEBERG_CLIENT_SECRET`, `CACHE_ENABLED`, `CACHE_VERSION`.
+    Optional: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `CODEBERG_CLIENT_ID`, `CODEBERG_CLIENT_SECRET`, `CACHE_ENABLED`, `CACHE_VERSION`.
 
 8. Click **Deploy**.
 
@@ -68,11 +65,15 @@ docker compose exec app baseball-etl validate --profile dev --years 2022-2025
 docker compose exec app baseball-etl status
 ```
 
-If required files are missing under `/home/app/tools/data`, the ETL pipeline
-automatically clones `bigflydata` into a temporary directory, uses it for the
-run, then cleans it up.
+If required files are missing under `/home/app/data`, the ETL pipeline
+should fetch required Retrosheet windows directly before load:
 
-If your snapshot data is mounted/cloned outside the default root:
+```bash
+docker compose exec app baseball-etl fetch retrosheet --years 2022-2025
+docker compose exec app baseball-etl fetch negroleagues
+```
+
+If your data root is mounted outside the default path:
 
 ```bash
 docker compose exec app baseball-etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
@@ -112,14 +113,16 @@ docker compose exec app baseball-etl validate --profile prod --years 2026
 docker compose exec app baseball-etl status
 ```
 
-Manual temp-clone pattern (optional when auto-clone is enabled):
+VM-safe batched pattern for new seasons or backfills:
 
 ```bash
-tmpdir="$(mktemp -d)"
-git clone --depth=1 <baseball-data-repo-url> "$tmpdir/baseball-data"
-docker compose exec app baseball-etl run --profile prod --years 2026 --data-root "$tmpdir/baseball-data"
-docker compose exec app baseball-etl validate --profile prod --years 2026 --data-root "$tmpdir/baseball-data"
-rm -rf "$tmpdir"
+docker compose exec app baseball-etl fetch retrosheet --years 2022-2023
+docker compose exec app baseball-etl run --profile prod --years 2022-2023
+docker compose exec app baseball-etl validate --profile prod --years 2022-2023
+
+docker compose exec app baseball-etl fetch retrosheet --years 2024-2025
+docker compose exec app baseball-etl run --profile prod --years 2024-2025
+docker compose exec app baseball-etl validate --profile prod --years 2024-2025
 ```
 
 ## Scaling
@@ -127,23 +130,24 @@ rm -rf "$tmpdir"
 Set `deploy.replicas` in the Compose file or adjust in Coolify's UI.
 Traefik load-balances across replicas automatically. Tune Postgres based on available RAM:
 
-| Postgres `-c` option            | Baseline value |
-| ------------------------------- | -------------- |
-| `shared_buffers`                | `1GB`          |
-| `effective_cache_size`          | `2GB`          |
-| `work_mem`                      | `32MB`         |
-| `maintenance_work_mem`          | `512MB`        |
-| `max_wal_size`                  | `12GB`         |
-| `min_wal_size`                  | `2GB`          |
-| `checkpoint_timeout`            | `15min`        |
-| `checkpoint_completion_target`  | `0.9`          |
-| `wal_compression`               | `on`           |
+| Postgres `-c` option           | Baseline value |
+| ------------------------------ | -------------- |
+| `shared_buffers`               | `1GB`          |
+| `effective_cache_size`         | `2GB`          |
+| `work_mem`                     | `32MB`         |
+| `maintenance_work_mem`         | `512MB`        |
+| `max_wal_size`                 | `12GB`         |
+| `min_wal_size`                 | `2GB`          |
+| `checkpoint_timeout`           | `15min`        |
+| `checkpoint_completion_target` | `0.9`          |
+| `wal_compression`              | `on`           |
 
 ETL window checks:
 
 - If logs show `checkpoints are occurring too frequently`, increase `max_wal_size`.
 - Inspect `checkpoints_req` vs `checkpoints_timed` in `pg_stat_bgwriter`.
 - Monitor checkpoint interval and WAL churn during force/year rewrites.
+- Run one ETL batch at a time on shared VMs; queue additional year windows serially.
 
 4 GB VM crash-prevention baseline:
 

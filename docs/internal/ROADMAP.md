@@ -88,20 +88,18 @@ See the dedicated Data Coverage docs for the newly completed endpoints:
 
 ### 13. Release
 
-Release planning for ETL safety/performance is split into two source-of-truth tracks:
+Release planning for ETL safety/performance now follows a single operational track:
 
-1. Baseball API ingestion/runtime:
+1. Baseball API ETL worker runtime:
    - [ETL Architecture Spec](../specs/etl.md)
    - [ETL Task List](../tasks/etl.md)
-2. Upstream dataset production (`bigflydata` project):
-   - `/Users/owais/Projects/bigflydata/docs/spec.md`
-   - `/Users/owais/Projects/bigflydata/docs/todo.md`
+   - [Database Loading Contract](./data-loading.md)
 
 Execution rule:
 
-- `bigflydata` owns source acquisition, raw preservation in VCS, and heavy transforms.
-- `baseball-etl` owns snapshot pull, read/upsert, validation, and DB-side observability/safety rails.
-- Serving materialization is being retired in favor of partitioned table ingestion fed by `bigflydata` prepared outputs.
+- `baseball-etl` owns source acquisition, load/upsert, validation, cleanup, and DB-side observability/safety rails.
+- ETL execution should use batched queue semantics to keep shared VM resource usage bounded.
+- Serving materialization remains a transition concern; bounded table/partition maintenance is preferred in worker jobs.
 
 #### Deferred after ETL release scope
 
