@@ -1,9 +1,6 @@
 -- season/career leaderboards materialized views.
 -- Views are created WITH NO DATA and refreshed via ETL/db refresh-views.
 
-
--- SECTION 036_season_batting_leaders_view.sql
-
 -- Create materialized view for season batting leaders
 -- Combines Retrosheet per-game stats (1903-2025) with Lahman pre-1903 data (1871-1902)
 -- Pre-aggregates all stats including advanced metrics (wOBA, wRC+)
@@ -166,10 +163,6 @@ CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_woba ON season_batting_lea
 CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_league_hr ON season_batting_leaders(season, league, hr DESC) WHERE ab >= 300;
 CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_season ON season_batting_leaders(season);
 CREATE INDEX IF NOT EXISTS idx_season_batting_leaders_player ON season_batting_leaders(player_id, season DESC);
-
-
-
--- SECTION 037_season_pitching_leaders_view.sql
 
 -- Create materialized view for season pitching leaders
 -- Combines Retrosheet per-game stats (1903-2025) with W/L/SV from games table
@@ -354,14 +347,9 @@ CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_league_era ON season_pitc
 CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_season ON season_pitching_leaders(season);
 CREATE INDEX IF NOT EXISTS idx_season_pitching_leaders_player ON season_pitching_leaders(player_id, season DESC);
 
-
-
--- SECTION 038_career_batting_leaders_view.sql
-
 -- Create materialized view for career batting leaders
 -- Aggregates from season_batting_leaders to get career totals
 -- Pre-calculates career rate stats
-
 CREATE MATERIALIZED VIEW IF NOT EXISTS career_batting_leaders AS
 SELECT
     player_id,
@@ -405,14 +393,9 @@ CREATE INDEX IF NOT EXISTS idx_career_batting_leaders_rbi ON career_batting_lead
 CREATE INDEX IF NOT EXISTS idx_career_batting_leaders_avg ON career_batting_leaders(career_avg DESC) WHERE total_ab >= 1000;
 CREATE INDEX IF NOT EXISTS idx_career_batting_leaders_ops ON career_batting_leaders(career_ops DESC) WHERE total_pa >= 3000;
 
-
-
--- SECTION 039_career_pitching_leaders_view.sql
-
 -- Create materialized view for career pitching leaders
 -- Aggregates from season_pitching_leaders to get career totals
 -- Pre-calculates career rate stats
-
 CREATE MATERIALIZED VIEW IF NOT EXISTS career_pitching_leaders AS
 SELECT
     player_id,
@@ -460,4 +443,3 @@ CREATE INDEX IF NOT EXISTS idx_career_pitching_leaders_so ON career_pitching_lea
 CREATE INDEX IF NOT EXISTS idx_career_pitching_leaders_sv ON career_pitching_leaders(total_sv DESC) WHERE total_g >= 100;
 CREATE INDEX IF NOT EXISTS idx_career_pitching_leaders_era ON career_pitching_leaders(career_era ASC) WHERE total_ipouts >= 1500;
 CREATE INDEX IF NOT EXISTS idx_career_pitching_leaders_whip ON career_pitching_leaders(career_whip ASC) WHERE total_ipouts >= 1500;
-

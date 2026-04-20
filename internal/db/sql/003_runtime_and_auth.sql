@@ -1,21 +1,11 @@
 -- runtime tracking and authentication tables.
 
-
--- SECTION 004_dataset_refreshes.sql
-
-
 CREATE TABLE IF NOT EXISTS dataset_refreshes (
     dataset TEXT PRIMARY KEY,
     last_loaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     row_count BIGINT NOT NULL DEFAULT 0,
     notes TEXT
 );
-
-
-
-
--- SECTION 005_auth_schema.sql
-
 
 -- Users table for authentication
 CREATE TABLE IF NOT EXISTS users (
@@ -77,12 +67,6 @@ CREATE INDEX IF NOT EXISTS idx_api_usage_user_id ON api_usage(user_id);
 CREATE INDEX IF NOT EXISTS idx_api_usage_api_key_id ON api_usage(api_key_id);
 CREATE INDEX IF NOT EXISTS idx_api_usage_created_at ON api_usage(created_at);
 
-
-
-
--- SECTION 046_etl_run_tracking.sql
-
-
 CREATE TABLE IF NOT EXISTS etl_runs (
     id BIGSERIAL PRIMARY KEY,
     profile TEXT NOT NULL,
@@ -112,5 +96,3 @@ CREATE TABLE IF NOT EXISTS etl_run_steps (
 
 CREATE INDEX IF NOT EXISTS idx_etl_run_steps_run_id ON etl_run_steps(run_id, id);
 CREATE INDEX IF NOT EXISTS idx_etl_run_steps_status ON etl_run_steps(status);
-
-

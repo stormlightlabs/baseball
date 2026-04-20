@@ -45,11 +45,10 @@ Dataset root resolution for `etl` and `db` commands:
 
 1. `--data-root`
 2. `BASEBALL_DATA_ROOT`
-3. `tools/data` (if present, e.g. bind-mounted snapshot workspace)
-4. legacy `data`
+3. `data`
 
-Snapshot data is not vendored as a git submodule. ETL can auto-clone the
-snapshot repo into a temporary directory when required files are missing.
+Data is local-first: keep source files under the resolved data root (`data` by default).
+When Retrosheet files are missing for a target window, fetch them with ETL commands before running a load.
 
 Quick local example for a complete representative slice:
 
@@ -62,7 +61,14 @@ cp conf/conf.example.toml conf.toml
 ./tmp/baseball-etl status
 ```
 
-For large Retrosheet slices, keep migration and recomputation separate:
+Fetch examples (when Retrosheet files for your window are not already present):
+
+```bash
+./tmp/baseball-etl fetch retrosheet --years=2023-2025
+./tmp/baseball-etl fetch negroleagues
+```
+
+For large Retrosheet slices, keep migration and recomputation separate, and process in bounded year windows:
 
 ```bash
 ./tmp/baseball db migrate --config conf.toml
@@ -75,7 +81,8 @@ For large Retrosheet slices, keep migration and recomputation separate:
 
 `db migrate` is structural/idempotent; treat materialized view refresh as an explicit incremental operation.
 
-`./tmp/baseball-etl run` is the canonical full ETL entrypoint.
+`./tmp/baseball-etl run` is the canonical ETL entrypoint.
+Treat ETL as a batched worker flow on shared VMs: prefer scoped `--years` runs over unbounded full-history jobs unless you are operating a larger host.
 
 For exhaustive production-style ingestion:
 
@@ -87,23 +94,19 @@ For exhaustive production-style ingestion:
 Retrosheet `--era` values: `fed`, `nlg`, `boomer`, `pitcher`, `turf`, `steroid`, `moneyball`, `statcast`, `modern`.
 
 The full ETL command also accepts `--years` and `--era` to customize the Retrosheet window.
-It also accepts `--data-root` when snapshots are mounted/cloned outside defaults.
+It also accepts `--data-root` when data is mounted outside defaults.
 
-Automatic snapshot bootstrap (when default `tools/data` is empty/incomplete):
+Batched worker pattern (recommended for VM safety):
 
 ```bash
-./tmp/baseball-etl run --profile=prod --mode=full
+./tmp/baseball-etl fetch retrosheet --years=2022-2023
+./tmp/baseball-etl run --profile=prod --years=2022-2023
+./tmp/baseball-etl validate --profile=prod --years=2022-2023
+
+./tmp/baseball-etl fetch retrosheet --years=2024-2025
+./tmp/baseball-etl run --profile=prod --years=2024-2025
+./tmp/baseball-etl validate --profile=prod --years=2024-2025
 ```
-
-When required files are missing under `tools/data` (or `/home/app/tools/data` in Docker),
-the ETL pipeline automatically clones `https://github.com/stormlightlabs/bigflydata.git`
-to a temporary directory, uses it for the run, then cleans it up.
-
-Optional env overrides:
-
-- `BASEBALL_DATA_REPO_URL` (default `https://github.com/stormlightlabs/bigflydata.git`)
-- `BASEBALL_DATA_REPO_REF` (branch/tag/SHA)
-- `BASEBALL_DATA_AUTO_CLONE` (`true` by default; set `false` to disable)
 
 ### Server
 

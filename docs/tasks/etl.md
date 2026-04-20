@@ -1,6 +1,6 @@
-# ETL Binary + Data Product Tasks
+# ETL Worker Tasks (No External Warehouse)
 
-Scope: keep ETL runtime performance-safe by moving upstream data engineering to `bigflydata`, while keeping `baseball-etl` focused on ingest/read/upsert/validate.
+Scope: keep ETL as an operational worker runtime for the production database. The worker owns fetch/load/validate/status/cleanup flows, including Retrosheet download lifecycle.
 
 ## Phase 0: Completed Baseline
 
@@ -21,7 +21,7 @@ Acceptance:
 - [x] Build `baseball-etl` alongside `baseball` in Docker multi-stage build.
 - [x] Keep shared orchestration in `internal/seed` (no logic fork).
 - [x] Consolidate command implementation into `internal/cli` and wire both binaries through that package.
-- [x] Remove `tools/data` git submodule from this repo.
+- [x] Remove deprecated `tools/data` git submodule from this repo.
 - [ ] Add smoke tests for `baseball-etl --help`, `run --help`, `validate --help`, `status --help`.
 - [ ] Remove ETL command registration from `internal/cli.NewBaseballRootCmd` once cutover is complete.
 
@@ -30,32 +30,35 @@ Acceptance:
 - [x] ETL can run without shipping server/cache command surfaces in its process.
 - [ ] Primary `baseball` CLI no longer exposes ETL commands after cutover.
 
-## Phase 2: Upstream Snapshot Contract (`bigflydata`)
+## Phase 2: Worker-Owned Data Lifecycle
 
-- [ ] Define Snapshot Contract V1 (`raw/`, `prepared/`, `snapshot.manifest.json`, schema version).
-- [ ] Store extracted raw source files in VCS/LFS as canonical artifacts (zip files are transitional inputs only).
-- [ ] Implement transform stages in Python using Polars + NumPy (no pandas).
-- [ ] Produce ingest-ready prepared outputs with deterministic schema/path contract.
-- [ ] Add data quality checks and row-level invariants in `bigflydata` CI.
-- [ ] Publish documentation and runbooks in `/Users/owais/Projects/bigflydata/docs/spec.md` + `todo.md`.
-
-Acceptance:
-
-- [ ] A pinned `bigflydata` ref fully defines ETL input files without upstream fetch variance.
-- [ ] Prepared outputs are deterministic and directly ingestible by Go ETL.
-
-## Phase 3: Ingestion Contract in `baseball-etl`
-
-- [ ] Add manifest/contract preflight validation before load.
-- [ ] Add prepared-data loader path as default ingest route.
-- [ ] Keep legacy archive-centric loader path only as fallback during migration.
-- [ ] Add per-dataset upsert strategy docs (keys, conflict policy, idempotency guarantees).
-- [ ] Track load throughput metrics (rows/s, duration, failure class) per phase.
+- [ ] Treat local `data/` as canonical ETL input root.
+- [ ] Ensure ETL can bootstrap missing Retrosheet files via `etl fetch retrosheet` as part of normal operations.
+- [ ] Document and harden Retrosheet file retention policy (what stays vs what is temporary).
+- [ ] Add explicit cleanup command path for transient Retrosheet artifacts after successful loads.
+- [ ] Vendor a pinned Chadwick Register snapshot under `data/` and document ETL update cadence for that snapshot.
+- [ ] Remove stale docs/config assumptions that require an external warehouse or snapshot repo.
 
 Acceptance:
 
-- [ ] Steady-state ETL does not require zip decompression/network fetch from providers.
-- [ ] Load behavior is idempotent and resumable with deterministic inputs.
+- [ ] ETL can execute full load windows without dependency on external warehouse publication flow.
+- [ ] Operators have explicit, repeatable download + cleanup behavior for Retrosheet data.
+
+## Phase 3: Job-Oriented ETL Worker Behavior
+
+- [ ] Define ETL job types (`full-run`, `yearly-sync`, `validate-only`, `cleanup-only`, `maintenance`).
+- [ ] Add durable run-state transitions for start/running/succeeded/failed/cancelled.
+- [ ] Add job metadata for scope (`years`, `era`, profile/mode) and replayability.
+- [ ] Add clear retry policy for network/download failures separate from DB write failures.
+- [ ] Track throughput and failure class metrics per job type.
+- [ ] Add queue controls for VM safety (max active jobs, max queued jobs, job-priority policy).
+- [ ] Add batch controls (year-window chunking, load chunk sizes, optional inter-batch delay).
+
+Acceptance:
+
+- [ ] ETL behaves like a queue worker surface even when invoked manually.
+- [ ] Failed jobs can be resumed or retried with explicit scope.
+- [ ] Default queue/batch settings prevent host saturation on the production VM.
 
 ## Phase 4: Dedicated ETL Container (Dev + Prod Compose)
 
@@ -64,7 +67,7 @@ Acceptance:
 - [ ] Keep same image as `app` unless later split is justified.
 - [ ] Configure ETL-specific resource caps (`mem_limit`, `cpus`, `pids_limit`).
 - [ ] Configure ETL-specific DB pool env values (separate from API defaults).
-- [ ] Mount shared data root volume at `/home/app/tools/data` for `app` + `etl`.
+- [ ] Mount shared data root volume at `/home/app/data` for `app` + `etl`.
 - [ ] Keep ETL service internal-only (no exposed ports).
 - [ ] Document one-shot execution path (`docker compose run --rm etl ...`) as default.
 
@@ -79,6 +82,7 @@ Acceptance:
 - [ ] Add per-step timeout and cancellation policy for heavy ETL phases.
 - [ ] Add explicit post-load `ANALYZE` for heavily changed tables/partitions.
 - [ ] Add DB backpressure throttling hooks (latency/WAL-sensitive pacing).
+- [ ] Add admission-control guardrails that reject or defer new ETL jobs when host pressure is high.
 - [ ] Add host-level alerting for free disk and WAL growth thresholds.
 - [ ] Add runbook actions for WAL pressure (pause ETL, archive/prune strategy, checkpoint analysis).
 - [ ] Add `pg_stat_bgwriter` trend capture (`checkpoints_req` / `checkpoints_timed`).
@@ -88,20 +92,38 @@ Acceptance:
 - [ ] Concurrent ETL starts are rejected safely.
 - [ ] Operators have deterministic controls for pause/resume/recovery.
 
-## Phase 6: De-Materialization + Partitioned Serving
+## Phase 6: Database Maintenance Jobs
 
-- [ ] Mark materialized-view refresh loops as legacy and remove from default ETL run path.
-- [ ] Define partitioned serving-table targets for current MV-backed heavy artifacts.
-- [ ] Add partition management policy (create/attach/retire) for serving tables.
-- [ ] Implement upsert/load steps from `bigflydata` prepared artifacts into partitioned serving tables.
-- [ ] Remove API/query dependencies on materialized-view-only objects.
-- [ ] Replace MV-centric observability/reporting with partitioned-table load metrics and checks.
+- [ ] Mark broad materialized-view refresh loops as legacy and keep them off default ETL run path.
+- [ ] Define explicit maintenance jobs for partition/table hygiene and targeted recompute.
+- [ ] Add partition management policy (create/attach/retire) for high-churn datasets.
+- [ ] Remove API/query dependencies on MV-only objects over time.
+- [ ] Replace MV-centric observability/reporting with table/partition load metrics and checks.
 - [ ] Add runbook queries for partition skew, stale partitions, and slow upsert phases.
 
 Acceptance:
 
-- [ ] Serving ingestion scales with changed partitions, not full-history MV rebuilds.
+- [ ] ETL maintenance scales by changed data scope instead of full-history refreshes.
 - [ ] Interrupted runs can resume without full rerun.
+
+## Phase 7: Materialized View Decomposition (Batched)
+
+Reference: Materialized View Decomposition and Batched Maintenance Plan section in [ETL spec](../specs/etl.md).
+
+- [ ] Add queue-backed maintenance job model for MV replacement work (`queued`, `running`, `succeeded`, `failed`).
+- [ ] Add changed-scope tracking tables (`etl_changed_games`, `etl_changed_seasons`, `etl_changed_players`).
+- [ ] Migrate `player_game_*` and `team_game_stats` to serving tables with staged batched upserts.
+- [ ] Migrate achievement views (`no_hitters`, `cycles`, `multi_hr_games`, `triple_plays`, `extra_inning_games`) to changed-game batch recompute.
+- [ ] Migrate season leader views to changed-season recompute.
+- [ ] Migrate career leader views to changed-player recompute.
+- [ ] Decompose `win_expectancy_historical` into incremental state-count maintenance plus publish step.
+- [ ] Add compatibility views so repository SQL can keep existing relation names during rollout.
+
+Acceptance:
+
+- [ ] Default ETL flow avoids single long-running MV refresh phases.
+- [ ] Maintenance jobs run in bounded batches and can resume after interruption.
+- [ ] API behavior remains stable during and after cutover.
 
 ## Verification Checklist
 
@@ -109,5 +131,4 @@ Acceptance:
 - [ ] ETL lock/concurrency behavior validated with two concurrent start attempts.
 - [ ] `docker compose` ETL one-shot run succeeds in dev and prod layouts.
 - [ ] API readiness remains healthy during ETL run window.
-- [x] ETL docs updated in `docs/internal/data-loading.md`.
-- [x] ETL docs updated in `conf/README.md`.
+- [ ] Retrosheet fetch/cleanup behavior validated across repeated runs.

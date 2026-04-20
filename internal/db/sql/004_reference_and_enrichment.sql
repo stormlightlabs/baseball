@@ -1,9 +1,5 @@
 -- reference data, enrichment tables, and crosswalk tables.
 
-
--- SECTION 010_team_aliases.sql
-
-
 -- Team aliases table for natural language search
 -- Maps common team names and variations to official team IDs
 CREATE TABLE IF NOT EXISTS team_aliases (
@@ -122,12 +118,6 @@ INSERT INTO series_aliases (alias, series_id) VALUES
     ('wild card', 'WC')
 ON CONFLICT (alias) DO NOTHING;
 
-
-
-
--- SECTION 011_update_game_search_with_team_names.sql
-
-
 -- Update search text generation to include team names from aliases
 CREATE OR REPLACE FUNCTION update_game_search_trigger()
 RETURNS TRIGGER AS $$
@@ -215,12 +205,6 @@ SET search_text = (
 UPDATE games
 SET search_tsv = to_tsvector('english', search_text)
 WHERE search_text IS NOT NULL;
-
-
-
-
--- SECTION 012_advanced_stats_constants.sql
-
 
 -- Advanced statistics constants tables
 -- Supports wOBA, wRC+, FIP, and WAR calculations
@@ -356,15 +340,8 @@ COMMENT ON TABLE park_factors IS 'Multi-year regressed park factors from FanGrap
 COMMENT ON COLUMN park_factors.basic_5yr IS 'Most stable 5-year regressed overall park factor';
 COMMENT ON COLUMN park_factors.factor_hr IS 'Home run park factor (e.g., Coors Field ~105-110)';
 
-
-
-
--- SECTION 013_fangraphs_team_park_map.sql
-
-
 -- FanGraphs team name to Retrosheet park ID mapping.
 -- Includes stable 2016+ mappings plus historical aliases used by FanGraphs.
-
 CREATE TABLE IF NOT EXISTS fangraphs_team_park_map (
     fangraphs_team VARCHAR(50) PRIMARY KEY,
     retrosheet_team_id VARCHAR(3) NOT NULL,
@@ -420,12 +397,6 @@ VALUES
 ON CONFLICT (fangraphs_team) DO NOTHING;
 
 CREATE INDEX IF NOT EXISTS idx_fangraphs_team_park_retrosheet ON fangraphs_team_park_map(retrosheet_team_id, start_year);
-
-
-
-
--- SECTION 014_populate_league_constants.sql
-
 
 -- Populate league constants for wRC+ calculations (2023-2024)
 -- Uses Lahman Batting table to calculate league-wide constants
@@ -500,17 +471,9 @@ SELECT
 FROM league_constants
 ORDER BY season DESC, league;
 
-
-
-
--- SECTION 041_salary_summary.sql
-
-
 -- Create table for yearly salary summary data
 -- This complements the Salaries table with aggregate statistics
-
 DROP TABLE IF EXISTS salary_summary;
-
 CREATE TABLE salary_summary (
     year INTEGER PRIMARY KEY,
     total NUMERIC(15, 2) NOT NULL,
@@ -526,15 +489,8 @@ COMMENT ON COLUMN salary_summary.total IS 'Total salary for all players in the s
 COMMENT ON COLUMN salary_summary.average IS 'Average salary for the season';
 COMMENT ON COLUMN salary_summary.median IS 'Median salary for the season';
 
-
-
-
--- SECTION 042_player_relatives.sql
-
-
 -- Create player_relatives table for family relationships
 -- Data source: Retrosheet relatives.csv
-
 CREATE TABLE IF NOT EXISTS player_relatives (
     player_id_1 VARCHAR(10) NOT NULL,
     relation_type VARCHAR(50) NOT NULL,
@@ -551,15 +507,8 @@ COMMENT ON COLUMN player_relatives.player_id_1 IS 'First player Retrosheet ID';
 COMMENT ON COLUMN player_relatives.relation_type IS 'Type of relationship (Brother, Father, Uncle, etc.)';
 COMMENT ON COLUMN player_relatives.player_id_2 IS 'Second player Retrosheet ID';
 
-
-
-
--- SECTION 043_player_bio_extended.sql
-
-
 -- Extended biographical data from Retrosheet biofile
 -- Supplements Lahman People table with additional fields
-
 CREATE TABLE IF NOT EXISTS player_bio_extended (
     retro_id VARCHAR(10) PRIMARY KEY,
 
@@ -596,15 +545,8 @@ COMMENT ON COLUMN player_bio_extended.birth_name IS 'Name at birth if different 
 COMMENT ON COLUMN player_bio_extended.cem_note IS 'Additional cemetery location details';
 COMMENT ON COLUMN player_bio_extended.hof_retrosheet IS 'Hall of Fame status from Retrosheet (may differ from Lahman)';
 
-
-
-
--- SECTION 048_batting_lahman_2025_schema_sync.sql
-
-
 -- Align Batting schema with Lahman 2025+ CSV layout.
 -- Lahman 2025 removed legacy Batting columns G_batting and G_old.
-
 ALTER TABLE "Batting"
     DROP COLUMN IF EXISTS "G_batting",
     DROP COLUMN IF EXISTS "G_old";
@@ -668,14 +610,7 @@ WHERE
     "SF" IS NULL OR
     "GIDP" IS NULL;
 
-
-
-
--- SECTION 049_mlbam_crosswalk_tables.sql
-
-
 -- Persisted MLBAM crosswalk tables for players and teams.
-
 CREATE TABLE IF NOT EXISTS player_mlbam_map (
     mlbam_id INTEGER PRIMARY KEY,
     lahman_id VARCHAR(9),
@@ -721,16 +656,8 @@ COMMENT ON TABLE player_mlbam_map IS
 COMMENT ON TABLE team_mlbam_map IS
 'Season-scoped MLBAM teamId crosswalk to local team_id/franchise_id identifiers.';
 
-
-
-
--- SECTION 051_people_crosswalk_lookup_indexes.sql
-
-
 -- Add lookup indexes to accelerate player crosswalk joins from Chadwick IDs.
 -- These are intentionally non-unique: duplicate IDs can exist in historical edge cases.
 
 CREATE INDEX IF NOT EXISTS "People_retroID_idx" ON "People" ("retroID");
 CREATE INDEX IF NOT EXISTS "People_bbrefID_idx" ON "People" ("bbrefID");
-
-

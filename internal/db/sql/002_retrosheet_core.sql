@@ -1,9 +1,5 @@
 -- Retrosheet core schema, indexing, partitioning, and supporting tables.
 
-
--- SECTION 002_retrosheet_schema.sql
-
-
 DROP TABLE IF EXISTS games;
 CREATE TABLE games (
     date varchar(8),
@@ -171,12 +167,6 @@ CREATE TABLE games (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_games_game_id ON games(game_id);
-
-
-
-
--- SECTION 003_retrosheet_plays_schema.sql
-
 
 -- Retrosheet Play-by-Play (Plays) Table
 -- Source: https://www.retrosheet.org/downloads/plays.html
@@ -417,12 +407,6 @@ CREATE INDEX IF NOT EXISTS idx_plays_date ON plays(date);
 CREATE INDEX IF NOT EXISTS idx_plays_batteam ON plays(batteam);
 CREATE INDEX IF NOT EXISTS idx_plays_pitteam ON plays(pitteam);
 
-
-
-
--- SECTION 006_add_primary_keys.sql
-
-
 -- Add primary key to games table
 -- A game is uniquely identified by date, home team, and game number (for doubleheaders)
 DO $$
@@ -451,23 +435,11 @@ BEGIN
     END IF;
 END $$;
 
-
-
-
--- SECTION 007_add_game_type.sql
-
-
 -- Add game_type column to games table to distinguish regular season, postseason, and all-star games
 ALTER TABLE games ADD COLUMN IF NOT EXISTS game_type varchar(20) DEFAULT 'regular';
 
 -- Create index for filtering by game type
 CREATE INDEX IF NOT EXISTS idx_games_game_type ON games(game_type);
-
-
-
-
--- SECTION 008_ejections_schema.sql
-
 
 -- Retrosheet Ejections Table
 -- Source: https://www.retrosheet.org/eject.htm
@@ -503,12 +475,6 @@ CREATE INDEX IF NOT EXISTS idx_ejections_umpire_id ON ejections(umpire_id);
 CREATE INDEX IF NOT EXISTS idx_ejections_date ON ejections(date);
 CREATE INDEX IF NOT EXISTS idx_ejections_team ON ejections(team);
 CREATE INDEX IF NOT EXISTS idx_ejections_role ON ejections(role);
-
-
-
-
--- SECTION 009_game_search_columns.sql
-
 
 -- Add search columns to games table for natural language game search
 ALTER TABLE games ADD COLUMN IF NOT EXISTS search_text text;
@@ -586,12 +552,6 @@ CREATE TRIGGER games_search_update
     FOR EACH ROW
     EXECUTE FUNCTION update_game_search_trigger();
 
-
-
-
--- SECTION 015_add_query_indexes.sql
-
-
 -- Additional indexes to optimize Negro Leagues endpoints and pagination-heavy queries
 
 -- Helps /negroleagues/plays when sorting by play number within games
@@ -604,12 +564,6 @@ CREATE INDEX IF NOT EXISTS idx_games_visiting_league_date ON games(visiting_team
 -- General date filter for schedule endpoints
 CREATE INDEX IF NOT EXISTS idx_games_date ON games(date);
 
-
-
-
--- SECTION 032_add_weather_columns.sql
-
-
 -- Add weather and game condition columns to games table
 ALTER TABLE games ADD COLUMN IF NOT EXISTS temp_f INTEGER;
 ALTER TABLE games ADD COLUMN IF NOT EXISTS sky VARCHAR(20);
@@ -621,12 +575,6 @@ ALTER TABLE games ADD COLUMN IF NOT EXISTS start_time TIME;
 ALTER TABLE games ADD COLUMN IF NOT EXISTS used_dh BOOLEAN;
 
 CREATE INDEX IF NOT EXISTS idx_games_used_dh ON games(used_dh) WHERE used_dh IS NOT NULL;
-
-
-
-
--- SECTION 033_partition_plays_table.sql
-
 
 -- Partition the plays table by year to improve query performance.
 -- Idempotent: skips when plays is already partitioned.
@@ -931,12 +879,6 @@ BEGIN
 END
 $$;
 
-
-
-
--- SECTION 034_denormalize_league_to_plays.sql
-
-
 -- Add league columns to plays table for better partition pruning
 
 ALTER TABLE plays ADD COLUMN IF NOT EXISTS home_team_league character varying(10);
@@ -956,12 +898,6 @@ CREATE INDEX IF NOT EXISTS idx_plays_home_league_date ON plays(home_team_league,
 CREATE INDEX IF NOT EXISTS idx_plays_visiting_league_date ON plays(visiting_team_league, date);
 
 ANALYZE plays;
-
-
-
-
--- SECTION 040_retrosheet_players.sql
-
 
 -- Retrosheet allplayers data
 -- Provides per-team-season player appearances with granular positional data
@@ -1011,12 +947,6 @@ COMMENT ON COLUMN retrosheet_players.games_rp IS 'Games as relief pitcher (enter
 COMMENT ON COLUMN retrosheet_players.first_game IS 'Date of first game with this team in this season';
 COMMENT ON COLUMN retrosheet_players.last_game IS 'Date of last game with this team in this season';
 
-
-
-
--- SECTION 044_retrosheet_coaches.sql
-
-
 -- Create coaches table from Retrosheet biodata
 -- Tracks coaching stints for players
 
@@ -1040,15 +970,8 @@ COMMENT ON TABLE coaches IS 'Coaching records from Retrosheet biodata';
 COMMENT ON COLUMN coaches.retro_id IS 'Retrosheet player ID';
 COMMENT ON COLUMN coaches.role IS 'Coaching position/role';
 
-
-
-
--- SECTION 045_retrosheet_umpires.sql
-
-
 -- Create umpires table from Retrosheet biodata
 -- Tracks umpire biographical and career data
-
 CREATE TABLE IF NOT EXISTS umpires (
     retro_id VARCHAR(10) PRIMARY KEY,
     last_name VARCHAR(100) NOT NULL,
@@ -1065,5 +988,3 @@ COMMENT ON TABLE umpires IS 'Umpire biographical data from Retrosheet';
 COMMENT ON COLUMN umpires.retro_id IS 'Retrosheet umpire ID';
 COMMENT ON COLUMN umpires.first_game IS 'Date of first game umpired';
 COMMENT ON COLUMN umpires.last_game IS 'Date of last game umpired';
-
-

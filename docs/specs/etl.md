@@ -1,60 +1,63 @@
 ---
-title: ETL Binary + Data Product Architecture
+title: ETL Worker Architecture (No External Warehouse)
 updated: 2026-04-20
 ---
 
 ## Problem
 
-The current deployment still runs API and ETL from the same runtime surface, and ETL remains responsible for too much upstream data handling (archive fetch/decompress/parse + DB writes).
+The refactor direction must change: we do not want a separate data warehouse or external snapshot-factory workflow to operate the product.
 
-For performance-sensitive runs, this causes avoidable contention:
+Operationally, that means ETL should be a dedicated worker container responsible for database lifecycle work, including:
 
-- CPU/memory pressure from archive-heavy preprocessing
-- long and variable ETL wall-clock time from network + decompression
-- increased DB stress windows when transform + load happen in one process path
+- downloading Retrosheet/Lahman source inputs when needed
+- loading and validating datasets in Postgres
+- running bounded post-load maintenance and recompute steps
+- cleaning up temporary/intermediate Retrosheet artifacts after successful jobs
 
 ## Architectural Direction
 
-Adopt a two-system model with strict responsibilities:
+Adopt a single-system ingestion model:
 
-1. `bigflydata` is the upstream dataset factory.
-2. `baseball-etl` is the downstream ingestion/runtime loader.
+1. `baseball-etl` is the worker runtime (Sidekiq/Celery-style responsibility model).
+2. Postgres is the only long-lived store.
+3. `data/` is the local source-data workspace, not a warehouse product.
 
 Core decisions:
 
-- Snapshot source files should be tracked in VCS as extracted raw tabular data (not zip archives as primary artifacts).
-- Zip archives are transitional only and should be removed from steady-state snapshot storage.
-- Heavy transforms move to Python data tooling in `bigflydata` using Polars + NumPy (no pandas).
-- Heavy derivation work moves upstream into `bigflydata`; Go ETL remains an ingestion runtime.
-- Serving materialization is no longer the target strategy; partitioned table ingestion is preferred.
-- `baseball-etl` focuses on pull/read/upsert/validate and DB-side safety.
+- No external warehouse contract is required for steady-state operations.
+- ETL owns source acquisition and cleanup lifecycle for Retrosheet.
+- ETL remains separate from API runtime (separate container/process), but targets the same operational database.
+- ETL jobs must be idempotent, year-bounded where possible, and resumable after interruption.
+- Materialized-view-heavy loops remain transitional; bounded table/partition maintenance is preferred.
 
 ## Responsibility Split
 
-| Concern               | `bigflydata`                                           | `baseball-etl`                                            |
-| --------------------- | ------------------------------------------------------ | --------------------------------------------------------- |
-| Source acquisition    | Owns download/sync from upstream providers             | Does not fetch provider archives directly in steady state |
-| Raw preservation      | Owns canonical raw snapshots in VCS/LFS                | Reads raw/prepared data via cloned snapshot root          |
-| Transform logic       | Owns normalization/enrichment and ingest-ready outputs | Only lightweight mapping needed for upsert                |
-| Snapshot metadata     | Owns manifest + schema contract metadata               | Verifies manifest/contract before load                    |
-| Database writes       | None                                                   | Owns COPY/upsert/load + validation                        |
-| Runtime observability | Optional build metrics                                 | Owns ETL run/step/refresh events                          |
+| Concern               | API Container (`baseball server`)     | ETL Worker Container (`baseball-etl`)             |
+| --------------------- | ------------------------------------- | ------------------------------------------------- |
+| HTTP traffic          | Owns API routes, auth, cache behavior | None                                              |
+| Source acquisition    | None                                  | Owns `etl fetch *` workflows                      |
+| DB writes for ingest  | None                                  | Owns load/upsert/reseed operations                |
+| Retrosheet lifecycle  | Read-only usage through API queries   | Download, extract/parse, load, cleanup            |
+| Validation/readiness  | Serves readiness endpoints            | Produces readiness inputs via ETL/validate/status |
+| Operational telemetry | API metrics/logs                      | ETL run/step events + failure metadata            |
 
-## Snapshot Contract (V1 Target)
+## Worker Data Contract
 
-`bigflydata` should publish a deterministic contract under repo root:
+`baseball-etl` consumes source files from a resolved data root:
 
-- `snapshot.manifest.json`: file hashes, sizes, and snapshot timestamp
-- `docs/spec.md`: contract version and dataset semantics
-- `raw/`: extracted source-of-record tabular files
-- `prepared/`: ingest-ready outputs optimized for Go loader throughput
+1. `--data-root`
+2. `BASEBALL_DATA_ROOT`
+3. `data`
 
-Target prepared principles:
+Expected structure remains local-first (example):
 
-- stable file paths per dataset/stage
-- explicit schema versioning
-- deterministic row ordering where applicable
-- no provider zip parsing required in `baseball-etl`
+- `lahman/csv/*`
+- `retrosheet/*.zip` and extracted/generated CSVs during ETL runs
+- `retrosheet/negroleagues/*`
+- `retrosheet/gameinfo.csv`, `allplayers.csv`, and related side datasets as required
+- `chadwick/register/*` (vendored pinned snapshot for stable crosswalk/person enrichment)
+
+Note: checked-in CSVs under `data/` are valid bootstrap inputs and reduce first-run fetch needs.
 
 ## Runtime Topology
 
@@ -65,71 +68,245 @@ Target prepared principles:
                 [postgres] <-> [redis]
                      ^
                      |
-       [etl container: baseball-etl run/validate/status]
-                     ^
+        [etl worker container: baseball-etl run/fetch/load/validate/status]
                      |
-          [clone/pull bigflydata snapshot ref]
+                     v
+             [local data root volume: data]
 ```
 
 Deployment rules:
 
-- API and ETL run in separate containers.
-- Both may use the same image artifact.
-- ETL exposes no HTTP port.
-- ETL uses independent resource and DB pool limits.
-- ETL runs are single-active via lock guard.
+- API and ETL run as separate containers/processes.
+- ETL exposes no public HTTP port.
+- ETL has independent CPU/memory/DB-pool limits.
+- ETL enforces single-active run semantics to avoid overlapping heavy jobs.
 
-Ingress note:
+## Batched Queue Contract
 
-- Production ingress uses Traefik via Coolify.
-- Caddy is development-only.
+ETL should execute as a batched job queue, even when manually triggered from CLI:
 
-## Performance Contract
+- queue model: enqueue scope-specific jobs (`years`, `era`, profile) and process serially by default
+- concurrency default: `1` active worker per deployment unless explicitly raised
+- batch unit: bounded year windows and bounded COPY/upsert chunk sizes
+- pacing: optional inter-batch delay/backpressure hooks to reduce WAL/checkpoint spikes
+- fairness: long full-history jobs should be split into smaller queued windows
 
-- No archive decompression in steady-state ETL hot path.
-- ETL reads ingest-ready files and performs bounded upsert batches.
-- Keep force/year writes year-bounded and resumable.
-- Avoid materialized-view rebuild loops in steady-state ETL.
-- Keep partition maintenance explicit and bounded.
-- Maintain ETL telemetry (`etl_runs`, `etl_run_steps`, `etl_step_events`), treating MV refresh events as legacy transition telemetry only.
+Primary objective: avoid VM saturation while still making forward progress on ingest and maintenance.
+
+## Retrosheet Lifecycle Contract
+
+For each ETL execution window:
+
+1. Resolve requested year/era scope.
+2. Ensure required Retrosheet files exist (download missing files).
+3. Parse/load/upsert to Postgres in bounded steps.
+4. Validate coverage/freshness contracts.
+5. Clean temporary artifacts produced by the run (failed runs retain diagnostics where needed).
+
+Cleanup intent:
+
+- Keep canonical source files required for reproducibility.
+- Remove transient extraction/output files that only serve in-flight load stages.
+- Keep cleanup explicit and auditable in ETL logs/events.
+
+## Performance and Safety Contract
+
+- Year/season-scoped writes are preferred over full-history rewrites.
+- Batched queue execution is preferred over one unbounded monolithic run.
+- Heavy steps are cancellable and resumable.
+- Post-load `ANALYZE` and backpressure-aware pacing are part of worker behavior.
+- ETL telemetry tables (`etl_runs`, `etl_run_steps`, `etl_step_events`) remain source of truth for operations.
+- API availability must remain stable during ETL windows.
 
 ## Migration Strategy
 
-### Phase A: Upstream data-product hardening (`bigflydata`)
+### Phase A: Doc + Runtime Contract Realignment
 
-- Keep current sync/build/verify working.
-- Add raw/prepared contract with explicit schema version.
-- Add transform pipeline on Polars + NumPy.
+- Remove warehouse/snapshot-factory assumptions from docs and runbooks.
+- Make ETL worker ownership explicit for fetch/load/cleanup responsibilities.
 
-### Phase B: Ingestion cutover (`baseball-etl`)
+### Phase B: Worker Job Hardening
 
-- Add prepared-data loader path as primary route.
-- Keep legacy archive-centric path as fallback only during transition.
-- Add manifest/contract preflight validation before DB writes.
+- Complete single-active lock/cancellation guarantees.
+- Add VM-safe batching controls (job chunk sizing, queue depth, optional pacing between batches).
+- Harden Retrosheet download + cleanup behavior for partial/interrupted runs.
+- Add explicit maintenance jobs for DB-side recompute/partition hygiene.
 
-### Phase C: Simplification
+### Phase C: Surface Simplification
 
-- Remove archive-first ETL assumptions from runbook and command surface.
-- Keep `baseball-etl` focused on load/validate/status workflows.
-- Remove serving materialization assumptions from ingestion runbooks and ETL hot path.
+- Keep `baseball-etl` as canonical data operations surface.
+- Keep `db` command group schema/maintenance focused.
+- Retire stale config/doc references that imply external warehouse ownership.
 
-## Database Workstreams (Still In Scope)
+### Phase D: Decompose Long MV Refreshes
 
-- Single-active ETL lock and cancellation policy
-- post-load analyze/backpressure hooks
-- partition management and retention policy
-- year/season-scoped upsert + recompute where needed
-- operator runbooks for WAL/checkpoint pressure and resume/recovery
+- Replace monolithic materialized-view refresh maintenance with queue-driven batch jobs.
+- Introduce staged intermediaries and serving tables for high-cost derived datasets.
+- Keep compatibility relation names during cutover to avoid API regressions.
+
+## Materialized View Decomposition and Batched Maintenance Plan
+
+### Why This Exists
+
+`refresh.materialized_views` currently executes broad materialized-view refreshes in one ETL phase after load.
+Even with per-view retries and observability, this can still produce long-running maintenance windows on small VMs.
+
+This plan decomposes heavy refresh work into batched jobs with explicit intermediaries, so each unit of work is smaller, resumable, and queueable.
+
+### Current State (Code-Backed)
+
+- ETL pipeline runs one `refresh.materialized_views` step after data load.
+- Retrosheet-heavy refresh set includes:
+  - `player_game_batting_stats`
+  - `player_game_pitching_stats`
+  - `player_game_fielding_stats`
+  - `team_game_stats`
+  - `win_expectancy_historical`
+  - achievement and leader views
+- Refresh mode is currently forced non-concurrent for ETL pipeline runs (`ForceNonConcurrent: true`).
+- API repositories query MV names directly, so transition must preserve query compatibility.
+
+### Target Pattern
+
+#### 1) Queue-Driven Maintenance
+
+Use ETL job queue semantics for maintenance work:
+
+- one active maintenance worker by default
+- explicit job types (`mv.batch.recompute`, `mv.publish`, `mv.compact`)
+- bounded batches by year or game-id window
+- idempotent jobs and resumable checkpoints
+
+#### 2) Intermediary Layers
+
+For each heavy MV family:
+
+- `*_stage` tables: transient batch output (per season/game window)
+- `*_serving` tables: durable incremental store with upsert keys
+- compatibility views: keep old names stable while backing data moves to serving tables
+
+#### 3) Scope Tracking
+
+Add scope tables to drive only affected recomputes:
+
+- `etl_changed_games(run_id, game_id, season)`
+- `etl_changed_seasons(run_id, season)`
+- `etl_changed_players(run_id, player_id, season)`
+
+Populate these from ETL load steps and use them to fan out downstream batch jobs.
+
+### View Family Migration Map
+
+| Current object | Intermediary strategy | Batch key | Target backing |
+| --- | --- | --- | --- |
+| `player_game_batting_stats` | `stage_player_game_batting_stats` -> upsert | `season`, `game_id` | `serving_player_game_batting_stats` |
+| `player_game_pitching_stats` | `stage_player_game_pitching_stats` -> upsert | `season`, `game_id` | `serving_player_game_pitching_stats` |
+| `player_game_fielding_stats` | `stage_player_game_fielding_stats` -> upsert | `season`, `game_id` | `serving_player_game_fielding_stats` |
+| `team_game_stats` | `stage_team_game_stats` -> upsert | `season`, `game_id` | `serving_team_game_stats` |
+| `no_hitters`, `cycles`, `multi_hr_games` | derive from changed games/player-game slices | `season`, `game_id` | `serving_achievement_*` tables |
+| `triple_plays`, `extra_inning_games` | derive from changed games only | `season`, `game_id` | `serving_achievement_*` tables |
+| `season_batting_leaders` | recompute changed seasons from serving player-game stats | `season` | `serving_season_batting_leaders` |
+| `season_pitching_leaders` | recompute changed seasons from serving player-game stats | `season` | `serving_season_pitching_leaders` |
+| `career_batting_leaders` | recompute changed players from season serving table | `player_id` | `serving_career_batting_leaders` |
+| `career_pitching_leaders` | recompute changed players from season serving table | `player_id` | `serving_career_pitching_leaders` |
+| `win_expectancy_historical` | incremental state-count table, publish from counts | `year` or `era` bucket | `serving_win_expectancy_state_counts` + view |
+| `player_id_map`, `team_franchise_map`, `park_map` | keep as-is initially; migrate later if needed | dataset-specific | existing MVs first |
+
+### Rollout Waves
+
+#### Wave 0: Queue and Scope Foundations
+
+- add ETL maintenance queue table(s)
+- add changed-scope tables (`etl_changed_*`)
+- instrument enqueue/dequeue/attempt timing
+
+#### Wave 1: Game-Log Serving Tables (Highest Impact)
+
+- migrate `player_game_*` + `team_game_stats` off full MV refresh
+- build in batches by season/game windows
+- publish compatibility views using existing object names
+
+#### Wave 2: Achievement Incrementals
+
+- move achievements to serving tables fed by changed game windows
+- remove full-refresh requirement from ingest path
+
+#### Wave 3: Season Leaders by Changed Season
+
+- recompute only affected seasons
+- publish season leader compatibility views
+
+#### Wave 4: Career Leaders by Changed Player
+
+- derive affected player set from changed seasons
+- upsert career totals only for impacted players
+
+#### Wave 5: Win Expectancy Decomposition
+
+- replace broad full recomputation with incremental state-count updates
+- keep historical rebuild as low-frequency backfill job
+
+### Example Intermediary DDL (Shape Only)
+
+```sql
+CREATE TABLE IF NOT EXISTS etl_maintenance_jobs (
+    id BIGSERIAL PRIMARY KEY,
+    run_id BIGINT NULL,
+    job_type TEXT NOT NULL,
+    scope_json JSONB NOT NULL,
+    status TEXT NOT NULL DEFAULT 'queued',
+    attempts INT NOT NULL DEFAULT 0,
+    queued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    started_at TIMESTAMPTZ NULL,
+    finished_at TIMESTAMPTZ NULL,
+    error TEXT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_etl_maintenance_jobs_status_queued_at
+ON etl_maintenance_jobs(status, queued_at);
+
+CREATE TABLE IF NOT EXISTS stage_player_game_batting_stats (
+    player_id TEXT NOT NULL,
+    game_id TEXT NOT NULL,
+    season INT NOT NULL,
+    payload JSONB NOT NULL,
+    batch_key TEXT NOT NULL
+);
+```
+
+### Publish/Compatibility Strategy
+
+To avoid API breakage during migration:
+
+1. Create serving tables with complete schemas.
+2. Load serving tables in batches.
+3. Replace MV usage behind compatibility views with same column contracts.
+4. Keep old names (`player_game_batting_stats`, etc.) queryable throughout cutover.
+
+### Operational Guardrails
+
+- one active maintenance worker on shared VM
+- hard timeout per batch
+- retry per batch with capped attempts
+- optional inter-batch delay for WAL/checkpoint pressure
+- fail-fast if queue depth exceeds safety threshold
+
+### Exit Criteria
+
+- ETL ingest no longer depends on full-history MV refresh loops
+- maintenance jobs complete in bounded batch windows
+- interrupted jobs resume from remaining scopes
+- API query surfaces continue to work under existing relation names
 
 ## Non-Goals (Current Scope)
 
-- No immediate full schema rewrite to `raw/core/serving` schemas
-- No API contract changes
+- No API contract changes under `/v1/*`.
+- No requirement to introduce a second persistent analytical store.
 
 ## Acceptance Criteria
 
-- ETL runtime no longer depends on provider zip parsing for steady-state runs.
-- `bigflydata` snapshot ref + manifest deterministically reproduce ETL inputs.
-- API availability is preserved during ETL windows with isolated resources.
-- ETL remains observable, cancellable, and single-active.
-- Heavy recompute work is moved upstream and bounded to affected data where feasible.
+- ETL worker can bootstrap required source data (including Retrosheet) without an external warehouse.
+- ETL worker handles download, load, validate, and cleanup lifecycle in one operational model.
+- ETL worker executes through batched queue semantics that keep shared VM usage bounded.
+- API and ETL are independently deployable and resource-isolated.
+- ETL runs remain observable, cancellable, and single-active.

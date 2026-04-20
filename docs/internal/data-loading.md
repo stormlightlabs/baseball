@@ -1,9 +1,10 @@
 # Database Loading Contract (Complete Slice)
 
-This is the source of truth for loading a complete database slice with the new upstream/downstream split:
+This is the source of truth for loading a complete database slice with an ETL-worker model:
 
-- `bigflydata` builds versioned data snapshots (`raw` + `prepared`)
-- `baseball-etl` pulls, reads, upserts, validates
+- `baseball-etl` owns fetch/load/validate/status/cleanup operations
+- Postgres is the only persistent data store for serving + analytics
+- local `data/` holds source inputs and transient ETL artifacts
 
 A complete slice means:
 
@@ -15,31 +16,19 @@ A complete slice means:
 
 | Environment | Prefix |
 | --- | --- |
-| Local | `./tmp/baseball` (db/server), `./tmp/baseball-etl` (etl), `uv run baseball-data` (snapshot build) |
+| Local | `./tmp/baseball` (db/server), `./tmp/baseball-etl` (etl) |
 | Docker/Coolify | `docker compose exec app baseball` (db/server), `docker compose exec app baseball-etl` (etl) |
 
 Examples below use:
 
 - `<BASEBALL>` for db/server commands
 - `<BASEBALL_ETL>` for ETL commands
-- `<BIGFLYDATA>` for snapshot-build commands
 
 ## Primary Operational Flow
 
-### 1) Build or update snapshot in `bigflydata`
+### 1) Ensure data root is present
 
-```bash
-cd /Users/owais/Projects/bigflydata
-<BIGFLYDATA> sync
-<BIGFLYDATA> build
-<BIGFLYDATA> verify
-```
-
-Target contract direction:
-
-- extracted raw tabular files are canonical artifacts in VCS/LFS
-- heavy transforms happen in Python (Polars + NumPy)
-- prepared ingest-ready outputs are produced in `bigflydata`
+Use checked-in CSVs under `data/` when available (for example, Lahman CSVs already restored in this repo). For missing Retrosheet files, use ETL fetch commands.
 
 ### 2) Apply DB schema migrations
 
@@ -49,7 +38,16 @@ Target contract direction:
 
 `db migrate` is structural/idempotent only. Heavy recompute remains an explicit ETL/load step.
 
-### 3) Run ETL ingestion
+### 3) Fetch source data required for your run scope
+
+Representative dev window:
+
+```bash
+<BASEBALL_ETL> fetch retrosheet --years 2022-2025
+<BASEBALL_ETL> fetch negroleagues
+```
+
+### 4) Run ETL ingestion
 
 Representative dev slice:
 
@@ -63,14 +61,21 @@ Full historical profile:
 <BASEBALL_ETL> run --profile prod --mode full
 ```
 
-### 4) Validate and inspect status
+For VM-safe operations, prefer batched windows instead of one large full-history run:
+
+```bash
+<BASEBALL_ETL> run --profile prod --years 2022-2023
+<BASEBALL_ETL> run --profile prod --years 2024-2025
+```
+
+### 5) Validate and inspect status
 
 ```bash
 <BASEBALL_ETL> validate --profile dev
 <BASEBALL_ETL> status
 ```
 
-### 5) API readiness checks
+### 6) API readiness checks
 
 ```bash
 curl http://localhost:8080/v1/ready
@@ -85,69 +90,51 @@ Resolution order for ETL and DB commands:
 
 1. `--data-root`
 2. `BASEBALL_DATA_ROOT`
-3. `tools/data`
-4. legacy `data`
+3. `data`
 
-## Production Bootstrap (Auto-Clone)
+## Retrosheet Download + Cleanup Contract
 
-When required files are missing under the default root (`tools/data` locally, `/home/app/tools/data` in Docker), ETL clones the snapshot repo to a temporary directory, uses it for the run, then cleans it up.
+Worker expectations:
 
-Optional overrides:
+- ETL fetches missing Retrosheet artifacts for requested years/eras.
+- ETL load steps should only depend on files under the resolved data root.
+- Temporary extraction artifacts should be cleaned after successful runs.
+- Failures should preserve enough artifacts/logs for debugging before cleanup.
 
-- `BASEBALL_DATA_REPO_URL`
-- `BASEBALL_DATA_REPO_REF`
-- `BASEBALL_DATA_AUTO_CLONE`
+Operational guidance:
 
-Example:
-
-```bash
-<BASEBALL_ETL> run --profile prod --mode full
-<BASEBALL_ETL> validate --profile prod
-```
-
-## Publishing Snapshot Updates (`bigflydata`)
-
-```bash
-tmpdir="$(mktemp -d)"
-git clone --depth=1 https://github.com/stormlightlabs/bigflydata.git "$tmpdir/bigflydata"
-cd "$tmpdir/bigflydata"
-
-<BIGFLYDATA> sync
-<BIGFLYDATA> build
-<BIGFLYDATA> verify
-
-# target state includes prepared outputs generated in-repo
-# commit raw/prepared/manifest updates together
-git add .
-git commit -m "Update snapshot raw/prepared datasets"
-git push
-
-cd -
-rm -rf "$tmpdir"
-```
+- Keep canonical source files (`*.zip`, core CSVs like `gameinfo.csv`, `allplayers.csv`) in the data root.
+- Prune transient ETL artifacts periodically to keep disk usage bounded.
 
 ## Large Dataset Guidance
 
 Run heavy steps explicitly and in order:
 
 1. `db migrate`
-2. `baseball-etl run ...`
-3. explicit partition maintenance/analysis for heavily changed serving tables
+2. `baseball-etl fetch retrosheet ...` (if needed)
+3. `baseball-etl run ...`
+4. explicit partition maintenance/analysis for heavily changed tables
+
+Queue and batching guidance:
+
+- keep one active ETL run at a time on shared VMs
+- split full-history windows into smaller year batches
+- defer additional jobs until current batch validation passes
 
 Partition/load observability:
 
 - `etl_step_events`
 - table/partition row-count + latency checks via ETL status and SQL diagnostics
 
-## Transitional / Legacy Commands
+## Stage Commands
 
-Legacy stage commands remain available during migration, but should not be the long-term hot path:
+Stage commands are first-class and expected in this worker model:
 
 - `<BASEBALL_ETL> fetch retrosheet`
 - `<BASEBALL_ETL> fetch negroleagues`
 - `<BASEBALL_ETL> load <dataset>`
-
-Target state is snapshot-first ingestion from `bigflydata` prepared outputs with partitioned serving-table writes (no steady-state materialized-view rebuild loop).
+- `<BASEBALL_ETL> validate`
+- `<BASEBALL_ETL> status`
 
 ## Retrosheet Era Contract
 
