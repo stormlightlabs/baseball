@@ -36,6 +36,7 @@ Production Postgres tuning is applied via `command: ["postgres", "-c", ...]` ent
 | Variable                   | Example                                                         | Notes                             |
 | -------------------------- | --------------------------------------------------------------- | --------------------------------- |
 | `DATABASE_URL`             | `postgres://postgres:pw@postgres:5432/baseball?sslmode=disable` | Host is the Compose service name  |
+| `SERVER_HOST`              | `0.0.0.0`                                                       | Bind API server to all interfaces |
 | `REDIS_URL`                | `redis://redis:6379/0`                                          |                                   |
 | `BASEBALL_DATA_ROOT`       | `/home/app/tools/data`                                          | Default data root checked by ETL  |
 | `BASEBALL_DATA_REPO_URL`   | `https://github.com/stormlightlabs/bigflydata.git`              | Optional snapshot clone override  |

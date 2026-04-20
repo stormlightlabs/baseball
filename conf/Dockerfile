@@ -26,7 +26,6 @@ USER app
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD ["/usr/local/bin/baseball", "server", "health"]
 
-ENV DATABASE_URL=postgres://postgres:postgres@postgres:5432/baseball_dev?sslmode=disable
 ENV BASEBALL_DATA_ROOT=/home/app/tools/data
 
 ENTRYPOINT ["/usr/local/bin/baseball"]
