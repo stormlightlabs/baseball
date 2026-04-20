@@ -294,7 +294,34 @@ func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir strin
 	}
 
 	buildStartedAt := time.Now()
+	var peopleRows int64
+	if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM "People"`).Scan(&peopleRows); err == nil {
+		echo.Infof(
+			"  Building player_mlbam_map from staged=%s against People=%s...",
+			formatNumber(staged),
+			formatNumber(peopleRows),
+		)
+	} else {
+		echo.Infof("  Building player_mlbam_map from staged=%s...", formatNumber(staged))
+	}
+
 	result, err := tx.ExecContext(ctx, `
+		WITH retro_lookup AS (
+			SELECT
+				p."retroID" AS retro_id,
+				ARRAY_AGG(DISTINCT p."playerID") FILTER (WHERE p."playerID" IS NOT NULL) AS retro_matches
+			FROM "People" p
+			WHERE p."retroID" IS NOT NULL
+			GROUP BY p."retroID"
+		),
+		bbref_lookup AS (
+			SELECT
+				p."bbrefID" AS bbref_id,
+				ARRAY_AGG(DISTINCT p."playerID") FILTER (WHERE p."playerID" IS NOT NULL) AS bbref_matches
+			FROM "People" p
+			WHERE p."bbrefID" IS NOT NULL
+			GROUP BY p."bbrefID"
+		)
 		INSERT INTO player_mlbam_map (
 			mlbam_id,
 			lahman_id,
@@ -318,28 +345,20 @@ func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir strin
 			s.retro_id,
 			s.bbref_id,
 			s.full_name,
-			'chadwick',
-			CASE
-				WHEN COALESCE(cardinality(r.retro_matches), 0) > 1 THEN 'none'
-				WHEN COALESCE(cardinality(b.bbref_matches), 0) > 1 THEN 'none'
+				'chadwick',
+				CASE
+					WHEN COALESCE(cardinality(r.retro_matches), 0) > 1 THEN 'none'
+					WHEN COALESCE(cardinality(b.bbref_matches), 0) > 1 THEN 'none'
 				WHEN COALESCE(cardinality(r.retro_matches), 0) = 1
 					AND COALESCE(cardinality(b.bbref_matches), 0) = 1
 					AND r.retro_matches[1] <> b.bbref_matches[1] THEN 'none'
 				WHEN COALESCE(r.retro_matches[1], b.bbref_matches[1]) IS NOT NULL THEN 'high'
 				ELSE 'none'
-			END,
-			NOW()
-		FROM chadwick_player_stage s
-		LEFT JOIN LATERAL (
-			SELECT ARRAY_AGG(DISTINCT p."playerID") FILTER (WHERE p."playerID" IS NOT NULL) AS retro_matches
-			FROM "People" p
-			WHERE s.retro_id IS NOT NULL AND p."retroID" = s.retro_id
-		) r ON TRUE
-		LEFT JOIN LATERAL (
-			SELECT ARRAY_AGG(DISTINCT p."playerID") FILTER (WHERE p."playerID" IS NOT NULL) AS bbref_matches
-			FROM "People" p
-			WHERE s.bbref_id IS NOT NULL AND p."bbrefID" = s.bbref_id
-		) b ON TRUE
+				END,
+				NOW()
+			FROM chadwick_player_stage s
+			LEFT JOIN retro_lookup r ON r.retro_id = s.retro_id
+			LEFT JOIN bbref_lookup b ON b.bbref_id = s.bbref_id
 	`)
 	if err != nil {
 		return 0, fmt.Errorf("failed to build player_mlbam_map: %w", err)

@@ -1,3 +1,9 @@
+-- Fresh migration set: win expectancy helper function and comments.
+
+
+-- SECTION 047_win_expectancy_metadata.sql
+
+
 -- Keep function and object comments separate from view-shape migrations for clarity.
 
 CREATE OR REPLACE FUNCTION get_win_expectancy(
@@ -32,3 +38,5 @@ Refresh after loading new play-by-play data: REFRESH MATERIALIZED VIEW CONCURREN
 COMMENT ON FUNCTION get_win_expectancy IS
 'Get win expectancy for a specific game state (inning, is_bottom, outs, runners, score_diff).
 Returns the most recent win probability and sample size for the given state.';
+
+

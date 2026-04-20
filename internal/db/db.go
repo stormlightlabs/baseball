@@ -151,6 +151,18 @@ func (db *DB) Migrate(ctx context.Context) error {
 		return fmt.Errorf("no migration files found")
 	}
 
+	currentMigrations := make(map[string]struct{}, len(migrations))
+	for _, migration := range migrations {
+		currentMigrations[migration.Name] = struct{}{}
+	}
+	legacyDetected, err := db.hasUnknownAppliedMigrations(ctx, currentMigrations)
+	if err != nil {
+		return fmt.Errorf("failed to inspect existing migration history: %w", err)
+	}
+	if legacyDetected {
+		return fmt.Errorf("legacy migration history detected; this build uses a fresh squashed migration set. recreate the database and rerun `db migrate`")
+	}
+
 	for _, migration := range migrations {
 		applied, err := db.isApplied(ctx, migration.Name)
 		if err != nil {
@@ -182,6 +194,28 @@ func (db *DB) Migrate(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (db *DB) hasUnknownAppliedMigrations(ctx context.Context, current map[string]struct{}) (bool, error) {
+	rows, err := db.QueryContext(ctx, `SELECT name FROM schema_migrations`)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return false, err
+		}
+		if _, ok := current[name]; !ok {
+			return true, nil
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return false, err
+	}
+	return false, nil
 }
 
 // CopyCSV efficiently loads CSV data into a PostgreSQL table using COPY.
@@ -945,22 +979,59 @@ func (db *DB) RefreshMaterializedViews(ctx context.Context, viewNames []string) 
 		}
 	}
 
-	for _, view := range views {
+	refreshOne := func(view string) error {
 		query := fmt.Sprintf("REFRESH MATERIALIZED VIEW CONCURRENTLY %s", view)
-		_, err := db.ExecContext(ctx, query)
-		if err != nil {
-			if strings.Contains(err.Error(), "cannot refresh materialized view") && strings.Contains(err.Error(), "concurrently") {
-				query = fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", view)
-				if _, err := db.ExecContext(ctx, query); err != nil {
-					return 0, fmt.Errorf("failed to refresh view %s: %w", view, err)
-				}
-			} else {
-				return 0, fmt.Errorf("failed to refresh view %s: %w", view, err)
+		if _, err := db.ExecContext(ctx, query); err != nil {
+			errText := strings.ToLower(err.Error())
+			if !strings.Contains(errText, "concurrently") {
+				return err
+			}
+
+			query = fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", view)
+			if _, err := db.ExecContext(ctx, query); err != nil {
+				return err
 			}
 		}
+		return nil
 	}
 
-	return len(views), nil
+	pending := append([]string(nil), views...)
+	refreshed := 0
+	maxPasses := len(views)
+
+	for pass := 0; pass < maxPasses && len(pending) > 0; pass++ {
+		nextPending := make([]string, 0)
+		progressed := false
+
+		for _, view := range pending {
+			if err := refreshOne(view); err != nil {
+				errText := strings.ToLower(err.Error())
+				if strings.Contains(errText, "has not been populated") {
+					nextPending = append(nextPending, view)
+					continue
+				}
+				return refreshed, fmt.Errorf("failed to refresh view %s: %w", view, err)
+			}
+
+			refreshed++
+			progressed = true
+		}
+
+		if len(nextPending) == 0 {
+			return refreshed, nil
+		}
+		if !progressed {
+			return refreshed, fmt.Errorf("failed to resolve dependent materialized views: %v", nextPending)
+		}
+
+		pending = nextPending
+	}
+
+	if len(pending) > 0 {
+		return refreshed, fmt.Errorf("failed to refresh all materialized views; remaining: %v", pending)
+	}
+
+	return refreshed, nil
 }
 
 // loadNegroLeaguesTeamMapping reads the team-to-league mapping CSV

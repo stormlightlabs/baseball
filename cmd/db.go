@@ -36,7 +36,7 @@ func DbMigrateCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "migrate",
 		Short: "Run database migrations",
-		Long:  "Create and update database schema for baseball data.",
+		Long:  "Create and update structural database schema objects. Materialized view population is handled separately (etl/db refresh-views).",
 		RunE:  migrate,
 	}
 }

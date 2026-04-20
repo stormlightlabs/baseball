@@ -84,6 +84,19 @@ cp conf/conf.example.toml conf.toml
 ./tmp/baseball etl status
 ```
 
+For large Retrosheet slices, keep migration and recomputation separate:
+
+```bash
+./tmp/baseball db migrate --config conf.toml
+./tmp/baseball etl --profile=dev --years=2023-2025
+./tmp/baseball db refresh-views player_game_batting_stats player_game_pitching_stats player_game_fielding_stats team_game_stats
+./tmp/baseball db refresh-views no_hitters cycles multi_hr_games triple_plays extra_inning_games
+./tmp/baseball db refresh-views season_batting_leaders season_pitching_leaders career_batting_leaders career_pitching_leaders
+./tmp/baseball db refresh-views player_id_map team_franchise_map park_map
+```
+
+`db migrate` is structural/idempotent; treat materialized view refresh as an explicit incremental operation.
+
 `./tmp/baseball etl run` is an explicit alias for `./tmp/baseball etl`.
 
 For exhaustive production-style ingestion:

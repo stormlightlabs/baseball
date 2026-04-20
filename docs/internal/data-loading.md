@@ -33,6 +33,32 @@ Shared pipeline flags:
 - `--era <comma-separated-era-list>`
 - `--data-root <path>`
 
+## Large Dataset Guidance (Incremental First)
+
+Retrosheet + derived leaderboards are large enough that full recomputation during schema deploy
+can be disruptive. Treat materialized view population as a **separate operational step** from
+`db migrate`.
+
+Migration contract:
+
+- `db migrate` is structural and idempotent (schema/object definitions only).
+- Heavy data movement and materialized view population happen in ETL/load steps.
+
+Recommended approach for large environments:
+
+1. Run `db migrate` first (schema/object changes only).
+2. Load source data (`etl ...` / `etl load ...`).
+3. Refresh materialized views in bounded batches:
+
+```bash
+<BASEBALL> db refresh-views player_game_batting_stats player_game_pitching_stats player_game_fielding_stats team_game_stats
+<BASEBALL> db refresh-views no_hitters cycles multi_hr_games triple_plays extra_inning_games
+<BASEBALL> db refresh-views season_batting_leaders season_pitching_leaders career_batting_leaders career_pitching_leaders
+<BASEBALL> db refresh-views player_id_map team_franchise_map park_map
+```
+
+This keeps migration time predictable and lets you pace heavy recomputes according to capacity.
+
 Data root resolution order:
 
 1. `--data-root`
@@ -169,7 +195,8 @@ These commands are still supported for partial runs, debugging, and CI:
 | `<BASEBALL> etl fetch negroleagues`     | Download and extract Negro Leagues archives                  | Writes files under `<data-root>/retrosheet/negroleagues`                                        | Network access     |
 | `<BASEBALL> etl load <dataset>`         | Execute a specific load stage                                | Dataset-dependent inserts/updates/truncation                                                    | Source files ready |
 | `<BASEBALL> etl status`                 | Show core + supplemental dataset freshness and health        | Read-only                                                                                       | Reachable Postgres |
-| `<BASEBALL> db migrate`                 | Apply SQL migrations                                         | Schema create/alter only                                                                        | Reachable Postgres |
+| `<BASEBALL> db migrate`                 | Apply SQL migrations                                         | Structural/idempotent schema object changes only (no MV population)                             | Reachable Postgres |
+| `<BASEBALL> db refresh-views <views...>`| Populate/refresh materialized views                          | Data recomputation (run in batches for large datasets)                                          | Reachable Postgres |
 
 ## Retrosheet Era Contract
 

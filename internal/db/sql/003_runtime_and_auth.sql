@@ -1,3 +1,22 @@
+-- Fresh migration set: runtime tracking and authentication tables.
+
+
+-- SECTION 004_dataset_refreshes.sql
+
+
+CREATE TABLE IF NOT EXISTS dataset_refreshes (
+    dataset TEXT PRIMARY KEY,
+    last_loaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    row_count BIGINT NOT NULL DEFAULT 0,
+    notes TEXT
+);
+
+
+
+
+-- SECTION 005_auth_schema.sql
+
+
 -- Users table for authentication
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -57,3 +76,41 @@ CREATE TABLE IF NOT EXISTS api_usage (
 CREATE INDEX IF NOT EXISTS idx_api_usage_user_id ON api_usage(user_id);
 CREATE INDEX IF NOT EXISTS idx_api_usage_api_key_id ON api_usage(api_key_id);
 CREATE INDEX IF NOT EXISTS idx_api_usage_created_at ON api_usage(created_at);
+
+
+
+
+-- SECTION 046_etl_run_tracking.sql
+
+
+CREATE TABLE IF NOT EXISTS etl_runs (
+    id BIGSERIAL PRIMARY KEY,
+    profile TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    params JSONB NOT NULL DEFAULT '{}'::jsonb,
+    status TEXT NOT NULL DEFAULT 'running',
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    finished_at TIMESTAMPTZ,
+    duration_ms BIGINT,
+    error TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_etl_runs_status ON etl_runs(status);
+CREATE INDEX IF NOT EXISTS idx_etl_runs_started_at ON etl_runs(started_at DESC);
+
+CREATE TABLE IF NOT EXISTS etl_run_steps (
+    id BIGSERIAL PRIMARY KEY,
+    run_id BIGINT NOT NULL REFERENCES etl_runs(id) ON DELETE CASCADE,
+    step TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'running',
+    row_count BIGINT NOT NULL DEFAULT 0,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    finished_at TIMESTAMPTZ,
+    duration_ms BIGINT,
+    error TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_etl_run_steps_run_id ON etl_run_steps(run_id, id);
+CREATE INDEX IF NOT EXISTS idx_etl_run_steps_status ON etl_run_steps(status);
+
+

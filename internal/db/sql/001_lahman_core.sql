@@ -1,3 +1,5 @@
+-- Fresh migration set: Lahman core schema.
+
 DROP TABLE IF EXISTS "AllstarFull";
 CREATE TABLE "AllstarFull" (
 	"playerID" varchar(9) NOT NULL,
