@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	"database/sql"
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/config"
 	"stormlightlabs.org/baseball/internal/db"
@@ -289,14 +289,10 @@ func recreateDatabase(cmd *cobra.Command, dbURL string) error {
 	if err != nil {
 		return err
 	}
-	parsed, err := url.Parse(targetURL)
-	if err != nil {
-		return fmt.Errorf("error: invalid database URL: %w", err)
-	}
 
-	dbName := strings.TrimPrefix(parsed.Path, "/")
-	if dbName == "" {
-		return fmt.Errorf("error: database URL must include a database name: %s", targetURL)
+	dbName, adminConnConfig, err := parseRecreateConnection(targetURL)
+	if err != nil {
+		return err
 	}
 
 	echo.Error(fmt.Sprintf("⚠ WARNING: This will drop and recreate database %s (all data will be lost).", dbName))
@@ -312,14 +308,7 @@ func recreateDatabase(cmd *cobra.Command, dbURL string) error {
 		}
 	}
 
-	adminURL := *parsed
-	adminURL.Path = "/postgres"
-	adminURL.RawPath = "/postgres"
-
-	conn, err := sql.Open("pgx", adminURL.String())
-	if err != nil {
-		return fmt.Errorf("error: failed to connect to server: %w", err)
-	}
+	conn := stdlib.OpenDB(*adminConnConfig)
 	defer conn.Close()
 
 	if err := conn.PingContext(ctx); err != nil {
@@ -343,6 +332,23 @@ func recreateDatabase(cmd *cobra.Command, dbURL string) error {
 
 	echo.Successf("✓ Recreated database %s", dbName)
 	return nil
+}
+
+func parseRecreateConnection(connString string) (string, *pgx.ConnConfig, error) {
+	cfg, err := pgx.ParseConfig(connString)
+	if err != nil {
+		return "", nil, fmt.Errorf("error: invalid database connection string: %w", err)
+	}
+
+	dbName := strings.TrimSpace(cfg.Database)
+	if dbName == "" {
+		return "", nil, fmt.Errorf("error: database connection string must include a database name")
+	}
+
+	adminCfg := cfg.Copy()
+	adminCfg.Database = "postgres"
+
+	return dbName, adminCfg, nil
 }
 
 func resolveDatabaseURL(cmd *cobra.Command, flagValue string) (string, error) {
