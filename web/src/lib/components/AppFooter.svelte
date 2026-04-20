@@ -31,7 +31,7 @@
         href="https://stormlightlabs.org"
         target="_blank"
         rel="noopener noreferrer"
-        class="inline-flex items-center gap-1 rounded text-[0.86rem] text-foreground no-underline transition-colors duration-150 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        class="inline-flex items-center gap-1 rounded text-sm text-muted no-underline transition-colors duration-150 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
         <span class="flex items-center">
           <i class="i-tabler-building"></i>
         </span>
@@ -41,7 +41,7 @@
         href="https://github.com/stormlightlabs/baseball"
         target="_blank"
         rel="noopener noreferrer"
-        class="inline-flex items-center gap-1 rounded text-[0.86rem] text-foreground no-underline transition-colors duration-150 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        class="inline-flex items-center gap-1 rounded text-sm text-muted no-underline transition-colors duration-150 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
         <span class="flex items-center">
           <i class="i-tabler-brand-github"></i>
         </span>
@@ -50,14 +50,14 @@
       {#each DOC_LINKS as { href, label } (href)}
         <a
           href={resolve(href)}
-          class="inline-flex items-center gap-1 rounded text-[0.86rem] text-foreground no-underline transition-colors duration-150 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          class="inline-flex items-center gap-1 rounded text-sm text-muted no-underline transition-colors duration-150 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
           {@render iconFor(label)}
           {label}
         </a>
       {/each}
       <a
         href="mailto:admin@bigfly.tech"
-        class="inline-flex items-center gap-1 rounded text-[0.86rem] text-primary no-underline transition-colors duration-150 hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        class="inline-flex items-center gap-1 rounded text-sm text-muted no-underline transition-colors duration-150 hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
         <span class="flex items-center">
           <i class="i-tabler-mail-code"></i>
         </span>

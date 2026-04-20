@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { afterNavigate, goto } from '$app/navigation';
+  import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { fetchPaginated } from '$lib/api';
@@ -11,7 +11,6 @@
   import type { GameLog } from '$lib/players/types';
   import { rowColumns } from '$lib/players/types';
   import { intParam } from '$lib/url-state.svelte';
-  import { onMount } from 'svelte';
 
   let playerId = $derived(page.params.id ?? '');
   let gameLogType = $derived(parseGameLogType(page.url.searchParams.get('log')));
@@ -23,24 +22,20 @@
 
   let columns = $derived(rowColumns(gameLogsResource.items));
 
-  async function refresh(force = false): Promise<void> {
+  async function refresh(): Promise<void> {
     const id = playerId;
     const logType = gameLogType;
     const pageValue = currentPage;
     const perPageValue = perPage;
     const key = `${id}|${logType}|${pageValue}|${perPageValue}`;
-    if (!force && key === lastKey) return;
+    if (key === lastKey) return;
     lastKey = key;
 
     const endpoint = gameLogEndpoint(logType, id);
     await gameLogsResource.load(() => fetchPaginated<GameLog>(endpoint, { page: pageValue, per_page: perPageValue }));
   }
 
-  onMount(() => {
-    void refresh(true);
-  });
-
-  afterNavigate(() => {
+  $effect(() => {
     void refresh();
   });
 

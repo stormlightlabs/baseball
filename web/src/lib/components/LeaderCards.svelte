@@ -134,10 +134,19 @@
     </div>
     <button
       type="button"
-      class="rounded border border-outline px-2.5 py-1 font-mono text-[0.64rem] text-foreground transition-colors hover:bg-surface"
+      class="rounded border border-outline px-2.5 py-1 font-sans text-xxs text-foreground transition-colors hover:bg-surface"
       onclick={() => void refreshLeaders('manual')}
       disabled={loading || refreshing}>
-      {refreshing ? 'Refreshing…' : 'Refresh'}
+      {#if refreshing}
+        <span class="inline-flex items-center gap-1">
+          <i class="i-tabler-loader-2 animate-spin"></i> Refreshing…
+        </span>
+      {:else}
+        <span class="inline-flex items-center gap-1">
+          <i class="i-tabler-refresh"></i>
+          Refresh
+        </span>
+      {/if}
     </button>
   </div>
 

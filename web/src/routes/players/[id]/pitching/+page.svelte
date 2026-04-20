@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { afterNavigate, goto } from '$app/navigation';
+  import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { apiFetch } from '$lib/api';
@@ -14,7 +14,6 @@
   import { QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
   import type { PitchingSeason, PlayerStatsPayload } from '$lib/players/types';
   import { intParam } from '$lib/url-state.svelte';
-  import { onMount } from 'svelte';
 
   let playerId = $derived(page.params.id ?? '');
   let currentPage = $derived(intParam(page.url.searchParams, 'page', 1));
@@ -82,12 +81,12 @@
 
   const fmtNum = (v: number | undefined) => (v != null ? String(v) : '—');
 
-  async function refresh(force = false): Promise<void> {
+  async function refresh(): Promise<void> {
     const id = playerId;
     const pageValue = currentPage;
     const perPageValue = perPage;
     const key = `${id}|${pageValue}|${perPageValue}`;
-    if (!force && key === lastKey) return;
+    if (key === lastKey) return;
     lastKey = key;
 
     await pitchingResource.load(async () => {
@@ -96,11 +95,7 @@
     });
   }
 
-  onMount(() => {
-    void refresh(true);
-  });
-
-  afterNavigate(() => {
+  $effect(() => {
     void refresh();
   });
 

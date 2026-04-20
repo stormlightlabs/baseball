@@ -24,9 +24,18 @@ export type ParamValue = string | number | null | undefined;
 type ParamOverrides = Record<string, ParamValue>;
 
 const NAVIGATION_OPTS = { replaceState: true, noScroll: true, keepFocus: true } as const;
-const currentRouteId = $derived(page.route.id);
-const currentSearchParams = $derived(page.url.searchParams);
-const currentHash = $derived(page.url.hash);
+
+function currentRouteId(): string | null {
+  return page.route.id ?? null;
+}
+
+function currentSearchParams(): URLSearchParams {
+  return page.url.searchParams;
+}
+
+function currentHash(): string {
+  return page.url.hash;
+}
 
 function withOverrides(base: URLSearchParams, overrides: ParamOverrides): SvelteURLSearchParams {
   const next = new SvelteURLSearchParams(base);
@@ -41,24 +50,24 @@ function withOverrides(base: URLSearchParams, overrides: ParamOverrides): Svelte
 }
 
 function nextSearch(overrides: ParamOverrides): string {
-  return withOverrides(currentSearchParams, overrides).toString();
+  return withOverrides(currentSearchParams(), overrides).toString();
 }
 
 /** Sets a single URL search parameter, replacing the current history entry. */
 export async function setUrlParam(key: string, value: ParamValue): Promise<void> {
   const qs = nextSearch({ [key]: value });
-  const routeId = currentRouteId;
+  const routeId = currentRouteId();
   if (!routeId) return;
-  const href = `${page.url.pathname}${qs ? `?${qs}` : ''}${currentHash}`;
+  const href = `${page.url.pathname}${qs ? `?${qs}` : ''}${currentHash()}`;
   await goto(resolve(href as '/'), NAVIGATION_OPTS);
 }
 
 /** Sets multiple URL search parameters atomically. */
 export async function setUrlParams(params: ParamOverrides): Promise<void> {
   const qs = nextSearch(params);
-  const routeId = currentRouteId;
+  const routeId = currentRouteId();
   if (!routeId) return;
-  const href = `${page.url.pathname}${qs ? `?${qs}` : ''}${currentHash}`;
+  const href = `${page.url.pathname}${qs ? `?${qs}` : ''}${currentHash()}`;
   await goto(resolve(href as '/'), NAVIGATION_OPTS);
 }
 
@@ -68,11 +77,12 @@ export async function setUrlParams(params: ParamOverrides): Promise<void> {
  */
 export function urlWith(overrides: ParamOverrides): string {
   const qs = nextSearch(overrides);
-  const routeId = currentRouteId;
+  const routeId = currentRouteId();
   if (!routeId) return `${page.url.pathname}${page.url.search}${page.url.hash}`;
   let href = page.url.pathname;
   if (qs) href += `?${qs}`;
-  if (currentHash) href += currentHash;
+  const hash = currentHash();
+  if (hash) href += hash;
   return href;
 }
 

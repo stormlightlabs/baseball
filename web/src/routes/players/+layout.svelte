@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { afterNavigate, goto } from '$app/navigation';
+  import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { apiFetch, apiUrl, fetchPaginated } from '$lib/api';
@@ -14,7 +14,7 @@
   import { normalizePlayerProfile, normalizeSearchPlayersPage } from '$lib/players/normalizers';
   import { AsyncPaginatedListResource, AsyncValueResource } from '$lib/players/resources.svelte';
   import type { ApiPlayerPayload, PlayerProfile, PlayerResult } from '$lib/players/types';
-  import { onMount, type Snippet } from 'svelte';
+  import type { Snippet } from 'svelte';
 
   let { children }: { children: Snippet } = $props();
 
@@ -45,7 +45,7 @@
     return erasInRange(profileResource.value.debut_year, profileResource.value.final_year);
   });
 
-  async function refreshSearch(force = false): Promise<void> {
+  async function refreshSearch(): Promise<void> {
     const term = q.trim();
     if (!term) {
       searchResource.clear();
@@ -53,7 +53,7 @@
       return;
     }
 
-    if (!force && term === lastSearchKey) return;
+    if (term === lastSearchKey) return;
     lastSearchKey = term;
 
     await searchResource.load(async () => {
@@ -62,7 +62,7 @@
     });
   }
 
-  async function refreshProfile(force = false): Promise<void> {
+  async function refreshProfile(): Promise<void> {
     const id = playerId;
     if (!id) {
       profileResource.clear();
@@ -70,7 +70,7 @@
       return;
     }
 
-    if (!force && id === lastProfileKey) return;
+    if (id === lastProfileKey) return;
     lastProfileKey = id;
 
     await profileResource.load(async () => {
@@ -79,15 +79,15 @@
     });
   }
 
-  onMount(() => {
+  $effect(() => {
     searchInput = q;
-    void refreshSearch(true);
-    void refreshProfile(true);
   });
 
-  afterNavigate(() => {
-    searchInput = q;
+  $effect(() => {
     void refreshSearch();
+  });
+
+  $effect(() => {
     void refreshProfile();
   });
 

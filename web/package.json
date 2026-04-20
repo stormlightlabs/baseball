@@ -19,6 +19,7 @@
     "@egoist/tailwindcss-icons": "^1.9.2",
     "@eslint/compat": "^2.0.4",
     "@eslint/js": "^10.0.1",
+    "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/tabler": "^1.2.33",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.57.0",

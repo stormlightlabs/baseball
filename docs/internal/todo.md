@@ -56,3 +56,6 @@ Add a plan to enrich our local warehouse from the full Chadwick register (names/
 Remove `core.MLBTeamCrosswalk* structs` if no longer needed anywhere.
 
 Repository-level unit tests for crosswalk query ambiguity behavior beyond API integration tests.
+
+`Step: load.crosswalk.players_mlbam` takes a long time and doesn't have enough
+logging.
