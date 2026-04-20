@@ -1,13 +1,9 @@
 -- game log and game-stat materialized views.
 -- Views are created WITH NO DATA and refreshed via ETL/db refresh-views.
 
-
--- SECTION 016_player_game_batting_stats_view.sql
-
 -- Create materialized view for per-game batting statistics
 -- This enables fast queries for player game logs and "game finder" functionality
 -- Coverage: All games in plays table (1910-2025)
-
 DROP MATERIALIZED VIEW IF EXISTS player_game_batting_stats CASCADE;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS player_game_batting_stats AS
@@ -64,10 +60,6 @@ COMMENT ON MATERIALIZED VIEW player_game_batting_stats IS
 Enables fast player game log queries and game finder functionality.
 Refresh after loading new plays data: REFRESH MATERIALIZED VIEW CONCURRENTLY player_game_batting_stats;';
 
-
-
--- SECTION 017_player_game_batting_stats_indexes.sql
-
 -- Create indexes for player_game_batting_stats materialized view
 -- Optimizes common query patterns: player lookups, game lookups, date ranges, season filters
 
@@ -93,10 +85,6 @@ CREATE INDEX IF NOT EXISTS idx_player_game_batting_sb ON player_game_batting_sta
 COMMENT ON INDEX idx_player_game_batting_player_id IS 'Fast lookup of all games for a specific player';
 COMMENT ON INDEX idx_player_game_batting_player_season IS 'Fast lookup of player season game logs';
 COMMENT ON INDEX idx_player_game_batting_hr IS 'Game finder: games with home runs';
-
-
-
--- SECTION 018_player_game_pitching_stats_view.sql
 
 -- Create materialized view for per-game pitching statistics
 -- This enables fast queries for pitcher game logs and "game finder" functionality
@@ -161,10 +149,6 @@ COMMENT ON MATERIALIZED VIEW player_game_pitching_stats IS
 Enables fast pitcher game log queries and game finder functionality.
 Refresh after loading new plays data: REFRESH MATERIALIZED VIEW CONCURRENTLY player_game_pitching_stats;';
 
-
-
--- SECTION 019_player_game_pitching_stats_indexes.sql
-
 -- Create indexes for player_game_pitching_stats materialized view
 -- Optimizes common query patterns: pitcher lookups, game lookups, date ranges, season filters
 
@@ -190,15 +174,10 @@ COMMENT ON INDEX idx_player_game_pitching_player_id IS 'Fast lookup of all games
 COMMENT ON INDEX idx_player_game_pitching_player_season IS 'Fast lookup of pitcher season game logs';
 COMMENT ON INDEX idx_player_game_pitching_so IS 'Game finder: games with 10+ strikeouts';
 
-
-
--- SECTION 020_player_game_fielding_stats_view.sql
-
 -- Create materialized view for per-game fielding statistics by position
 -- This enables fast queries for player fielding logs and "game finder" functionality
 -- Coverage: All games in plays table (1910-2025)
 -- Position codes: 1=P, 2=C, 3=1B, 4=2B, 5=3B, 6=SS, 7=LF, 8=CF, 9=RF
-
 DROP MATERIALIZED VIEW IF EXISTS player_game_fielding_stats CASCADE;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS player_game_fielding_stats AS
@@ -275,10 +254,6 @@ Each row represents a player''s fielding performance at a specific position in a
 Enables fast fielding game log queries and game finder functionality.
 Refresh after loading new plays data: REFRESH MATERIALIZED VIEW CONCURRENTLY player_game_fielding_stats;';
 
-
-
--- SECTION 021_player_game_fielding_stats_indexes.sql
-
 -- Create indexes for player_game_fielding_stats materialized view
 -- Optimizes common query patterns: player lookups, game lookups, date ranges, season filters, position filters
 
@@ -307,13 +282,9 @@ COMMENT ON INDEX idx_player_game_fielding_player_position IS 'Fast lookup of pla
 COMMENT ON INDEX idx_player_game_fielding_errors IS 'Game finder: games with errors';
 
 
-
--- SECTION 022_team_game_stats_view.sql
-
 -- Create materialized view for per-game team statistics
 -- This enables fast queries for team game logs and daily performance tracking
 -- Coverage: All games in plays table (1910-2025)
-
 DROP MATERIALIZED VIEW IF EXISTS team_game_stats CASCADE;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS team_game_stats AS
@@ -446,9 +417,6 @@ Includes both offensive (batting) and defensive (pitching/fielding) stats.
 Enables daily performance tracking and rolling aggregate queries.
 Refresh after loading new plays data: REFRESH MATERIALIZED VIEW CONCURRENTLY team_game_stats;';
 
-
-
--- SECTION 023_team_game_stats_indexes.sql
 
 -- Create indexes for team_game_stats materialized view
 -- These indexes support common query patterns for team daily stats API

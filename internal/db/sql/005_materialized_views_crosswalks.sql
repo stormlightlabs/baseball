@@ -1,12 +1,7 @@
 -- crosswalk and win expectancy materialized views.
 
-
--- SECTION 024_player_id_crosswalk_view.sql
-
-
 -- Create materialized view for player ID crosswalk
 -- Normalizes Lahman ↔ Retrosheet player identifiers for seamless joins
-
 DROP MATERIALIZED VIEW IF EXISTS player_id_map CASCADE;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS player_id_map AS
@@ -72,14 +67,8 @@ COMMENT ON FUNCTION retro_to_lahman IS
 'Convert Retrosheet player ID (e.g., "trout001") to Lahman ID (e.g., "troutmi01")';
 
 
-
-
--- SECTION 025_team_franchise_crosswalk_view.sql
-
-
 -- Create materialized view for team/franchise ID crosswalk
 -- Maps Retrosheet team codes to Lahman team IDs and franchise IDs across seasons
-
 DROP MATERIALIZED VIEW IF EXISTS team_franchise_map CASCADE;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS team_franchise_map AS
@@ -138,15 +127,8 @@ COMMENT ON FUNCTION franchise_current_team IS
 COMMENT ON FUNCTION franchise_all_teams IS
 'Get all historical team IDs for a franchise, ordered by season (e.g., all teams for Braves franchise)';
 
-
-
-
--- SECTION 026_park_crosswalk_view.sql
-
-
 -- Create materialized view for park ID crosswalk
 -- Maps park codes across Lahman and Retrosheet, handling missing mappings
-
 DROP MATERIALIZED VIEW IF EXISTS park_map CASCADE;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS park_map AS
@@ -259,14 +241,8 @@ COMMENT ON FUNCTION active_parks IS
 'Get all parks used since specified year, ordered by number of games played';
 
 
-
-
--- SECTION 035_win_expectancy_add_columns.sql
-
-
 -- Create/rebuild the win_expectancy_historical materialized view.
 -- Includes synthetic id and timestamps for API contract compatibility.
-
 DROP TABLE IF EXISTS win_expectancy_historical CASCADE;
 DROP MATERIALIZED VIEW IF EXISTS win_expectancy_historical CASCADE;
 
@@ -345,5 +321,3 @@ CREATE INDEX IF NOT EXISTS idx_win_expectancy_inning ON win_expectancy_historica
 CREATE INDEX IF NOT EXISTS idx_win_expectancy_outs ON win_expectancy_historical(outs);
 CREATE INDEX IF NOT EXISTS idx_win_expectancy_runners ON win_expectancy_historical(runners_state);
 CREATE INDEX IF NOT EXISTS idx_win_expectancy_score ON win_expectancy_historical(score_diff);
-
-

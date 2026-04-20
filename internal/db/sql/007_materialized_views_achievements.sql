@@ -1,9 +1,6 @@
 -- achievements and notable-game materialized views.
 -- Views are created WITH NO DATA and refreshed via ETL/db refresh-views.
 
-
--- SECTION 027_no_hitters_view.sql
-
 -- Create materialized view for no-hitter achievements
 -- A no-hitter is a game where a team allows zero hits to the opposing team
 -- Coverage: All games in plays table (1910-2025)
@@ -58,10 +55,6 @@ CREATE INDEX IF NOT EXISTS idx_no_hitters_team_id ON no_hitters(team_id);
 CREATE INDEX IF NOT EXISTS idx_no_hitters_season ON no_hitters(season);
 CREATE INDEX IF NOT EXISTS idx_no_hitters_date ON no_hitters(date);
 CREATE INDEX IF NOT EXISTS idx_no_hitters_pitcher ON no_hitters(winning_pitcher_id);
-
-
-
--- SECTION 028_cycles_view.sql
 
 -- Create materialized view for hitting for the cycle achievements
 -- A cycle is when a player hits a single, double, triple, and home run in the same game
@@ -123,10 +116,6 @@ CREATE INDEX IF NOT EXISTS idx_cycles_team_id ON cycles(team_id);
 CREATE INDEX IF NOT EXISTS idx_cycles_season ON cycles(season);
 CREATE INDEX IF NOT EXISTS idx_cycles_date ON cycles(date);
 
-
-
--- SECTION 029_multi_hr_games_view.sql
-
 -- Create materialized view for multiple home run game achievements
 DROP MATERIALIZED VIEW IF EXISTS multi_hr_games CASCADE;
 
@@ -176,14 +165,8 @@ CREATE INDEX IF NOT EXISTS idx_multi_hr_games_season ON multi_hr_games(season);
 CREATE INDEX IF NOT EXISTS idx_multi_hr_games_date ON multi_hr_games(date);
 CREATE INDEX IF NOT EXISTS idx_multi_hr_games_hr_count ON multi_hr_games(home_runs DESC);
 
-
-
--- SECTION 030_triple_plays_view.sql
-
-
 -- Create materialized view for triple play achievements
 DROP MATERIALIZED VIEW IF EXISTS triple_plays CASCADE;
-
 CREATE MATERIALIZED VIEW IF NOT EXISTS triple_plays AS
 WITH home_triple_plays AS (
     SELECT
@@ -231,12 +214,6 @@ CREATE INDEX IF NOT EXISTS idx_triple_plays_game_id ON triple_plays(game_id);
 CREATE INDEX IF NOT EXISTS idx_triple_plays_team_id ON triple_plays(team_id);
 CREATE INDEX IF NOT EXISTS idx_triple_plays_season ON triple_plays(season);
 CREATE INDEX IF NOT EXISTS idx_triple_plays_date ON triple_plays(date);
-
-
-
-
--- SECTION 031_extra_inning_games_view.sql
-
 
 -- Create materialized view for extra inning game achievements
 -- Tracks games that went 20 or more innings (60+ outs)

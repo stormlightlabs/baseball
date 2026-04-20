@@ -1,11 +1,6 @@
 -- win expectancy helper function and comments.
 
-
--- SECTION 047_win_expectancy_metadata.sql
-
-
 -- Keep function and object comments separate from view-shape migrations for clarity.
-
 CREATE OR REPLACE FUNCTION get_win_expectancy(
     p_inning INT,
     p_is_bottom BOOLEAN,
