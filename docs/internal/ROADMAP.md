@@ -88,57 +88,12 @@ See the dedicated Data Coverage docs for the newly completed endpoints:
 
 ### 13. Release
 
-Goal: ship an ETL-safe, ETL-performant release for constrained VM environments with clear operational observability and recovery procedures.
+Release planning for ETL safety/performance now lives in:
 
-#### Phase 0 - Completed baseline (Completed 2026-04-20)
+- [ETL Architecture Spec](../specs/etl.md)
+- [ETL Task List](../tasks/etl.md)
 
-- [x] Fix Postgres tuning delivery mechanism: use `command: postgres -c ...` instead of `POSTGRES_*` env no-ops
-- [x] Tune Postgres baseline for 4 GB profile (`shared_buffers=1GB`, `effective_cache_size=2GB`, `work_mem=32MB`, WAL/checkpoint controls)
-- [x] Add hard app DB pool limits (`DB_MAX_OPEN_CONNS`, `DB_MAX_IDLE_CONNS`, lifetime/idle-time caps)
-- [x] Add Go runtime memory/CPU bounds (`GOMEMLIMIT`, `GOMAXPROCS`)
-- [x] Add service-level memory/CPU/PID limits for app/postgres/redis
-- [x] Add Postgres concurrency caps (`max_connections`, parallel worker limits)
-- [x] Enable checkpoint visibility (`log_checkpoints=on`)
-- [x] Remove hardcoded dev `DATABASE_URL` from Dockerfile ENV
-- [x] Ensure `SERVER_HOST=0.0.0.0` in prod compose environment contract
-
-#### Phase 1 - Operational safety and crash prevention
-
-- [ ] Add host-level alerting for free disk and WAL growth thresholds
-- [ ] Add runbook actions for WAL pressure (pause ETL, archive/prune strategy, checkpoint analysis)
-- [ ] Add periodic `pg_stat_bgwriter` capture for `checkpoints_req`/`checkpoints_timed` trend monitoring
-- [ ] Add ETL concurrency guard (single active ETL run lock)
-- [ ] Add per-step timeout/cancel policy for heavy operations
-- [ ] Add off-peak scheduling recommendations and safe defaults for large force/year ranges
-- [ ] Add optional load-shed mode for non-critical endpoints during ETL windows
-- [ ] Add documented emergency toggles (disable heavy refresh groups, pause force mode)
-- [ ] Add operational checklist for resume/recovery after interruption
-
-#### Phase 2 - Force/year write-path performance
-
-- [ ] Make force-clear Retrosheet deletes year-bounded and date-index-friendly for `plays`/`games`
-- [ ] Emit per-year delete telemetry (rows + duration by table)
-- [ ] Keep per-year transactional boundaries for resumability
-- [ ] Keep crosswalk refresh lock-friendly (`DELETE` path, no full-table `TRUNCATE`), with phase timing logs
-- [ ] Add indexes/constraints for incremental upsert paths
-- [ ] Add ETL perf baselines for range-force runs (runtime, WAL growth, checkpoint frequency)
-
-#### Phase 3 - Hybrid incremental materialization and cutover
-
-- [ ] Finalize heavy artifact list for replacement (`player_game_*`, `team_game_stats`, `season_*_leaders`, `career_*_leaders`)
-- [ ] Define source-of-truth model per artifact (`MV`, `incremental table`, or mixed)
-- [ ] Define incremental keys/invalidation units (season/year/team/player)
-- [ ] Define cutover SLOs (max refresh time, max lock time, acceptable staleness)
-- [ ] Add structural migrations for incremental target tables (no historical rewrite)
-- [ ] Add `etl_watermarks` / `materialization_state` tables for resumable progress tracking
-- [ ] Replace full-refresh ETL steps with year/season-bounded recompute + upsert steps
-- [ ] Make force/year runs only recompute affected years/seasons
-- [ ] Add phase-level ETL events and row-count metrics per artifact update step
-- [ ] Add retry-safe transactional boundaries and resumability markers
-- [ ] Add runbook queries for slow phases and stale watermarks
-- [ ] Add ETL runtime baseline comparison before/after cutover
-- [ ] Document the hybrid strategy in ETL and deployment docs
-- [ ] Keep migration set structural and idempotent only (`IF NOT EXISTS`, guarded DDL)
+Use those two docs as the source of truth for ETL database work, container/binary split, and hybrid materialization execution phases.
 
 #### Deferred after ETL release scope
 

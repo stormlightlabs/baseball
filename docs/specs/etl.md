@@ -94,6 +94,45 @@ Ingress note:
 - Post-load `ANALYZE` on heavily changed tables/partitions
 - Maintain phase-level telemetry (`etl_step_events`, `materialized_view_refresh_events`)
 
+## Database Workstreams
+
+### Operational safety and crash prevention
+
+- Host-level alerting for low disk and WAL growth thresholds
+- Runbook actions for WAL pressure (pause ETL, archive/prune strategy, checkpoint analysis)
+- Periodic `pg_stat_bgwriter` capture for `checkpoints_req` and `checkpoints_timed`
+- ETL concurrency guard (single active ETL run lock)
+- Per-step timeout and cancellation policy for heavy operations
+- Off-peak scheduling recommendations and safe defaults for large force/year ranges
+- Optional load-shed mode for non-critical endpoints during ETL windows
+- Documented emergency toggles (disable heavy refresh groups, pause force mode)
+- Operational resume/recovery checklist after interruption
+
+### Force/year write-path performance
+
+- Keep force-clear Retrosheet deletes year-bounded and date-index-friendly for `plays` and `games`
+- Emit per-year delete telemetry (rows and duration by table)
+- Keep per-year transactional boundaries for resumability
+- Keep crosswalk refresh lock-friendly (`DELETE` path, avoid full-table `TRUNCATE`)
+- Add indexes/constraints for incremental upsert paths
+- Maintain ETL performance baselines for range-force runs (runtime, WAL growth, checkpoint frequency)
+
+### Hybrid incremental materialization and cutover
+
+- Finalize heavy artifact list for replacement (`player_game_*`, `team_game_stats`, `season_*_leaders`, `career_*_leaders`)
+- Define source-of-truth model per artifact (`MV`, incremental table, or mixed)
+- Define incremental keys/invalidation units (season/year/team/player)
+- Define cutover SLOs (max refresh time, max lock time, acceptable staleness)
+- Add structural migrations for incremental target tables (no historical rewrite)
+- Add `etl_watermarks` / `materialization_state` for resumable progress tracking
+- Replace full-refresh ETL steps with year/season-bounded recompute + upsert steps
+- Make force/year runs recompute only affected years/seasons
+- Add phase-level ETL events and row-count metrics per artifact update step
+- Add retry-safe transactional boundaries and resumability markers
+- Add runbook queries for slow phases and stale watermarks
+- Compare ETL runtime baseline before/after cutover
+- Keep migration sets structural and idempotent only (`IF NOT EXISTS`, guarded DDL)
+
 ## Non-Goals (For This Plan)
 
 - No immediate full schema rewrite to `raw/core/serving` schemas

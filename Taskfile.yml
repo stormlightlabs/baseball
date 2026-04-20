@@ -2,8 +2,10 @@ version: "3"
 
 vars:
   BINARY_NAME: baseball
+  ETL_BINARY_NAME: baseball-etl
   BUILD_DIR: tmp
-  MAIN_PATH: ./cli
+  MAIN_PATH: ./cmd/baseball
+  ETL_MAIN_PATH: ./cmd/baseball-etl
 
 tasks:
   default:
@@ -20,6 +22,16 @@ tasks:
       - "**/*.go"
     generates:
       - "{{.BUILD_DIR}}/{{.BINARY_NAME}}"
+
+  build:etl:
+    desc: Build the baseball ETL CLI
+    cmds:
+      - go build -o {{.BUILD_DIR}}/{{.ETL_BINARY_NAME}} {{.ETL_MAIN_PATH}}
+    sources:
+      - "**/*.sql"
+      - "**/*.go"
+    generates:
+      - "{{.BUILD_DIR}}/{{.ETL_BINARY_NAME}}"
 
   clean:
     desc: Clean build artifacts

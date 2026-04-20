@@ -21,11 +21,12 @@ Acceptance:
 - [ ] Build `baseball-etl` alongside `baseball` in Docker multi-stage build.
 - [ ] Keep shared orchestration in `internal/seed` (no logic fork).
 - [ ] Add smoke tests for `baseball-etl --help`, `run --help`, `validate --help`, `status --help`.
+- [ ] Remove ETL command registration from the primary CLI entrypoint (`cmd/baseball/main.go` / `commands.NewBaseballRootCmd` wiring) once `baseball-etl` is the canonical ETL interface.
 
 Acceptance:
 
 - [ ] ETL can run without shipping server/cache command surfaces in its process.
-- [ ] Existing `baseball etl ...` usage remains backward compatible during transition.
+- [ ] Primary `baseball` CLI no longer exposes ETL command surface after cutover.
 
 ## Phase 2: Dedicated ETL Container (Dev + Prod Compose)
 
@@ -48,7 +49,9 @@ Acceptance:
 - [ ] Add single-active ETL run guard (advisory lock or `etl_run_locks` table).
 - [ ] Add per-step timeout and cancellation policy for heavy ETL phases.
 - [ ] Add host-level alerting for free disk and WAL growth thresholds.
+- [ ] Add runbook actions for WAL pressure (pause ETL, archive/prune strategy, checkpoint analysis).
 - [ ] Add `pg_stat_bgwriter` trend capture (`checkpoints_req` / `checkpoints_timed`).
+- [ ] Add off-peak scheduling recommendations and safe defaults for large force/year ranges.
 - [ ] Add optional load-shed mode for non-critical endpoints during ETL windows.
 - [ ] Add emergency toggles for heavy refresh groups and force-mode suppression.
 - [ ] Publish resume/recovery runbook for interrupted ETL runs.
@@ -62,10 +65,12 @@ Acceptance:
 
 - [x] Keep force clears year-bounded and index-friendly (`date` predicates).
 - [x] Keep per-year delete telemetry and transactional boundaries.
+- [x] Keep crosswalk refresh lock-friendly (`DELETE` path, no full-table `TRUNCATE`).
 - [ ] Add explicit post-load `ANALYZE` for heavily changed tables/partitions.
 - [ ] Add DB backpressure throttling hooks (latency/WAL-sensitive pacing).
+- [ ] Add indexes/constraints for incremental upsert paths.
 - [ ] Replace global refresh default with affected-year/affected-artifact refresh plans.
-- [ ] Baseline ETL runtime, WAL growth, and checkpoint frequency before/after changes.
+- [ ] Add ETL perf baselines for range-force runs (runtime, WAL growth, checkpoint frequency).
 
 Acceptance:
 
@@ -78,9 +83,16 @@ Acceptance:
 - [ ] Define source-of-truth model per artifact (`MV`, incremental table, or mixed).
 - [ ] Add `etl_watermarks` / `materialization_state` for resumable progress.
 - [ ] Define invalidation keys (season/year/team/player) and retry-safe transaction boundaries.
+- [ ] Define cutover SLOs (max refresh time, max lock time, acceptable staleness).
+- [ ] Add structural migrations for incremental target tables (no historical rewrite).
 - [ ] Implement year/season-bounded recompute + upsert steps.
 - [ ] Make force/year runs recompute only affected years/seasons.
+- [ ] Add phase-level ETL events and row-count metrics per artifact update step.
+- [ ] Add retry-safe transactional boundaries and resumability markers.
 - [ ] Add runbook queries for stale watermarks and slow phases.
+- [ ] Compare ETL runtime baseline before/after cutover.
+- [ ] Document hybrid strategy updates in ETL and deployment docs.
+- [ ] Keep migration sets structural and idempotent only (`IF NOT EXISTS`, guarded DDL).
 
 Acceptance:
 
