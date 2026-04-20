@@ -86,51 +86,93 @@ See the dedicated Data Coverage docs for the newly completed endpoints:
 - **Filtered indexes** - Create partial indexes for specific league + date combinations if query patterns show benefit
 - **Composite partition key** - Repartition by (league, year) only if league-specific queries dominate and current performance is insufficient
 
-### 14. Production Deployment (Coolify/Hostinger KVM2)
+### 13. Release
 
-Target: ~100 GB HDD VPS, 4 GB RAM, Coolify dashboard with Traefik for TLS/routing.
+Goal: ship a stable, scalable release with hybrid incremental materialization, an open API access model, and production-safe VM/ETL operations.
 
-#### Blocking - Dockerfile & Compose
+#### Phase 0 - Completed baseline (Completed 2026-04-20)
 
-- [ ] Copy templates and static assets into Docker image (`internal/api/templates/`, `internal/api/static/` are loaded at runtime but not included in the build stage)
-- [ ] Bind server to `0.0.0.0` inside the container (config default is `localhost`, unreachable through Traefik)
-- [ ] Fix Postgres tuning: `POSTGRES_SHARED_BUFFERS` etc. are env-var no-ops on the official image; pass via `command: postgres -c shared_buffers=1GB ...` or mount a `postgresql.conf`
-- [ ] Remove hardcoded dev `DATABASE_URL` from Dockerfile ENV (leaks creds into image layer, confusing if runtime env is missing)
-- [ ] Add `GITHUB_REDIRECT_URL`, `CODEBERG_REDIRECT_URL` to prod compose and README env table (defaults are `localhost`)
-- [ ] Add `HOST=0.0.0.0` to prod compose environment
+- [x] Fix Postgres tuning delivery mechanism: use `command: postgres -c ...` instead of `POSTGRES_*` env no-ops
+- [x] Tune Postgres baseline for 4 GB profile (`shared_buffers=1GB`, `effective_cache_size=2GB`, `work_mem=32MB`, WAL/checkpoint controls)
+- [x] Add hard app DB pool limits (`DB_MAX_OPEN_CONNS`, `DB_MAX_IDLE_CONNS`, lifetime/idle-time caps)
+- [x] Add Go runtime memory/CPU bounds (`GOMEMLIMIT`, `GOMAXPROCS`)
+- [x] Add service-level memory/CPU/PID limits for app/postgres/redis
+- [x] Add Postgres concurrency caps (`max_connections`, parallel worker limits)
+- [x] Enable checkpoint visibility (`log_checkpoints=on`)
 
-#### Blocking - Auth & Security
+#### Phase 1 - Platform stability and crash prevention
 
-- [ ] Fix middleware ordering: rate limiter runs before auth, so `api_key` context is always nil and all requests hit the 10 req/min unauthenticated limit
-- [ ] Fix session cookie `Secure` flag: behind Traefik, `req.TLS` is always nil; check `X-Forwarded-Proto == "https"` or force `Secure: true` in non-debug mode
-- [ ] Add security headers middleware: `Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy`, `Referrer-Policy`
-- [ ] Add CORS middleware for cross-origin API consumers
+- [ ] Remove hardcoded dev `DATABASE_URL` from Dockerfile ENV
+- [ ] Add `HOST=0.0.0.0` to prod compose environment contract
+- [ ] Add host-level alerting for free disk and WAL growth thresholds
+- [ ] Add runbook actions for WAL pressure (pause ETL, archive/prune strategy, checkpoint analysis)
+- [ ] Add periodic `pg_stat_bgwriter` capture for `checkpoints_req`/`checkpoints_timed` trend monitoring
+- [ ] Add ETL concurrency guard (single active ETL run lock)
+- [ ] Add per-step timeout/cancel policy for heavy operations
+- [ ] Add off-peak scheduling recommendations and safe defaults for large force/year ranges
+- [ ] Add optional load-shed mode for non-critical endpoints during ETL windows
+- [ ] Add documented emergency toggles (disable heavy refresh groups, pause force mode)
+- [ ] Add operational checklist for resume/recovery after interruption
 
-#### Blocking - README accuracy
+#### Phase 2 - Hybrid materialization design and schema
 
-- [ ] Document all required env vars: `HOST`, `DEBUG_MODE`, `GITHUB_REDIRECT_URL`, `CODEBERG_REDIRECT_URL`
-- [ ] Clarify which seed data is checked in (Lahman, FanGraphs, salaries) vs fetched at runtime (Retrosheet)
-- [ ] Tune Postgres for 4 GB RAM: `shared_buffers=1GB`, `effective_cache_size=2GB`, `work_mem=64MB`
+- [ ] Finalize heavy artifact list for replacement (`player_game_*`, `team_game_stats`, `season_*_leaders`, `career_*_leaders`)
+- [ ] Define source-of-truth model per artifact (`MV`, `incremental table`, or mixed)
+- [ ] Define incremental keys and invalidation units (season/year/team/player)
+- [ ] Define cutover SLOs (max refresh time, max lock time, acceptable staleness)
+- [ ] Add structural migrations for incremental target tables (no historical rewrite in migrations)
+- [ ] Add `etl_watermarks` / `materialization_state` tables for resumable progress tracking
+- [ ] Add indexes/constraints for incremental upsert paths
+- [ ] Keep migration set structural and idempotent only (`IF NOT EXISTS`, guarded DDL)
 
-#### SEO
+#### Phase 3 - Incremental ETL and read-path cutover
 
-- [ ] Add `robots.txt` handler (allow `/`, `/docs/`, `/examples`; disallow `/v1/auth/`, `/debug/`)
-- [ ] Add `sitemap.xml` handler (static entries for home, examples, docs, login)
-- [ ] Add `<meta name="description">`, OpenGraph tags (`og:title`, `og:description`, `og:type`, `og:url`), and `<link rel="canonical">` to `base.html`
-- [ ] Add JSON-LD structured data (`WebAPI` / `WebApplication` schema) to `home.html`
+- [ ] Replace full-refresh ETL steps with year/season-bounded recompute + upsert steps
+- [ ] Make force/year runs only recompute affected years/seasons
+- [ ] Add phase-level ETL events and row-count metrics per artifact update step
+- [ ] Add retry-safe transactional boundaries and resumability markers
+- [ ] Add dual-read verification mode (MV vs table) for sampled requests
+- [ ] Add integrity checks for totals/rate metrics across old/new artifacts
+- [ ] Cut over repositories to incremental tables after parity is confirmed
+- [ ] Keep fallback toggle to prior read-path during rollout window
+- [ ] Add runbook queries for slow phases and stale watermarks
+- [ ] Add perf baselines for ETL runtime and checkpoint frequency before/after cutover
+- [ ] Document the hybrid strategy in ETL and deployment docs
 
-#### Post-deploy ETL sequence
+#### Phase 4 - Open API access model
 
-- [ ] Draft a shell script that runs all the ETL steps
+Target policy:
 
-### 15. Technical Debt
+- API is open (no OAuth/session/API-key requirement)
+- No API-level CORS restrictions for dashboard/web/mobile use
+- No app-layer rate limiting for dashboard/web/mobile clients
 
-- [ ] Custom error types: Replace `strings.Contains(err.Error(), "not found")` with typed errors
-- [x] Fix `writeError` infinite recursion: `api/helpers.go:47` calls itself instead of `writeInternalServerError` — any non-`NotFoundError` triggers a stack overflow crash
-- [ ] Remove global config state: `config.Get()` panics, refactor to dependency injection
-- [x] Standardize cache integration: Measure and add caching to Stats/Awards/Manager repos
-- [x] Standardize query building: Pick one pattern for dynamic WHERE clauses
-- [ ] Complete TODOs: cache/repository.go:121, core/mlb.go:164, api/plays_test.go:504, repository/computed.go:144
-- [ ] Improve godoc coverage: Document all exported functions
-- [ ] Extract filter parsing helpers: Reduce duplication in handler filter building
-- [ ] Add structured logging: Replace fmt.Printf with proper charmbracelet/log & slog
+Execution tasks:
+
+- [ ] Remove auth requirement middleware from API route stack
+- [ ] Remove `/v1/auth/*` surface
+- [ ] Remove OAuth/session token validation paths from request flow
+- [ ] Remove CORS middleware from API stack (or replace with explicit open policy where browser interoperability requires headers)
+- [ ] Disable API-level rate limiting middleware for first-party clients; decide whether to remove it entirely
+- [ ] Keep edge-level abuse controls outside app (reverse proxy/WAF) as optional guardrail
+- [ ] Remove OAuth-only env vars from prod compose/env docs (`GITHUB_*`, `CODEBERG_*`) if auth is removed
+- [ ] Remove auth/rate-limit specific config/env dependencies from startup and docs
+- [ ] Update middleware/API tests for open-access behavior
+- [ ] Run security review for open-access posture (DoS, scrape load, origin assumptions)
+
+#### Phase 5 - Release readiness, docs, and quality cleanup
+
+- [ ] Document required env vars for the open-access deployment model
+- [ ] Add `robots.txt` handler (allow `/`, `/docs/`)
+- [ ] Add `sitemap.xml` handler (static entries for home, examples, docs)
+- [ ] Add `<meta name="description">`, OpenGraph tags (`og:title`, `og:description`, `og:type`, `og:url`), and `<link rel="canonical">` to `+layout.svelte`
+- [ ] Add JSON-LD structured data (`WebAPI` / `WebApplication` schema) to web app.
+- [ ] Custom error types: replace `strings.Contains(err.Error(), "not found")` with typed errors
+- [ ] Remove global config state (`config.Get()` panic path) via dependency injection
+- [ ] Complete TODOs: `cache/repository.go:121`, `core/mlb.go:164`, `api/plays_test.go:504`, `repository/computed.go:144`
+- [ ] Improve godoc coverage for exported functions
+- [ ] Extract filter parsing helpers to reduce handler duplication
+- [ ] Add structured logging (replace `fmt.Printf` with `log/slog` or equivalent)
+- [x] Fix `writeError` infinite recursion (`api/helpers.go`)
+- [x] Standardize cache integration for Stats/Awards/Manager repos
+- [x] Standardize dynamic query-building pattern

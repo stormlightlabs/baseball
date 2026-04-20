@@ -45,8 +45,6 @@ Table should be sortable
 
 Post-ETL we need to clean-up year specific Play-by-Play & Game log data to keep space lean.
 
-Slog?
-
 API version should be `ALPHA` (keep the `v1` namespace) while we iron out kinks in the system.
 
 Do we ingest the Chadwick Register more exhaustively to enrich persons data?
@@ -56,6 +54,3 @@ Add a plan to enrich our local warehouse from the full Chadwick register (names/
 Remove `core.MLBTeamCrosswalk* structs` if no longer needed anywhere.
 
 Repository-level unit tests for crosswalk query ambiguity behavior beyond API integration tests.
-
-`Step: load.crosswalk.players_mlbam` takes a long time and doesn't have enough
-logging.
