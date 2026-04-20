@@ -32,15 +32,7 @@ go.work.sum
 # .vscode/
 AGENTS.md
 tmp/
-data/retrosheet/
-data/**/*.zip
-data/lahman/**/*.csv
-data/fangraphs/**/*.csv
-data/salaries/*.csv
-data/chadwick/*.csv
 
-# Snapshot artifacts should live in the standalone baseball-data repo/submodule.
-tools/data/
 .task/
 sandbox/
 conf.toml
