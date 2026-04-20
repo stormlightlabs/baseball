@@ -1,6 +1,6 @@
-# ETL Binary + Container Tasks
+# ETL Binary + Data Product Tasks
 
-Scope: create a separate ETL binary and dedicated ETL container, with ETL-focused performance and safety execution phases.
+Scope: keep ETL runtime performance-safe by moving upstream data engineering to `bigflydata`, while keeping `baseball-etl` focused on ingest/read/upsert/validate.
 
 ## Phase 0: Completed Baseline
 
@@ -15,22 +15,49 @@ Acceptance:
 
 - [x] Current baseline supports safer large ETL runs than previous builds.
 
-## Phase 1: Separate ETL Binary
+## Phase 1: Runtime Surface Split (In Progress)
 
 - [x] Add `cmd/baseball-etl/main.go` with ETL-focused root command surface.
 - [x] Build `baseball-etl` alongside `baseball` in Docker multi-stage build.
 - [x] Keep shared orchestration in `internal/seed` (no logic fork).
 - [x] Consolidate command implementation into `internal/cli` and wire both binaries through that package.
-- [x] Remove `tools/data` git submodule from this repo and rely on runtime snapshot clone/bootstrap for missing defaults.
+- [x] Remove `tools/data` git submodule from this repo.
 - [ ] Add smoke tests for `baseball-etl --help`, `run --help`, `validate --help`, `status --help`.
-- [ ] Remove ETL command registration from the primary CLI entrypoint (`cmd/baseball/main.go` / `internal/cli.NewBaseballRootCmd` wiring) once `baseball-etl` is the canonical ETL interface.
+- [ ] Remove ETL command registration from `internal/cli.NewBaseballRootCmd` once cutover is complete.
 
 Acceptance:
 
 - [x] ETL can run without shipping server/cache command surfaces in its process.
-- [ ] Primary `baseball` CLI no longer exposes ETL command surface after cutover.
+- [ ] Primary `baseball` CLI no longer exposes ETL commands after cutover.
 
-## Phase 2: Dedicated ETL Container (Dev + Prod Compose)
+## Phase 2: Upstream Snapshot Contract (`bigflydata`)
+
+- [ ] Define Snapshot Contract V1 (`raw/`, `prepared/`, `snapshot.manifest.json`, schema version).
+- [ ] Store extracted raw source files in VCS/LFS as canonical artifacts (zip files are transitional inputs only).
+- [ ] Implement transform stages in Python using Polars + NumPy (no pandas).
+- [ ] Produce ingest-ready prepared outputs with deterministic schema/path contract.
+- [ ] Add data quality checks and row-level invariants in `bigflydata` CI.
+- [ ] Publish documentation and runbooks in `/Users/owais/Projects/bigflydata/docs/spec.md` + `todo.md`.
+
+Acceptance:
+
+- [ ] A pinned `bigflydata` ref fully defines ETL input files without upstream fetch variance.
+- [ ] Prepared outputs are deterministic and directly ingestible by Go ETL.
+
+## Phase 3: Ingestion Contract in `baseball-etl`
+
+- [ ] Add manifest/contract preflight validation before load.
+- [ ] Add prepared-data loader path as default ingest route.
+- [ ] Keep legacy archive-centric loader path only as fallback during migration.
+- [ ] Add per-dataset upsert strategy docs (keys, conflict policy, idempotency guarantees).
+- [ ] Track load throughput metrics (rows/s, duration, failure class) per phase.
+
+Acceptance:
+
+- [ ] Steady-state ETL does not require zip decompression/network fetch from providers.
+- [ ] Load behavior is idempotent and resumable with deterministic inputs.
+
+## Phase 4: Dedicated ETL Container (Dev + Prod Compose)
 
 - [ ] Add `etl` service to `conf/docker-compose.dev.yml`.
 - [ ] Add `etl` service to `conf/docker-compose.prod.yml`.
@@ -44,68 +71,43 @@ Acceptance:
 Acceptance:
 
 - [ ] ETL can execute in its own container without `docker compose exec app`.
-- [ ] API service remains independently deployable and operable during ETL runs.
+- [ ] API service remains independently operable during ETL runs.
 
-## Phase 3: Safety Rails
+## Phase 5: Safety Rails + Throughput
 
 - [ ] Add single-active ETL run guard (advisory lock or `etl_run_locks` table).
 - [ ] Add per-step timeout and cancellation policy for heavy ETL phases.
+- [ ] Add explicit post-load `ANALYZE` for heavily changed tables/partitions.
+- [ ] Add DB backpressure throttling hooks (latency/WAL-sensitive pacing).
 - [ ] Add host-level alerting for free disk and WAL growth thresholds.
 - [ ] Add runbook actions for WAL pressure (pause ETL, archive/prune strategy, checkpoint analysis).
 - [ ] Add `pg_stat_bgwriter` trend capture (`checkpoints_req` / `checkpoints_timed`).
-- [ ] Add off-peak scheduling recommendations and safe defaults for large force/year ranges.
-- [ ] Add optional load-shed mode for non-critical endpoints during ETL windows.
-- [ ] Add emergency toggles for heavy refresh groups and force-mode suppression.
-- [ ] Publish resume/recovery runbook for interrupted ETL runs.
 
 Acceptance:
 
 - [ ] Concurrent ETL starts are rejected safely.
-- [ ] Operators have deterministic controls for pause, resume, and rollback.
+- [ ] Operators have deterministic controls for pause/resume/recovery.
 
-## Phase 4: Throughput and Refresh Scope
+## Phase 6: De-Materialization + Partitioned Serving
 
-- [x] Keep force clears year-bounded and index-friendly (`date` predicates).
-- [x] Keep per-year delete telemetry and transactional boundaries.
-- [x] Keep crosswalk refresh lock-friendly (`DELETE` path, no full-table `TRUNCATE`).
-- [ ] Add explicit post-load `ANALYZE` for heavily changed tables/partitions.
-- [ ] Add DB backpressure throttling hooks (latency/WAL-sensitive pacing).
-- [ ] Add indexes/constraints for incremental upsert paths.
-- [ ] Replace global refresh default with affected-year/affected-artifact refresh plans.
-- [ ] Add ETL perf baselines for range-force runs (runtime, WAL growth, checkpoint frequency).
-
-Acceptance:
-
-- [ ] ETL runtime variance is reduced for year-scoped loads.
-- [ ] Full-system refresh is no longer the default for incremental updates.
-
-## Phase 5: Hybrid Incremental Materialization
-
-- [ ] Finalize heavy artifact replacement list (`player_game_*`, `team_game_stats`, `season_*_leaders`, `career_*_leaders`).
-- [ ] Define source-of-truth model per artifact (`MV`, incremental table, or mixed).
-- [ ] Add `etl_watermarks` / `materialization_state` for resumable progress.
-- [ ] Define invalidation keys (season/year/team/player) and retry-safe transaction boundaries.
-- [ ] Define cutover SLOs (max refresh time, max lock time, acceptable staleness).
-- [ ] Add structural migrations for incremental target tables (no historical rewrite).
-- [ ] Implement year/season-bounded recompute + upsert steps.
-- [ ] Make force/year runs recompute only affected years/seasons.
-- [ ] Add phase-level ETL events and row-count metrics per artifact update step.
-- [ ] Add retry-safe transactional boundaries and resumability markers.
-- [ ] Add runbook queries for stale watermarks and slow phases.
-- [ ] Compare ETL runtime baseline before/after cutover.
-- [ ] Document hybrid strategy updates in ETL and deployment docs.
-- [ ] Keep migration sets structural and idempotent only (`IF NOT EXISTS`, guarded DDL).
+- [ ] Mark materialized-view refresh loops as legacy and remove from default ETL run path.
+- [ ] Define partitioned serving-table targets for current MV-backed heavy artifacts.
+- [ ] Add partition management policy (create/attach/retire) for serving tables.
+- [ ] Implement upsert/load steps from `bigflydata` prepared artifacts into partitioned serving tables.
+- [ ] Remove API/query dependencies on materialized-view-only objects.
+- [ ] Replace MV-centric observability/reporting with partitioned-table load metrics and checks.
+- [ ] Add runbook queries for partition skew, stale partitions, and slow upsert phases.
 
 Acceptance:
 
-- [ ] Materialization work scales with changed data, not full history.
+- [ ] Serving ingestion scales with changed partitions, not full-history MV rebuilds.
 - [ ] Interrupted runs can resume without full rerun.
 
-## Verification Checklist (Before Marking Complete)
+## Verification Checklist
 
 - [x] `go test ./...`
 - [ ] ETL lock/concurrency behavior validated with two concurrent start attempts.
-- [ ] `docker compose` ETL one-shot run succeeds in dev and prod compose layouts.
+- [ ] `docker compose` ETL one-shot run succeeds in dev and prod layouts.
 - [ ] API readiness remains healthy during ETL run window.
 - [x] ETL docs updated in `docs/internal/data-loading.md`.
 - [x] ETL docs updated in `conf/README.md`.

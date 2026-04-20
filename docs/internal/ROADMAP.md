@@ -88,12 +88,20 @@ See the dedicated Data Coverage docs for the newly completed endpoints:
 
 ### 13. Release
 
-Release planning for ETL safety/performance now lives in:
+Release planning for ETL safety/performance is split into two source-of-truth tracks:
 
-- [ETL Architecture Spec](../specs/etl.md)
-- [ETL Task List](../tasks/etl.md)
+1. Baseball API ingestion/runtime:
+   - [ETL Architecture Spec](../specs/etl.md)
+   - [ETL Task List](../tasks/etl.md)
+2. Upstream dataset production (`bigflydata` project):
+   - `/Users/owais/Projects/bigflydata/docs/spec.md`
+   - `/Users/owais/Projects/bigflydata/docs/todo.md`
 
-Use those two docs as the source of truth for ETL database work, container/binary split, and hybrid materialization execution phases.
+Execution rule:
+
+- `bigflydata` owns source acquisition, raw preservation in VCS, and heavy transforms.
+- `baseball-etl` owns snapshot pull, read/upsert, validation, and DB-side observability/safety rails.
+- Serving materialization is being retired in favor of partitioned table ingestion fed by `bigflydata` prepared outputs.
 
 #### Deferred after ETL release scope
 
