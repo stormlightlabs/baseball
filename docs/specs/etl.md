@@ -25,6 +25,7 @@ Adopt a single-system ingestion model:
 Core decisions:
 
 - No external warehouse contract is required for steady-state operations.
+- No snapshot-repo bootstrap/auto-clone path is required for ETL startup.
 - ETL owns source acquisition and cleanup lifecycle for Retrosheet.
 - ETL remains separate from API runtime (separate container/process), but targets the same operational database.
 - ETL jobs must be idempotent, year-bounded where possible, and resumable after interruption.
@@ -55,7 +56,7 @@ Expected structure remains local-first (example):
 - `retrosheet/*.zip` and extracted/generated CSVs during ETL runs
 - `retrosheet/negroleagues/*`
 - `retrosheet/gameinfo.csv`, `allplayers.csv`, and related side datasets as required
-- `chadwick/register/*` (vendored pinned snapshot for stable crosswalk/person enrichment)
+- `chadwick/people-*.csv`, `chadwick/people.csv`, and `chadwick/manifest.json` (worker-fetched from GitHub register shards)
 
 Note: checked-in CSVs under `data/` are valid bootstrap inputs and reduce first-run fetch needs.
 
@@ -108,6 +109,7 @@ Cleanup intent:
 - Keep canonical source files required for reproducibility.
 - Remove transient extraction/output files that only serve in-flight load stages.
 - Keep cleanup explicit and auditable in ETL logs/events.
+- Use `etl cleanup retrosheet` for repeatable operator-driven pruning.
 
 ## Performance and Safety Contract
 

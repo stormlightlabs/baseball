@@ -26,9 +26,10 @@ func ETLCmd() *cobra.Command {
 		},
 	}
 	addPipelineFlags(cmd, opts)
-	cmd.PersistentFlags().String("data-root", "", "Base dataset root (default resolution: --data-root, BASEBALL_DATA_ROOT, tools/data, data)")
+	cmd.PersistentFlags().String("data-root", "", "Base dataset root (default resolution: --data-root, BASEBALL_DATA_ROOT, data, tools/data)")
 	cmd.AddCommand(EtlFetchCmd())
 	cmd.AddCommand(EtlLoadCmd())
+	cmd.AddCommand(EtlCleanupCmd())
 	cmd.AddCommand(EtlStatusCmd())
 	cmd.AddCommand(EtlRunCmd())
 	cmd.AddCommand(EtlValidateCmd())
@@ -66,6 +67,32 @@ func EtlLoadCmd() *cobra.Command {
 	cmd.AddCommand(AllStarLoadCmd())
 	cmd.AddCommand(BiodataLoadCmd())
 	cmd.AddCommand(MLBAMCrosswalkLoadCmd())
+	return cmd
+}
+
+// EtlCleanupCmd creates the cleanup command group under etl.
+func EtlCleanupCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cleanup",
+		Short: "Cleanup transient ETL artifacts",
+		Long:  "Cleanup transient ETL artifacts while preserving canonical source archives.",
+	}
+	cmd.AddCommand(RetrosheetCleanupCmd())
+	return cmd
+}
+
+// RetrosheetCleanupCmd creates the cleanup retrosheet command.
+func RetrosheetCleanupCmd() *cobra.Command {
+	var dryRun bool
+	cmd := &cobra.Command{
+		Use:   "retrosheet",
+		Short: "Cleanup transient Retrosheet artifacts",
+		Long:  "Remove transient Retrosheet extraction artifacts while keeping canonical source zips and required CSVs.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cleanupRetrosheet(cmd, dryRun)
+		},
+	}
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Preview removable files without deleting them")
 	return cmd
 }
 
@@ -468,6 +495,38 @@ func fetchRetrosheet(cmd *cobra.Command, yearsFlag string, force bool) error {
 
 	echo.Success("✓ Retrosheet data downloaded successfully")
 	echo.Infof("  Years: %s", describeYears(years))
+	echo.Infof("  Directory: %s", dataDir)
+	return nil
+}
+
+func cleanupRetrosheet(cmd *cobra.Command, dryRun bool) error {
+	echo.Header("Cleaning Retrosheet Artifacts")
+	dataDir := seed.RetrosheetDir(resolveDataRoot(cmd))
+
+	result, err := seed.CleanupRetrosheetArtifacts(dataDir, dryRun)
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	if len(result.Candidates) == 0 {
+		echo.Success("✓ No transient Retrosheet artifacts found")
+		echo.Infof("  Directory: %s", dataDir)
+		return nil
+	}
+
+	if dryRun {
+		echo.Info("Dry-run mode: no files deleted")
+		for _, path := range result.Candidates {
+			echo.Infof("  would remove: %s", path)
+		}
+		echo.Successf("✓ %d transient file(s) identified", len(result.Candidates))
+		return nil
+	}
+
+	for _, path := range result.Removed {
+		echo.Infof("  removed: %s", path)
+	}
+	echo.Successf("✓ Removed %d transient file(s)", len(result.Removed))
 	echo.Infof("  Directory: %s", dataDir)
 	return nil
 }

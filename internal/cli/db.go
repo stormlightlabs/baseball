@@ -22,7 +22,7 @@ func DbCmd() *cobra.Command {
 		Short: "Database operations",
 		Long:  "Database migration and management operations.",
 	}
-	cmd.PersistentFlags().String("data-root", "", "Base dataset root (default resolution: --data-root, BASEBALL_DATA_ROOT, tools/data, data)")
+	cmd.PersistentFlags().String("data-root", "", "Base dataset root (default resolution: --data-root, BASEBALL_DATA_ROOT, data, tools/data)")
 	cmd.AddCommand(DbMigrateCmd())
 	cmd.AddCommand(DbResetCmd())
 	cmd.AddCommand(DbRepopulateCmd())

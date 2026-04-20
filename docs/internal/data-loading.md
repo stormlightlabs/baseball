@@ -45,6 +45,7 @@ Representative dev window:
 ```bash
 <BASEBALL_ETL> fetch retrosheet --years 2022-2025
 <BASEBALL_ETL> fetch negroleagues
+<BASEBALL_ETL> fetch chadwick
 ```
 
 ### 4) Run ETL ingestion
@@ -75,7 +76,14 @@ For VM-safe operations, prefer batched windows instead of one large full-history
 <BASEBALL_ETL> status
 ```
 
-### 6) API readiness checks
+### 6) Cleanup transient Retrosheet artifacts (optional but recommended)
+
+```bash
+<BASEBALL_ETL> cleanup retrosheet --dry-run
+<BASEBALL_ETL> cleanup retrosheet
+```
+
+### 7) API readiness checks
 
 ```bash
 curl http://localhost:8080/v1/ready
@@ -104,7 +112,8 @@ Worker expectations:
 Operational guidance:
 
 - Keep canonical source files (`*.zip`, core CSVs like `gameinfo.csv`, `allplayers.csv`) in the data root.
-- Prune transient ETL artifacts periodically to keep disk usage bounded.
+- Keep Chadwick output under `data/chadwick` (`people-*.csv`, merged `people.csv`, and `manifest.json`).
+- Prune transient ETL artifacts periodically with `baseball-etl cleanup retrosheet` to keep disk usage bounded.
 
 ## Large Dataset Guidance
 
@@ -132,6 +141,8 @@ Stage commands are first-class and expected in this worker model:
 
 - `<BASEBALL_ETL> fetch retrosheet`
 - `<BASEBALL_ETL> fetch negroleagues`
+- `<BASEBALL_ETL> fetch chadwick`
+- `<BASEBALL_ETL> cleanup retrosheet`
 - `<BASEBALL_ETL> load <dataset>`
 - `<BASEBALL_ETL> validate`
 - `<BASEBALL_ETL> status`

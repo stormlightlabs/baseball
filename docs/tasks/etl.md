@@ -32,17 +32,17 @@ Acceptance:
 
 ## Phase 2: Worker-Owned Data Lifecycle
 
-- [ ] Treat local `data/` as canonical ETL input root.
-- [ ] Ensure ETL can bootstrap missing Retrosheet files via `etl fetch retrosheet` as part of normal operations.
-- [ ] Document and harden Retrosheet file retention policy (what stays vs what is temporary).
-- [ ] Add explicit cleanup command path for transient Retrosheet artifacts after successful loads.
-- [ ] Vendor a pinned Chadwick Register snapshot under `data/` and document ETL update cadence for that snapshot.
-- [ ] Remove stale docs/config assumptions that require an external warehouse or snapshot repo.
+- [x] Treat local `data/` as canonical ETL input root.
+- [x] Ensure ETL can bootstrap missing Retrosheet files via `etl fetch retrosheet` as part of normal operations.
+- [x] Document and harden Retrosheet file retention policy (what stays vs what is temporary).
+- [x] Add explicit cleanup command path for transient Retrosheet artifacts after successful loads.
+- [x] Fetch required Chadwick register shards directly from GitHub and persist `data/chadwick/manifest.json`.
+- [x] Remove stale docs/config assumptions that require an external warehouse or snapshot repo.
 
 Acceptance:
 
-- [ ] ETL can execute full load windows without dependency on external warehouse publication flow.
-- [ ] Operators have explicit, repeatable download + cleanup behavior for Retrosheet data.
+- [x] ETL can execute full load windows without dependency on external warehouse publication flow.
+- [x] Operators have explicit, repeatable download + cleanup behavior for Retrosheet data.
 
 ## Phase 3: Job-Oriented ETL Worker Behavior
 
@@ -106,7 +106,7 @@ Acceptance:
 - [ ] ETL maintenance scales by changed data scope instead of full-history refreshes.
 - [ ] Interrupted runs can resume without full rerun.
 
-## Phase 7: Materialized View Decomposition (Batched)
+## Phase 7: Materialized View Decomposition (Batched, `etl-mv-batching` in ETL)
 
 Reference: Materialized View Decomposition and Batched Maintenance Plan section in [ETL spec](../specs/etl.md).
 
