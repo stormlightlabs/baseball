@@ -85,6 +85,9 @@ func TestMetaEndpoints(t *testing.T) {
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
 		}
+		if got := w.Header().Get("X-Count-Mode"); got != "lightweight" {
+			t.Fatalf("expected X-Count-Mode=lightweight, got %q", got)
+		}
 
 		var resp metaResponse
 		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
@@ -128,6 +131,21 @@ func TestMetaEndpoints(t *testing.T) {
 		}
 	})
 
+	t.Run("GET /v1/meta?strict=true", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/meta?strict=true", nil)
+		w := httptest.NewRecorder()
+
+		testServer.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status 200, got %d", w.Code)
+		}
+		got := w.Header().Get("X-Count-Mode")
+		if got != "strict" && got != "fallback" {
+			t.Fatalf("expected X-Count-Mode to be strict or fallback, got %q", got)
+		}
+	})
+
 	t.Run("GET /v1/meta/datasets", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/meta/datasets", nil)
 		w := httptest.NewRecorder()
@@ -136,6 +154,9 @@ func TestMetaEndpoints(t *testing.T) {
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
+		}
+		if got := w.Header().Get("X-Count-Mode"); got != "lightweight" {
+			t.Fatalf("expected X-Count-Mode=lightweight, got %q", got)
 		}
 
 		var datasets []core.DatasetStatus
@@ -152,6 +173,21 @@ func TestMetaEndpoints(t *testing.T) {
 		}
 	})
 
+	t.Run("GET /v1/meta/datasets?strict=true", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/meta/datasets?strict=true", nil)
+		w := httptest.NewRecorder()
+
+		testServer.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status 200, got %d", w.Code)
+		}
+		got := w.Header().Get("X-Count-Mode")
+		if got != "strict" && got != "fallback" {
+			t.Fatalf("expected X-Count-Mode to be strict or fallback, got %q", got)
+		}
+	})
+
 	t.Run("GET /v1/meta/readiness", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/meta/readiness", nil)
 		w := httptest.NewRecorder()
@@ -160,6 +196,9 @@ func TestMetaEndpoints(t *testing.T) {
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
+		}
+		if got := w.Header().Get("X-Count-Mode"); got != "lightweight" {
+			t.Fatalf("expected X-Count-Mode=lightweight, got %q", got)
 		}
 
 		var resp core.ReadinessStatus
@@ -462,6 +501,9 @@ func TestHealthEndpoint(t *testing.T) {
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status 200, got %d", w.Code)
+		}
+		if got := w.Header().Get("X-Count-Mode"); got != "lightweight" {
+			t.Fatalf("expected X-Count-Mode=lightweight, got %q", got)
 		}
 
 		var resp core.ReadinessStatus

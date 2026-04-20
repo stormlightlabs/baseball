@@ -1,4 +1,4 @@
--- Fresh migration set: achievements and notable-game materialized views.
+-- achievements and notable-game materialized views.
 -- Views are created WITH NO DATA and refreshed via ETL/db refresh-views.
 
 

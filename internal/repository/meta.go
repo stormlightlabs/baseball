@@ -122,12 +122,12 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 			"https://sabr.org/lahman-database/",
 			true,
 			map[string]int64{
-				"people":      r.safeCount(ctx, `SELECT COUNT(*) FROM "People"`),
-				"teams":       r.safeCount(ctx, `SELECT COUNT(*) FROM "Teams"`),
-				"batting":     r.safeCount(ctx, `SELECT COUNT(*) FROM "Batting"`),
-				"pitching":    r.safeCount(ctx, `SELECT COUNT(*) FROM "Pitching"`),
-				"appearances": r.safeCount(ctx, `SELECT COUNT(*) FROM "Appearances"`),
-				"salaries":    r.safeCount(ctx, `SELECT COUNT(*) FROM "Salaries"`),
+				"people":      r.tableCount(ctx, "People", `SELECT COUNT(*) FROM "People"`),
+				"teams":       r.tableCount(ctx, "Teams", `SELECT COUNT(*) FROM "Teams"`),
+				"batting":     r.tableCount(ctx, "Batting", `SELECT COUNT(*) FROM "Batting"`),
+				"pitching":    r.tableCount(ctx, "Pitching", `SELECT COUNT(*) FROM "Pitching"`),
+				"appearances": r.tableCount(ctx, "Appearances", `SELECT COUNT(*) FROM "Appearances"`),
+				"salaries":    r.tableCount(ctx, "Salaries", `SELECT COUNT(*) FROM "Salaries"`),
 			},
 			seasonPtr(minLahman),
 			seasonPtr(maxLahman),
@@ -140,8 +140,8 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 			"https://www.retrosheet.org/",
 			true,
 			map[string]int64{
-				"games": r.safeCount(ctx, `SELECT COUNT(*) FROM games`),
-				"plays": r.safeCount(ctx, `SELECT COUNT(*) FROM plays`),
+				"games": r.tableCount(ctx, "games", `SELECT COUNT(*) FROM games`),
+				"plays": r.tableCount(ctx, "plays", `SELECT COUNT(*) FROM plays`),
 			},
 			seasonPtr(minRetro),
 			seasonPtr(maxRetro),
@@ -154,9 +154,9 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 			"https://www.fangraphs.com/tools/guts",
 			true,
 			map[string]int64{
-				"woba_constants":   r.safeCount(ctx, `SELECT COUNT(*) FROM woba_constants`),
-				"league_constants": r.safeCount(ctx, `SELECT COUNT(*) FROM league_constants`),
-				"park_factors":     r.safeCount(ctx, `SELECT COUNT(*) FROM park_factors`),
+				"woba_constants":   r.tableCount(ctx, "woba_constants", `SELECT COUNT(*) FROM woba_constants`),
+				"league_constants": r.tableCount(ctx, "league_constants", `SELECT COUNT(*) FROM league_constants`),
+				"park_factors":     r.tableCount(ctx, "park_factors", `SELECT COUNT(*) FROM park_factors`),
 			},
 			nil,
 			nil,
@@ -169,7 +169,7 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 			"https://www.retrosheet.org/downloads/csvdownloads.html",
 			false,
 			map[string]int64{
-				"retrosheet_players": r.safeCount(ctx, `SELECT COUNT(*) FROM retrosheet_players`),
+				"retrosheet_players": r.tableCount(ctx, "retrosheet_players", `SELECT COUNT(*) FROM retrosheet_players`),
 			},
 			nil,
 			nil,
@@ -182,10 +182,10 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 			"https://www.retrosheet.org/downloads/csvdownloads.html",
 			false,
 			map[string]int64{
-				"player_bio_extended": r.safeCount(ctx, `SELECT COUNT(*) FROM player_bio_extended`),
-				"player_relatives":    r.safeCount(ctx, `SELECT COUNT(*) FROM player_relatives`),
-				"coaches":             r.safeCount(ctx, `SELECT COUNT(*) FROM coaches`),
-				"umpires":             r.safeCount(ctx, `SELECT COUNT(*) FROM umpires`),
+				"player_bio_extended": r.tableCount(ctx, "player_bio_extended", `SELECT COUNT(*) FROM player_bio_extended`),
+				"player_relatives":    r.tableCount(ctx, "player_relatives", `SELECT COUNT(*) FROM player_relatives`),
+				"coaches":             r.tableCount(ctx, "coaches", `SELECT COUNT(*) FROM coaches`),
+				"umpires":             r.tableCount(ctx, "umpires", `SELECT COUNT(*) FROM umpires`),
 			},
 			nil,
 			nil,
@@ -198,7 +198,7 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 			"https://github.com/stormlightlabs/baseball",
 			false,
 			map[string]int64{
-				"salary_summary": r.safeCount(ctx, `SELECT COUNT(*) FROM salary_summary`),
+				"salary_summary": r.tableCount(ctx, "salary_summary", `SELECT COUNT(*) FROM salary_summary`),
 			},
 			nil,
 			nil,
@@ -211,7 +211,7 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 			"https://github.com/chadwickbureau/register",
 			false,
 			map[string]int64{
-				"player_mlbam_map": r.safeCount(ctx, `SELECT COUNT(*) FROM player_mlbam_map`),
+				"player_mlbam_map": r.tableCount(ctx, "player_mlbam_map", `SELECT COUNT(*) FROM player_mlbam_map`),
 			},
 			nil,
 			nil,
@@ -224,7 +224,7 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 			"https://statsapi.mlb.com/api/v1/teams",
 			false,
 			map[string]int64{
-				"team_mlbam_map": r.safeCount(ctx, `SELECT COUNT(*) FROM team_mlbam_map`),
+				"team_mlbam_map": r.tableCount(ctx, "team_mlbam_map", `SELECT COUNT(*) FROM team_mlbam_map`),
 			},
 			nil,
 			nil,
@@ -381,15 +381,74 @@ func (r *MetaRepository) loadRefreshes(ctx context.Context) (map[string]refreshR
 	return result, nil
 }
 
-func (r *MetaRepository) safeCount(ctx context.Context, query string) int64 {
+func (r *MetaRepository) safeCount(ctx context.Context, query string) (int64, error) {
 	var count sql.NullInt64
 	if err := r.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
-		return 0
+		return 0, err
 	}
 	if !count.Valid {
+		return 0, nil
+	}
+	return count.Int64, nil
+}
+
+func (r *MetaRepository) tableCount(ctx context.Context, tableName, strictQuery string) int64 {
+	if core.CountModeFromContext(ctx) == core.CountModeStrict {
+		if count, err := r.safeCount(ctx, strictQuery); err == nil {
+			return count
+		}
+		core.MarkCountModeFallback(ctx)
+	}
+
+	if estimate, ok := r.estimateTableRows(ctx, tableName); ok {
+		if estimate <= 0 {
+			if hasRows, existsOK := r.tableHasRows(ctx, tableName); existsOK && hasRows {
+				return 1
+			}
+		}
+		return estimate
+	}
+
+	if hasRows, ok := r.tableHasRows(ctx, tableName); ok {
+		if hasRows {
+			return 1
+		}
 		return 0
 	}
-	return count.Int64
+
+	return 0
+}
+
+func (r *MetaRepository) estimateTableRows(ctx context.Context, tableName string) (int64, bool) {
+	var estimate sql.NullFloat64
+	err := r.db.QueryRowContext(ctx, `
+		SELECT c.reltuples
+		FROM pg_class c
+		JOIN pg_namespace n ON n.oid = c.relnamespace
+		WHERE n.nspname = 'public'
+		  AND c.relname = $1
+		  AND c.relkind IN ('r', 'm', 'p')
+	`, tableName).Scan(&estimate)
+	if err != nil || !estimate.Valid {
+		return 0, false
+	}
+	if estimate.Float64 < 0 {
+		return 0, false
+	}
+	return int64(estimate.Float64), true
+}
+
+func (r *MetaRepository) tableHasRows(ctx context.Context, tableName string) (bool, bool) {
+	query := fmt.Sprintf(`SELECT EXISTS (SELECT 1 FROM %s LIMIT 1)`, quoteIdentifier(tableName))
+	var exists bool
+	if err := r.db.QueryRowContext(ctx, query).Scan(&exists); err != nil {
+		return false, false
+	}
+	return exists, true
+}
+
+func quoteIdentifier(name string) string {
+	return `"` + strings.ReplaceAll(name, `"`, `""`) + `"`
 }
 
 func toSeasonYear(value sql.NullInt64) core.SeasonYear {

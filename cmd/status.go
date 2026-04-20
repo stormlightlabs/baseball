@@ -16,15 +16,20 @@ import (
 
 // EtlStatusCmd creates the status command
 func EtlStatusCmd() *cobra.Command {
-	return &cobra.Command{
+	var strict bool
+	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Check data freshness and completeness",
-		Long:  "Display status of loaded data including freshness and completeness metrics.",
-		RunE:  status,
+		Long:  "Display status of loaded data including freshness and completeness metrics. Defaults to lightweight count mode; use --strict for exact counts.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return status(cmd, args, strict)
+		},
 	}
+	cmd.Flags().BoolVar(&strict, "strict", false, "Use strict exact COUNT(*) queries (slower on large datasets)")
+	return cmd
 }
 
-func status(cmd *cobra.Command, args []string) error {
+func status(cmd *cobra.Command, _ []string, strict bool) error {
 	echo.Header("Data Status")
 	ctx := cmd.Context()
 	dataRoot := resolveDataRoot(cmd)
@@ -75,6 +80,11 @@ func status(cmd *cobra.Command, args []string) error {
 
 	echo.Info("")
 	echo.Info("Database:")
+	if strict {
+		echo.Infof("  Count mode: %s", echo.WarnStyle().Render("strict (exact)"))
+	} else {
+		echo.Infof("  Count mode: %s", echo.InfoStyle().Render("lightweight (estimates/existence)"))
+	}
 
 	database, err := db.Connect("")
 	if err != nil {
@@ -88,8 +98,8 @@ func status(cmd *cobra.Command, args []string) error {
 		refreshes = map[string]db.DatasetRefresh{}
 	}
 
-	lahmanPlayers, lahmanPlayersErr := safeCount(ctx, database, `SELECT COUNT(*) FROM "People"`)
-	lahmanTeams, _ := safeCount(ctx, database, `SELECT COUNT(*) FROM "Teams"`)
+	lahmanPlayers, lahmanPlayersErr := safeTableCount(ctx, database, "People", strict)
+	lahmanTeams, _ := safeTableCount(ctx, database, "Teams", strict)
 	lahmanMin, lahmanMax, lahmanRangeErr := seasonRange(ctx, database)
 
 	echo.Info("• Lahman Baseball Database")
@@ -114,8 +124,8 @@ func status(cmd *cobra.Command, args []string) error {
 		echo.Infof("    Last ETL run: never recorded")
 	}
 
-	gamesCount, gamesErr := safeCount(ctx, database, `SELECT COUNT(*) FROM games`)
-	playsCount, playsErr := safeCount(ctx, database, `SELECT COUNT(*) FROM plays`)
+	gamesCount, gamesErr := safeTableCount(ctx, database, "games", strict)
+	playsCount, playsErr := safeTableCount(ctx, database, "plays", strict)
 	gamesStart, gamesEnd, gamesRangeErr := retroDateRange(ctx, database, "games", "date")
 	playsStart, playsEnd, playsRangeErr := retroDateRange(ctx, database, "plays", "date")
 
@@ -162,9 +172,9 @@ func status(cmd *cobra.Command, args []string) error {
 	echo.Info("")
 	echo.Info("• Supplemental Datasets")
 
-	wobaConstants, wobaErr := safeCount(ctx, database, `SELECT COUNT(*) FROM woba_constants`)
-	leagueConstants, leagueErr := safeCount(ctx, database, `SELECT COUNT(*) FROM league_constants`)
-	parkFactors, pfErr := safeCount(ctx, database, `SELECT COUNT(*) FROM park_factors`)
+	wobaConstants, wobaErr := safeTableCount(ctx, database, "woba_constants", strict)
+	leagueConstants, leagueErr := safeTableCount(ctx, database, "league_constants", strict)
+	parkFactors, pfErr := safeTableCount(ctx, database, "park_factors", strict)
 	if wobaErr != nil || leagueErr != nil || pfErr != nil {
 		echo.Infof("  ⚠ FanGraphs constants unavailable: %v %v %v", wobaErr, leagueErr, pfErr)
 	} else if wobaConstants > 0 && leagueConstants > 0 && parkFactors > 0 {
@@ -179,7 +189,7 @@ func status(cmd *cobra.Command, args []string) error {
 		echo.Infof("    FanGraphs ETL: never recorded")
 	}
 
-	retroPlayersCount, retroPlayersErr := safeCount(ctx, database, `SELECT COUNT(*) FROM retrosheet_players`)
+	retroPlayersCount, retroPlayersErr := safeTableCount(ctx, database, "retrosheet_players", strict)
 	if retroPlayersErr != nil {
 		echo.Infof("  ⚠ Retrosheet players unavailable: %v", retroPlayersErr)
 	} else if retroPlayersCount > 0 {
@@ -194,10 +204,10 @@ func status(cmd *cobra.Command, args []string) error {
 		echo.Infof("    Retrosheet players ETL: never recorded")
 	}
 
-	bioExtendedCount, bioExtendedErr := safeCount(ctx, database, `SELECT COUNT(*) FROM player_bio_extended`)
-	relativesCount, relativesErr := safeCount(ctx, database, `SELECT COUNT(*) FROM player_relatives`)
-	coachesCount, coachesErr := safeCount(ctx, database, `SELECT COUNT(*) FROM coaches`)
-	umpiresCount, umpiresErr := safeCount(ctx, database, `SELECT COUNT(*) FROM umpires`)
+	bioExtendedCount, bioExtendedErr := safeTableCount(ctx, database, "player_bio_extended", strict)
+	relativesCount, relativesErr := safeTableCount(ctx, database, "player_relatives", strict)
+	coachesCount, coachesErr := safeTableCount(ctx, database, "coaches", strict)
+	umpiresCount, umpiresErr := safeTableCount(ctx, database, "umpires", strict)
 	if bioExtendedErr != nil || relativesErr != nil || coachesErr != nil || umpiresErr != nil {
 		echo.Infof("  ⚠ Biodata tables unavailable: %v %v %v %v", bioExtendedErr, relativesErr, coachesErr, umpiresErr)
 	} else if bioExtendedCount > 0 || relativesCount > 0 || coachesCount > 0 || umpiresCount > 0 {
@@ -212,7 +222,7 @@ func status(cmd *cobra.Command, args []string) error {
 		echo.Infof("    Biodata ETL: never recorded")
 	}
 
-	salarySummaryCount, salarySummaryErr := safeCount(ctx, database, `SELECT COUNT(*) FROM salary_summary`)
+	salarySummaryCount, salarySummaryErr := safeTableCount(ctx, database, "salary_summary", strict)
 	if salarySummaryErr != nil {
 		echo.Infof("  ⚠ Salary summary unavailable: %v", salarySummaryErr)
 	} else if salarySummaryCount > 0 {
@@ -227,7 +237,7 @@ func status(cmd *cobra.Command, args []string) error {
 		echo.Infof("    Salary ETL: never recorded")
 	}
 
-	weatherGamesCount, weatherGamesErr := safeCount(ctx, database, `SELECT COUNT(*) FROM games WHERE temp_f IS NOT NULL OR wind_speed_mph IS NOT NULL OR sky IS NOT NULL OR precip IS NOT NULL OR field_condition IS NOT NULL`)
+	weatherGamesCount, weatherGamesErr := weatherCoverageCount(ctx, database, refreshes, strict)
 	if weatherGamesErr != nil {
 		echo.Infof("  ⚠ Weather metadata check failed: %v", weatherGamesErr)
 	} else if weatherGamesCount > 0 {
@@ -242,8 +252,7 @@ func status(cmd *cobra.Command, args []string) error {
 		echo.Infof("    Weather ETL: never recorded")
 	}
 
-	allStarGamesCount, allStarGamesErr := safeCount(ctx, database, `SELECT COUNT(*) FROM games WHERE game_type = 'allstar'`)
-	allStarPlaysCount, allStarPlaysErr := safeCount(ctx, database, `SELECT COUNT(*) FROM plays WHERE gid LIKE 'ALS%'`)
+	allStarGamesCount, allStarPlaysCount, allStarGamesErr, allStarPlaysErr := allStarCounts(ctx, database, refreshes, strict)
 	if allStarGamesErr != nil || allStarPlaysErr != nil {
 		echo.Infof("  ⚠ All-Star data check failed: %v %v", allStarGamesErr, allStarPlaysErr)
 	} else if allStarGamesCount > 0 {
@@ -264,7 +273,7 @@ func status(cmd *cobra.Command, args []string) error {
 		echo.Infof("    All-Star plays ETL: never recorded")
 	}
 
-	ejectionsCount, ejectionsErr := safeCount(ctx, database, `SELECT COUNT(*) FROM ejections`)
+	ejectionsCount, ejectionsErr := ejectionsCountValue(ctx, database, refreshes, strict)
 	if ejectionsErr != nil {
 		echo.Infof("  ⚠ Ejections check failed: %v", ejectionsErr)
 	} else if ejectionsCount > 0 {
@@ -279,7 +288,7 @@ func status(cmd *cobra.Command, args []string) error {
 		echo.Infof("    Ejections ETL: never recorded")
 	}
 
-	parkMapCount, parkMapErr := safeCount(ctx, database, `SELECT COUNT(*) FROM park_map`)
+	parkMapCount, parkMapErr := safeTableCount(ctx, database, "park_map", strict)
 	if parkMapErr != nil {
 		echo.Infof("  ⚠ Park map check failed: %v", parkMapErr)
 	} else if parkMapCount > 0 {
@@ -343,12 +352,107 @@ func dirSnapshot(path string) (bool, int, time.Time, error) {
 	return true, len(entries), latest, nil
 }
 
-func safeCount(ctx context.Context, database *db.DB, query string) (int64, error) {
+func exactCount(ctx context.Context, database *db.DB, query string) (int64, error) {
 	var count int64
 	if err := database.QueryRowContext(ctx, query).Scan(&count); err != nil {
 		return 0, err
 	}
 	return count, nil
+}
+
+func safeTableCount(ctx context.Context, database *db.DB, table string, strict bool) (int64, error) {
+	if strict {
+		return exactCount(ctx, database, fmt.Sprintf("SELECT COUNT(*) FROM %s", quoteIdentifier(table)))
+	}
+
+	estimate, estimateErr := estimateTableRows(ctx, database, table)
+	if estimateErr == nil {
+		if estimate <= 0 {
+			hasRows, existsErr := tableHasRows(ctx, database, table)
+			if existsErr == nil && hasRows {
+				return 1, nil
+			}
+		}
+		return estimate, nil
+	}
+
+	hasRows, existsErr := tableHasRows(ctx, database, table)
+	if existsErr == nil {
+		if hasRows {
+			return 1, nil
+		}
+		return 0, nil
+	}
+
+	return 0, nil
+}
+
+func estimateTableRows(ctx context.Context, database *db.DB, table string) (int64, error) {
+	var estimate sql.NullFloat64
+	err := database.QueryRowContext(ctx, `
+		SELECT c.reltuples
+		FROM pg_class c
+		JOIN pg_namespace n ON n.oid = c.relnamespace
+		WHERE n.nspname = 'public'
+		  AND c.relname = $1
+		  AND c.relkind IN ('r', 'm', 'p')
+	`, table).Scan(&estimate)
+	if err != nil {
+		return 0, err
+	}
+	if !estimate.Valid || estimate.Float64 < 0 {
+		return 0, nil
+	}
+	return int64(estimate.Float64), nil
+}
+
+func tableHasRows(ctx context.Context, database *db.DB, table string) (bool, error) {
+	var exists bool
+	query := fmt.Sprintf(`SELECT EXISTS (SELECT 1 FROM %s LIMIT 1)`, quoteIdentifier(table))
+	if err := database.QueryRowContext(ctx, query).Scan(&exists); err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+func weatherCoverageCount(ctx context.Context, database *db.DB, refreshes map[string]db.DatasetRefresh, strict bool) (int64, error) {
+	if strict {
+		return exactCount(ctx, database, `SELECT COUNT(*) FROM games WHERE temp_f IS NOT NULL OR wind_speed_mph IS NOT NULL OR sky IS NOT NULL OR precip IS NOT NULL OR field_condition IS NOT NULL`)
+	}
+	if refresh, ok := refreshes["retrosheet_gameinfo"]; ok && refresh.RowCount > 0 {
+		return refresh.RowCount, nil
+	}
+	return 0, nil
+}
+
+func allStarCounts(ctx context.Context, database *db.DB, refreshes map[string]db.DatasetRefresh, strict bool) (int64, int64, error, error) {
+	if strict {
+		gamesCount, gamesErr := exactCount(ctx, database, `SELECT COUNT(*) FROM games WHERE game_type = 'allstar'`)
+		playsCount, playsErr := exactCount(ctx, database, `SELECT COUNT(*) FROM plays WHERE gid LIKE 'ALS%'`)
+		return gamesCount, playsCount, gamesErr, playsErr
+	}
+
+	var gamesCount int64
+	var playsCount int64
+	if refresh, ok := refreshes["allstar_games"]; ok {
+		gamesCount = refresh.RowCount
+	} else if refresh, ok := refreshes["retrosheet_allstar_games"]; ok {
+		gamesCount = refresh.RowCount
+	}
+	if refresh, ok := refreshes["allstar_plays"]; ok {
+		playsCount = refresh.RowCount
+	}
+	return gamesCount, playsCount, nil, nil
+}
+
+func ejectionsCountValue(ctx context.Context, database *db.DB, refreshes map[string]db.DatasetRefresh, strict bool) (int64, error) {
+	if strict {
+		return exactCount(ctx, database, `SELECT COUNT(*) FROM ejections`)
+	}
+	if refresh, ok := refreshes["retrosheet_ejections"]; ok {
+		return refresh.RowCount, nil
+	}
+	return 0, nil
 }
 
 func seasonRange(ctx context.Context, database *db.DB) (*int, *int, error) {

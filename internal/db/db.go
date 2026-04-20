@@ -50,11 +50,12 @@ type DatasetRefresh struct {
 
 // MaterializedViewRefreshOptions controls observability for view refresh operations.
 type MaterializedViewRefreshOptions struct {
-	RunID         *int64
-	Step          string
-	Group         string
-	SlowThreshold time.Duration
-	OnAttempt     func(MaterializedViewRefreshAttempt)
+	RunID              *int64
+	Step               string
+	Group              string
+	SlowThreshold      time.Duration
+	ForceNonConcurrent bool
+	OnAttempt          func(MaterializedViewRefreshAttempt)
 }
 
 // MaterializedViewRefreshAttempt describes one refresh attempt for a single materialized view.
@@ -1063,27 +1064,50 @@ func (db *DB) RefreshMaterializedViewsWithOptions(ctx context.Context, viewNames
 		}
 
 		mode := "non_concurrent"
-		if caps.populated && caps.supportsConcurrent {
+		if !opts.ForceNonConcurrent && caps.populated && caps.supportsConcurrent {
 			mode = "concurrent"
 		}
 
-		startedAt := time.Now()
-		query := fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", view)
-		if mode == "concurrent" {
-			query = fmt.Sprintf("REFRESH MATERIALIZED VIEW CONCURRENTLY %s", view)
+		runRefresh := func(refreshMode string) error {
+			query := fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", view)
+			if refreshMode == "concurrent" {
+				query = fmt.Sprintf("REFRESH MATERIALIZED VIEW CONCURRENTLY %s", view)
+			}
+			_, err := db.ExecContext(ctx, query)
+			return err
 		}
-		if _, err := db.ExecContext(ctx, query); err == nil {
+
+		startedAt := time.Now()
+		if err := runRefresh(mode); err == nil {
 			recordAttempt(view, pass, mode, startedAt, "completed", nil)
 			caps.populated = true
 			capabilitiesByView[view] = caps
 			return "completed", nil
 		} else {
-			errText := strings.ToLower(err.Error())
-			if strings.Contains(errText, "has not been populated") {
+			if isMaterializedViewDeferredDependencyError(err) {
 				recordAttempt(view, pass, mode, startedAt, "deferred_dependency", err)
 				return "deferred_dependency", nil
 			}
+
 			recordAttempt(view, pass, mode, startedAt, "failed", err)
+
+			if mode == "concurrent" && shouldRetryNonConcurrent(err) {
+				fallbackMode := "non_concurrent"
+				fallbackStartedAt := time.Now()
+				if fallbackErr := runRefresh(fallbackMode); fallbackErr == nil {
+					recordAttempt(view, pass, fallbackMode, fallbackStartedAt, "completed", nil)
+					caps.populated = true
+					capabilitiesByView[view] = caps
+					return "completed", nil
+				} else if isMaterializedViewDeferredDependencyError(fallbackErr) {
+					recordAttempt(view, pass, fallbackMode, fallbackStartedAt, "deferred_dependency", fallbackErr)
+					return "deferred_dependency", nil
+				} else {
+					recordAttempt(view, pass, fallbackMode, fallbackStartedAt, "failed", fallbackErr)
+					return "failed", fallbackErr
+				}
+			}
+
 			return "failed", err
 		}
 	}
@@ -1125,6 +1149,25 @@ func (db *DB) RefreshMaterializedViewsWithOptions(ctx context.Context, viewNames
 	}
 
 	return refreshed, nil
+}
+
+func isMaterializedViewDeferredDependencyError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errText := strings.ToLower(err.Error())
+	return strings.Contains(errText, "has not been populated")
+}
+
+func shouldRetryNonConcurrent(err error) bool {
+	if err == nil {
+		return false
+	}
+	errText := strings.ToLower(err.Error())
+	return strings.Contains(errText, "concurrently cannot be used") ||
+		strings.Contains(errText, "cannot refresh materialized view") ||
+		strings.Contains(errText, "sqlstate 0a000") ||
+		strings.Contains(errText, "sqlstate 55000")
 }
 
 func normalizeMaterializedViewName(view string) (schema, name string) {

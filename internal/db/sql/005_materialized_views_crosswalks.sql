@@ -1,4 +1,4 @@
--- Fresh migration set: crosswalk and win expectancy materialized views.
+-- crosswalk and win expectancy materialized views.
 
 
 -- SECTION 024_player_id_crosswalk_view.sql

@@ -59,11 +59,15 @@ Recommended approach for large environments:
 
 This keeps migration time predictable and lets you pace heavy recomputes according to capacity.
 
+Postgres runtime tuning for ETL-heavy writes should be applied via container command args (for example `postgres -c max_wal_size=12GB ...`), not `POSTGRES_*` environment variables.
+This avoids frequent checkpoint churn during force clears and large refresh batches.
+
 Materialized-view refresh observability:
 
 - Each refresh attempt is recorded in `materialized_view_refresh_events`.
 - ETL pipeline refresh attempts are linked to `etl_runs.id` via `run_id`.
 - `db refresh-views` also records per-view attempts with step `db.refresh-views`.
+- ETL phase-level timing and row counts are recorded in `etl_step_events` for long-running steps.
 
 Quick diagnostics:
 
@@ -84,6 +88,28 @@ FROM materialized_view_refresh_events
 ORDER BY started_at DESC
 LIMIT 50;
 ```
+
+```sql
+SELECT
+  started_at,
+  run_id,
+  step,
+  phase,
+  status,
+  row_count,
+  duration_ms,
+  metadata,
+  error
+FROM etl_step_events
+ORDER BY started_at DESC
+LIMIT 100;
+```
+
+Force semantics (`etl load retrosheet --force` / `db populate retrosheet --force`):
+
+- Force clear is year-scoped and uses date bounds (`YYYY0101` to `(YYYY+1)0101`) for both `games` and `plays`.
+- Deletes execute with a per-year transaction boundary for safer resumability.
+- Force mode does not delete rows outside requested year ranges.
 
 Data root resolution order:
 
@@ -147,6 +173,8 @@ Server/API checks:
 ```bash
 curl http://localhost:8080/v1/ready
 curl http://localhost:8080/v1/meta/datasets
+curl http://localhost:8080/v1/meta/datasets?strict=true
+curl -i http://localhost:8080/v1/meta | grep -i X-Count-Mode
 curl http://localhost:8080/v1/health
 ```
 
@@ -210,19 +238,20 @@ These commands are still supported for partial runs, debugging, and CI:
 - `<BASEBALL> etl load parks`
 - `<BASEBALL> etl load allstar`
 - `<BASEBALL> etl status`
+- `<BASEBALL> etl status --strict` (exact-count audit mode)
 
 ## Command Contract Table
 
-| Command                                 | Purpose                                                      | Write behavior                                                                                  | Prerequisites      |
-| --------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------ |
-| `<BASEBALL> etl` / `<BASEBALL> etl run` | Full ETL orchestration (extract, transform, load, validate)  | Downloads archives, loads core + supplemental datasets, refreshes materialized views, validates | Reachable Postgres |
-| `<BASEBALL> etl validate --profile <P>` | Profile-aware ETL completeness validation                    | Read-only                                                                                       | Reachable Postgres |
-| `<BASEBALL> etl fetch retrosheet`       | Download Retrosheet game logs, plays, and auxiliary archives | Writes files under `<data-root>/retrosheet`                                                     | Network access     |
-| `<BASEBALL> etl fetch negroleagues`     | Download and extract Negro Leagues archives                  | Writes files under `<data-root>/retrosheet/negroleagues`                                        | Network access     |
-| `<BASEBALL> etl load <dataset>`         | Execute a specific load stage                                | Dataset-dependent inserts/updates/truncation                                                    | Source files ready |
-| `<BASEBALL> etl status`                 | Show core + supplemental dataset freshness and health        | Read-only                                                                                       | Reachable Postgres |
-| `<BASEBALL> db migrate`                 | Apply SQL migrations                                         | Structural/idempotent schema object changes only (no MV population)                             | Reachable Postgres |
-| `<BASEBALL> db refresh-views <views...>`| Populate/refresh materialized views                          | Data recomputation (run in batches for large datasets)                                          | Reachable Postgres |
+| Command                                  | Purpose                                                      | Write behavior                                                                                  | Prerequisites      |
+| ---------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------ |
+| `<BASEBALL> etl` / `<BASEBALL> etl run`  | Full ETL orchestration (extract, transform, load, validate)  | Downloads archives, loads core + supplemental datasets, refreshes materialized views, validates | Reachable Postgres |
+| `<BASEBALL> etl validate --profile <P>`  | Profile-aware ETL completeness validation                    | Read-only                                                                                       | Reachable Postgres |
+| `<BASEBALL> etl fetch retrosheet`        | Download Retrosheet game logs, plays, and auxiliary archives | Writes files under `<data-root>/retrosheet`                                                     | Network access     |
+| `<BASEBALL> etl fetch negroleagues`      | Download and extract Negro Leagues archives                  | Writes files under `<data-root>/retrosheet/negroleagues`                                        | Network access     |
+| `<BASEBALL> etl load <dataset>`          | Execute a specific load stage                                | Dataset-dependent inserts/updates/truncation                                                    | Source files ready |
+| `<BASEBALL> etl status [--strict]`       | Show core + supplemental dataset freshness and health        | Read-only (lightweight by default; `--strict` runs exact counts)                                | Reachable Postgres |
+| `<BASEBALL> db migrate`                  | Apply SQL migrations                                         | Structural/idempotent schema object changes only (no MV population)                             | Reachable Postgres |
+| `<BASEBALL> db refresh-views <views...>` | Populate/refresh materialized views                          | Data recomputation (run in batches for large datasets)                                          | Reachable Postgres |
 
 ## Retrosheet Era Contract
 

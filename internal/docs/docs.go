@@ -12,7 +12,7 @@ const docTemplate = `{
         "contact": {
             "name": "API Support",
             "url": "https://github.com/stormlightlabs/baseball",
-            "email": "info@stormlightlabs.org"
+            "email": "admin@bigfly.tech"
         },
         "license": {
             "name": "MPL-2.0",
@@ -2093,6 +2093,14 @@ const docTemplate = `{
                     "meta"
                 ],
                 "summary": "API metadata",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "Use strict exact row counts (falls back to lightweight mode on error/timeout)",
+                        "name": "strict",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2610,6 +2618,14 @@ const docTemplate = `{
                     "meta"
                 ],
                 "summary": "Dataset status",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "Use strict exact row counts (falls back to lightweight mode on error/timeout)",
+                        "name": "strict",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -13610,7 +13626,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "/v1",
 	Schemes:          []string{},
-	Title:            "Baseball API",
+	Title:            "BigFly baseball API",
 	Description:      "<!-- markdownlint-disable -->\n\nA comprehensive REST API for baseball statistics serving data from the Lahman Baseball Database and Retrosheet\n\n## Attributions\n\n**[SABR Lahman Database](https://sabr.org/lahman-database/)**: The information used here was obtained free of charge from and is copyrighted by Sean Lahman.\n\n**[Retrosheet.org](https://www.retrosheet.org/)**: The information used here was obtained free of charge from and is copyrighted by Retrosheet.\n\nwOBA weights and seasonal constants from **[FanGraphs Guts!](https://www.fangraphs.com/tools/guts)**, used under FanGraphs’ published terms.\n",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

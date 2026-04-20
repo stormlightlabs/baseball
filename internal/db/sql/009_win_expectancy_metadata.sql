@@ -1,4 +1,4 @@
--- Fresh migration set: win expectancy helper function and comments.
+-- win expectancy helper function and comments.
 
 
 -- SECTION 047_win_expectancy_metadata.sql

@@ -1,4 +1,4 @@
--- Fresh migration set: Retrosheet core schema, indexing, partitioning, and supporting tables.
+-- Retrosheet core schema, indexing, partitioning, and supporting tables.
 
 
 -- SECTION 002_retrosheet_schema.sql

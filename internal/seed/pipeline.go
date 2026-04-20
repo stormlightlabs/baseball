@@ -183,8 +183,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	echo.Infof("Mode: %s", opts.Mode)
 	echo.Infof("Years: %s", summarizeYears(opts.Years))
 
-	rows, stepErr := runPipelineStep(ctx, database, runID, "extract.retrosheet", func() (int64, error) {
-		return 0, FetchRetrosheetData(ctx, opts.RetrosheetDataDir, opts.Years, force)
+	rows, stepErr := runPipelineStep(ctx, database, runID, "extract.retrosheet", func(stepCtx context.Context) (int64, error) {
+		return 0, FetchRetrosheetData(stepCtx, opts.RetrosheetDataDir, opts.Years, force)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -193,8 +193,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "extract.chadwick", func() (int64, error) {
-		return 0, FetchChadwickRegisterData(ctx, opts.ChadwickDataDir, force)
+	rows, stepErr = runPipelineStep(ctx, database, runID, "extract.chadwick", func(stepCtx context.Context) (int64, error) {
+		return 0, FetchChadwickRegisterData(stepCtx, opts.ChadwickDataDir, force)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -203,8 +203,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "extract.negroleagues", func() (int64, error) {
-		return 0, FetchNegroLeaguesData(ctx, filepath.Join(opts.RetrosheetDataDir, "negroleagues"), force)
+	rows, stepErr = runPipelineStep(ctx, database, runID, "extract.negroleagues", func(stepCtx context.Context) (int64, error) {
+		return 0, FetchNegroLeaguesData(stepCtx, filepath.Join(opts.RetrosheetDataDir, "negroleagues"), force)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -213,8 +213,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "load.lahman", func() (int64, error) {
-		return LoadLahman(ctx, database, LahmanOptions{CSVDir: opts.LahmanCSVDir, Skip: skipLahman})
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.lahman", func(stepCtx context.Context) (int64, error) {
+		return LoadLahman(stepCtx, database, LahmanOptions{CSVDir: opts.LahmanCSVDir, Skip: skipLahman})
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -223,8 +223,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "load.retrosheet", func() (int64, error) {
-		loaded, err := LoadRetrosheet(ctx, database, RetrosheetOptions{
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.retrosheet", func(stepCtx context.Context) (int64, error) {
+		loaded, err := LoadRetrosheet(stepCtx, database, RetrosheetOptions{
 			DataDir: opts.RetrosheetDataDir,
 			Years:   opts.Years,
 			Force:   force,
@@ -241,8 +241,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "load.fangraphs", func() (int64, error) {
-		return LoadFanGraphsData(ctx, database, opts.FanGraphsDir)
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.fangraphs", func(stepCtx context.Context) (int64, error) {
+		return LoadFanGraphsData(stepCtx, database, opts.FanGraphsDir)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -251,8 +251,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "load.salary", func() (int64, error) {
-		return LoadSalaryData(ctx, database, opts.SalaryDataDir)
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.salary", func(stepCtx context.Context) (int64, error) {
+		return LoadSalaryData(stepCtx, database, opts.SalaryDataDir)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -261,12 +261,12 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "load.retrosheet_players", func() (int64, error) {
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.retrosheet_players", func(stepCtx context.Context) (int64, error) {
 		csvPath, err := EnsureRetrosheetPlayersCSV(opts.RetrosheetDataDir)
 		if err != nil {
 			return 0, err
 		}
-		return LoadRetrosheetPlayers(ctx, database, csvPath)
+		return LoadRetrosheetPlayers(stepCtx, database, csvPath)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -275,13 +275,13 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "load.biodata", func() (int64, error) {
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.biodata", func(stepCtx context.Context) (int64, error) {
 		tmpDir, cleanup, err := ExtractBiodataArchive(opts.RetrosheetDataDir)
 		if err != nil {
 			return 0, err
 		}
 		defer cleanup()
-		return LoadBiodata(ctx, database, tmpDir)
+		return LoadBiodata(stepCtx, database, tmpDir)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -290,8 +290,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "load.crosswalk.players_mlbam", func() (int64, error) {
-		return LoadPlayerMLBAMMappings(ctx, database, opts.ChadwickDataDir)
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.crosswalk.players_mlbam", func(stepCtx context.Context) (int64, error) {
+		return LoadPlayerMLBAMMappings(stepCtx, database, opts.ChadwickDataDir)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -300,8 +300,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "load.crosswalk.teams_mlbam", func() (int64, error) {
-		return LoadTeamMLBAMMappings(ctx, database, opts.Years)
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.crosswalk.teams_mlbam", func(stepCtx context.Context) (int64, error) {
+		return LoadTeamMLBAMMappings(stepCtx, database, opts.Years)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -310,8 +310,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "load.weather", func() (int64, error) {
-		return LoadWeatherData(ctx, database, filepath.Join(opts.RetrosheetDataDir, "gameinfo.csv"))
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.weather", func(stepCtx context.Context) (int64, error) {
+		return LoadWeatherData(stepCtx, database, filepath.Join(opts.RetrosheetDataDir, "gameinfo.csv"))
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -320,8 +320,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "load.parks", func() (int64, error) {
-		return LoadParksData(ctx, database)
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.parks", func(stepCtx context.Context) (int64, error) {
+		return LoadParksData(stepCtx, database)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -330,8 +330,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "load.allstar", func() (int64, error) {
-		return LoadAllStarData(ctx, database, filepath.Join(opts.RetrosheetDataDir, "allstar", "allstar.zip"))
+	rows, stepErr = runPipelineStep(ctx, database, runID, "load.allstar", func(stepCtx context.Context) (int64, error) {
+		return LoadAllStarData(stepCtx, database, filepath.Join(opts.RetrosheetDataDir, "allstar", "allstar.zip"))
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -340,11 +340,12 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "refresh.materialized_views", func() (int64, error) {
+	rows, stepErr = runPipelineStep(ctx, database, runID, "refresh.materialized_views", func(stepCtx context.Context) (int64, error) {
 		refreshRunID := runID
-		views, err := RefreshPipelineMaterializedViews(ctx, database, db.MaterializedViewRefreshOptions{
-			RunID: &refreshRunID,
-			Step:  "refresh.materialized_views",
+		views, err := RefreshPipelineMaterializedViews(stepCtx, database, db.MaterializedViewRefreshOptions{
+			RunID:              &refreshRunID,
+			Step:               "refresh.materialized_views",
+			ForceNonConcurrent: true,
 		})
 		return int64(views), err
 	})
@@ -355,8 +356,8 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "validate", func() (int64, error) {
-		validation, err := ValidatePipeline(ctx, database, opts.Profile, opts.Years)
+	rows, stepErr = runPipelineStep(ctx, database, runID, "validate", func(stepCtx context.Context) (int64, error) {
+		validation, err := ValidatePipeline(stepCtx, database, opts.Profile, opts.Years)
 		if err != nil {
 			return 0, err
 		}
@@ -389,7 +390,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	return result, nil
 }
 
-func runPipelineStep(ctx context.Context, database *db.DB, runID int64, step string, fn func() (int64, error)) (int64, error) {
+func runPipelineStep(ctx context.Context, database *db.DB, runID int64, step string, fn func(context.Context) (int64, error)) (int64, error) {
 	stepID, err := database.StartETLStep(ctx, runID, step)
 	if err != nil {
 		return 0, err
@@ -399,7 +400,8 @@ func runPipelineStep(ctx context.Context, database *db.DB, runID int64, step str
 	echo.Info("")
 	echo.Infof("Step: %s", step)
 
-	rowCount, stepErr := fn()
+	stepCtx := withETLStepContext(ctx, runID, step)
+	rowCount, stepErr := fn(stepCtx)
 	if stepErr != nil {
 		_ = database.FinishETLStep(ctx, stepID, "failed", rowCount, stepErr.Error())
 		return rowCount, stepErr

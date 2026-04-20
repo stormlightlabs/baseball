@@ -1,4 +1,4 @@
--- Fresh migration set: reference data, enrichment tables, and crosswalk tables.
+-- reference data, enrichment tables, and crosswalk tables.
 
 
 -- SECTION 010_team_aliases.sql

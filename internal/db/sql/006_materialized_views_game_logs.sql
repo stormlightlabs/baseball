@@ -1,4 +1,4 @@
--- Fresh migration set: game log and game-stat materialized views.
+-- game log and game-stat materialized views.
 -- Views are created WITH NO DATA and refreshed via ETL/db refresh-views.
 
 

@@ -1,4 +1,4 @@
--- Fresh migration set: runtime tracking and authentication tables.
+-- runtime tracking and authentication tables.
 
 
 -- SECTION 004_dataset_refreshes.sql

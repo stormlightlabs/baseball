@@ -288,40 +288,116 @@ func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir strin
 		formatNumber(skippedInvalidMLBAM),
 		time.Since(parseStartedAt).Round(time.Second),
 	)
+	recordETLPhaseEvent(
+		ctx,
+		database,
+		"load.crosswalk.players_mlbam",
+		"parse_stage",
+		"completed",
+		staged,
+		parseStartedAt,
+		map[string]any{
+			"processed":              processed,
+			"staged":                 staged,
+			"skipped_missing_mlbam":  skippedMissingMLBAM,
+			"skipped_invalid_mlbam":  skippedInvalidMLBAM,
+			"source_file":            csvPath,
+			"source_file_size_bytes": fileInfo.Size(),
+		},
+		nil,
+	)
 
-	if _, err := tx.ExecContext(ctx, `TRUNCATE TABLE player_mlbam_map`); err != nil {
+	clearStartedAt := time.Now()
+	echo.Info("  Crosswalk phase: clear target table (player_mlbam_map)")
+	clearResult, err := tx.ExecContext(ctx, `DELETE FROM player_mlbam_map`)
+	if err != nil {
+		recordETLPhaseEvent(
+			ctx,
+			database,
+			"load.crosswalk.players_mlbam",
+			"clear_target",
+			"failed",
+			0,
+			clearStartedAt,
+			map[string]any{"target_table": "player_mlbam_map"},
+			err,
+		)
 		return 0, fmt.Errorf("failed to clear player_mlbam_map: %w", err)
 	}
+	clearedRows, _ := clearResult.RowsAffected()
+	recordETLPhaseEvent(
+		ctx,
+		database,
+		"load.crosswalk.players_mlbam",
+		"clear_target",
+		"completed",
+		clearedRows,
+		clearStartedAt,
+		map[string]any{"target_table": "player_mlbam_map"},
+		nil,
+	)
+	echo.Infof("  Cleared player_mlbam_map rows=%s (%s)", formatNumber(clearedRows), time.Since(clearStartedAt).Round(time.Millisecond))
 
 	buildStartedAt := time.Now()
+	echo.Info("  Crosswalk phase: build People lookup tables")
 	var peopleRows int64
 	if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM "People"`).Scan(&peopleRows); err == nil {
-		echo.Infof(
-			"  Building player_mlbam_map from staged=%s against People=%s...",
-			formatNumber(staged),
-			formatNumber(peopleRows),
-		)
-	} else {
-		echo.Infof("  Building player_mlbam_map from staged=%s...", formatNumber(staged))
+		echo.Infof("  Building player_mlbam_map from staged=%s against People=%s...", formatNumber(staged), formatNumber(peopleRows))
 	}
+	if _, err := tx.ExecContext(ctx, `
+		CREATE TEMP TABLE chadwick_retro_lookup ON COMMIT DROP AS
+		SELECT
+			p."retroID" AS retro_id,
+			ARRAY_AGG(DISTINCT p."playerID") FILTER (WHERE p."playerID" IS NOT NULL) AS retro_matches
+		FROM "People" p
+		WHERE p."retroID" IS NOT NULL
+		GROUP BY p."retroID";
+		CREATE INDEX chadwick_retro_lookup_retro_id_idx ON chadwick_retro_lookup(retro_id);
 
-	result, err := tx.ExecContext(ctx, `
-		WITH retro_lookup AS (
-			SELECT
-				p."retroID" AS retro_id,
-				ARRAY_AGG(DISTINCT p."playerID") FILTER (WHERE p."playerID" IS NOT NULL) AS retro_matches
-			FROM "People" p
-			WHERE p."retroID" IS NOT NULL
-			GROUP BY p."retroID"
-		),
-		bbref_lookup AS (
-			SELECT
-				p."bbrefID" AS bbref_id,
-				ARRAY_AGG(DISTINCT p."playerID") FILTER (WHERE p."playerID" IS NOT NULL) AS bbref_matches
-			FROM "People" p
-			WHERE p."bbrefID" IS NOT NULL
-			GROUP BY p."bbrefID"
+		CREATE TEMP TABLE chadwick_bbref_lookup ON COMMIT DROP AS
+		SELECT
+			p."bbrefID" AS bbref_id,
+			ARRAY_AGG(DISTINCT p."playerID") FILTER (WHERE p."playerID" IS NOT NULL) AS bbref_matches
+		FROM "People" p
+		WHERE p."bbrefID" IS NOT NULL
+		GROUP BY p."bbrefID";
+		CREATE INDEX chadwick_bbref_lookup_bbref_id_idx ON chadwick_bbref_lookup(bbref_id);
+	`); err != nil {
+		recordETLPhaseEvent(
+			ctx,
+			database,
+			"load.crosswalk.players_mlbam",
+			"build_lookup",
+			"failed",
+			0,
+			buildStartedAt,
+			map[string]any{
+				"staged_rows": staged,
+				"people_rows": peopleRows,
+			},
+			err,
 		)
+		return 0, fmt.Errorf("failed to build player crosswalk lookups: %w", err)
+	}
+	recordETLPhaseEvent(
+		ctx,
+		database,
+		"load.crosswalk.players_mlbam",
+		"build_lookup",
+		"completed",
+		staged,
+		buildStartedAt,
+		map[string]any{
+			"staged_rows": staged,
+			"people_rows": peopleRows,
+		},
+		nil,
+	)
+	echo.Infof("  Built lookup tables (%s)", time.Since(buildStartedAt).Round(time.Millisecond))
+
+	insertStartedAt := time.Now()
+	echo.Info("  Crosswalk phase: insert merged mappings")
+	result, err := tx.ExecContext(ctx, `
 		INSERT INTO player_mlbam_map (
 			mlbam_id,
 			lahman_id,
@@ -357,21 +433,73 @@ func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir strin
 				END,
 				NOW()
 			FROM chadwick_player_stage s
-			LEFT JOIN retro_lookup r ON r.retro_id = s.retro_id
-			LEFT JOIN bbref_lookup b ON b.bbref_id = s.bbref_id
+			LEFT JOIN chadwick_retro_lookup r ON r.retro_id = s.retro_id
+			LEFT JOIN chadwick_bbref_lookup b ON b.bbref_id = s.bbref_id
 	`)
 	if err != nil {
+		recordETLPhaseEvent(
+			ctx,
+			database,
+			"load.crosswalk.players_mlbam",
+			"insert",
+			"failed",
+			0,
+			insertStartedAt,
+			map[string]any{"staged_rows": staged},
+			err,
+		)
 		return 0, fmt.Errorf("failed to build player_mlbam_map: %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return 0, fmt.Errorf("failed to commit player_mlbam_map load: %w", err)
 	}
 
 	rows, _ := result.RowsAffected()
 	if rows == 0 {
 		rows = staged
 	}
+	recordETLPhaseEvent(
+		ctx,
+		database,
+		"load.crosswalk.players_mlbam",
+		"insert",
+		"completed",
+		rows,
+		insertStartedAt,
+		map[string]any{"staged_rows": staged},
+		nil,
+	)
+	echo.Infof("  Inserted player_mlbam_map rows=%s (%s)", formatNumber(rows), time.Since(insertStartedAt).Round(time.Millisecond))
+
+	commitStartedAt := time.Now()
+	if err := tx.Commit(); err != nil {
+		recordETLPhaseEvent(
+			ctx,
+			database,
+			"load.crosswalk.players_mlbam",
+			"commit",
+			"failed",
+			0,
+			commitStartedAt,
+			map[string]any{
+				"inserted_rows": rows,
+			},
+			err,
+		)
+		return 0, fmt.Errorf("failed to commit player_mlbam_map load: %w", err)
+	}
+	recordETLPhaseEvent(
+		ctx,
+		database,
+		"load.crosswalk.players_mlbam",
+		"commit",
+		"completed",
+		rows,
+		commitStartedAt,
+		map[string]any{
+			"inserted_rows": rows,
+		},
+		nil,
+	)
+	echo.Infof("  Crosswalk commit completed in %s", time.Since(commitStartedAt).Round(time.Millisecond))
+
 	echo.Infof(
 		"  Built player_mlbam_map rows=%s from staged=%s (%s)",
 		formatNumber(rows),

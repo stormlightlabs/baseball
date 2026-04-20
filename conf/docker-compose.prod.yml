@@ -28,13 +28,30 @@ services:
 
   postgres:
     image: postgres:17.5
+    command:
+      - postgres
+      - -c
+      - shared_buffers=1GB
+      - -c
+      - effective_cache_size=2GB
+      - -c
+      - work_mem=32MB
+      - -c
+      - maintenance_work_mem=512MB
+      - -c
+      - max_wal_size=12GB
+      - -c
+      - min_wal_size=2GB
+      - -c
+      - checkpoint_timeout=15min
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
+      - wal_compression=on
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-baseball}
-      POSTGRES_SHARED_BUFFERS: 512MB
-      POSTGRES_EFFECTIVE_CACHE_SIZE: 2GB
-      POSTGRES_WORK_MEM: 32MB
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

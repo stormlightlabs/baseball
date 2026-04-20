@@ -9,6 +9,7 @@ import (
 var (
 	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#42be65"))
 	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#ee5396"))
+	warnStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#ffb86c"))
 	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#33B1FF"))
 	headerStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FAFAFA")).
 			Background(lipgloss.Color("#33B1FF")).Padding(0, 1).Bold(true)
@@ -67,4 +68,9 @@ func ErrorStyle() lipgloss.Style {
 // InfoStyle returns the info style
 func InfoStyle() lipgloss.Style {
 	return infoStyle
+}
+
+// WarnStyle returns the warning style
+func WarnStyle() lipgloss.Style {
+	return warnStyle
 }

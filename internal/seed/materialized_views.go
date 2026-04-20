@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"stormlightlabs.org/baseball/internal/db"
@@ -42,7 +43,10 @@ func RefreshRetrosheetMaterializedViews(ctx context.Context, database *db.DB) (i
 		database,
 		"Retrosheet-derived",
 		retrosheetMaterializedViews,
-		db.MaterializedViewRefreshOptions{Step: "etl.load.retrosheet.refresh_views"},
+		db.MaterializedViewRefreshOptions{
+			Step:               "etl.load.retrosheet.refresh_views",
+			ForceNonConcurrent: true,
+		},
 	)
 }
 
@@ -108,10 +112,52 @@ func refreshNamedMaterializedViews(
 
 	count, err := database.RefreshMaterializedViewsWithOptions(ctx, views, opts)
 	logMaterializedViewSummary(group, attempts, slowThreshold)
+	summary := materializedViewAttemptSummary(attempts, slowThreshold)
 
 	if err != nil {
+		recordETLPhaseEvent(
+			ctx,
+			database,
+			"refresh.materialized_views",
+			materializedViewPhaseName(group),
+			"failed",
+			int64(count),
+			start,
+			map[string]any{
+				"group":       group,
+				"view_count":  len(views),
+				"attempts":    summary["attempts"],
+				"retries":     summary["retries"],
+				"deferred":    summary["deferred"],
+				"failed":      summary["failed"],
+				"slow_count":  summary["slow_count"],
+				"slow_thresh": slowThreshold.Milliseconds(),
+			},
+			err,
+		)
 		return 0, fmt.Errorf("failed to refresh %s materialized views: %w", group, err)
 	}
+
+	recordETLPhaseEvent(
+		ctx,
+		database,
+		"refresh.materialized_views",
+		materializedViewPhaseName(group),
+		"completed",
+		int64(count),
+		start,
+		map[string]any{
+			"group":       group,
+			"view_count":  len(views),
+			"attempts":    summary["attempts"],
+			"retries":     summary["retries"],
+			"deferred":    summary["deferred"],
+			"failed":      summary["failed"],
+			"slow_count":  summary["slow_count"],
+			"slow_thresh": slowThreshold.Milliseconds(),
+		},
+		nil,
+	)
 
 	echo.Successf("  ✓ Refreshed %d %s views (%s)", count, group, time.Since(start).Round(time.Second))
 	return count, nil
@@ -168,4 +214,39 @@ func logMaterializedViewSummary(group string, attempts []db.MaterializedViewRefr
 	for i := 0; i < limit; i++ {
 		echo.Infof("    %s (%s)", slow[i].ViewName, slow[i].Duration.Round(time.Millisecond))
 	}
+}
+
+func materializedViewAttemptSummary(attempts []db.MaterializedViewRefreshAttempt, slowThreshold time.Duration) map[string]int {
+	summary := map[string]int{
+		"attempts":   len(attempts),
+		"retries":    0,
+		"deferred":   0,
+		"failed":     0,
+		"slow_count": 0,
+	}
+
+	for _, attempt := range attempts {
+		if attempt.Attempt > 1 {
+			summary["retries"]++
+		}
+		switch attempt.Status {
+		case "failed":
+			summary["failed"]++
+		case "deferred_dependency":
+			summary["deferred"]++
+		case "completed":
+			if attempt.Duration >= slowThreshold {
+				summary["slow_count"]++
+			}
+		}
+	}
+	return summary
+}
+
+func materializedViewPhaseName(group string) string {
+	if group == "" {
+		return "materialized_views.refresh"
+	}
+	sanitized := strings.NewReplacer("/", "_", " ", "_").Replace(group)
+	return "materialized_views." + sanitized
 }

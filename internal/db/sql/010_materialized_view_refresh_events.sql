@@ -1,4 +1,4 @@
--- Fresh migration set: materialized view refresh observability.
+-- materialized view refresh observability.
 -- Stores per-view refresh attempts for ETL and manual operations.
 
 CREATE TABLE IF NOT EXISTS materialized_view_refresh_events (

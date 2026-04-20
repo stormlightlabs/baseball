@@ -3441,7 +3441,7 @@ definitions:
     type: object
 info:
   contact:
-    email: info@stormlightlabs.org
+    email: admin@bigfly.tech
     name: API Support
     url: https://github.com/stormlightlabs/baseball
   description: |
@@ -3459,7 +3459,7 @@ info:
   license:
     name: MPL-2.0
     url: https://opensource.org/license/mpl-2-0
-  title: Baseball API
+  title: BigFly baseball API
   version: "1.0"
 paths:
   /achievements/cycles:
@@ -4862,6 +4862,12 @@ paths:
       - application/json
       description: Returns API version, dataset freshness, coverage, era label mappings,
         and schema fingerprints
+      parameters:
+      - description: Use strict exact row counts (falls back to lightweight mode on
+          error/timeout)
+        in: query
+        name: strict
+        type: boolean
       produces:
       - application/json
       responses:
@@ -5202,6 +5208,12 @@ paths:
       consumes:
       - application/json
       description: Returns dataset ETL metadata and coverage
+      parameters:
+      - description: Use strict exact row counts (falls back to lightweight mode on
+          error/timeout)
+        in: query
+        name: strict
+        type: boolean
       produces:
       - application/json
       responses:

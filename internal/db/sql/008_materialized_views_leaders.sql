@@ -1,4 +1,4 @@
--- Fresh migration set: season/career leaderboards materialized views.
+-- season/career leaderboards materialized views.
 -- Views are created WITH NO DATA and refreshed via ETL/db refresh-views.
 
 

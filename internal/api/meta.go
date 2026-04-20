@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 // TODO: we'll update to semantic versioning when ready
 const apiVersion = "ALPHA" // 1.0.0
+const countModeHeader = "X-Count-Mode"
 
 type MetaRoutes struct {
 	repo          core.MetaRepository
@@ -59,17 +61,19 @@ type datasetCoverage struct {
 //	@Tags			meta
 //	@Accept			json
 //	@Produce		json
+//	@Param			strict	query		bool	false	"Use strict exact row counts (falls back to lightweight mode on error/timeout)"
 //	@Success		200	{object}	metaResponse
 //	@Failure		500	{object}	ErrorResponse
 //	@Router			/meta [get]
 func (mr *MetaRoutes) handleMeta(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	datasets, err := mr.repo.DatasetStatuses(ctx)
+	datasets, mode, err := mr.loadDatasetsWithMode(r)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
+	w.Header().Set(countModeHeader, string(mode))
+
+	ctx := r.Context()
 
 	minLahman, maxLahman, minRetro, maxRetro, err := mr.repo.SeasonCoverage(ctx)
 	if err != nil {
@@ -114,16 +118,17 @@ func eraLabelsMap() map[string]string {
 //	@Tags			meta
 //	@Accept			json
 //	@Produce		json
+//	@Param			strict	query		bool	false	"Use strict exact row counts (falls back to lightweight mode on error/timeout)"
 //	@Success		200	{array}		core.DatasetStatus
 //	@Failure		500	{object}	ErrorResponse
 //	@Router			/meta/datasets [get]
 func (mr *MetaRoutes) handleDatasetStatus(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	datasets, err := mr.repo.DatasetStatuses(ctx)
+	datasets, mode, err := mr.loadDatasetsWithMode(r)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
+	w.Header().Set(countModeHeader, string(mode))
 	writeJSON(w, http.StatusOK, datasets)
 }
 
@@ -138,12 +143,13 @@ func (mr *MetaRoutes) handleDatasetStatus(w http.ResponseWriter, r *http.Request
 //	@Failure		500	{object}	ErrorResponse
 //	@Router			/meta/readiness [get]
 func (mr *MetaRoutes) handleReadiness(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx := core.WithCountMode(r.Context(), core.CountModeLightweight)
 	readiness, err := mr.repo.Readiness(ctx)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
+	w.Header().Set(countModeHeader, string(core.EffectiveCountModeFromContext(ctx)))
 	writeJSON(w, http.StatusOK, readiness)
 }
 
@@ -159,12 +165,13 @@ func (mr *MetaRoutes) handleReadiness(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500	{object}	ErrorResponse
 //	@Router			/ready [get]
 func (mr *MetaRoutes) handleReady(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx := core.WithCountMode(r.Context(), core.CountModeLightweight)
 	readiness, err := mr.repo.Readiness(ctx)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
+	w.Header().Set(countModeHeader, string(core.EffectiveCountModeFromContext(ctx)))
 
 	status := http.StatusOK
 	if !readiness.Ready {
@@ -184,6 +191,37 @@ func makeCoverage(from, to core.SeasonYear) datasetCoverage {
 		c.To = &t
 	}
 	return c
+}
+
+func (mr *MetaRoutes) loadDatasetsWithMode(r *http.Request) ([]core.DatasetStatus, core.CountMode, error) {
+	requestedMode := core.CountModeLightweight
+	if isTruthyParam(r.URL.Query().Get("strict")) {
+		requestedMode = core.CountModeStrict
+	}
+
+	ctx := core.WithCountMode(r.Context(), requestedMode)
+	if requestedMode == core.CountModeStrict {
+		strictCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		datasets, err := mr.repo.DatasetStatuses(strictCtx)
+		if err == nil {
+			return datasets, core.EffectiveCountModeFromContext(strictCtx), nil
+		}
+
+		fallbackCtx := core.WithCountMode(r.Context(), core.CountModeLightweight)
+		datasets, fallbackErr := mr.repo.DatasetStatuses(fallbackCtx)
+		if fallbackErr != nil {
+			return nil, "", err
+		}
+		return datasets, core.CountModeFallback, nil
+	}
+
+	datasets, err := mr.repo.DatasetStatuses(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+	return datasets, core.EffectiveCountModeFromContext(ctx), nil
 }
 
 // handleWOBAConstants godoc

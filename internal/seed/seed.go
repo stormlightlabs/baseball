@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/stdlib"
 	"stormlightlabs.org/baseball/internal/db"
@@ -133,22 +134,116 @@ func LoadRetrosheet(ctx context.Context, database *db.DB, opts RetrosheetOptions
 			gamesKey := fmt.Sprintf("retrosheet_games_%d", year)
 			playsKey := fmt.Sprintf("retrosheet_plays_%d", year)
 
-			yearStr := fmt.Sprintf("%d", year)
-			_, err := database.ExecContext(ctx, `DELETE FROM games WHERE date LIKE $1 || '%'`, yearStr)
+			yearStart, yearEnd := retrosheetYearDateBounds(year)
+			yearStartedAt := time.Now()
+
+			tx, err := database.BeginTx(ctx, nil)
 			if err != nil {
+				return result, fmt.Errorf("error: failed to begin force-clear transaction for %d: %w", year, err)
+			}
+
+			gamesDeleteStartedAt := time.Now()
+			gamesDeleteResult, err := tx.ExecContext(ctx, `DELETE FROM games WHERE date >= $1 AND date < $2`, yearStart, yearEnd)
+			if err != nil {
+				_ = tx.Rollback()
+				recordETLPhaseEvent(
+					ctx,
+					database,
+					"load.retrosheet",
+					"force_clear.games",
+					"failed",
+					0,
+					gamesDeleteStartedAt,
+					map[string]any{"year": year, "from": yearStart, "to": yearEnd},
+					err,
+				)
 				return result, fmt.Errorf("error: failed to delete games for %d: %w", year, err)
 			}
+			gamesDeletedRows, _ := gamesDeleteResult.RowsAffected()
+			recordETLPhaseEvent(
+				ctx,
+				database,
+				"load.retrosheet",
+				"force_clear.games",
+				"completed",
+				gamesDeletedRows,
+				gamesDeleteStartedAt,
+				map[string]any{"year": year, "from": yearStart, "to": yearEnd},
+				nil,
+			)
 
-			if _, err = database.ExecContext(ctx, `DELETE FROM plays WHERE SUBSTRING(gid, 4, 4) = $1`, yearStr); err != nil {
+			playsDeleteStartedAt := time.Now()
+			playsDeleteResult, err := tx.ExecContext(ctx, `DELETE FROM plays WHERE date >= $1 AND date < $2`, yearStart, yearEnd)
+			if err != nil {
+				_ = tx.Rollback()
+				recordETLPhaseEvent(
+					ctx,
+					database,
+					"load.retrosheet",
+					"force_clear.plays",
+					"failed",
+					0,
+					playsDeleteStartedAt,
+					map[string]any{"year": year, "from": yearStart, "to": yearEnd},
+					err,
+				)
 				return result, fmt.Errorf("error: failed to delete plays for %d: %w", year, err)
 			}
+			playsDeletedRows, _ := playsDeleteResult.RowsAffected()
+			recordETLPhaseEvent(
+				ctx,
+				database,
+				"load.retrosheet",
+				"force_clear.plays",
+				"completed",
+				playsDeletedRows,
+				playsDeleteStartedAt,
+				map[string]any{"year": year, "from": yearStart, "to": yearEnd},
+				nil,
+			)
 
-			if err := clearDatasetRefresh(ctx, database, gamesKey); err != nil {
+			if err := clearDatasetRefreshWithExec(ctx, tx, gamesKey); err != nil {
+				_ = tx.Rollback()
 				return result, fmt.Errorf("error: failed to clear %s: %w", gamesKey, err)
 			}
-			if err := clearDatasetRefresh(ctx, database, playsKey); err != nil {
+			if err := clearDatasetRefreshWithExec(ctx, tx, playsKey); err != nil {
+				_ = tx.Rollback()
 				return result, fmt.Errorf("error: failed to clear %s: %w", playsKey, err)
 			}
+
+			commitStartedAt := time.Now()
+			if err := tx.Commit(); err != nil {
+				recordETLPhaseEvent(
+					ctx,
+					database,
+					"load.retrosheet",
+					"force_clear.commit",
+					"failed",
+					0,
+					commitStartedAt,
+					map[string]any{"year": year},
+					err,
+				)
+				return result, fmt.Errorf("error: failed to commit force clear for %d: %w", year, err)
+			}
+			recordETLPhaseEvent(
+				ctx,
+				database,
+				"load.retrosheet",
+				"force_clear.commit",
+				"completed",
+				gamesDeletedRows+playsDeletedRows,
+				commitStartedAt,
+				map[string]any{"year": year},
+				nil,
+			)
+
+			gamesDuration := time.Since(gamesDeleteStartedAt).Round(time.Millisecond)
+			playsDuration := time.Since(playsDeleteStartedAt).Round(time.Millisecond)
+			echo.Infof("  Force clear year=%d games_deleted=%s duration=%s", year, formatNumber(gamesDeletedRows), gamesDuration)
+			echo.Infof("  Force clear year=%d plays_deleted=%s duration=%s", year, formatNumber(playsDeletedRows), playsDuration)
+			echo.Infof("  Force clear year=%d committed in %s (total=%s)", year, time.Since(commitStartedAt).Round(time.Millisecond), time.Since(yearStartedAt).Round(time.Millisecond))
+
 			delete(refreshes, gamesKey)
 			delete(refreshes, playsKey)
 		}
@@ -452,6 +547,10 @@ func defaultRetrosheetYears() []int {
 	return []int{2023, 2024, 2025}
 }
 
+func retrosheetYearDateBounds(year int) (string, string) {
+	return fmt.Sprintf("%04d0101", year), fmt.Sprintf("%04d0101", year+1)
+}
+
 // ResetLahman truncates Lahman tables and clears refresh metadata.
 func ResetLahman(ctx context.Context, database *db.DB, tables []string) error {
 	if len(tables) == 0 {
@@ -503,11 +602,15 @@ func ResetRetrosheet(ctx context.Context, database *db.DB, years []int) error {
 }
 
 func clearDatasetRefresh(ctx context.Context, database *db.DB, dataset string) error {
+	return clearDatasetRefreshWithExec(ctx, database, dataset)
+}
+
+func clearDatasetRefreshWithExec(ctx context.Context, exec db.Exec, dataset string) error {
 	if dataset == "" {
 		return nil
 	}
 
-	if _, err := database.ExecContext(ctx, `DELETE FROM dataset_refreshes WHERE dataset = $1`, dataset); err != nil {
+	if _, err := exec.ExecContext(ctx, `DELETE FROM dataset_refreshes WHERE dataset = $1`, dataset); err != nil {
 		return fmt.Errorf("error: failed to clear dataset refresh for %s: %w", dataset, err)
 	}
 

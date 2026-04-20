@@ -14,6 +14,8 @@ The repo ships two Compose files in `conf/`:
 - `docker-compose.dev.yml` -- includes Caddy reverse proxy, hardcoded credentials, Postgres port exposed to host
 - `docker-compose.prod.yml` -- no Caddy (Coolify's Traefik handles routing/TLS), secrets via `${VAR}` interpolation, production-sized Postgres tuning
 
+Production Postgres tuning is applied via `command: ["postgres", "-c", ...]` entries in Compose, not `POSTGRES_*` environment variables.
+
 ## Prerequisites
 
 - VPS with Coolify installed, 4 GB+ RAM, 10 GB+ disk
@@ -85,6 +87,8 @@ Readiness validation:
 - `GET /v1/ready` for probe-style readiness status.
 - `GET /v1/meta/datasets` for per-dataset health details.
 - `GET /v1/health` for process liveness.
+- `GET /v1/meta?strict=true` (or `/v1/meta/datasets?strict=true`) for exact row counts when auditing.
+  Default mode is lightweight and each response reports `X-Count-Mode: lightweight|strict|fallback`.
 
 ## Updating
 
@@ -117,11 +121,23 @@ rm -rf "$tmpdir"
 Set `deploy.replicas` in the Compose file or adjust in Coolify's UI.
 Traefik load-balances across replicas automatically. Tune Postgres based on available RAM:
 
-| Setting                         | Guideline      |
+| Postgres `-c` option            | Baseline value |
 | ------------------------------- | -------------- |
-| `POSTGRES_SHARED_BUFFERS`       | 25% of RAM     |
-| `POSTGRES_EFFECTIVE_CACHE_SIZE` | 50--75% of RAM |
-| `POSTGRES_WORK_MEM`             | 32--64 MB      |
+| `shared_buffers`                | `1GB`          |
+| `effective_cache_size`          | `2GB`          |
+| `work_mem`                      | `32MB`         |
+| `maintenance_work_mem`          | `512MB`        |
+| `max_wal_size`                  | `12GB`         |
+| `min_wal_size`                  | `2GB`          |
+| `checkpoint_timeout`            | `15min`        |
+| `checkpoint_completion_target`  | `0.9`          |
+| `wal_compression`               | `on`           |
+
+ETL window checks:
+
+- If logs show `checkpoints are occurring too frequently`, increase `max_wal_size`.
+- Inspect `checkpoints_req` vs `checkpoints_timed` in `pg_stat_bgwriter`.
+- Monitor checkpoint interval and WAL churn during force/year rewrites.
 
 ## Backup and recovery
 

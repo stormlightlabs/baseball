@@ -1,4 +1,4 @@
--- Fresh migration set: Lahman core schema.
+-- Lahman core schema.
 
 DROP TABLE IF EXISTS "AllstarFull";
 CREATE TABLE "AllstarFull" (
