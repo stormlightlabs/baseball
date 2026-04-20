@@ -70,6 +70,11 @@ type MaterializedViewRefreshAttempt struct {
 	Error      string
 }
 
+type materializedViewCapabilities struct {
+	populated          bool
+	supportsConcurrent bool
+}
+
 type Exec interface {
 	ExecContext(context.Context, string, ...any) (sql.Result, error)
 }
@@ -1007,6 +1012,15 @@ func (db *DB) RefreshMaterializedViewsWithOptions(ctx context.Context, viewNames
 		}
 	}
 
+	capabilitiesByView := make(map[string]materializedViewCapabilities, len(views))
+	for _, view := range views {
+		caps, err := db.getMaterializedViewCapabilities(ctx, view)
+		if err != nil {
+			return 0, fmt.Errorf("failed to inspect materialized view %s: %w", view, err)
+		}
+		capabilitiesByView[view] = caps
+	}
+
 	attemptByView := make(map[string]int, len(views))
 	recordAttempt := func(view string, pass int, mode string, startedAt time.Time, status string, attemptErr error) {
 		attemptByView[view]++
@@ -1038,40 +1052,39 @@ func (db *DB) RefreshMaterializedViewsWithOptions(ctx context.Context, viewNames
 	}
 
 	refreshOne := func(view string, pass int) (string, error) {
-		concurrentStartedAt := time.Now()
-		concurrentQuery := fmt.Sprintf("REFRESH MATERIALIZED VIEW CONCURRENTLY %s", view)
-		if _, err := db.ExecContext(ctx, concurrentQuery); err == nil {
-			recordAttempt(view, pass, "concurrent", concurrentStartedAt, "completed", nil)
+		caps, ok := capabilitiesByView[view]
+		if !ok {
+			var err error
+			caps, err = db.getMaterializedViewCapabilities(ctx, view)
+			if err != nil {
+				return "failed", err
+			}
+			capabilitiesByView[view] = caps
+		}
+
+		mode := "non_concurrent"
+		if caps.populated && caps.supportsConcurrent {
+			mode = "concurrent"
+		}
+
+		startedAt := time.Now()
+		query := fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", view)
+		if mode == "concurrent" {
+			query = fmt.Sprintf("REFRESH MATERIALIZED VIEW CONCURRENTLY %s", view)
+		}
+		if _, err := db.ExecContext(ctx, query); err == nil {
+			recordAttempt(view, pass, mode, startedAt, "completed", nil)
+			caps.populated = true
+			capabilitiesByView[view] = caps
 			return "completed", nil
 		} else {
 			errText := strings.ToLower(err.Error())
-
 			if strings.Contains(errText, "has not been populated") {
-				recordAttempt(view, pass, "concurrent", concurrentStartedAt, "deferred_dependency", err)
+				recordAttempt(view, pass, mode, startedAt, "deferred_dependency", err)
 				return "deferred_dependency", nil
 			}
-
-			if !strings.Contains(errText, "concurrently") {
-				recordAttempt(view, pass, "concurrent", concurrentStartedAt, "failed", err)
-				return "failed", err
-			}
-
-			recordAttempt(view, pass, "concurrent", concurrentStartedAt, "failed", err)
-
-			nonConcurrentStartedAt := time.Now()
-			nonConcurrentQuery := fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", view)
-			if _, fallbackErr := db.ExecContext(ctx, nonConcurrentQuery); fallbackErr == nil {
-				recordAttempt(view, pass, "non_concurrent", nonConcurrentStartedAt, "completed", nil)
-				return "completed", nil
-			} else {
-				fallbackErrText := strings.ToLower(fallbackErr.Error())
-				if strings.Contains(fallbackErrText, "has not been populated") {
-					recordAttempt(view, pass, "non_concurrent", nonConcurrentStartedAt, "deferred_dependency", fallbackErr)
-					return "deferred_dependency", nil
-				}
-				recordAttempt(view, pass, "non_concurrent", nonConcurrentStartedAt, "failed", fallbackErr)
-				return "failed", fallbackErr
-			}
+			recordAttempt(view, pass, mode, startedAt, "failed", err)
+			return "failed", err
 		}
 	}
 
@@ -1112,6 +1125,60 @@ func (db *DB) RefreshMaterializedViewsWithOptions(ctx context.Context, viewNames
 	}
 
 	return refreshed, nil
+}
+
+func normalizeMaterializedViewName(view string) (schema, name string) {
+	trimmed := strings.TrimSpace(view)
+	if trimmed == "" {
+		return "public", ""
+	}
+	parts := strings.SplitN(trimmed, ".", 2)
+	if len(parts) == 1 {
+		return "public", strings.Trim(parts[0], `"`)
+	}
+	return strings.Trim(parts[0], `"`), strings.Trim(parts[1], `"`)
+}
+
+func (db *DB) getMaterializedViewCapabilities(ctx context.Context, view string) (materializedViewCapabilities, error) {
+	schema, name := normalizeMaterializedViewName(view)
+	if name == "" {
+		return materializedViewCapabilities{}, fmt.Errorf("invalid materialized view name %q", view)
+	}
+
+	var caps materializedViewCapabilities
+	if err := db.QueryRowContext(
+		ctx,
+		`SELECT ispopulated FROM pg_matviews WHERE schemaname = $1 AND matviewname = $2`,
+		schema,
+		name,
+	).Scan(&caps.populated); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return materializedViewCapabilities{}, fmt.Errorf("materialized view %s.%s does not exist", schema, name)
+		}
+		return materializedViewCapabilities{}, err
+	}
+
+	if err := db.QueryRowContext(
+		ctx,
+		`SELECT EXISTS (
+			SELECT 1
+			FROM pg_class c
+			JOIN pg_namespace n ON n.oid = c.relnamespace
+			JOIN pg_index i ON i.indrelid = c.oid
+			WHERE n.nspname = $1
+			  AND c.relname = $2
+			  AND i.indisunique
+			  AND i.indisvalid
+			  AND i.indpred IS NULL
+			  AND i.indexprs IS NULL
+		)`,
+		schema,
+		name,
+	).Scan(&caps.supportsConcurrent); err != nil {
+		return materializedViewCapabilities{}, err
+	}
+
+	return caps, nil
 }
 
 func (db *DB) recordMaterializedViewRefreshEvent(ctx context.Context, opts MaterializedViewRefreshOptions, attempt MaterializedViewRefreshAttempt) error {
