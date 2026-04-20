@@ -66,6 +66,8 @@ Fetch examples (when Retrosheet files for your window are not already present):
 ```bash
 ./tmp/baseball-etl fetch retrosheet --years=2023-2025
 ./tmp/baseball-etl fetch negroleagues
+./tmp/baseball-etl fetch chadwick
+./tmp/baseball-etl cleanup retrosheet --dry-run
 ```
 
 For large Retrosheet slices, keep migration and recomputation separate, and process in bounded year windows:

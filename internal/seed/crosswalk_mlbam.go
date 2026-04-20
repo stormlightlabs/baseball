@@ -2,7 +2,9 @@ package seed
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/csv"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -22,12 +25,22 @@ import (
 
 const (
 	chadwickRegisterShardURL = "https://raw.githubusercontent.com/chadwickbureau/register/master/data/people-%s.csv"
+	chadwickRegisterRepoURL  = "https://github.com/chadwickbureau/register"
+	chadwickManifestFilename = "manifest.json"
 	mlbStatsAPIBaseURL       = "https://statsapi.mlb.com/api"
 )
 
 var chadwickShardKeys = []string{
 	"0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
 	"a", "b", "c", "d", "e", "f",
+}
+
+var chadwickRequiredColumns = []string{
+	"key_mlbam",
+	"key_retro",
+	"key_bbref",
+	"name_first",
+	"name_last",
 }
 
 // FetchChadwickRegisterData ensures Chadwick register people.csv is available.
@@ -52,6 +65,9 @@ func FetchChadwickRegisterData(ctx context.Context, dataDir string, force bool) 
 
 	if err := mergeCSVShards(singlePath, shardPaths); err != nil {
 		return fmt.Errorf("failed assembling Chadwick people.csv from shards: %w", err)
+	}
+	if err := writeChadwickManifest(dataDir, singlePath, shardPaths); err != nil {
+		return fmt.Errorf("failed writing Chadwick manifest: %w", err)
 	}
 
 	return nil
@@ -140,6 +156,100 @@ func mergeCSVShards(outputPath string, shardPaths []string) error {
 	return nil
 }
 
+type chadwickManifest struct {
+	SchemaVersion   int                    `json:"schema_version"`
+	GeneratedAtUTC  string                 `json:"generated_at_utc"`
+	SourceRepoURL   string                 `json:"source_repo_url"`
+	SourceShardURL  string                 `json:"source_shard_url_template"`
+	ShardKeys       []string               `json:"shard_keys"`
+	RequiredColumns []string               `json:"required_columns"`
+	Files           []chadwickManifestFile `json:"files"`
+}
+
+type chadwickManifestFile struct {
+	Path      string `json:"path"`
+	SizeBytes int64  `json:"size_bytes"`
+	SHA256    string `json:"sha256"`
+}
+
+func writeChadwickManifest(dataDir, mergedPath string, shardPaths []string) error {
+	paths := append([]string{}, shardPaths...)
+	paths = append(paths, mergedPath)
+	slices.Sort(paths)
+
+	files := make([]chadwickManifestFile, 0, len(paths))
+	for _, path := range paths {
+		record, err := buildChadwickManifestFile(dataDir, path)
+		if err != nil {
+			return err
+		}
+		files = append(files, record)
+	}
+
+	manifest := chadwickManifest{
+		SchemaVersion:   1,
+		GeneratedAtUTC:  time.Now().UTC().Format(time.RFC3339),
+		SourceRepoURL:   chadwickRegisterRepoURL,
+		SourceShardURL:  chadwickRegisterShardURL,
+		ShardKeys:       slices.Clone(chadwickShardKeys),
+		RequiredColumns: slices.Clone(chadwickRequiredColumns),
+		Files:           files,
+	}
+
+	content, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal manifest JSON: %w", err)
+	}
+	content = append(content, '\n')
+
+	manifestPath := filepath.Join(dataDir, chadwickManifestFilename)
+	tmpPath := manifestPath + ".tmp"
+	if err := os.WriteFile(tmpPath, content, 0644); err != nil {
+		return fmt.Errorf("failed writing manifest temp file: %w", err)
+	}
+	if err := os.Rename(tmpPath, manifestPath); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed promoting manifest file: %w", err)
+	}
+	return nil
+}
+
+func buildChadwickManifestFile(rootDir, path string) (chadwickManifestFile, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return chadwickManifestFile{}, fmt.Errorf("failed to stat %s: %w", path, err)
+	}
+	hash, err := hashFileSHA256(path)
+	if err != nil {
+		return chadwickManifestFile{}, err
+	}
+
+	rel, err := filepath.Rel(rootDir, path)
+	if err != nil {
+		return chadwickManifestFile{}, fmt.Errorf("failed to build relative path for %s: %w", path, err)
+	}
+
+	return chadwickManifestFile{
+		Path:      filepath.ToSlash(rel),
+		SizeBytes: info.Size(),
+		SHA256:    hash,
+	}, nil
+}
+
+func hashFileSHA256(path string) (string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to open %s for checksum: %w", path, err)
+	}
+	defer file.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return "", fmt.Errorf("failed to hash %s: %w", path, err)
+	}
+	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
 func ensureChadwickRegisterCSV(ctx context.Context, dataDir string) (string, error) {
 	if dataDir == "" {
 		dataDir = ChadwickDir("")
@@ -195,8 +305,7 @@ func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir strin
 		index[strings.TrimSpace(strings.ToLower(h))] = i
 	}
 
-	required := []string{"key_mlbam", "key_retro", "key_bbref", "name_first", "name_last"}
-	for _, k := range required {
+	for _, k := range chadwickRequiredColumns {
 		if _, ok := index[k]; !ok {
 			return 0, fmt.Errorf("chadwick CSV missing required column %q", k)
 		}

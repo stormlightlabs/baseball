@@ -1,8 +1,12 @@
 package seed
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -11,18 +15,18 @@ const (
 	DataRootEnvVar = "BASEBALL_DATA_ROOT"
 
 	// DefaultDataRoot is the preferred repository-local location for dataset snapshots.
-	DefaultDataRoot = "tools/data"
+	DefaultDataRoot = "data"
 
 	// LegacyDataRoot is the historical in-repo dataset location.
-	LegacyDataRoot = "data"
+	LegacyDataRoot = "tools/data"
 )
 
 // ResolveDataRoot applies precedence for ETL dataset roots:
 // 1) explicit flag/option
 // 2) BASEBALL_DATA_ROOT environment variable
-// 3) tools/data (if it exists)
-// 4) legacy data (if it exists)
-// If neither location exists, tools/data is returned as the default target.
+// 3) data (if it exists)
+// 4) legacy tools/data (if it exists)
+// If neither location exists, data is returned as the default target.
 func ResolveDataRoot(explicit string) string {
 	if value := normalizeRoot(explicit); value != "" {
 		return value
@@ -97,4 +101,72 @@ func normalizeRoot(value string) string {
 func isDir(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && info.IsDir()
+}
+
+type dataRootProvision struct {
+	rootPath string
+	cleanup  func()
+}
+
+func ensurePipelineDataRoot(ctx context.Context, opts PipelineOptions) (dataRootProvision, error) {
+	_ = ctx
+
+	for _, dir := range []string{opts.DataRoot, opts.RetrosheetDataDir, opts.ChadwickDataDir} {
+		if dir == "" {
+			continue
+		}
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return dataRootProvision{}, fmt.Errorf("failed to prepare data directory %q: %w", dir, err)
+		}
+	}
+
+	missing, err := missingPipelineDataArtifacts(opts)
+	if err != nil {
+		return dataRootProvision{}, err
+	}
+	if len(missing) > 0 {
+		return dataRootProvision{}, fmt.Errorf(
+			"data root %q is missing required local source files: %s\n\nRetrosheet and Chadwick inputs are worker-fetched by ETL, but Lahman/FanGraphs/salary source files must exist under the resolved data root",
+			opts.DataRoot,
+			strings.Join(missing, ", "),
+		)
+	}
+
+	return dataRootProvision{rootPath: opts.DataRoot, cleanup: func() {}}, nil
+}
+
+func missingPipelineDataArtifacts(opts PipelineOptions) ([]string, error) {
+	missing := make([]string, 0)
+
+	requiredFiles := []string{
+		filepath.Join(opts.LahmanCSVDir, "People.csv"),
+		filepath.Join(opts.LahmanCSVDir, "Teams.csv"),
+		filepath.Join(opts.FanGraphsDir, "woba.csv"),
+		filepath.Join(opts.SalaryDataDir, "summary.csv"),
+	}
+
+	for _, path := range requiredFiles {
+		info, err := os.Stat(path)
+		if err == nil && !info.IsDir() {
+			continue
+		}
+		if errors.Is(err, os.ErrNotExist) || (err == nil && info.IsDir()) {
+			missing = append(missing, path)
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to check %s: %w", path, err)
+		}
+	}
+
+	parkFactorFiles, err := filepath.Glob(filepath.Join(opts.FanGraphsDir, "pf", "*.csv"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to inspect park factor files: %w", err)
+	}
+	if len(parkFactorFiles) == 0 {
+		missing = append(missing, filepath.Join(opts.FanGraphsDir, "pf", "*.csv"))
+	}
+
+	slices.Sort(missing)
+	return missing, nil
 }
