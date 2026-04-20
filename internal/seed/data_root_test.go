@@ -42,7 +42,7 @@ func TestResolveDataRootUsesEnvBeforeLocalDirs(t *testing.T) {
 	}
 }
 
-func TestResolveDataRootPrefersVendorDataWhenPresent(t *testing.T) {
+func TestResolveDataRootPrefersDefaultDataRootWhenPresent(t *testing.T) {
 	withTempWorkingDir(t)
 
 	t.Setenv(DataRootEnvVar, "")
@@ -73,7 +73,7 @@ func TestResolveDataRootFallsBackToLegacyData(t *testing.T) {
 	}
 }
 
-func TestResolveDataRootDefaultsToVendorDataWhenNoPathsExist(t *testing.T) {
+func TestResolveDataRootDefaultsToDefaultDataRootWhenNoPathsExist(t *testing.T) {
 	withTempWorkingDir(t)
 
 	t.Setenv(DataRootEnvVar, "")

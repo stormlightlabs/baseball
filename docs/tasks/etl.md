@@ -17,15 +17,17 @@ Acceptance:
 
 ## Phase 1: Separate ETL Binary
 
-- [ ] Add `cli/etl/main.go` with ETL-focused root command surface.
-- [ ] Build `baseball-etl` alongside `baseball` in Docker multi-stage build.
-- [ ] Keep shared orchestration in `internal/seed` (no logic fork).
+- [x] Add `cmd/baseball-etl/main.go` with ETL-focused root command surface.
+- [x] Build `baseball-etl` alongside `baseball` in Docker multi-stage build.
+- [x] Keep shared orchestration in `internal/seed` (no logic fork).
+- [x] Consolidate command implementation into `internal/cli` and wire both binaries through that package.
+- [x] Remove `tools/data` git submodule from this repo and rely on runtime snapshot clone/bootstrap for missing defaults.
 - [ ] Add smoke tests for `baseball-etl --help`, `run --help`, `validate --help`, `status --help`.
-- [ ] Remove ETL command registration from the primary CLI entrypoint (`cmd/baseball/main.go` / `commands.NewBaseballRootCmd` wiring) once `baseball-etl` is the canonical ETL interface.
+- [ ] Remove ETL command registration from the primary CLI entrypoint (`cmd/baseball/main.go` / `internal/cli.NewBaseballRootCmd` wiring) once `baseball-etl` is the canonical ETL interface.
 
 Acceptance:
 
-- [ ] ETL can run without shipping server/cache command surfaces in its process.
+- [x] ETL can run without shipping server/cache command surfaces in its process.
 - [ ] Primary `baseball` CLI no longer exposes ETL command surface after cutover.
 
 ## Phase 2: Dedicated ETL Container (Dev + Prod Compose)
@@ -101,9 +103,9 @@ Acceptance:
 
 ## Verification Checklist (Before Marking Complete)
 
-- [ ] `go test ./...`
+- [x] `go test ./...`
 - [ ] ETL lock/concurrency behavior validated with two concurrent start attempts.
 - [ ] `docker compose` ETL one-shot run succeeds in dev and prod compose layouts.
 - [ ] API readiness remains healthy during ETL run window.
-- [ ] ETL docs updated in `docs/internal/data-loading.md`.
-- [ ] ETL docs updated in `conf/README.md`.
+- [x] ETL docs updated in `docs/internal/data-loading.md`.
+- [x] ETL docs updated in `conf/README.md`.

@@ -30,8 +30,7 @@ Production Postgres tuning is applied via `command: ["postgres", "-c", ...]` ent
 4. Designate **app** as the public service on port **8080**.
 5. Assign your domain -- Coolify provisions TLS automatically.
 6. Set the health check path to `/v1/health`.
-7. In app Git settings, enabling **Git Submodules** is optional. Production ETL can auto-clone snapshot data at runtime.
-8. Configure environment variables in Coolify's UI:
+7. Configure environment variables in Coolify's UI:
 
 | Variable                   | Example                                                         | Notes                             |
 | -------------------------- | --------------------------------------------------------------- | --------------------------------- |
@@ -53,7 +52,7 @@ Production Postgres tuning is applied via `command: ["postgres", "-c", ...]` ent
 
 Optional: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `CODEBERG_CLIENT_ID`, `CODEBERG_CLIENT_SECRET`, `CACHE_ENABLED`, `CACHE_VERSION`.
 
-1. Click **Deploy**.
+8. Click **Deploy**.
 
 ## Data preparation and loading
 
@@ -64,9 +63,9 @@ Quick Docker/Coolify example for a representative complete slice (`2022-2025`) u
 
 ```bash
 docker compose exec app baseball db migrate
-docker compose exec app baseball etl run --profile dev --years 2022-2025
-docker compose exec app baseball etl validate --profile dev --years 2022-2025
-docker compose exec app baseball etl status
+docker compose exec app baseball-etl run --profile dev --years 2022-2025
+docker compose exec app baseball-etl validate --profile dev --years 2022-2025
+docker compose exec app baseball-etl status
 ```
 
 If required files are missing under `/home/app/tools/data`, the ETL pipeline
@@ -76,17 +75,17 @@ run, then cleans it up.
 If your snapshot data is mounted/cloned outside the default root:
 
 ```bash
-docker compose exec app baseball etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
-docker compose exec app baseball etl validate --profile dev --years 2022-2025 --data-root /path/to/baseball-data
+docker compose exec app baseball-etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
+docker compose exec app baseball-etl validate --profile dev --years 2022-2025 --data-root /path/to/baseball-data
 ```
 
 First-time full historical setup (production profile):
 
 ```bash
 docker compose exec app baseball db migrate
-docker compose exec app baseball etl run --profile prod --mode full
-docker compose exec app baseball etl validate --profile prod
-docker compose exec app baseball etl status
+docker compose exec app baseball-etl run --profile prod --mode full
+docker compose exec app baseball-etl validate --profile prod
+docker compose exec app baseball-etl status
 ```
 
 Readiness validation:
@@ -108,9 +107,9 @@ docker compose exec app baseball db migrate
 For new seasons:
 
 ```bash
-docker compose exec app baseball etl run --profile prod --years 2026
-docker compose exec app baseball etl validate --profile prod --years 2026
-docker compose exec app baseball etl status
+docker compose exec app baseball-etl run --profile prod --years 2026
+docker compose exec app baseball-etl validate --profile prod --years 2026
+docker compose exec app baseball-etl status
 ```
 
 Manual temp-clone pattern (optional when auto-clone is enabled):
@@ -118,8 +117,8 @@ Manual temp-clone pattern (optional when auto-clone is enabled):
 ```bash
 tmpdir="$(mktemp -d)"
 git clone --depth=1 <baseball-data-repo-url> "$tmpdir/baseball-data"
-docker compose exec app baseball etl run --profile prod --years 2026 --data-root "$tmpdir/baseball-data"
-docker compose exec app baseball etl validate --profile prod --years 2026 --data-root "$tmpdir/baseball-data"
+docker compose exec app baseball-etl run --profile prod --years 2026 --data-root "$tmpdir/baseball-data"
+docker compose exec app baseball-etl validate --profile prod --years 2026 --data-root "$tmpdir/baseball-data"
 rm -rf "$tmpdir"
 ```
 

@@ -10,20 +10,22 @@ For this contract, a complete slice means:
 
 ## Command Prefixes
 
-Use one prefix consistently.
+Use the matching binary prefix for each command group.
 
 | Environment    | Prefix                             |
 | -------------- | ---------------------------------- |
-| Local          | `./tmp/baseball`                   |
-| Docker/Coolify | `docker compose exec app baseball` |
+| Local          | `./tmp/baseball` (db/server), `./tmp/baseball-etl` (etl) |
+| Docker/Coolify | `docker compose exec app baseball` (db/server), `docker compose exec app baseball-etl` (etl) |
 
-Examples below use `<BASEBALL>` as a placeholder for your chosen prefix.
+Examples below use `<BASEBALL>` for db/server commands and `<BASEBALL_ETL>` for ETL commands.
 
 ## Primary Entry Point
 
-`<BASEBALL> etl` is the default full ETL pipeline.
+`<BASEBALL_ETL> run` is the canonical full ETL pipeline.
 
-`<BASEBALL> etl run` is an explicit alias with identical behavior and flags.
+`<BASEBALL_ETL>` and `<BASEBALL_ETL> run` are compatible aliases.
+
+Legacy `<BASEBALL> etl ...` commands remain available during transition.
 
 Shared pipeline flags:
 
@@ -47,7 +49,7 @@ Migration contract:
 Recommended approach for large environments:
 
 1. Run `db migrate` first (schema/object changes only).
-2. Load source data (`etl ...` / `etl load ...`).
+2. Load source data (`<BASEBALL_ETL> run ...` / `<BASEBALL_ETL> load ...`).
 3. Refresh materialized views in bounded batches:
 
 ```bash
@@ -146,26 +148,26 @@ Optional full reset:
 Representative development slice:
 
 ```bash
-<BASEBALL> etl --profile dev
+<BASEBALL_ETL> run --profile dev
 ```
 
 Representative development slice with explicit years:
 
 ```bash
-<BASEBALL> etl --profile dev --years 2022-2025
+<BASEBALL_ETL> run --profile dev --years 2022-2025
 ```
 
 Production/exhaustive load:
 
 ```bash
-<BASEBALL> etl --profile prod --mode full
+<BASEBALL_ETL> run --profile prod --mode full
 ```
 
 ### 4) Validate completeness
 
 ```bash
-<BASEBALL> etl validate --profile dev
-<BASEBALL> etl status
+<BASEBALL_ETL> validate --profile dev
+<BASEBALL_ETL> status
 ```
 
 Server/API checks:
@@ -181,8 +183,8 @@ curl http://localhost:8080/v1/health
 ### 5) Production bootstrap (automatic temp clone + cleanup)
 
 ```bash
-<BASEBALL> etl --profile prod --mode full
-<BASEBALL> etl validate --profile prod
+<BASEBALL_ETL> run --profile prod --mode full
+<BASEBALL_ETL> validate --profile prod
 ```
 
 If required snapshot files are missing under the default data root (`tools/data` locally,
@@ -196,12 +198,12 @@ Optional overrides:
 - `BASEBALL_DATA_REPO_REF` (branch/tag/SHA)
 - `BASEBALL_DATA_AUTO_CLONE` (`true` by default; set `false` to disable)
 
-### 6) Publish snapshot updates (`tools/data` submodule)
+### 6) Publish snapshot updates (external snapshot repo)
 
 ```bash
-# from repo root
-cd tools/data
-git pull
+tmpdir="$(mktemp -d)"
+git clone --depth=1 https://github.com/stormlightlabs/bigflydata.git "$tmpdir/bigflydata"
+cd "$tmpdir/bigflydata"
 git lfs install
 uv run baseball-data sync
 uv run baseball-data build
@@ -210,46 +212,44 @@ git add .
 git commit -m "Sync snapshot data"
 git push
 
-cd ../..
-git add tools/data .gitmodules
-git commit -m "Bump tools/data submodule"
-git push
+cd -
+rm -rf "$tmpdir"
 ```
 
 Notes:
 
-- `tools/data` points to `https://github.com/stormlightlabs/bigflydata.git`.
-- Push to `tools/data` first; the parent repo only records the submodule commit SHA.
+- The application repo does not vendor snapshot data as a git submodule.
+- ETL auto-clone uses `BASEBALL_DATA_REPO_URL`/`BASEBALL_DATA_REPO_REF` when default data roots are incomplete.
 
 ## Stage Commands (First-Class, Composable)
 
 These commands are still supported for partial runs, debugging, and CI:
 
-- `<BASEBALL> etl fetch retrosheet`
-- `<BASEBALL> etl fetch negroleagues`
-- `<BASEBALL> etl load lahman`
-- `<BASEBALL> etl load retrosheet`
-- `<BASEBALL> etl load retrosheet players`
-- `<BASEBALL> etl load negroleagues`
-- `<BASEBALL> etl load fangraphs`
-- `<BASEBALL> etl load salary`
-- `<BASEBALL> etl load biodata`
-- `<BASEBALL> etl load weather`
-- `<BASEBALL> etl load parks`
-- `<BASEBALL> etl load allstar`
-- `<BASEBALL> etl status`
-- `<BASEBALL> etl status --strict` (exact-count audit mode)
+- `<BASEBALL_ETL> fetch retrosheet`
+- `<BASEBALL_ETL> fetch negroleagues`
+- `<BASEBALL_ETL> load lahman`
+- `<BASEBALL_ETL> load retrosheet`
+- `<BASEBALL_ETL> load retrosheet players`
+- `<BASEBALL_ETL> load negroleagues`
+- `<BASEBALL_ETL> load fangraphs`
+- `<BASEBALL_ETL> load salary`
+- `<BASEBALL_ETL> load biodata`
+- `<BASEBALL_ETL> load weather`
+- `<BASEBALL_ETL> load parks`
+- `<BASEBALL_ETL> load allstar`
+- `<BASEBALL_ETL> status`
+- `<BASEBALL_ETL> status --strict` (exact-count audit mode)
 
 ## Command Contract Table
 
 | Command                                  | Purpose                                                      | Write behavior                                                                                  | Prerequisites      |
 | ---------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------ |
-| `<BASEBALL> etl` / `<BASEBALL> etl run`  | Full ETL orchestration (extract, transform, load, validate)  | Downloads archives, loads core + supplemental datasets, refreshes materialized views, validates | Reachable Postgres |
-| `<BASEBALL> etl validate --profile <P>`  | Profile-aware ETL completeness validation                    | Read-only                                                                                       | Reachable Postgres |
-| `<BASEBALL> etl fetch retrosheet`        | Download Retrosheet game logs, plays, and auxiliary archives | Writes files under `<data-root>/retrosheet`                                                     | Network access     |
-| `<BASEBALL> etl fetch negroleagues`      | Download and extract Negro Leagues archives                  | Writes files under `<data-root>/retrosheet/negroleagues`                                        | Network access     |
-| `<BASEBALL> etl load <dataset>`          | Execute a specific load stage                                | Dataset-dependent inserts/updates/truncation                                                    | Source files ready |
-| `<BASEBALL> etl status [--strict]`       | Show core + supplemental dataset freshness and health        | Read-only (lightweight by default; `--strict` runs exact counts)                                | Reachable Postgres |
+| `<BASEBALL_ETL>` / `<BASEBALL_ETL> run`  | Full ETL orchestration (extract, transform, load, validate)  | Downloads archives, loads core + supplemental datasets, refreshes materialized views, validates | Reachable Postgres |
+| `<BASEBALL_ETL> validate --profile <P>`  | Profile-aware ETL completeness validation                    | Read-only                                                                                       | Reachable Postgres |
+| `<BASEBALL_ETL> fetch retrosheet`        | Download Retrosheet game logs, plays, and auxiliary archives | Writes files under `<data-root>/retrosheet`                                                     | Network access     |
+| `<BASEBALL_ETL> fetch negroleagues`      | Download and extract Negro Leagues archives                  | Writes files under `<data-root>/retrosheet/negroleagues`                                        | Network access     |
+| `<BASEBALL_ETL> load <dataset>`          | Execute a specific load stage                                | Dataset-dependent inserts/updates/truncation                                                    | Source files ready |
+| `<BASEBALL_ETL> status [--strict]`       | Show core + supplemental dataset freshness and health        | Read-only (lightweight by default; `--strict` runs exact counts)                                | Reachable Postgres |
 | `<BASEBALL> db migrate`                  | Apply SQL migrations                                         | Structural/idempotent schema object changes only (no MV population)                             | Reachable Postgres |
 | `<BASEBALL> db refresh-views <views...>` | Populate/refresh materialized views                          | Data recomputation (run in batches for large datasets)                                          | Reachable Postgres |
 
