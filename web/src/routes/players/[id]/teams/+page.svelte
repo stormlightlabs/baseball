@@ -40,6 +40,6 @@
   {:else}
     <SortableTable
       columns={TEAMS_COLUMNS}
-      rows={teamsResource.items.map((team) => ({ ...team, team: team.team ?? team.team_id ?? '?' }))} />
+      rows={teamsResource.items.map((team) => ({ ...team, team: team.team_name ?? team.team_id ?? '?' }))} />
   {/if}
 </div>

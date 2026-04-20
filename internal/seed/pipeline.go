@@ -341,7 +341,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	}
 
 	rows, stepErr = runPipelineStep(ctx, database, runID, "refresh.materialized_views", func() (int64, error) {
-		views, err := database.RefreshMaterializedViews(ctx, nil)
+		views, err := RefreshPipelineMaterializedViews(ctx, database)
 		return int64(views), err
 	})
 	result.TotalRows += rows

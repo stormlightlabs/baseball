@@ -17,6 +17,7 @@ import (
 
 	"stormlightlabs.org/baseball/internal/core"
 	"stormlightlabs.org/baseball/internal/db"
+	"stormlightlabs.org/baseball/internal/echo"
 )
 
 const (
@@ -158,10 +159,22 @@ func ensureChadwickRegisterCSV(ctx context.Context, dataDir string) (string, err
 
 // LoadPlayerMLBAMMappings ingests Chadwick register IDs into player_mlbam_map.
 func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir string) (int64, error) {
+	const logProgressEvery = int64(100000)
+	startedAt := time.Now()
+
 	csvPath, err := ensureChadwickRegisterCSV(ctx, dataDir)
 	if err != nil {
 		return 0, err
 	}
+	fileInfo, err := os.Stat(csvPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to stat chadwick register CSV: %w", err)
+	}
+	echo.Infof(
+		"Loading player MLBAM crosswalk from %s (%s); this can take a while for full-history registers.",
+		csvPath,
+		formatByteSize(fileInfo.Size()),
+	)
 
 	file, err := os.Open(csvPath)
 	if err != nil {
@@ -219,7 +232,11 @@ func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir strin
 	}
 	defer stmt.Close()
 
+	parseStartedAt := time.Now()
+	var processed int64
 	var staged int64
+	var skippedMissingMLBAM int64
+	var skippedInvalidMLBAM int64
 	for {
 		rec, readErr := reader.Read()
 		if readErr != nil {
@@ -231,13 +248,16 @@ func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir strin
 		if rec == nil {
 			break
 		}
+		processed++
 
 		mlbamRaw := strings.TrimSpace(rec[index["key_mlbam"]])
 		if mlbamRaw == "" {
+			skippedMissingMLBAM++
 			continue
 		}
 		mlbamID, parseErr := strconv.Atoi(mlbamRaw)
 		if parseErr != nil || mlbamID <= 0 {
+			skippedInvalidMLBAM++
 			continue
 		}
 
@@ -249,12 +269,31 @@ func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir strin
 			return 0, fmt.Errorf("failed to stage chadwick row: %w", err)
 		}
 		staged++
+
+		if processed%logProgressEvery == 0 {
+			echo.Infof(
+				"  Chadwick parse progress: processed=%s staged=%s skipped=%s elapsed=%s",
+				formatNumber(processed),
+				formatNumber(staged),
+				formatNumber(skippedMissingMLBAM+skippedInvalidMLBAM),
+				time.Since(parseStartedAt).Round(time.Second),
+			)
+		}
 	}
+	echo.Infof(
+		"  Chadwick parse complete: processed=%s staged=%s skipped_missing_mlbam=%s skipped_invalid_mlbam=%s (%s)",
+		formatNumber(processed),
+		formatNumber(staged),
+		formatNumber(skippedMissingMLBAM),
+		formatNumber(skippedInvalidMLBAM),
+		time.Since(parseStartedAt).Round(time.Second),
+	)
 
 	if _, err := tx.ExecContext(ctx, `TRUNCATE TABLE player_mlbam_map`); err != nil {
 		return 0, fmt.Errorf("failed to clear player_mlbam_map: %w", err)
 	}
 
+	buildStartedAt := time.Now()
 	result, err := tx.ExecContext(ctx, `
 		INSERT INTO player_mlbam_map (
 			mlbam_id,
@@ -314,10 +353,32 @@ func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir strin
 	if rows == 0 {
 		rows = staged
 	}
+	echo.Infof(
+		"  Built player_mlbam_map rows=%s from staged=%s (%s)",
+		formatNumber(rows),
+		formatNumber(staged),
+		time.Since(buildStartedAt).Round(time.Second),
+	)
+	echo.Infof("  Player MLBAM crosswalk step completed in %s", time.Since(startedAt).Round(time.Second))
+
 	if err := database.RecordDatasetRefresh(ctx, "mlbam_players_map", rows); err != nil {
 		return rows, fmt.Errorf("failed to record mlbam_players_map refresh: %w", err)
 	}
 	return rows, nil
+}
+
+func formatByteSize(size int64) string {
+	if size < 1024 {
+		return fmt.Sprintf("%d B", size)
+	}
+	units := []string{"KB", "MB", "GB", "TB"}
+	value := float64(size)
+	unitIdx := -1
+	for value >= 1024 && unitIdx < len(units)-1 {
+		value /= 1024
+		unitIdx++
+	}
+	return fmt.Sprintf("%.1f %s", value, units[unitIdx])
 }
 
 type teamMatchCandidate struct {

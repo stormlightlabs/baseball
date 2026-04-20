@@ -99,7 +99,7 @@ export type HofEntry = {
   category?: string;
 };
 
-export type PlayerTeam = { year?: number; team_id?: string; team?: string; league?: string; g?: number };
+export type PlayerTeam = { year?: number; team_id?: string; team_name?: string; league?: string; games?: number };
 
 export type Salary = { year: number; team?: string; team_id?: string; salary: number };
 

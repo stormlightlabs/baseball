@@ -679,6 +679,11 @@ func loadRetrosheet(cmd *cobra.Command, eraFlag, yearsFlag string) error {
 			return fmt.Errorf("error: failed to record Retrosheet ejections refresh: %w", err)
 		}
 	}
+
+	echo.Info("")
+	if _, err := seed.RefreshRetrosheetMaterializedViews(ctx, database); err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
 	return nil
 }
 

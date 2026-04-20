@@ -57,7 +57,7 @@ export const TEAMS_COLUMNS = [
   { key: 'year', label: 'Year', sortable: true },
   { key: 'team', label: 'Team', sortable: true },
   { key: 'league', label: 'League', sortable: true },
-  { key: 'g', label: 'G', sortable: true }
+  { key: 'games', label: 'G', sortable: true }
 ];
 
 export const SALARIES_COLUMNS = [
