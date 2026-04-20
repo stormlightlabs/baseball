@@ -467,7 +467,24 @@ func refreshViews(cmd *cobra.Command, args []string) error {
 		echo.Infof("Refreshing %d view(s): %v", len(args), args)
 	}
 
-	count, err := database.RefreshMaterializedViews(ctx, args)
+	count, err := database.RefreshMaterializedViewsWithOptions(ctx, args, db.MaterializedViewRefreshOptions{
+		Step:  "db.refresh-views",
+		Group: "manual",
+		OnAttempt: func(attempt db.MaterializedViewRefreshAttempt) {
+			echo.Infof(
+				"  MV view=%s pass=%d attempt=%d mode=%s status=%s duration=%s",
+				attempt.ViewName,
+				attempt.Pass,
+				attempt.Attempt,
+				attempt.Mode,
+				attempt.Status,
+				attempt.Duration.Round(time.Millisecond),
+			)
+			if attempt.Error != "" {
+				echo.Infof("    error=%s", attempt.Error)
+			}
+		},
+	})
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}

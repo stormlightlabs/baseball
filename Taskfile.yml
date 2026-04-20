@@ -102,3 +102,10 @@ tasks:
     desc: Build the dashboard as a static SPA
     cmds:
       - pnpm --dir web build
+
+  build:path:
+    desc: Build the binary and then put in directory in PATH for easy access
+    cmds:
+      - task: build
+      - cp {{.BUILD_DIR}}/{{.BINARY_NAME}} /usr/local/bin/
+      - echo "✓ {{.BINARY_NAME}} is now available in your PATH (try running '{{.BINARY_NAME}} --help')"

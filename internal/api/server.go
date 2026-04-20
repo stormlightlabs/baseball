@@ -1,13 +1,13 @@
-// Package api provides HTTP handlers for the Baseball API
+// Package api provides HTTP handlers for the BigFly Baseball API
 //
-//	@title	Baseball API
+//	@title	BigFly baseball API
 //	@description.markdown
 //	@version			1.0
 //	@BasePath			/v1
 //
 //	@contact.name		API Support
 //	@contact.url		https://github.com/stormlightlabs/baseball
-//	@contact.email		info@stormlightlabs.org
+//	@contact.email		admin@bigfly.tech
 //
 //	@license.name		MPL-2.0
 //	@license.url		https://opensource.org/license/mpl-2-0

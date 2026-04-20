@@ -48,6 +48,28 @@ type DatasetRefresh struct {
 	RowCount     int64
 }
 
+// MaterializedViewRefreshOptions controls observability for view refresh operations.
+type MaterializedViewRefreshOptions struct {
+	RunID         *int64
+	Step          string
+	Group         string
+	SlowThreshold time.Duration
+	OnAttempt     func(MaterializedViewRefreshAttempt)
+}
+
+// MaterializedViewRefreshAttempt describes one refresh attempt for a single materialized view.
+type MaterializedViewRefreshAttempt struct {
+	ViewName   string
+	Pass       int
+	Attempt    int
+	Mode       string
+	Status     string
+	StartedAt  time.Time
+	FinishedAt time.Time
+	Duration   time.Duration
+	Error      string
+}
+
 type Exec interface {
 	ExecContext(context.Context, string, ...any) (sql.Result, error)
 }
@@ -954,6 +976,12 @@ func csvReader(r io.Reader) *csv.Reader {
 // RefreshMaterializedViews refreshes one or more materialized views.
 // If viewNames is empty, refreshes all materialized views in the database.
 func (db *DB) RefreshMaterializedViews(ctx context.Context, viewNames []string) (int, error) {
+	return db.RefreshMaterializedViewsWithOptions(ctx, viewNames, MaterializedViewRefreshOptions{})
+}
+
+// RefreshMaterializedViewsWithOptions refreshes one or more materialized views with observability metadata.
+// If viewNames is empty, refreshes all materialized views in the database.
+func (db *DB) RefreshMaterializedViewsWithOptions(ctx context.Context, viewNames []string, opts MaterializedViewRefreshOptions) (int, error) {
 	views := viewNames
 	if len(views) == 0 {
 		rows, err := db.QueryContext(ctx, `
@@ -979,20 +1007,72 @@ func (db *DB) RefreshMaterializedViews(ctx context.Context, viewNames []string) 
 		}
 	}
 
-	refreshOne := func(view string) error {
-		query := fmt.Sprintf("REFRESH MATERIALIZED VIEW CONCURRENTLY %s", view)
-		if _, err := db.ExecContext(ctx, query); err != nil {
+	attemptByView := make(map[string]int, len(views))
+	recordAttempt := func(view string, pass int, mode string, startedAt time.Time, status string, attemptErr error) {
+		attemptByView[view]++
+
+		errMsg := ""
+		if attemptErr != nil {
+			errMsg = attemptErr.Error()
+		}
+
+		event := MaterializedViewRefreshAttempt{
+			ViewName:   view,
+			Pass:       pass,
+			Attempt:    attemptByView[view],
+			Mode:       mode,
+			Status:     status,
+			StartedAt:  startedAt,
+			FinishedAt: time.Now(),
+			Error:      errMsg,
+		}
+		event.Duration = event.FinishedAt.Sub(event.StartedAt)
+
+		if recErr := db.recordMaterializedViewRefreshEvent(ctx, opts, event); recErr != nil {
+			// Observability should never block the refresh operation.
+		}
+
+		if opts.OnAttempt != nil {
+			opts.OnAttempt(event)
+		}
+	}
+
+	refreshOne := func(view string, pass int) (string, error) {
+		concurrentStartedAt := time.Now()
+		concurrentQuery := fmt.Sprintf("REFRESH MATERIALIZED VIEW CONCURRENTLY %s", view)
+		if _, err := db.ExecContext(ctx, concurrentQuery); err == nil {
+			recordAttempt(view, pass, "concurrent", concurrentStartedAt, "completed", nil)
+			return "completed", nil
+		} else {
 			errText := strings.ToLower(err.Error())
-			if !strings.Contains(errText, "concurrently") {
-				return err
+
+			if strings.Contains(errText, "has not been populated") {
+				recordAttempt(view, pass, "concurrent", concurrentStartedAt, "deferred_dependency", err)
+				return "deferred_dependency", nil
 			}
 
-			query = fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", view)
-			if _, err := db.ExecContext(ctx, query); err != nil {
-				return err
+			if !strings.Contains(errText, "concurrently") {
+				recordAttempt(view, pass, "concurrent", concurrentStartedAt, "failed", err)
+				return "failed", err
+			}
+
+			recordAttempt(view, pass, "concurrent", concurrentStartedAt, "failed", err)
+
+			nonConcurrentStartedAt := time.Now()
+			nonConcurrentQuery := fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", view)
+			if _, fallbackErr := db.ExecContext(ctx, nonConcurrentQuery); fallbackErr == nil {
+				recordAttempt(view, pass, "non_concurrent", nonConcurrentStartedAt, "completed", nil)
+				return "completed", nil
+			} else {
+				fallbackErrText := strings.ToLower(fallbackErr.Error())
+				if strings.Contains(fallbackErrText, "has not been populated") {
+					recordAttempt(view, pass, "non_concurrent", nonConcurrentStartedAt, "deferred_dependency", fallbackErr)
+					return "deferred_dependency", nil
+				}
+				recordAttempt(view, pass, "non_concurrent", nonConcurrentStartedAt, "failed", fallbackErr)
+				return "failed", fallbackErr
 			}
 		}
-		return nil
 	}
 
 	pending := append([]string(nil), views...)
@@ -1004,13 +1084,13 @@ func (db *DB) RefreshMaterializedViews(ctx context.Context, viewNames []string) 
 		progressed := false
 
 		for _, view := range pending {
-			if err := refreshOne(view); err != nil {
-				errText := strings.ToLower(err.Error())
-				if strings.Contains(errText, "has not been populated") {
-					nextPending = append(nextPending, view)
-					continue
-				}
+			status, err := refreshOne(view, pass+1)
+			if err != nil {
 				return refreshed, fmt.Errorf("failed to refresh view %s: %w", view, err)
+			}
+			if status == "deferred_dependency" {
+				nextPending = append(nextPending, view)
+				continue
 			}
 
 			refreshed++
@@ -1032,6 +1112,68 @@ func (db *DB) RefreshMaterializedViews(ctx context.Context, viewNames []string) 
 	}
 
 	return refreshed, nil
+}
+
+func (db *DB) recordMaterializedViewRefreshEvent(ctx context.Context, opts MaterializedViewRefreshOptions, attempt MaterializedViewRefreshAttempt) error {
+	var runID any
+	if opts.RunID != nil {
+		runID = *opts.RunID
+	}
+
+	var step any
+	if strings.TrimSpace(opts.Step) != "" {
+		step = opts.Step
+	}
+
+	var group any
+	if strings.TrimSpace(opts.Group) != "" {
+		group = opts.Group
+	}
+
+	var errText any
+	if attempt.Error != "" {
+		errText = attempt.Error
+	}
+
+	_, err := db.ExecContext(ctx, `
+		INSERT INTO materialized_view_refresh_events (
+			run_id,
+			step,
+			view_group,
+			view_name,
+			pass,
+			attempt,
+			mode,
+			status,
+			started_at,
+			finished_at,
+			duration_ms,
+			error
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+	`,
+		runID,
+		step,
+		group,
+		attempt.ViewName,
+		attempt.Pass,
+		attempt.Attempt,
+		attempt.Mode,
+		attempt.Status,
+		attempt.StartedAt,
+		attempt.FinishedAt,
+		attempt.Duration.Milliseconds(),
+		errText,
+	)
+	if err != nil {
+		errText := strings.ToLower(err.Error())
+		if strings.Contains(errText, "materialized_view_refresh_events") &&
+			(strings.Contains(errText, "does not exist") || strings.Contains(errText, "undefined_table")) {
+			return nil
+		}
+		return fmt.Errorf("failed to insert materialized view refresh event: %w", err)
+	}
+
+	return nil
 }
 
 // loadNegroLeaguesTeamMapping reads the team-to-league mapping CSV

@@ -59,6 +59,32 @@ Recommended approach for large environments:
 
 This keeps migration time predictable and lets you pace heavy recomputes according to capacity.
 
+Materialized-view refresh observability:
+
+- Each refresh attempt is recorded in `materialized_view_refresh_events`.
+- ETL pipeline refresh attempts are linked to `etl_runs.id` via `run_id`.
+- `db refresh-views` also records per-view attempts with step `db.refresh-views`.
+
+Quick diagnostics:
+
+```sql
+SELECT
+  started_at,
+  run_id,
+  step,
+  view_group,
+  view_name,
+  pass,
+  attempt,
+  mode,
+  status,
+  duration_ms,
+  error
+FROM materialized_view_refresh_events
+ORDER BY started_at DESC
+LIMIT 50;
+```
+
 Data root resolution order:
 
 1. `--data-root`
