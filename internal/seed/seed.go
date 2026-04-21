@@ -31,6 +31,12 @@ type RetrosheetOptions struct {
 	Force   bool
 }
 
+// SalaryOptions controls salary ingestion behavior.
+type SalaryOptions struct {
+	DataDir string
+	Skip    bool
+}
+
 // RetrosheetResult contains counters for Retrosheet loads.
 type RetrosheetResult struct {
 	GameRows int64
@@ -916,7 +922,19 @@ func LoadRetrosheetPlayers(ctx context.Context, database *db.DB, csvPath string)
 
 // LoadSalaryData loads salary data from individual year CSV files and summary data.
 // This enriches the Lahman Salaries table with additional modern salary data.
-func LoadSalaryData(ctx context.Context, database *db.DB, dataDir string) (int64, error) {
+func LoadSalaryData(ctx context.Context, database *db.DB, opts SalaryOptions) (int64, error) {
+	if opts.Skip {
+		loaded, err := database.IsDatasetLoaded(ctx, "salaries")
+		if err != nil {
+			return 0, fmt.Errorf("error: failed to check if salaries are loaded: %w", err)
+		}
+		if loaded {
+			echo.Info("Salary data already loaded, skipping")
+			return 0, nil
+		}
+	}
+
+	dataDir := opts.DataDir
 	if dataDir == "" {
 		dataDir = SalariesDir("")
 	}

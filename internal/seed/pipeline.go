@@ -276,7 +276,10 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	}
 
 	rows, stepErr = runPipelineStep(ctx, database, runID, "load.salary", func(stepCtx context.Context) (int64, error) {
-		return LoadSalaryData(stepCtx, database, opts.SalaryDataDir)
+		return LoadSalaryData(stepCtx, database, SalaryOptions{
+			DataDir: opts.SalaryDataDir,
+			Skip:    opts.Mode == PipelineModeIncremental,
+		})
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -312,7 +315,10 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	}
 
 	rows, stepErr = runPipelineStep(ctx, database, runID, "load.crosswalk.players_mlbam", func(stepCtx context.Context) (int64, error) {
-		return LoadPlayerMLBAMMappings(stepCtx, database, opts.ChadwickDataDir)
+		return LoadPlayerMLBAMMappings(stepCtx, database, PlayerMLBAMMappingOptions{
+			DataDir: opts.ChadwickDataDir,
+			Skip:    opts.Mode == PipelineModeIncremental,
+		})
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -321,7 +327,10 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	}
 
 	rows, stepErr = runPipelineStep(ctx, database, runID, "load.crosswalk.teams_mlbam", func(stepCtx context.Context) (int64, error) {
-		return LoadTeamMLBAMMappings(stepCtx, database, opts.Years)
+		return LoadTeamMLBAMMappings(stepCtx, database, TeamMLBAMMappingOptions{
+			Years: opts.Years,
+			Skip:  opts.Mode == PipelineModeIncremental,
+		})
 	})
 	result.TotalRows += rows
 	if stepErr != nil {

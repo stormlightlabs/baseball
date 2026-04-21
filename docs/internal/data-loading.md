@@ -1,5 +1,7 @@
 # Database Loading Contract (Complete Slice)
 
+See also: [ETL Cutover & Narrow-Slice Runbook](./etl-cutover.md)
+
 This is the source of truth for loading a complete database slice with an ETL-worker model:
 
 - `baseball-etl` owns fetch/load/validate/status/cleanup operations
@@ -103,6 +105,19 @@ curl http://localhost:8080/v1/meta/datasets?strict=true
 curl http://localhost:8080/v1/health
 ```
 
+## Narrow Slice Quickstart (Local)
+
+Use this when you want production-like behavior with a bounded local scope.
+
+```bash
+./tmp/baseball db migrate
+./tmp/baseball-etl fetch retrosheet --years 2024-2025
+./tmp/baseball-etl worker --max-active-jobs 1 --poll-interval 5s
+./tmp/baseball-etl run --profile dev --years 2024-2025 --year-batch-size 1
+./tmp/baseball-etl validate --profile dev --years 2024-2025
+./tmp/baseball-etl status
+```
+
 ## Data Root Resolution
 
 Resolution order for ETL and DB commands:
@@ -123,7 +138,8 @@ Worker expectations:
 Operational guidance:
 
 - Keep canonical source files (`*.zip`, core CSVs like `gameinfo.csv`, `allplayers.csv`) in the data root.
-- Keep Chadwick output under `data/chadwick` (`people-*.csv`, merged `people.csv`, and `manifest.json`).
+- Keep Chadwick source under `data/chadwick` as committed `people.csv` plus `manifest.json`.
+- Use `baseball-etl fetch chadwick --force` when you intentionally refresh `people.csv` from upstream.
 - Prune transient ETL artifacts periodically with `baseball-etl cleanup retrosheet` to keep disk usage bounded.
 
 ## Large Dataset Guidance

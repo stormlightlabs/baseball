@@ -17,8 +17,13 @@ following before the package `tests` run:
 - Refreshes materialized views so repository and API queries see the same shape the
   application expects in normal use.
 
-The current suite does not include dedicated end-to-end tests for the ETL
+The current suite does not include full end-to-end worker-process tests for ETL
 loaders. It also does not require Redis for test execution.
+
+The migration/test path primarily exercises fresh-database behavior. Keep this
+aligned with long-lived cutover behavior by validating migration + narrow-slice
+runs from the [ETL Cutover & Narrow-Slice Runbook](./etl-cutover.md) when ETL
+maintenance semantics change.
 
 ## Prerequisites
 

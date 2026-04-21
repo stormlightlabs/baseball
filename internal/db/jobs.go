@@ -402,6 +402,8 @@ func scanETLJob(scanner etlJobScanner) (*ETLJob, error) {
 		scopeJSON []byte
 		optsJSON  []byte
 		runID     sql.NullInt64
+		failure   sql.NullString
+		lastError sql.NullString
 		startedAt sql.NullTime
 		finished  sql.NullTime
 		nextRetry sql.NullTime
@@ -418,8 +420,8 @@ func scanETLJob(scanner etlJobScanner) (*ETLJob, error) {
 		&optsJSON,
 		&job.MaxRetries,
 		&job.Attempts,
-		&job.FailureClass,
-		&job.LastError,
+		&failure,
+		&lastError,
 		&job.RowCount,
 		&runID,
 		&job.QueuedAt,
@@ -463,6 +465,12 @@ func scanETLJob(scanner etlJobScanner) (*ETLJob, error) {
 	}
 	if workerID.Valid {
 		job.WorkerID = workerID.String
+	}
+	if failure.Valid {
+		job.FailureClass = failure.String
+	}
+	if lastError.Valid {
+		job.LastError = lastError.String
 	}
 
 	return &job, nil

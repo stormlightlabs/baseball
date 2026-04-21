@@ -244,12 +244,17 @@ func NegroLeaguesFetchCmd() *cobra.Command {
 
 // ChadwickFetchCmd creates the fetch chadwick command
 func ChadwickFetchCmd() *cobra.Command {
-	return &cobra.Command{
+	var force bool
+	cmd := &cobra.Command{
 		Use:   "chadwick",
 		Short: "Download Chadwick register data",
 		Long:  "Download Chadwick register people.csv used for MLBAM player crosswalks.",
-		RunE:  fetchChadwick,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return fetchChadwick(cmd, force)
+		},
 	}
+	cmd.Flags().BoolVar(&force, "force", false, "Force refresh from Chadwick upstream and rewrite local people.csv + manifest")
+	return cmd
 }
 
 // LahmanLoadCmd creates the load lahman command
@@ -409,7 +414,7 @@ func runETLPipeline(cmd *cobra.Command, opts *pipelineCLIOptions) error {
 
 	echo.Successf("✓ Enqueued %d ETL job(s) type=%s", len(queueResult.JobIDs), queueResult.JobType)
 	for idx, jobID := range queueResult.JobIDs {
-		echo.Infof("  Job %d: id=%d years=%s", idx+1, jobID, describeYears(queueResult.BatchScopes[idx]))
+		echo.Infof("  Job %d: id=%d year_scope=%s", idx+1, jobID, describeYears(queueResult.BatchScopes[idx]))
 	}
 
 	if opts.enqueueOnly {
@@ -619,14 +624,30 @@ func fetchNegroLeagues(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func fetchChadwick(cmd *cobra.Command, args []string) error {
-	echo.Header("Fetching Chadwick Register Data")
+func fetchChadwick(cmd *cobra.Command, force bool) error {
+	echo.Header("Refreshing Chadwick Register Data")
 	dataDir := seed.ChadwickDir(resolveDataRoot(cmd))
-	if err := seed.FetchChadwickRegisterData(cmd.Context(), dataDir, false); err != nil {
+	peoplePath := filepath.Join(dataDir, "people.csv")
+	_, existedErr := os.Stat(peoplePath)
+	alreadyPresent := existedErr == nil
+	if existedErr != nil && !os.IsNotExist(existedErr) {
+		return fmt.Errorf("error: failed to inspect local Chadwick file: %w", existedErr)
+	}
+
+	if err := seed.FetchChadwickRegisterData(cmd.Context(), dataDir, force); err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
-	echo.Success("✓ Chadwick register downloaded successfully")
-	echo.Infof("  File: %s", filepath.Join(dataDir, "people.csv"))
+	echo.Success("✓ Chadwick register is ready")
+	echo.Infof("  File: %s", peoplePath)
+	if force {
+		echo.Infof("  Manifest: %s", filepath.Join(dataDir, "manifest.json"))
+		echo.Info("  Source refreshed from upstream")
+	} else if alreadyPresent {
+		echo.Info("  Existing local file retained (use --force to refresh from upstream)")
+	} else {
+		echo.Infof("  Manifest: %s", filepath.Join(dataDir, "manifest.json"))
+		echo.Info("  Source downloaded because local people.csv was missing")
+	}
 	return nil
 }
 
@@ -686,11 +707,15 @@ func cleanupRetrosheet(cmd *cobra.Command, dryRun bool) error {
 
 func describeYears(years []int) string {
 	if len(years) == 0 {
-		return "0 years"
+		return "none"
 	}
 	sorted := slices.Clone(years)
 	slices.Sort(sorted)
-	return fmt.Sprintf("%d years: %d-%d", len(sorted), sorted[0], sorted[len(sorted)-1])
+	sorted = slices.Compact(sorted)
+	if len(sorted) == 1 {
+		return fmt.Sprintf("%d", sorted[0])
+	}
+	return fmt.Sprintf("%d-%d", sorted[0], sorted[len(sorted)-1])
 }
 
 func loadLahman(cmd *cobra.Command, args []string) error {
@@ -1033,7 +1058,7 @@ Expected format:
   Year,Player,Pos,Salary`, dataDir)
 	}
 
-	_, err = seed.LoadSalaryData(ctx, database, dataDir)
+	_, err = seed.LoadSalaryData(ctx, database, seed.SalaryOptions{DataDir: dataDir})
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -1152,12 +1177,16 @@ func loadMLBAMCrosswalk(cmd *cobra.Command, yearsFlag string) error {
 		years = []int{time.Now().Year()}
 	}
 
-	playerRows, err := seed.LoadPlayerMLBAMMappings(cmd.Context(), database, seed.ChadwickDir(resolveDataRoot(cmd)))
+	playerRows, err := seed.LoadPlayerMLBAMMappings(cmd.Context(), database, seed.PlayerMLBAMMappingOptions{
+		DataDir: seed.ChadwickDir(resolveDataRoot(cmd)),
+	})
 	if err != nil {
 		return fmt.Errorf("error loading player MLBAM mappings: %w", err)
 	}
 
-	teamRows, err := seed.LoadTeamMLBAMMappings(cmd.Context(), database, years)
+	teamRows, err := seed.LoadTeamMLBAMMappings(cmd.Context(), database, seed.TeamMLBAMMappingOptions{
+		Years: years,
+	})
 	if err != nil {
 		return fmt.Errorf("error loading team MLBAM mappings: %w", err)
 	}

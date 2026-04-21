@@ -53,9 +53,25 @@ func FetchChadwickRegisterData(ctx context.Context, dataDir string, force bool) 
 	}
 
 	singlePath := filepath.Join(dataDir, "people.csv")
+	if !force {
+		info, err := os.Stat(singlePath)
+		if err == nil && !info.IsDir() {
+			return nil
+		}
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("failed to check existing Chadwick people.csv: %w", err)
+		}
+	}
+
+	tmpShardDir, err := os.MkdirTemp(dataDir, ".chadwick-shards-*")
+	if err != nil {
+		return fmt.Errorf("failed creating Chadwick shard temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpShardDir)
+
 	shardPaths := make([]string, 0, len(chadwickShardKeys))
 	for _, shard := range chadwickShardKeys {
-		target := filepath.Join(dataDir, fmt.Sprintf("people-%s.csv", shard))
+		target := filepath.Join(tmpShardDir, fmt.Sprintf("people-%s.csv", shard))
 		url := fmt.Sprintf(chadwickRegisterShardURL, shard)
 		if _, err := downloadIfNeeded(ctx, url, target, force); err != nil {
 			return fmt.Errorf("failed downloading Chadwick shard %q: %w", shard, err)
@@ -66,7 +82,7 @@ func FetchChadwickRegisterData(ctx context.Context, dataDir string, force bool) 
 	if err := mergeCSVShards(singlePath, shardPaths); err != nil {
 		return fmt.Errorf("failed assembling Chadwick people.csv from shards: %w", err)
 	}
-	if err := writeChadwickManifest(dataDir, singlePath, shardPaths); err != nil {
+	if err := writeChadwickManifest(dataDir, singlePath, nil); err != nil {
 		return fmt.Errorf("failed writing Chadwick manifest: %w", err)
 	}
 
@@ -267,12 +283,29 @@ func ensureChadwickRegisterCSV(ctx context.Context, dataDir string) (string, err
 	return csvPath, nil
 }
 
+// PlayerMLBAMMappingOptions controls player crosswalk ingestion behavior.
+type PlayerMLBAMMappingOptions struct {
+	DataDir string
+	Skip    bool
+}
+
 // LoadPlayerMLBAMMappings ingests Chadwick register IDs into player_mlbam_map.
-func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir string) (int64, error) {
+func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, opts PlayerMLBAMMappingOptions) (int64, error) {
 	const logProgressEvery = int64(100000)
 	startedAt := time.Now()
 
-	csvPath, err := ensureChadwickRegisterCSV(ctx, dataDir)
+	if opts.Skip {
+		loaded, err := database.IsDatasetLoaded(ctx, "mlbam_players_map")
+		if err != nil {
+			return 0, fmt.Errorf("failed to check if mlbam_players_map is loaded: %w", err)
+		}
+		if loaded {
+			echo.Info("Player MLBAM crosswalk already loaded, skipping")
+			return 0, nil
+		}
+	}
+
+	csvPath, err := ensureChadwickRegisterCSV(ctx, opts.DataDir)
 	if err != nil {
 		return 0, err
 	}
@@ -623,6 +656,12 @@ func LoadPlayerMLBAMMappings(ctx context.Context, database *db.DB, dataDir strin
 	return rows, nil
 }
 
+// TeamMLBAMMappingOptions controls team crosswalk ingestion behavior.
+type TeamMLBAMMappingOptions struct {
+	Years []int
+	Skip  bool
+}
+
 func formatByteSize(size int64) string {
 	if size < 1024 {
 		return fmt.Sprintf("%d B", size)
@@ -821,19 +860,27 @@ func fetchMLBTeamsForSeason(ctx context.Context, season int) (core.MLBTeamsRespo
 }
 
 // LoadTeamMLBAMMappings builds season-scoped team MLBAM mappings for the selected ETL years.
-func LoadTeamMLBAMMappings(ctx context.Context, database *db.DB, years []int) (int64, error) {
+func LoadTeamMLBAMMappings(ctx context.Context, database *db.DB, opts TeamMLBAMMappingOptions) (int64, error) {
+	years := dedupeSortedYears(opts.Years)
 	if len(years) == 0 {
 		years = []int{time.Now().Year()}
 	}
-	unique := map[int]struct{}{}
-	for _, y := range years {
-		if y > 0 {
-			unique[y] = struct{}{}
-		}
-	}
 
 	totalRows := int64(0)
-	for season := range unique {
+	loadedSeasons := 0
+	for _, season := range years {
+		if opts.Skip {
+			seasonKey := fmt.Sprintf("mlbam_teams_map_%d", season)
+			loaded, err := database.IsDatasetLoaded(ctx, seasonKey)
+			if err != nil {
+				return totalRows, fmt.Errorf("failed to check if %s is loaded: %w", seasonKey, err)
+			}
+			if loaded {
+				echo.Infof("Team MLBAM crosswalk already loaded for season %d, skipping", season)
+				continue
+			}
+		}
+
 		mlbTeams, err := fetchMLBTeamsForSeason(ctx, season)
 		if err != nil {
 			return totalRows, fmt.Errorf("failed to fetch MLB teams for %d: %w", season, err)
@@ -955,11 +1002,19 @@ func LoadTeamMLBAMMappings(ctx context.Context, database *db.DB, years []int) (i
 		if err := tx.Commit(); err != nil {
 			return totalRows, fmt.Errorf("failed committing team_mlbam_map season %d: %w", season, err)
 		}
+		seasonKey := fmt.Sprintf("mlbam_teams_map_%d", season)
+		if err := database.RecordDatasetRefresh(ctx, seasonKey, seasonRows); err != nil {
+			return totalRows, fmt.Errorf("failed to record %s refresh: %w", seasonKey, err)
+		}
+
 		totalRows += seasonRows
+		loadedSeasons++
 	}
 
-	if err := database.RecordDatasetRefresh(ctx, "mlbam_teams_map", totalRows); err != nil {
-		return totalRows, fmt.Errorf("failed to record mlbam_teams_map refresh: %w", err)
+	if loadedSeasons > 0 {
+		if err := database.RecordDatasetRefresh(ctx, "mlbam_teams_map", totalRows); err != nil {
+			return totalRows, fmt.Errorf("failed to record mlbam_teams_map refresh: %w", err)
+		}
 	}
 	return totalRows, nil
 }

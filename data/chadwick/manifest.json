@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-04-21T01:37:58Z",
+  "source_repo_url": "https://github.com/chadwickbureau/register",
+  "source_shard_url_template": "https://raw.githubusercontent.com/chadwickbureau/register/master/data/people-%s.csv",
+  "shard_keys": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f"
+  ],
+  "required_columns": [
+    "key_mlbam",
+    "key_retro",
+    "key_bbref",
+    "name_first",
+    "name_last"
+  ],
+  "files": [
+    {
+      "path": "people.csv",
+      "size_bytes": 66044232,
+      "sha256": "0d212f38ba7f7dc32fbacb2e5ad5fb23eca97812cf700b964c76fa6972eb4a9e"
+    }
+  ]
+}

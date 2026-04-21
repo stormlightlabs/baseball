@@ -91,9 +91,8 @@ See the dedicated Data Coverage docs for the newly completed endpoints:
 Release planning for ETL safety/performance now follows a single operational track:
 
 1. Baseball API ETL worker runtime:
-   - [ETL Architecture Spec](../specs/etl.md)
-   - [ETL Task List](../tasks/etl.md)
    - [Database Loading Contract](./data-loading.md)
+   - [ETL Cutover & Narrow-Slice Runbook](./etl-cutover.md)
 
 Execution rule:
 

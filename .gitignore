@@ -39,3 +39,4 @@ conf.toml
 .gomodcache/
 .gocache/
 .sandbox/
+data/retrosheet/

@@ -1,6 +1,7 @@
 package seed
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -112,5 +113,30 @@ func TestWriteChadwickManifest(t *testing.T) {
 	slices.Sort(wantColumns)
 	if !slices.Equal(gotColumns, wantColumns) {
 		t.Fatalf("unexpected required columns: %v", manifest.RequiredColumns)
+	}
+}
+
+func TestFetchChadwickRegisterData_UsesCommittedPeopleCSV(t *testing.T) {
+	root := t.TempDir()
+	peoplePath := filepath.Join(root, "people.csv")
+	content := []byte("key_mlbam,key_retro,key_bbref,name_first,name_last\n1,retro,bbref,First,Last\n")
+	if err := os.WriteFile(peoplePath, content, 0644); err != nil {
+		t.Fatalf("write people.csv: %v", err)
+	}
+
+	if err := FetchChadwickRegisterData(context.Background(), root, false); err != nil {
+		t.Fatalf("FetchChadwickRegisterData returned error: %v", err)
+	}
+
+	manifestPath := filepath.Join(root, chadwickManifestFilename)
+	if _, err := os.Stat(manifestPath); !os.IsNotExist(err) {
+		t.Fatalf("did not expect manifest to be created/rewritten in no-op mode")
+	}
+
+	for _, shard := range chadwickShardKeys {
+		shardPath := filepath.Join(root, "people-"+shard+".csv")
+		if _, err := os.Stat(shardPath); !os.IsNotExist(err) {
+			t.Fatalf("unexpected shard file present: %s", shardPath)
+		}
 	}
 }

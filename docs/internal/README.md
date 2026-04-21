@@ -6,7 +6,10 @@ Postgres is the target store with reusable DDLs checked in under `internal/db/sq
 
 ## Data Loading Contract
 
-Use [Database Loading Contract (Complete Slice)](./data-loading.md) as the authoritative setup and ETL guide.
+Use the internal runbooks as the authoritative ETL operations docs:
+
+- [Database Loading Contract (Complete Slice)](./data-loading.md)
+- [ETL Cutover & Narrow-Slice Runbook](./etl.md)
 
 ### Three-Layer Approach
 

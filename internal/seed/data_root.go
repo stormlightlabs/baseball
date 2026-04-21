@@ -119,9 +119,10 @@ func ensurePipelineDataRoot(ctx context.Context, opts PipelineOptions) (dataRoot
 	}
 	if len(missing) > 0 {
 		return dataRootProvision{}, fmt.Errorf(
-			"data root %q is missing required local source files: %s\n\nRetrosheet and Chadwick inputs are worker-fetched by ETL, but Lahman/FanGraphs/salary source files must exist under the resolved data root",
+			"data root %q is missing required local source files: %s\n\nRetrosheet archives are worker-fetched by ETL; Lahman/FanGraphs/salary sources are local inputs under the resolved data root. Chadwick `people.csv` is expected at %q and can be refreshed with `baseball-etl fetch chadwick`",
 			opts.DataRoot,
 			strings.Join(missing, ", "),
+			filepath.Join(opts.ChadwickDataDir, "people.csv"),
 		)
 	}
 

@@ -14,7 +14,7 @@ func (db *DB) UpsertDeltaSeasonsForRun(ctx context.Context, runID int64, years [
 	years = dedupeYears(years)
 	_, err := db.ExecContext(ctx, `
 		INSERT INTO etl_delta_seasons (run_id, season)
-		SELECT $1, y
+		SELECT $1::bigint, y
 		FROM UNNEST($2::int[]) AS y
 		ON CONFLICT (run_id, season) DO NOTHING
 	`, runID, years)
@@ -33,7 +33,7 @@ func (db *DB) UpsertDeltaGamesForRun(ctx context.Context, runID int64, years []i
 	_, err := db.ExecContext(ctx, `
 		INSERT INTO etl_delta_games (run_id, game_id, season)
 		SELECT DISTINCT
-			$1 AS run_id,
+			$1::bigint AS run_id,
 			g.game_id,
 			CAST(SUBSTRING(g.date, 1, 4) AS INTEGER) AS season
 		FROM games g
@@ -72,7 +72,7 @@ func (db *DB) UpsertDeltaPlayersForRun(ctx context.Context, runID int64, years [
 			WHERE COALESCE(v.player_id, '') <> ''
 		)
 		INSERT INTO etl_delta_players (run_id, player_id, season)
-		SELECT $1, player_id, season
+		SELECT $1::bigint, player_id, season
 		FROM player_scope
 		ON CONFLICT (run_id, player_id) DO NOTHING
 	`, runID, years)

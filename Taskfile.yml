@@ -14,6 +14,12 @@ tasks:
       - task --list
 
   build:
+    desc: Build both binaries (CLI and ETL)
+    cmds:
+      - task: build:cli
+      - task: build:etl
+
+  build:cli:
     desc: Build the baseball CLI
     cmds:
       - go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.MAIN_PATH}}
@@ -39,7 +45,7 @@ tasks:
       - rm -rf {{.BUILD_DIR}}
 
   rebuild:
-    desc: Clean and rebuild
+    desc: Clean and rebuild bins
     cmds:
       - task: clean
       - task: build
