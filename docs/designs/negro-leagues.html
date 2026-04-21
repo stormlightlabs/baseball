@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Negro Leagues — Baseball API Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    body.page-negro {--bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#a78bfa;--accent2:#10b981;--era:#a78bfa}
+    body.page-negro * {box-sizing:border-box;margin:0;padding:0}
+    body.page-negro {background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+    body.page-negro h1,body.page-negro h2,body.page-negro h3 {font-family:'Google Sans',sans-serif}
+    body.page-negro code,body.page-negro pre {font-family:'Google Sans Code',monospace}
+    body.page-negro .site-header {border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:56px;background:var(--surface)}
+    body.page-negro .logo {font-family:'Google Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none}
+    body.page-negro .badge {font-family:'Google Sans Code',monospace;font-size:0.7rem;background:rgba(167,139,250,0.15);color:var(--accent);padding:2px 8px;border-radius:4px;border:1px solid rgba(167,139,250,0.3)}
+    body.page-negro .nav-links {margin-left:auto;display:flex;gap:0.25rem}
+    body.page-negro .nav-links a {font-size:0.8rem;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:4px;transition:color 0.15s,background 0.15s}
+    body.page-negro .nav-links a:hover,body.page-negro .nav-links a.active {color:var(--text);background:var(--border)}
+    body.page-negro .context-banner {background:rgba(167,139,250,0.06);border-bottom:1px solid rgba(167,139,250,0.2);padding:0.6rem 2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    body.page-negro .cb-era {font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--accent);background:rgba(167,139,250,0.12);padding:2px 8px;border-radius:4px;border:1px solid rgba(167,139,250,0.25)}
+    body.page-negro .cb-text {font-size:0.78rem;color:var(--muted)}
+    body.page-negro .cb-caveat {font-size:0.7rem;color:#f97316;background:rgba(249,115,22,0.1);padding:2px 8px;border-radius:4px;border:1px solid rgba(249,115,22,0.2)}
+    body.page-negro .layout {display:grid;grid-template-columns:280px 1fr 300px;height:calc(100vh - 56px - 42px)}
+    body.page-negro .sidebar {border-right:1px solid var(--border);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:0.5rem;background:var(--surface)}
+    body.page-negro .center {overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+    body.page-negro .api-panel {border-left:1px solid var(--border);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem;background:var(--surface)}
+    body.page-negro .sidebar-label {font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)}
+    body.page-negro .panel {background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
+    body.page-negro .panel-label {font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    body.page-negro label.fl {display:block;font-size:0.7rem;color:var(--muted);margin-bottom:3px;margin-top:6px}
+    body.page-negro select,body.page-negro input[type=text],body.page-negro input[type=number] {width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:0.75rem;font-family:'Inter',sans-serif;outline:none}
+    body.page-negro select:focus,body.page-negro input:focus {border-color:var(--accent)}
+    body.page-negro .btn {width:100%;margin-top:10px;padding:7px;background:var(--accent);color:#000;border:none;border-radius:6px;font-family:'Google Sans',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;transition:opacity 0.15s}
+    body.page-negro .btn:hover {opacity:0.85}
+    body.page-negro .btn-outline {background:transparent;color:var(--accent);border:1px solid rgba(167,139,250,0.4);border-radius:6px;padding:4px 10px;font-size:0.75rem;font-family:'Google Sans',sans-serif;cursor:pointer;transition:all 0.15s}
+    body.page-negro .btn-outline:hover {background:rgba(167,139,250,0.1)}
+    body.page-negro .quick-filter {display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.25rem}
+    body.page-negro .qf {font-size:0.7rem;padding:3px 9px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.15s}
+    body.page-negro .qf:hover {border-color:var(--accent);color:var(--accent)}
+    body.page-negro table {width:100%;border-collapse:collapse;font-size:0.8rem}
+    body.page-negro thead tr {border-bottom:1px solid var(--border)}
+    body.page-negro th {text-align:left;padding:0.4rem 0.6rem;font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.05em;font-weight:400}
+    body.page-negro td {padding:0.45rem 0.6rem;border-bottom:1px solid rgba(37,41,52,0.5)}
+    body.page-negro tr:hover td {background:var(--surface2)}
+    body.page-negro tr.selected td {background:rgba(167,139,250,0.06)}
+    body.page-negro .tab-row {display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:1rem}
+    body.page-negro .tab {font-size:0.78rem;padding:6px 14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;font-family:'Google Sans',sans-serif;margin-bottom:-1px}
+    body.page-negro .tab.active {color:var(--accent);border-bottom-color:var(--accent)}
+    body.page-negro .tab:hover:not(.active) {color:var(--text)}
+    body.page-negro .ap-label {font-family:'Google Sans Code',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem}
+    body.page-negro .api-url {font-family:'Google Sans Code',monospace;font-size:0.72rem;color:var(--accent);background:var(--surface2);padding:6px 8px;border-radius:5px;word-break:break-all;line-height:1.5}
+    body.page-negro .curl-block {background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;color:#a5b4fc;line-height:1.6;white-space:pre-wrap;word-break:break-all}
+    body.page-negro .json-preview {background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;line-height:1.7;white-space:pre;overflow-x:auto;max-height:220px;overflow-y:auto}
+    body.page-negro .copy-btn {font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);border:none;padding:4px 10px;border-radius:4px;cursor:pointer;width:100%;text-align:center;margin-top:0.35rem;transition:color 0.15s}
+    body.page-negro .copy-btn:hover {color:var(--text)}
+    body.page-negro .team-chip {display:inline-flex;align-items:center;gap:4px;font-family:'Google Sans Code',monospace;font-size:0.7rem;background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);color:var(--accent);padding:2px 7px;border-radius:4px;cursor:pointer;transition:all 0.15s;white-space:nowrap}
+    body.page-negro .team-chip:hover {background:rgba(167,139,250,0.16)}
+    body.page-negro .league-pill {font-family:'Google Sans Code',monospace;font-size:0.65rem;padding:2px 7px;border-radius:4px;font-weight:500}
+    body.page-negro .league-NAL {background:rgba(59,130,246,0.12);color:#93c5fd;border:1px solid rgba(59,130,246,0.2)}
+    body.page-negro .league-NNL {background:rgba(16,185,129,0.12);color:#6ee7b7;border:1px solid rgba(16,185,129,0.2)}
+    body.page-negro .league-other {background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+    body.page-negro .coverage-note {font-size:0.72rem;color:var(--muted);background:var(--surface2);border-radius:6px;padding:0.6rem 0.8rem;border-left:3px solid rgba(167,139,250,0.4);line-height:1.5}
+    body.page-negro .game-detail {background:var(--surface2);border-radius:8px;padding:1rem;margin-top:0.75rem;display:none}
+    body.page-negro .game-detail.visible {display:block}
+    body.page-negro .score-row {display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:0.75rem}
+    body.page-negro .score-team {font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700}
+    body.page-negro .score-num {font-family:'Google Sans',sans-serif;font-size:1.8rem;font-weight:700;color:#f1f5f9}
+    body.page-negro .score-sep {font-size:1.2rem;color:var(--muted)}
+    body.page-negro .meta-strip {display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.5rem}
+    body.page-negro .mi {text-align:center}
+    body.page-negro .mi-val {font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.9rem;color:var(--text)}
+    body.page-negro .mi-label {font-size:0.65rem;color:var(--muted);margin-top:1px}
+  </style>
+</head>
+<body class="page-negro">
+
+<header class="site-header">
+  <a href="index.html" class="logo">Baseball API</a>
+  <span class="badge">nlg era · 1935–1949</span>
+  <nav class="nav-links">
+    <a href="home.html">Home</a><a href="players.html">Players</a>
+    <a href="teams.html">Teams</a><a href="games.html">Games</a>
+    <a href="seasons.html">Seasons</a><a href="leaders.html">Leaders</a>
+    <a href="compare.html">Compare</a>
+    <a href="federal-league.html">Federal League</a>
+    <a href="negro-leagues.html" class="active">Negro Leagues</a>
+    <a href="data-sources.html">Data</a><a href="docs.html">Docs</a>
+  </nav>
+</header>
+
+<div class="context-banner">
+  <span class="cb-era">nlg · 1935–1949</span>
+  <span class="cb-text">Negro Leagues — NAL, NNL, and related circuits. Multiple leagues, 15 seasons.</span>
+  <span class="cb-caveat">⚠ Coverage varies by team/year · sub-leagues: NAL, NNL · crosswalk to MLBAM limited</span>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Negro Leagues</div>
+
+    <!-- League sub-filter -->
+    <div style="margin-bottom:6px">
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:6px">Sub-league</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="league-pill league-NAL" style="cursor:pointer;padding:3px 10px" onclick="selectLeague('NAL')">NAL</span>
+        <span class="league-pill league-NNL" style="cursor:pointer;padding:3px 10px" onclick="selectLeague('NNL')">NNL</span>
+        <span class="league-pill league-other" style="cursor:pointer;padding:3px 10px" onclick="selectLeague('')">All</span>
+      </div>
+    </div>
+
+    <label class="fl">Season</label>
+    <select id="fSeason" onchange="updateEndpoints()">
+      <option value="">All (1935–1949)</option>
+      <option>1935</option><option>1936</option><option>1937</option><option>1938</option>
+      <option>1939</option><option>1940</option><option>1941</option><option>1942</option>
+      <option>1943</option><option>1944</option><option>1945</option><option>1946</option>
+      <option>1947</option><option>1948</option><option>1949</option>
+    </select>
+
+    <label class="fl">Home team</label>
+    <select id="fHome" onchange="updateEndpoints()">
+      <option value="">Any</option>
+      <option>KC</option><option>HOM</option><option>BAE</option><option>CLB</option>
+      <option>NWA</option><option>MEM</option><option>PHI</option><option>NYB</option>
+    </select>
+
+    <label class="fl">Away team</label>
+    <select id="fAway" onchange="updateEndpoints()">
+      <option value="">Any</option>
+      <option>KC</option><option>HOM</option><option>BAE</option><option>CLB</option>
+      <option>NWA</option><option>MEM</option><option>PHI</option><option>NYB</option>
+    </select>
+
+    <div class="sidebar-label" style="margin-top:0.75rem">View</div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="tab active" id="view-games" style="padding:5px 10px;border-radius:5px;font-size:0.78rem;cursor:pointer;font-family:'Google Sans',sans-serif;color:var(--accent);background:rgba(167,139,250,0.08)" onclick="switchView('games')">Games</span>
+      <span class="tab" id="view-teams" style="padding:5px 10px;border-radius:5px;font-size:0.78rem;cursor:pointer;font-family:'Google Sans',sans-serif;color:var(--muted)" onclick="switchView('teams')">Teams</span>
+      <span class="tab" id="view-plays" style="padding:5px 10px;border-radius:5px;font-size:0.78rem;cursor:pointer;font-family:'Google Sans',sans-serif;color:var(--muted)" onclick="switchView('plays')">Plays</span>
+      <span class="tab" id="view-schedule" style="padding:5px 10px;border-radius:5px;font-size:0.78rem;cursor:pointer;font-family:'Google Sans',sans-serif;color:var(--muted)" onclick="switchView('schedule')">Schedule</span>
+    </div>
+
+    <div class="sidebar-label" style="margin-top:0.75rem">Quick filters</div>
+    <div class="quick-filter">
+      <span class="qf" onclick="applyQuick('extra')">Extra innings</span>
+      <span class="qf" onclick="applyQuick('nal')">NAL only</span>
+      <span class="qf" onclick="applyQuick('nnl')">NNL only</span>
+      <span class="qf" onclick="applyQuick('kc')">KC Monarchs</span>
+    </div>
+
+    <button class="btn" onclick="applyFilters()">Apply filters</button>
+
+    <div style="margin-top:auto;padding-top:1rem">
+      <div class="coverage-note">Coverage reflects Retrosheet data for the Negro Leagues (1935–1949). Game completeness varies significantly by year and circuit. Use the <code style="font-size:0.68rem;color:var(--accent)">league</code> param to scope to a specific sub-league.</div>
+    </div>
+  </aside>
+
+  <!-- CENTER -->
+  <main class="center">
+
+    <!-- Era context panel -->
+    <div class="panel" style="border-color:rgba(167,139,250,0.2);padding:1rem">
+      <div style="display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9;margin-bottom:4px">Negro Leagues Era <span style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--accent);font-weight:400;background:rgba(167,139,250,0.12);padding:2px 6px;border-radius:4px;margin-left:4px">nlg</span></div>
+          <div style="font-size:0.78rem;color:var(--muted);line-height:1.5">The Negro Leagues operated from the early 1900s with peak coverage here from 1935–1949. Multiple circuits ran concurrently — primarily the Negro American League (NAL) and Negro National League (NNL). Data is sourced from Retrosheet with known gaps.</div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            <span class="league-pill league-NAL">Negro American League (NAL)</span>
+            <span class="league-pill league-NNL">Negro National League (NNL)</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:1.5rem;flex-shrink:0">
+          <div style="text-align:center"><div style="font-family:'Google Sans',sans-serif;font-weight:700;font-size:1.4rem;color:var(--accent)">15</div><div style="font-size:0.65rem;color:var(--muted)">Seasons</div></div>
+          <div style="text-align:center"><div style="font-family:'Google Sans',sans-serif;font-weight:700;font-size:1.4rem;color:var(--accent)">30+</div><div style="font-size:0.65rem;color:var(--muted)">Teams</div></div>
+          <div style="text-align:center"><div style="font-family:'Google Sans',sans-serif;font-weight:700;font-size:1.4rem;color:var(--accent)">2</div><div style="font-size:0.65rem;color:var(--muted)">Circuits</div></div>
+          <div style="text-align:center"><div style="font-family:'Google Sans',sans-serif;font-weight:700;font-size:1.4rem;color:#f97316">variable</div><div style="font-size:0.65rem;color:var(--muted)">PBP coverage</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Games panel -->
+    <div class="panel" id="panelGames">
+      <div class="panel-label">
+        <span id="resultsLabel">Games — All seasons</span>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted)">GET /negroleagues/games</span>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table id="gamesTable">
+          <thead><tr>
+            <th>Date</th><th>Home</th><th>Away</th><th>Score</th><th>Inn</th><th>League</th><th>Season</th>
+          </tr></thead>
+          <tbody id="gamesBody"></tbody>
+        </table>
+      </div>
+
+      <div class="game-detail" id="gameDetail">
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em">Game detail</div>
+        <div class="score-row" id="scoreRow"></div>
+        <div class="meta-strip" id="metaStrip"></div>
+      </div>
+    </div>
+
+    <!-- Teams panel (hidden) -->
+    <div class="panel" id="panelTeams" style="display:none">
+      <div class="panel-label">
+        <span>Negro Leagues Teams</span>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted)">GET /negroleagues/teams</span>
+      </div>
+      <div style="margin-bottom:0.75rem;display:flex;gap:0.5rem;align-items:center">
+        <span style="font-size:0.75rem;color:var(--muted)">Filter by league:</span>
+        <span class="league-pill league-NAL" style="cursor:pointer;padding:3px 10px" onclick="filterTeams('NAL')">NAL</span>
+        <span class="league-pill league-NNL" style="cursor:pointer;padding:3px 10px" onclick="filterTeams('NNL')">NNL</span>
+        <span class="league-pill league-other" style="cursor:pointer;padding:3px 10px" onclick="filterTeams('')">All</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Team ID</th><th>Name</th><th>City</th><th>League</th><th>Active years</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><span class="team-chip">KC</span></td><td>Kansas City Monarchs</td><td>Kansas City, MO</td><td><span class="league-pill league-NAL">NAL</span></td><td>1935–1949</td></tr>
+            <tr><td><span class="team-chip">HOM</span></td><td>Homestead Grays</td><td>Pittsburgh/Washington</td><td><span class="league-pill league-NNL">NNL</span></td><td>1935–1948</td></tr>
+            <tr><td><span class="team-chip">BAE</span></td><td>Baltimore Elite Giants</td><td>Baltimore, MD</td><td><span class="league-pill league-NNL">NNL</span></td><td>1938–1949</td></tr>
+            <tr><td><span class="team-chip">CLB</span></td><td>Cleveland Buckeyes</td><td>Cleveland, OH</td><td><span class="league-pill league-NAL">NAL</span></td><td>1943–1949</td></tr>
+            <tr><td><span class="team-chip">NWA</span></td><td>Newark Eagles</td><td>Newark, NJ</td><td><span class="league-pill league-NNL">NNL</span></td><td>1936–1948</td></tr>
+            <tr><td><span class="team-chip">MEM</span></td><td>Memphis Red Sox</td><td>Memphis, TN</td><td><span class="league-pill league-NAL">NAL</span></td><td>1935–1949</td></tr>
+            <tr><td><span class="team-chip">PHI</span></td><td>Philadelphia Stars</td><td>Philadelphia, PA</td><td><span class="league-pill league-NNL">NNL</span></td><td>1934–1949</td></tr>
+            <tr><td><span class="team-chip">NYB</span></td><td>New York Black Yankees</td><td>New York, NY</td><td><span class="league-pill league-NNL">NNL</span></td><td>1936–1948</td></tr>
+            <tr><td colspan="5" style="color:var(--muted);font-size:0.72rem;font-style:italic">… additional teams available via ?league=NAL or ?league=NNL …</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Plays panel (hidden) -->
+    <div class="panel" id="panelPlays" style="display:none">
+      <div class="panel-label">
+        <span>Play-by-Play Explorer</span>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted)">GET /negroleagues/plays</span>
+      </div>
+      <div style="background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.25);border-radius:6px;padding:0.75rem;margin-bottom:1rem;font-size:0.78rem;color:#fdba74;line-height:1.5">
+        <strong>Coverage caveat:</strong> Negro Leagues play-by-play data is heavily fragmented. Many games have no event data. Batter and pitcher IDs may not align with other datasets. Use <code style="font-size:0.7rem">league</code> param to restrict to a specific circuit.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">
+        <div>
+          <label class="fl">Batter ID</label>
+          <input type="text" placeholder="e.g. paigesa01" />
+        </div>
+        <div>
+          <label class="fl">Pitcher ID</label>
+          <input type="text" placeholder="e.g. gibsojos01" />
+        </div>
+        <div>
+          <label class="fl">Team (batting)</label>
+          <select><option value="">Any</option><option>KC</option><option>HOM</option><option>BAE</option><option>NWA</option></select>
+        </div>
+        <div>
+          <label class="fl">Sub-league</label>
+          <select id="playsLeague">
+            <option value="">Any</option>
+            <option>NAL</option>
+            <option>NNL</option>
+          </select>
+        </div>
+        <div>
+          <label class="fl">Date from (YYYYMMDD)</label>
+          <input type="text" placeholder="19400501" />
+        </div>
+        <div>
+          <label class="fl">Date to (YYYYMMDD)</label>
+          <input type="text" placeholder="19401010" />
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Game ID</th><th>Inning</th><th>Batter</th><th>Pitcher</th><th>League</th><th>Event</th><th>Runs</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td style="font-family:'Google Sans Code',monospace;font-size:0.7rem">KC194107040</td><td>1T</td><td>paigesa01</td><td>gibsojos01</td>
+              <td><span class="league-pill league-NAL">NAL</span></td><td>Strikeout</td><td>0</td>
+            </tr>
+            <tr>
+              <td style="font-family:'Google Sans Code',monospace;font-size:0.7rem">HOM194207120</td><td>3B</td><td>gibsojos01</td><td>bradlbr01</td>
+              <td><span class="league-pill league-NNL">NNL</span></td><td>HR</td><td>2</td>
+            </tr>
+            <tr>
+              <td style="font-family:'Google Sans Code',monospace;font-size:0.7rem;color:var(--muted);font-style:italic" colspan="7">— event sequence gap (Retrosheet partial) —</td>
+            </tr>
+            <tr>
+              <td style="font-family:'Google Sans Code',monospace;font-size:0.7rem">NWA194606010</td><td>5T</td><td>dobylar01</td><td>trentth01</td>
+              <td><span class="league-pill league-NNL">NNL</span></td><td>Single</td><td>1</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Schedule panel (hidden) -->
+    <div class="panel" id="panelSchedule" style="display:none">
+      <div class="panel-label">
+        <span>Season Schedule</span>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted)">GET /negroleagues/seasons/{year}/schedule</span>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+        <span style="font-size:0.78rem;color:var(--muted)">Season:</span>
+        <select id="schedYear" style="width:auto;padding:4px 8px" onchange="loadSchedule(this.value)">
+          <option value="">Select…</option>
+          <option>1940</option><option>1942</option><option>1945</option><option>1947</option><option>1948</option>
+        </select>
+        <span style="font-size:0.78rem;color:var(--muted)">League:</span>
+        <select id="schedLeague" style="width:auto;padding:4px 8px" onchange="loadSchedule(document.getElementById('schedYear').value)">
+          <option value="">All</option>
+          <option>NAL</option>
+          <option>NNL</option>
+        </select>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);margin-left:auto">Paginated · 100/page</span>
+      </div>
+      <div id="scheduleContent">
+        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem">
+          Select a season above. Team-level schedule also available via
+          <code style="font-size:0.7rem;color:var(--accent)">/negroleagues/seasons/{year}/teams/{team_id}/games</code>
+          with optional <code style="font-size:0.7rem;color:var(--accent)">?league=NAL</code>.
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Date</th><th>Home</th><th>Away</th><th>Score</th><th>Inn</th><th>League</th></tr></thead>
+            <tbody>
+              <tr><td>1942-05-10</td><td>KC</td><td>CLB</td><td><b>6–2</b></td><td>9</td><td><span class="league-pill league-NAL">NAL</span></td></tr>
+              <tr><td>1942-05-10</td><td>HOM</td><td>NWA</td><td><b>4–1</b></td><td>9</td><td><span class="league-pill league-NNL">NNL</span></td></tr>
+              <tr><td>1942-05-17</td><td>MEM</td><td>KC</td><td><b>3–7</b></td><td>9</td><td><span class="league-pill league-NAL">NAL</span></td></tr>
+              <tr><td>1942-05-17</td><td>BAE</td><td>PHI</td><td><b>5–2</b></td><td>9</td><td><span class="league-pill league-NNL">NNL</span></td></tr>
+              <tr><td colspan="6" style="color:var(--muted);font-size:0.72rem;font-style:italic">… additional games — coverage may be incomplete for this season …</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Games per season chart -->
+    <div class="panel">
+      <div class="panel-label">Games recorded per season (NAL + NNL combined)</div>
+      <canvas id="gamesPerSeasonChart" height="90"></canvas>
+    </div>
+
+  </main>
+
+  <!-- API PANEL -->
+  <aside class="api-panel">
+    <div>
+      <div class="ap-label">Endpoint</div>
+      <div class="api-url" id="endpointDisplay">GET /negroleagues/games</div>
+    </div>
+    <div>
+      <div class="ap-label">Full URL</div>
+      <div class="api-url" id="urlDisplay">https://api.baseball.example/v1/negroleagues/games</div>
+      <button class="copy-btn" onclick="copyText('urlDisplay')">copy URL</button>
+    </div>
+    <div>
+      <div class="ap-label">curl</div>
+      <div class="curl-block" id="curlDisplay">curl -s \
+  "https://api.baseball.example/\
+v1/negroleagues/games" \
+  | jq .</div>
+      <button class="copy-btn" onclick="copyText('curlDisplay')">copy curl</button>
+    </div>
+    <div>
+      <div class="ap-label">Sample response</div>
+      <div class="json-preview"><span style="color:#93c5fd">"data"</span>: [
+  {
+    <span style="color:#93c5fd">"game_id"</span>: <span style="color:#86efac">"KC194107040"</span>,
+    <span style="color:#93c5fd">"date"</span>: <span style="color:#86efac">"1941-07-04"</span>,
+    <span style="color:#93c5fd">"season"</span>: <span style="color:#fde68a">1941</span>,
+    <span style="color:#93c5fd">"home_team"</span>: <span style="color:#86efac">"KC"</span>,
+    <span style="color:#93c5fd">"away_team"</span>: <span style="color:#86efac">"MEM"</span>,
+    <span style="color:#93c5fd">"home_score"</span>: <span style="color:#fde68a">8</span>,
+    <span style="color:#93c5fd">"away_score"</span>: <span style="color:#fde68a">3</span>,
+    <span style="color:#93c5fd">"innings"</span>: <span style="color:#fde68a">9</span>,
+    <span style="color:#93c5fd">"league"</span>: <span style="color:#86efac">"NAL"</span>
+  }
+],
+<span style="color:#93c5fd">"total"</span>: <span style="color:#fde68a">4210</span>,
+<span style="color:#93c5fd">"page"</span>: <span style="color:#fde68a">1</span>,
+<span style="color:#93c5fd">"per_page"</span>: <span style="color:#fde68a">50</span></div>
+    </div>
+    <div>
+      <div class="ap-label">Available endpoints</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--accent);padding:3px 6px;background:rgba(167,139,250,0.07);border-radius:4px;cursor:pointer" onclick="setEndpoint('games')">GET /negroleagues/games</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 6px;background:var(--surface2);border-radius:4px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'" onclick="setEndpoint('teams')">GET /negroleagues/teams</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 6px;background:var(--surface2);border-radius:4px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'" onclick="setEndpoint('plays')">GET /negroleagues/plays</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 6px;background:var(--surface2);border-radius:4px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'" onclick="setEndpoint('schedule')">GET /negroleagues/seasons/{year}/schedule</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 6px;background:var(--surface2);border-radius:4px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'" onclick="setEndpoint('teamgames')">GET /negroleagues/seasons/{year}/teams/{id}/games</div>
+      </div>
+    </div>
+    <div>
+      <div class="ap-label">Sub-league param</div>
+      <div style="background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;line-height:1.8">
+        <div><span style="color:#93c5fd">?league=</span><span style="color:#86efac">NAL</span> <span style="color:var(--muted)">— Negro American League</span></div>
+        <div><span style="color:#93c5fd">?league=</span><span style="color:#86efac">NNL</span> <span style="color:var(--muted)">— Negro National League</span></div>
+        <div style="color:var(--muted);margin-top:4px">Omit to return all circuits</div>
+      </div>
+    </div>
+    <div style="flex:1;min-height:0.5rem"></div>
+    <div style="background:rgba(167,139,250,0.05);border:1px solid rgba(167,139,250,0.15);border-radius:6px;padding:0.75rem">
+      <div style="font-family:'Google Sans Code',monospace;font-size:0.6rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Era context</div>
+      <div style="font-size:0.72rem;color:var(--muted);line-height:1.5">Negro Leagues data is <strong style="color:var(--text)">not merged</strong> with the main <code style="font-size:0.68rem;color:var(--accent)">/games</code> routes. Cross-era comparisons with integrated baseball (post-1947) should note the distinct data provenance.</div>
+    </div>
+  </aside>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+<script>
+  const games = [
+    {date:'1940-05-12',home:'KC',away:'MEM',hs:7,as:2,inn:9,league:'NAL',season:1940},
+    {date:'1941-07-04',home:'KC',away:'MEM',hs:8,as:3,inn:9,league:'NAL',season:1941},
+    {date:'1942-05-10',home:'HOM',away:'NWA',hs:4,as:1,inn:9,league:'NNL',season:1942},
+    {date:'1942-06-15',home:'BAE',away:'PHI',hs:3,as:3,inn:12,league:'NNL',season:1942},
+    {date:'1944-08-20',home:'CLB',away:'KC',hs:2,as:5,inn:9,league:'NAL',season:1944},
+    {date:'1946-07-07',home:'NWA',away:'HOM',hs:6,as:1,inn:9,league:'NNL',season:1946},
+    {date:'1947-09-14',home:'KC',away:'CLB',hs:9,as:4,inn:9,league:'NAL',season:1947},
+    {date:'1948-08-01',home:'HOM',away:'BAE',hs:5,as:2,inn:9,league:'NNL',season:1948},
+  ];
+
+  function renderGames(list) {
+    const tb = document.getElementById('gamesBody');
+    tb.innerHTML = '';
+    if (!list.length) {
+      tb.innerHTML = '<tr><td colspan="7" style="color:var(--muted);font-style:italic">No games match the current filters.</td></tr>';
+      return;
+    }
+    list.forEach(g => {
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      const lClass = g.league === 'NAL' ? 'league-NAL' : 'league-NNL';
+      tr.innerHTML = `<td>${g.date}</td><td>${g.home}</td><td>${g.away}</td><td><b>${g.hs}–${g.as}</b></td><td>${g.inn}</td><td><span class="league-pill ${lClass}">${g.league}</span></td><td>${g.season}</td>`;
+      tr.onclick = () => showDetail(g, tr);
+      tb.appendChild(tr);
+    });
+  }
+  renderGames(games);
+
+  function showDetail(g, tr) {
+    document.querySelectorAll('tr.selected').forEach(r => r.classList.remove('selected'));
+    tr.classList.add('selected');
+    document.getElementById('scoreRow').innerHTML = `
+      <span class="score-team">${g.away}</span>
+      <span class="score-num">${g.as}</span>
+      <span class="score-sep">@</span>
+      <span class="score-num">${g.hs}</span>
+      <span class="score-team">${g.home}</span>
+    `;
+    const lClass = g.league === 'NAL' ? 'league-NAL' : 'league-NNL';
+    document.getElementById('metaStrip').innerHTML = `
+      <div class="mi"><div class="mi-val">${g.date}</div><div class="mi-label">Date</div></div>
+      <div class="mi"><div class="mi-val"><span class="league-pill ${lClass}">${g.league}</span></div><div class="mi-label">League</div></div>
+      <div class="mi"><div class="mi-val">${g.inn}</div><div class="mi-label">Innings</div></div>
+      <div class="mi"><div class="mi-val">${g.season}</div><div class="mi-label">Season</div></div>
+    `;
+    document.getElementById('gameDetail').classList.add('visible');
+    const id = `${g.home}${g.date.replace(/-/g,'')}0`;
+    document.getElementById('endpointDisplay').textContent = `GET /negroleagues/games → detail: /games/${id}`;
+    document.getElementById('urlDisplay').textContent = `https://api.baseball.example/v1/games/${id}`;
+    document.getElementById('curlDisplay').textContent = `curl -s \\\n  "https://api.baseball.example/v1/games/${id}" \\\n  | jq .`;
+  }
+
+  let activeLeague = '';
+
+  function applyFilters() {
+    const season = document.getElementById('fSeason').value;
+    const home = document.getElementById('fHome').value;
+    const away = document.getElementById('fAway').value;
+    let filtered = games;
+    if (season) filtered = filtered.filter(g => g.season == season);
+    if (home) filtered = filtered.filter(g => g.home === home);
+    if (away) filtered = filtered.filter(g => g.away === away);
+    if (activeLeague) filtered = filtered.filter(g => g.league === activeLeague);
+    renderGames(filtered);
+    const params = [];
+    if (season) params.push(`season=${season}`);
+    if (home) params.push(`home_team=${home}`);
+    if (away) params.push(`away_team=${away}`);
+    if (activeLeague) params.push(`league=${activeLeague}`);
+    const qs = params.length ? '?' + params.join('&') : '';
+    document.getElementById('endpointDisplay').textContent = `GET /negroleagues/games${qs}`;
+    document.getElementById('urlDisplay').textContent = `https://api.baseball.example/v1/negroleagues/games${qs}`;
+    document.getElementById('curlDisplay').textContent = `curl -s \\\n  "https://api.baseball.example/v1/negroleagues/games${qs}" \\\n  | jq .`;
+    document.getElementById('resultsLabel').textContent = `Games — ${filtered.length} results${season ? ' · ' + season : ''}${activeLeague ? ' · ' + activeLeague : ''}`;
+  }
+
+  function selectLeague(l) { activeLeague = l; applyFilters(); }
+  function filterTeams(l) { /* visual only for design */ }
+
+  function applyQuick(type) {
+    if (type === 'extra') renderGames(games.filter(g => g.inn > 9));
+    if (type === 'nal') { activeLeague = 'NAL'; applyFilters(); }
+    if (type === 'nnl') { activeLeague = 'NNL'; applyFilters(); }
+    if (type === 'kc') { document.getElementById('fHome').value = 'KC'; applyFilters(); }
+  }
+
+  function switchView(view) {
+    ['games','teams','plays','schedule'].forEach(v => {
+      const tab = document.getElementById('view-' + v);
+      const panel = document.getElementById('panel' + v.charAt(0).toUpperCase() + v.slice(1));
+      const isActive = v === view;
+      tab.style.color = isActive ? 'var(--accent)' : 'var(--muted)';
+      tab.style.background = isActive ? 'rgba(167,139,250,0.08)' : 'transparent';
+      panel.style.display = isActive ? 'block' : 'none';
+    });
+    const endpoints = {
+      games: 'GET /negroleagues/games',
+      teams: 'GET /negroleagues/teams',
+      plays: 'GET /negroleagues/plays',
+      schedule: 'GET /negroleagues/seasons/{year}/schedule',
+    };
+    const urls = {
+      games: 'https://api.baseball.example/v1/negroleagues/games',
+      teams: 'https://api.baseball.example/v1/negroleagues/teams',
+      plays: 'https://api.baseball.example/v1/negroleagues/plays',
+      schedule: 'https://api.baseball.example/v1/negroleagues/seasons/1942/schedule',
+    };
+    document.getElementById('endpointDisplay').textContent = endpoints[view];
+    document.getElementById('urlDisplay').textContent = urls[view];
+    document.getElementById('curlDisplay').textContent = `curl -s \\\n  "${urls[view]}" \\\n  | jq .`;
+  }
+
+  function setEndpoint(view) { switchView(view); }
+
+  function loadSchedule(year) {
+    if (!year) return;
+    const league = document.getElementById('schedLeague').value;
+    const qs = league ? `?league=${league}` : '';
+    document.getElementById('endpointDisplay').textContent = `GET /negroleagues/seasons/${year}/schedule${qs}`;
+    document.getElementById('urlDisplay').textContent = `https://api.baseball.example/v1/negroleagues/seasons/${year}/schedule${qs}`;
+    document.getElementById('curlDisplay').textContent = `curl -s \\\n  "https://api.baseball.example/v1/negroleagues/seasons/${year}/schedule${qs}" \\\n  | jq .`;
+  }
+
+  function copyText(id) {
+    navigator.clipboard.writeText(document.getElementById(id).textContent).catch(() => {});
+  }
+
+  // Games per season chart (approximate recorded game counts)
+  const ctx = document.getElementById('gamesPerSeasonChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['1935','1936','1937','1938','1939','1940','1941','1942','1943','1944','1945','1946','1947','1948','1949'],
+      datasets: [
+        {label:'NAL', data:[120,135,148,140,155,162,170,158,120,115,142,168,175,180,160], backgroundColor:'rgba(59,130,246,0.5)', borderRadius:2},
+        {label:'NNL', data:[100,118,132,128,140,145,155,148,90,88,125,152,158,142,0], backgroundColor:'rgba(16,185,129,0.5)', borderRadius:2},
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins:{legend:{labels:{color:'#6b7280',font:{size:10}}}},
+      scales:{
+        x:{stacked:true,ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}},
+        y:{stacked:true,ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'},title:{display:true,text:'Games recorded',color:'#6b7280',font:{size:9}}}
+      }
+    }
+  });
+</script>
+</body>
+</html>

@@ -260,10 +260,122 @@ Ref: `docs/designs/data-sources.html`
 
 ## League-Specific Views
 
-- [ ] Add explicit UI entry points for:
-  - `/api/v1/federalleague/games`, `/teams`, `/plays`, `/seasons/{year}/schedule`, `/seasons/{year}/teams/{team_id}/games`
-  - `/api/v1/negroleagues/games`, `/teams`, `/plays`, `/seasons/{year}/schedule`, `/seasons/{year}/teams/{team_id}/games`
-- [ ] Show these as first-class historical contexts, not hidden filters.
+Ref: `docs/designs/federal-league.html`, `docs/designs/negro-leagues.html`
+
+Both leagues get their own SvelteKit route families (`/federal-league` and `/negro-leagues`) that share a common page structure and a set of dedicated components. Neither is a filtered view of the main `/games` or `/teams` routes — they are isolated historical contexts backed by their own API families.
+
+### Shared: `LeagueContextBanner`
+
+- [ ] Create `LeagueContextBanner` component:
+  - Full-width sub-header strip rendered below the site nav on league-specific pages.
+  - Slots: era chip (e.g. `fed · 1914–1915`), short descriptor text, one or more caveat pills.
+  - Caveat pill uses orange accent and warns of partial play-by-play coverage.
+  - Accept props: `era` (short code), `years` (string), `description`, `caveats: string[]`.
+  - Used on both `/federal-league` and `/negro-leagues` pages.
+
+### Shared: `LeagueEraPanel`
+
+- [ ] Create `LeagueEraPanel` component:
+  - Top-of-center-pane summary card.
+  - Shows: era name + era chip badge, prose description, and a row of quick-stats (teams count, seasons count, game count, PBP coverage quality indicator).
+  - Coverage quality indicator renders as a string (`partial` / `variable`) in orange when data is incomplete.
+  - Accept props: `name`, `eraCode`, `years`, `description`, `stats: {teams, seasons, games, coverageLabel}`.
+
+### Shared: `LeagueCoverageCaveat`
+
+- [ ] Create `LeagueCoverageCaveat` component:
+  - Orange-bordered inline callout block (left border accent, muted background).
+  - Used above the Plays view to warn that play-by-play is fragmentary for these eras.
+  - Accept props: `league` (`'Federal League' | 'Negro Leagues'`), optional `message` override.
+  - Reuses the same visual pattern as the existing global era disclaimer component.
+
+### Shared: `LeagueTeamChipGrid`
+
+- [ ] Create `LeagueTeamChipGrid` component:
+  - Compact wrapping grid of team ID chips rendered in the sidebar.
+  - Each chip is a small pill styled with the page's era accent color.
+  - Clicking a chip sets the `home_team` filter and triggers a results reload.
+  - Accept props: `teams: { id: string, city?: string }[]`, `onSelect: (id: string) => void`.
+  - Used in both league sidebars.
+
+### Negro Leagues (`/negro-leagues`)
+
+- [ ] Add SvelteKit route `/negro-leagues` with three-column layout.
+- [ ] Shared: `SubLeaguePillGroup` component:
+  - Segmented control rendering NAL and NNL as distinct colored pills (NAL blue, NNL green).
+  - Selecting a pill sets `?league=NAL` or `?league=NNL` query param on all fetch calls.
+  - An "All" option clears the param.
+  - Used in sidebar and within the Teams view filter row.
+- [ ] Sidebar:
+  - `SubLeaguePillGroup` at top.
+  - `LeagueTeamChipGrid` sourced from `GET /api/v1/negroleagues/teams`.
+  - Season select: full range 1935–1949.
+  - Home team and away team selects.
+  - View switcher (Games / Teams / Plays / Schedule).
+  - Quick-filter chips: Extra innings, NAL only, NNL only, KC Monarchs.
+  - Apply filters button.
+  - `LeagueCoverageCaveat` pinned to sidebar bottom.
+- [ ] Center — Games view (default):
+  - `LeagueEraPanel` at top.
+  - Results table from `GET /api/v1/negroleagues/games` with `league` param applied (columns: Date, Home, Away, Score, Inn, League pill, Season).
+  - League column renders `SubLeaguePill` (NAL blue / NNL green) per row.
+  - Inline game detail on row click.
+  - Pagination.
+- [ ] Center — Teams view:
+  - `SubLeaguePillGroup` filter row above table.
+  - Table from `GET /api/v1/negroleagues/teams?league=...` (columns: Team ID chip, Name, City, League pill, Active years).
+- [ ] Center — Plays view:
+  - `LeagueCoverageCaveat` at top.
+  - Batter ID, pitcher ID, team, `SubLeaguePillGroup`, date-range form mapping to `GET /api/v1/negroleagues/plays`.
+  - Results table with League pill column.
+  - Inline gap indicator row for partial sequences.
+- [ ] Center — Schedule view:
+  - Season select (1935–1949) and `SubLeaguePillGroup` side-by-side.
+  - Fetches `GET /api/v1/negroleagues/seasons/{year}/schedule?league=...`.
+  - Results table with League pill column.
+  - Note linking to team-scoped endpoint: `GET /api/v1/negroleagues/seasons/{year}/teams/{team_id}/games`.
+  - Pagination.
+- [ ] Center — Games-per-season chart:
+  - Stacked bar chart (Chart.js) of recorded games per season, NAL and NNL stacked.
+  - Always visible below the active view to communicate coverage variability at a glance.
+- [ ] `ApiPanel` (right column): reflects active endpoint + league param as URL, curl, and sample JSON. Includes sub-league param reference block (NAL / NNL / omit).
+
+### Federal League (`/federal-league`)
+
+- [ ] Add SvelteKit route `/federal-league` with three-column layout (sidebar, center, API panel).
+- [ ] Sidebar:
+  - `LeagueTeamChipGrid` with the 8 Federal League franchises sourced from `GET /api/v1/federalleague/teams`.
+  - Season select: 1914 / 1915 / All.
+  - Home team and away team selects populated from teams list.
+  - View switcher (Games / Teams / Plays / Schedule) as sidebar tab group.
+  - Quick-filter chips: Extra innings, Shutouts, CHF home.
+  - Apply filters button.
+  - `LeagueCoverageCaveat` pinned to sidebar bottom.
+- [ ] Center — Games view (default):
+  - `LeagueEraPanel` at top.
+  - Sortable results table from `GET /api/v1/federalleague/games` (columns: Date, Home, Away, Score, Inn, Park, Season).
+  - Clicking a row expands an inline game detail strip (score, park, innings, season).
+  - Pagination via `Pagination` component.
+- [ ] Center — Teams view:
+  - Table from `GET /api/v1/federalleague/teams` (columns: Team ID chip, City, Nickname, Seasons, W, L, PCT).
+- [ ] Center — Plays view:
+  - `LeagueCoverageCaveat` at top.
+  - Batter ID, pitcher ID, team, date-range filter form mapping to `GET /api/v1/federalleague/plays` params.
+  - Results table (columns: Game ID, Inning, Batter, Pitcher, Event, Runs).
+  - Inline gap indicator row when event sequence is known-partial.
+- [ ] Center — Schedule view:
+  - Season selector buttons (1914 / 1915) that fetch `GET /api/v1/federalleague/seasons/{year}/schedule`.
+  - Results table (columns: Date, Home, Away, Score, Inn, Park).
+  - Note below table linking to team-scoped schedule endpoint: `GET /api/v1/federalleague/seasons/{year}/teams/{team_id}/games`.
+  - Pagination.
+- [ ] Center — Standings chart:
+  - Bar chart (Chart.js) showing wins per team grouped by season (1914 vs 1915), always visible below the active view.
+- [ ] `ApiPanel` (right column): reflects active endpoint + params as URL, curl, and sample JSON response shape.
+
+### Navigation
+
+- [ ] Add "Federal League" and "Negro Leagues" links to the top-level app nav (`+layout.svelte`).
+- [ ] Both routes listed under a "Historical Leagues" group or divider in the nav.
 
 ## Live & Current-Season Data
 

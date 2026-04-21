@@ -15,6 +15,7 @@
   <header class="site-header">
     <a href="index.html" class="logo">Baseball API</a>
     <span class="badge">design hub</span>
+    <a class='badge' href="mobile/index.html">Mobile →</a>
     <nav class="nav-links">
       <a href="home.html">Home</a>
       <a href="players.html">Players</a>
@@ -23,6 +24,8 @@
       <a href="seasons.html">Seasons</a>
       <a href="leaders.html">Leaders</a>
       <a href="compare.html">Compare</a>
+      <a href="federal-league.html">Fed League</a>
+      <a href="negro-leagues.html">Negro Leagues</a>
       <a href="data-sources.html">Data</a>
       <a href="docs.html">Docs</a>
     </nav>
@@ -142,6 +145,35 @@
 
     </div>
 
+    <div class="section-label">League-Specific Historical Views</div>
+
+    <div class="card-grid">
+
+      <a href="federal-league.html" class="page-card" style="border-color:rgba(245,158,11,0.2)">
+        <div class="card-icon" style="color:#f59e0b">⚑</div>
+        <div class="card-title">Federal League <span class="card-arrow">↗</span></div>
+        <div class="card-desc">First-class view of the 1914–1915 Federal League. Browse games, teams, play-by-play, and season schedules via the dedicated <code>/federalleague/*</code> API family. Includes era context, partial coverage caveats, and API panel.</div>
+        <div class="card-tags">
+          <span class="tag" style="color:#f59e0b;border-color:rgba(245,158,11,0.3)">/federalleague/games</span>
+          <span class="tag" style="color:#f59e0b;border-color:rgba(245,158,11,0.3)">/federalleague/teams</span>
+          <span class="tag" style="color:#f59e0b;border-color:rgba(245,158,11,0.3)">fed · 1914–1915</span>
+        </div>
+      </a>
+
+      <a href="negro-leagues.html" class="page-card" style="border-color:rgba(167,139,250,0.2)">
+        <div class="card-icon" style="color:#a78bfa">◈</div>
+        <div class="card-title">Negro Leagues <span class="card-arrow">↗</span></div>
+        <div class="card-desc">First-class view of the Negro Leagues (1935–1949). Browse NAL/NNL games, teams, plays, and schedules via <code>/negroleagues/*</code>. Includes sub-league filtering, era context, variable-coverage caveats, and API panel.</div>
+        <div class="card-tags">
+          <span class="tag" style="color:#a78bfa;border-color:rgba(167,139,250,0.3)">/negroleagues/games</span>
+          <span class="tag" style="color:#93c5fd;border-color:rgba(59,130,246,0.3)">NAL</span>
+          <span class="tag" style="color:#6ee7b7;border-color:rgba(16,185,129,0.3)">NNL</span>
+          <span class="tag" style="color:#a78bfa;border-color:rgba(167,139,250,0.3)">nlg · 1935–1949</span>
+        </div>
+      </a>
+
+    </div>
+
     <div class="section-label">Live &amp; Current Season</div>
 
     <div class="card-grid">
@@ -196,7 +228,7 @@
 
     <div class="status-bar">
       <div class="stat-item">
-        <div class="stat-value">9</div>
+        <div class="stat-value">11</div>
         <div class="stat-label">Screens</div>
       </div>
       <div class="divider"></div>

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Federal League — Baseball API Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    body.page-federal {--bg:#0d0f13;--surface:#13161c;--surface2:#1a1e27;--border:#252934;--text:#e2e8f0;--muted:#6b7280;--accent:#f59e0b;--accent2:#10b981;--era:#f59e0b}
+    body.page-federal * {box-sizing:border-box;margin:0;padding:0}
+    body.page-federal {background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+    body.page-federal h1,body.page-federal h2,body.page-federal h3 {font-family:'Google Sans',sans-serif}
+    body.page-federal code,body.page-federal pre {font-family:'Google Sans Code',monospace}
+    body.page-federal .site-header {border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:56px;background:var(--surface)}
+    body.page-federal .logo {font-family:'Google Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none}
+    body.page-federal .badge {font-family:'Google Sans Code',monospace;font-size:0.7rem;background:rgba(245,158,11,0.15);color:var(--accent);padding:2px 8px;border-radius:4px;border:1px solid rgba(245,158,11,0.3)}
+    body.page-federal .nav-links {margin-left:auto;display:flex;gap:0.25rem}
+    body.page-federal .nav-links a {font-size:0.8rem;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:4px;transition:color 0.15s,background 0.15s}
+    body.page-federal .nav-links a:hover,body.page-federal .nav-links a.active {color:var(--text);background:var(--border)}
+    body.page-federal .context-banner {background:rgba(245,158,11,0.07);border-bottom:1px solid rgba(245,158,11,0.2);padding:0.6rem 2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    body.page-federal .cb-era {font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--accent);background:rgba(245,158,11,0.12);padding:2px 8px;border-radius:4px;border:1px solid rgba(245,158,11,0.25)}
+    body.page-federal .cb-text {font-size:0.78rem;color:var(--muted)}
+    body.page-federal .cb-caveat {font-size:0.7rem;color:#f97316;background:rgba(249,115,22,0.1);padding:2px 8px;border-radius:4px;border:1px solid rgba(249,115,22,0.2)}
+    body.page-federal .layout {display:grid;grid-template-columns:260px 1fr 300px;height:calc(100vh - 56px - 42px)}
+    body.page-federal .sidebar {border-right:1px solid var(--border);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:0.5rem;background:var(--surface)}
+    body.page-federal .center {overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+    body.page-federal .api-panel {border-left:1px solid var(--border);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem;background:var(--surface)}
+    body.page-federal .sidebar-label {font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)}
+    body.page-federal .panel {background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
+    body.page-federal .panel-label {font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    body.page-federal label.fl {display:block;font-size:0.7rem;color:var(--muted);margin-bottom:3px;margin-top:6px}
+    body.page-federal select,body.page-federal input[type=text],body.page-federal input[type=number] {width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:0.75rem;font-family:'Inter',sans-serif;outline:none}
+    body.page-federal select:focus,body.page-federal input:focus {border-color:var(--accent)}
+    body.page-federal .btn {width:100%;margin-top:10px;padding:7px;background:var(--accent);color:#000;border:none;border-radius:6px;font-family:'Google Sans',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;transition:opacity 0.15s}
+    body.page-federal .btn:hover {opacity:0.85}
+    body.page-federal .btn-outline {background:transparent;color:var(--accent);border:1px solid rgba(245,158,11,0.4);border-radius:6px;padding:4px 10px;font-size:0.75rem;font-family:'Google Sans',sans-serif;cursor:pointer;transition:all 0.15s}
+    body.page-federal .btn-outline:hover {background:rgba(245,158,11,0.1)}
+    body.page-federal .quick-filter {display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.25rem}
+    body.page-federal .qf {font-size:0.7rem;padding:3px 9px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.15s}
+    body.page-federal .qf:hover,.qf.active {border-color:var(--accent);color:var(--accent)}
+    body.page-federal table {width:100%;border-collapse:collapse;font-size:0.8rem}
+    body.page-federal thead tr {border-bottom:1px solid var(--border)}
+    body.page-federal th {text-align:left;padding:0.4rem 0.6rem;font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.05em;font-weight:400}
+    body.page-federal td {padding:0.45rem 0.6rem;border-bottom:1px solid rgba(37,41,52,0.5)}
+    body.page-federal tr:hover td {background:var(--surface2)}
+    body.page-federal tr.selected td {background:rgba(245,158,11,0.06)}
+    body.page-federal .tab-row {display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:1rem}
+    body.page-federal .tab {font-size:0.78rem;padding:6px 14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;font-family:'Google Sans',sans-serif;margin-bottom:-1px}
+    body.page-federal .tab.active {color:var(--accent);border-bottom-color:var(--accent)}
+    body.page-federal .tab:hover:not(.active) {color:var(--text)}
+    body.page-federal .ap-label {font-family:'Google Sans Code',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem}
+    body.page-federal .api-url {font-family:'Google Sans Code',monospace;font-size:0.72rem;color:var(--accent);background:var(--surface2);padding:6px 8px;border-radius:5px;word-break:break-all;line-height:1.5}
+    body.page-federal .curl-block {background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;color:#a5b4fc;line-height:1.6;white-space:pre-wrap;word-break:break-all}
+    body.page-federal .json-preview {background:var(--surface2);border-radius:6px;padding:0.75rem;font-family:'Google Sans Code',monospace;font-size:0.68rem;line-height:1.7;white-space:pre;overflow-x:auto;max-height:220px;overflow-y:auto}
+    body.page-federal .copy-btn {font-family:'Google Sans Code',monospace;font-size:0.7rem;background:var(--border);color:var(--muted);border:none;padding:4px 10px;border-radius:4px;cursor:pointer;width:100%;text-align:center;margin-top:0.35rem;transition:color 0.15s}
+    body.page-federal .copy-btn:hover {color:var(--text)}
+    body.page-federal .team-chip {display:inline-flex;align-items:center;gap:4px;font-family:'Google Sans Code',monospace;font-size:0.7rem;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);color:var(--accent);padding:2px 7px;border-radius:4px;cursor:pointer;transition:all 0.15s}
+    body.page-federal .team-chip:hover {background:rgba(245,158,11,0.16)}
+    body.page-federal .coverage-note {font-size:0.72rem;color:var(--muted);background:var(--surface2);border-radius:6px;padding:0.6rem 0.8rem;border-left:3px solid rgba(245,158,11,0.4);line-height:1.5}
+    body.page-federal .game-detail {background:var(--surface2);border-radius:8px;padding:1rem;margin-top:0.75rem;display:none}
+    body.page-federal .game-detail.visible {display:block}
+    body.page-federal .score-row {display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:0.75rem}
+    body.page-federal .score-team {font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700}
+    body.page-federal .score-num {font-family:'Google Sans',sans-serif;font-size:1.8rem;font-weight:700;color:#f1f5f9}
+    body.page-federal .score-sep {font-size:1.2rem;color:var(--muted)}
+    body.page-federal .meta-strip {display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.5rem}
+    body.page-federal .mi {text-align:center}
+    body.page-federal .mi-val {font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.9rem;color:var(--text)}
+    body.page-federal .mi-label {font-size:0.65rem;color:var(--muted);margin-top:1px}
+  </style>
+</head>
+<body class="page-federal">
+
+<header class="site-header">
+  <a href="index.html" class="logo">Baseball API</a>
+  <span class="badge">fed era · 1914–1915</span>
+  <nav class="nav-links">
+    <a href="home.html">Home</a><a href="players.html">Players</a>
+    <a href="teams.html">Teams</a><a href="games.html">Games</a>
+    <a href="seasons.html">Seasons</a><a href="leaders.html">Leaders</a>
+    <a href="compare.html">Compare</a>
+    <a href="federal-league.html" class="active">Federal League</a>
+    <a href="negro-leagues.html">Negro Leagues</a>
+    <a href="data-sources.html">Data</a><a href="docs.html">Docs</a>
+  </nav>
+</header>
+
+<div class="context-banner">
+  <span class="cb-era">fed · 1914–1915</span>
+  <span class="cb-text">Federal League — third major league, two seasons (1914–1915). 8 teams, ~1,200 games.</span>
+  <span class="cb-caveat">⚠ Partial play-by-play coverage · crosswalk to Lahman/MLBAM limited</span>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Federal League</div>
+
+    <div style="margin-bottom:6px">
+      <div style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--accent);margin-bottom:8px">8 franchises · 2 seasons</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        <span class="team-chip" onclick="selectTeam('CHF')">CHF</span>
+        <span class="team-chip" onclick="selectTeam('BRF')">BRF</span>
+        <span class="team-chip" onclick="selectTeam('SLF')">SLF</span>
+        <span class="team-chip" onclick="selectTeam('PIF')">PIF</span>
+        <span class="team-chip" onclick="selectTeam('BSF')">BSF</span>
+        <span class="team-chip" onclick="selectTeam('BUF')">BUF</span>
+        <span class="team-chip" onclick="selectTeam('KCF')">KCF</span>
+        <span class="team-chip" onclick="selectTeam('INF')">INF</span>
+      </div>
+    </div>
+
+    <label class="fl">Season</label>
+    <select id="fSeason" onchange="updateEndpoints()">
+      <option value="">All (1914–1915)</option>
+      <option value="1914">1914</option>
+      <option value="1915">1915</option>
+    </select>
+
+    <label class="fl">Home team</label>
+    <select id="fHome" onchange="updateEndpoints()">
+      <option value="">Any</option>
+      <option>CHF</option><option>BRF</option><option>SLF</option><option>PIF</option>
+      <option>BSF</option><option>BUF</option><option>KCF</option><option>INF</option>
+    </select>
+
+    <label class="fl">Away team</label>
+    <select id="fAway" onchange="updateEndpoints()">
+      <option value="">Any</option>
+      <option>CHF</option><option>BRF</option><option>SLF</option><option>PIF</option>
+      <option>BSF</option><option>BUF</option><option>KCF</option><option>INF</option>
+    </select>
+
+    <div class="sidebar-label" style="margin-top:0.75rem">View</div>
+    <div class="tab-row" style="margin-bottom:0.5rem;border:none">
+      <span class="tab active" id="view-games" onclick="switchView('games')">Games</span>
+      <span class="tab" id="view-teams" onclick="switchView('teams')">Teams</span>
+      <span class="tab" id="view-plays" onclick="switchView('plays')">Plays</span>
+      <span class="tab" id="view-schedule" onclick="switchView('schedule')">Schedule</span>
+    </div>
+
+    <div class="sidebar-label" style="margin-top:0.25rem">Quick filters</div>
+    <div class="quick-filter">
+      <span class="qf" onclick="applyQuick('extra')">Extra innings</span>
+      <span class="qf" onclick="applyQuick('shutout')">Shutouts</span>
+      <span class="qf" onclick="applyQuick('chf')">CHF home</span>
+    </div>
+
+    <button class="btn" onclick="applyFilters()">Apply filters</button>
+
+    <div style="margin-top:auto;padding-top:1rem">
+      <div class="coverage-note">Federal League data is sourced from Retrosheet. Play-by-play coverage is partial — expect gaps in event sequences for some games.</div>
+    </div>
+  </aside>
+
+  <!-- CENTER -->
+  <main class="center">
+
+    <!-- Era context panel -->
+    <div class="panel" style="border-color:rgba(245,158,11,0.25);padding:1rem">
+      <div style="display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9;margin-bottom:4px">Federal League Era <span style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--accent);font-weight:400;background:rgba(245,158,11,0.12);padding:2px 6px;border-radius:4px;margin-left:4px">fed</span></div>
+          <div style="font-size:0.78rem;color:var(--muted);line-height:1.5">The Federal League operated as a rival major league for two seasons (1914–1915) before folding. Several franchises challenged the reserve clause and signed established stars from the AL and NL.</div>
+        </div>
+        <div style="display:flex;gap:1.5rem;flex-shrink:0">
+          <div style="text-align:center"><div style="font-family:'Google Sans',sans-serif;font-weight:700;font-size:1.4rem;color:var(--accent)">8</div><div style="font-size:0.65rem;color:var(--muted)">Teams</div></div>
+          <div style="text-align:center"><div style="font-family:'Google Sans',sans-serif;font-weight:700;font-size:1.4rem;color:var(--accent)">2</div><div style="font-size:0.65rem;color:var(--muted)">Seasons</div></div>
+          <div style="text-align:center"><div style="font-family:'Google Sans',sans-serif;font-weight:700;font-size:1.4rem;color:var(--accent)">~1.2k</div><div style="font-size:0.65rem;color:var(--muted)">Games</div></div>
+          <div style="text-align:center"><div style="font-family:'Google Sans',sans-serif;font-weight:700;font-size:1.4rem;color:#f97316">partial</div><div style="font-size:0.65rem;color:var(--muted)">PBP coverage</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs for center view -->
+    <div class="panel" id="panelGames">
+      <div class="panel-label">
+        <span id="resultsLabel">Games — All seasons</span>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted)">GET /federalleague/games</span>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table id="gamesTable">
+          <thead><tr>
+            <th>Date</th><th>Home</th><th>Away</th><th>Score</th><th>Inn</th><th>Park</th><th>Season</th>
+          </tr></thead>
+          <tbody id="gamesBody"></tbody>
+        </table>
+      </div>
+
+      <div class="game-detail" id="gameDetail">
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em">Game detail</div>
+        <div class="score-row" id="scoreRow"></div>
+        <div class="meta-strip" id="metaStrip"></div>
+      </div>
+    </div>
+
+    <!-- Teams panel (hidden by default) -->
+    <div class="panel" id="panelTeams" style="display:none">
+      <div class="panel-label">
+        <span>Federal League Teams</span>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted)">GET /federalleague/teams</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Team ID</th><th>City</th><th>Nickname</th><th>Seasons</th><th>W</th><th>L</th><th>PCT</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><span class="team-chip">CHF</span></td><td>Chicago</td><td>Chi-Feds / Whales</td><td>1914–1915</td><td>87</td><td>67</td><td>.565</td></tr>
+            <tr><td><span class="team-chip">BRF</span></td><td>Brooklyn</td><td>Tip-Tops</td><td>1914–1915</td><td>77</td><td>77</td><td>.500</td></tr>
+            <tr><td><span class="team-chip">SLF</span></td><td>St. Louis</td><td>Terriers</td><td>1914–1915</td><td>87</td><td>67</td><td>.565</td></tr>
+            <tr><td><span class="team-chip">PIF</span></td><td>Pittsburgh</td><td>Rebels</td><td>1914–1915</td><td>60</td><td>94</td><td>.390</td></tr>
+            <tr><td><span class="team-chip">BSF</span></td><td>Baltimore</td><td>Terrapins</td><td>1914–1915</td><td>84</td><td>70</td><td>.545</td></tr>
+            <tr><td><span class="team-chip">BUF</span></td><td>Buffalo</td><td>Blues/Buffeds</td><td>1914–1915</td><td>80</td><td>71</td><td>.530</td></tr>
+            <tr><td><span class="team-chip">KCF</span></td><td>Kansas City</td><td>Packers</td><td>1914–1915</td><td>67</td><td>84</td><td>.444</td></tr>
+            <tr><td><span class="team-chip">INF</span></td><td>Indianapolis / Newark</td><td>Hoosiers/Peppers</td><td>1914–1915</td><td>88</td><td>65</td><td>.575</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Plays panel (hidden by default) -->
+    <div class="panel" id="panelPlays" style="display:none">
+      <div class="panel-label">
+        <span>Play-by-Play Explorer</span>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted)">GET /federalleague/plays</span>
+      </div>
+      <div style="background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.25);border-radius:6px;padding:0.75rem;margin-bottom:1rem;font-size:0.78rem;color:#fdba74;line-height:1.5">
+        <strong>Coverage caveat:</strong> Federal League play-by-play data is sourced from Retrosheet and is incomplete for many games. Event sequences may have gaps. Pitch-level data is not available for this era.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">
+        <div>
+          <label class="fl">Batter ID</label>
+          <input type="text" placeholder="e.g. cobbtw01" />
+        </div>
+        <div>
+          <label class="fl">Pitcher ID</label>
+          <input type="text" placeholder="e.g. brownmo01" />
+        </div>
+        <div>
+          <label class="fl">Team (batting)</label>
+          <select><option value="">Any</option><option>CHF</option><option>BRF</option><option>SLF</option></select>
+        </div>
+        <div>
+          <label class="fl">Date range</label>
+          <input type="text" placeholder="19140501 – 19141010" />
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Game ID</th><th>Inning</th><th>Batter</th><th>Pitcher</th><th>Event</th><th>Runs</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="font-family:'Google Sans Code',monospace;font-size:0.7rem">CHF191404230</td><td>3T</td><td>tinkeji01</td><td>hendlcl01</td><td>Single</td><td>0</td></tr>
+            <tr><td style="font-family:'Google Sans Code',monospace;font-size:0.7rem">CHF191404230</td><td>3T</td><td>zeidfbi01</td><td>hendlcl01</td><td>HR</td><td>2</td></tr>
+            <tr><td style="font-family:'Google Sans Code',monospace;font-size:0.7rem">BRF191405010</td><td>1T</td><td>kauffal01</td><td>marqrn01</td><td>Walk</td><td>0</td></tr>
+            <tr><td style="font-family:'Google Sans Code',monospace;font-size:0.7rem;color:var(--muted);font-style:italic" colspan="6">— gaps in event sequence (Retrosheet partial) —</td></tr>
+            <tr><td style="font-family:'Google Sans Code',monospace;font-size:0.7rem">SLF191406150</td><td>7B</td><td>prattde01</td><td>cullmni01</td><td>GDP</td><td>0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Schedule panel (hidden by default) -->
+    <div class="panel" id="panelSchedule" style="display:none">
+      <div class="panel-label">
+        <span>Season Schedule</span>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted)">GET /federalleague/seasons/{year}/schedule</span>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+        <span style="font-size:0.78rem;color:var(--muted)">Season:</span>
+        <button class="btn-outline" onclick="loadSchedule(1914)" id="sch1914">1914</button>
+        <button class="btn-outline" onclick="loadSchedule(1915)" id="sch1915">1915</button>
+        <span style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);margin-left:auto">Paginated · 100/page</span>
+      </div>
+
+      <!-- Calendar-style month grid for 1914 -->
+      <div id="scheduleContent">
+        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem">Select a season to view schedule. Showing team-level view via <code style="font-size:0.7rem;color:var(--accent)">/federalleague/seasons/1914/teams/CHF/games</code> also available.</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Date</th><th>Home</th><th>Away</th><th>Score</th><th>Inn</th><th>Park</th></tr></thead>
+            <tbody id="scheduleBody">
+              <tr><td>1914-04-13</td><td>CHF</td><td>KCF</td><td><b>9–1</b></td><td>9</td><td>Weeghman Park</td></tr>
+              <tr><td>1914-04-13</td><td>BRF</td><td>BSF</td><td><b>2–7</b></td><td>9</td><td>Washington Park</td></tr>
+              <tr><td>1914-04-13</td><td>SLF</td><td>PIF</td><td><b>5–3</b></td><td>9</td><td>Handlan's Park</td></tr>
+              <tr><td>1914-04-13</td><td>INF</td><td>BUF</td><td><b>4–4</b></td><td>13</td><td>Federal League Park</td></tr>
+              <tr><td colspan="6" style="color:var(--muted);font-size:0.72rem;font-style:italic">… 598 more games in 1914 season …</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Season standings chart -->
+    <div class="panel">
+      <div class="panel-label">Final standings by season</div>
+      <canvas id="standingsChart" height="100"></canvas>
+    </div>
+
+  </main>
+
+  <!-- API PANEL -->
+  <aside class="api-panel">
+    <div>
+      <div class="ap-label">Endpoint</div>
+      <div class="api-url" id="endpointDisplay">GET /federalleague/games</div>
+    </div>
+    <div>
+      <div class="ap-label">Full URL</div>
+      <div class="api-url" id="urlDisplay">https://api.baseball.example/v1/federalleague/games</div>
+      <button class="copy-btn" onclick="copyText('urlDisplay')">copy URL</button>
+    </div>
+    <div>
+      <div class="ap-label">curl</div>
+      <div class="curl-block" id="curlDisplay">curl -s \
+  "https://api.baseball.example/\
+v1/federalleague/games" \
+  | jq .</div>
+      <button class="copy-btn" onclick="copyText('curlDisplay')">copy curl</button>
+    </div>
+    <div>
+      <div class="ap-label">Sample response</div>
+      <div class="json-preview"><span style="color:#93c5fd">"data"</span>: [
+  {
+    <span style="color:#93c5fd">"game_id"</span>: <span style="color:#86efac">"CHF191404230"</span>,
+    <span style="color:#93c5fd">"date"</span>: <span style="color:#86efac">"1914-04-23"</span>,
+    <span style="color:#93c5fd">"season"</span>: <span style="color:#fde68a">1914</span>,
+    <span style="color:#93c5fd">"home_team"</span>: <span style="color:#86efac">"CHF"</span>,
+    <span style="color:#93c5fd">"away_team"</span>: <span style="color:#86efac">"BRF"</span>,
+    <span style="color:#93c5fd">"home_score"</span>: <span style="color:#fde68a">5</span>,
+    <span style="color:#93c5fd">"away_score"</span>: <span style="color:#fde68a">3</span>,
+    <span style="color:#93c5fd">"innings"</span>: <span style="color:#fde68a">9</span>,
+    <span style="color:#93c5fd">"park"</span>: <span style="color:#86efac">"Weeghman Park"</span>
+  }
+],
+<span style="color:#93c5fd">"total"</span>: <span style="color:#fde68a">1187</span>,
+<span style="color:#93c5fd">"page"</span>: <span style="color:#fde68a">1</span>,
+<span style="color:#93c5fd">"per_page"</span>: <span style="color:#fde68a">50</span></div>
+    </div>
+    <div>
+      <div class="ap-label">Available endpoints</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--accent);padding:3px 6px;background:rgba(245,158,11,0.07);border-radius:4px;cursor:pointer" onclick="setEndpoint('games')">GET /federalleague/games</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 6px;background:var(--surface2);border-radius:4px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'" onclick="setEndpoint('teams')">GET /federalleague/teams</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 6px;background:var(--surface2);border-radius:4px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'" onclick="setEndpoint('plays')">GET /federalleague/plays</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 6px;background:var(--surface2);border-radius:4px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'" onclick="setEndpoint('schedule')">GET /federalleague/seasons/{year}/schedule</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 6px;background:var(--surface2);border-radius:4px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'" onclick="setEndpoint('teamgames')">GET /federalleague/seasons/{year}/teams/{id}/games</div>
+      </div>
+    </div>
+    <div style="flex:1;min-height:0.5rem"></div>
+    <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:6px;padding:0.75rem">
+      <div style="font-family:'Google Sans Code',monospace;font-size:0.6rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Era context</div>
+      <div style="font-size:0.72rem;color:var(--muted);line-height:1.5">Federal League data is <strong style="color:var(--text)">not merged</strong> with the main <code style="font-size:0.68rem;color:var(--accent)">/games</code> or <code style="font-size:0.68rem;color:var(--accent)">/stats</code> routes. Use the dedicated <code style="font-size:0.68rem;color:var(--accent)">/federalleague/*</code> family for isolated queries.</div>
+    </div>
+  </aside>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+<script>
+  const games = [
+    {date:'1914-04-23',home:'CHF',away:'BRF',hs:5,as:3,inn:9,park:'Weeghman Park',season:1914},
+    {date:'1914-05-01',home:'SLF',away:'KCF',hs:7,as:2,inn:9,park:"Handlan's Park",season:1914},
+    {date:'1914-06-12',home:'BUF',away:'PIF',hs:4,as:4,inn:13,park:'Federal League Park',season:1914},
+    {date:'1914-07-04',home:'INF',away:'CHF',hs:3,as:6,inn:9,park:'Federal League Park',season:1914},
+    {date:'1914-08-20',home:'BSF',away:'BRF',hs:1,as:0,inn:9,park:'Terrapin Park',season:1914},
+    {date:'1914-10-03',home:'INF',away:'CHF',hs:6,as:1,inn:9,park:'Federal League Park',season:1914},
+    {date:'1915-04-22',home:'CHF',away:'SLF',hs:4,as:3,inn:10,park:'Weeghman Park',season:1915},
+    {date:'1915-06-18',home:'SLF',away:'BRF',hs:2,as:5,inn:9,park:"Handlan's Park",season:1915},
+    {date:'1915-09-30',home:'CHF',away:'SLF',hs:8,as:3,inn:9,park:'Weeghman Park',season:1915},
+  ];
+
+  function renderGames(list) {
+    const tb = document.getElementById('gamesBody');
+    tb.innerHTML = '';
+    list.forEach(g => {
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.innerHTML = `<td>${g.date}</td><td>${g.home}</td><td>${g.away}</td><td><b>${g.hs}–${g.as}</b></td><td>${g.inn}</td><td>${g.park}</td><td>${g.season}</td>`;
+      tr.onclick = () => showDetail(g, tr);
+      tb.appendChild(tr);
+    });
+  }
+  renderGames(games);
+
+  function showDetail(g, tr) {
+    document.querySelectorAll('tr.selected').forEach(r => r.classList.remove('selected'));
+    tr.classList.add('selected');
+    document.getElementById('scoreRow').innerHTML = `
+      <span class="score-team">${g.away}</span>
+      <span class="score-num">${g.as}</span>
+      <span class="score-sep">@</span>
+      <span class="score-num">${g.hs}</span>
+      <span class="score-team">${g.home}</span>
+    `;
+    document.getElementById('metaStrip').innerHTML = `
+      <div class="mi"><div class="mi-val">${g.date}</div><div class="mi-label">Date</div></div>
+      <div class="mi"><div class="mi-val">${g.park}</div><div class="mi-label">Park</div></div>
+      <div class="mi"><div class="mi-val">${g.inn}</div><div class="mi-label">Innings</div></div>
+      <div class="mi"><div class="mi-val">${g.season}</div><div class="mi-label">Season</div></div>
+    `;
+    document.getElementById('gameDetail').classList.add('visible');
+    const id = `${g.home}${g.date.replace(/-/g,'')}0`;
+    document.getElementById('endpointDisplay').textContent = `GET /federalleague/games → detail: /games/${id}`;
+    document.getElementById('urlDisplay').textContent = `https://api.baseball.example/v1/games/${id}`;
+    document.getElementById('curlDisplay').textContent = `curl -s \\\n  "https://api.baseball.example/v1/games/${id}" \\\n  | jq .`;
+  }
+
+  function applyFilters() {
+    const season = document.getElementById('fSeason').value;
+    const home = document.getElementById('fHome').value;
+    const away = document.getElementById('fAway').value;
+    let filtered = games;
+    if (season) filtered = filtered.filter(g => g.season == season);
+    if (home) filtered = filtered.filter(g => g.home === home);
+    if (away) filtered = filtered.filter(g => g.away === away);
+    renderGames(filtered);
+    const params = [];
+    if (season) params.push(`season=${season}`);
+    if (home) params.push(`home_team=${home}`);
+    if (away) params.push(`away_team=${away}`);
+    const qs = params.length ? '?' + params.join('&') : '';
+    document.getElementById('endpointDisplay').textContent = `GET /federalleague/games${qs}`;
+    document.getElementById('urlDisplay').textContent = `https://api.baseball.example/v1/federalleague/games${qs}`;
+    document.getElementById('curlDisplay').textContent = `curl -s \\\n  "https://api.baseball.example/v1/federalleague/games${qs}" \\\n  | jq .`;
+    document.getElementById('resultsLabel').textContent = `Games — ${filtered.length} results${season ? ' · ' + season + ' season' : ''}`;
+  }
+
+  function applyQuick(type) {
+    if (type === 'extra') renderGames(games.filter(g => g.inn > 9));
+    if (type === 'shutout') renderGames(games.filter(g => g.hs === 0 || g.as === 0));
+    if (type === 'chf') { document.getElementById('fHome').value = 'CHF'; applyFilters(); }
+  }
+
+  function selectTeam(id) {
+    document.getElementById('fHome').value = id;
+    applyFilters();
+  }
+
+  function switchView(view) {
+    ['games','teams','plays','schedule'].forEach(v => {
+      document.getElementById('view-' + v).classList.toggle('active', v === view);
+      document.getElementById('panel' + v.charAt(0).toUpperCase() + v.slice(1)).style.display = v === view ? 'block' : 'none';
+    });
+    const endpoints = {
+      games: 'GET /federalleague/games',
+      teams: 'GET /federalleague/teams',
+      plays: 'GET /federalleague/plays',
+      schedule: 'GET /federalleague/seasons/{year}/schedule',
+    };
+    const urls = {
+      games: 'https://api.baseball.example/v1/federalleague/games',
+      teams: 'https://api.baseball.example/v1/federalleague/teams',
+      plays: 'https://api.baseball.example/v1/federalleague/plays',
+      schedule: 'https://api.baseball.example/v1/federalleague/seasons/1914/schedule',
+    };
+    document.getElementById('endpointDisplay').textContent = endpoints[view];
+    document.getElementById('urlDisplay').textContent = urls[view];
+    document.getElementById('curlDisplay').textContent = `curl -s \\\n  "${urls[view]}" \\\n  | jq .`;
+  }
+
+  function setEndpoint(view) { switchView(view); }
+
+  function loadSchedule(year) {
+    document.getElementById('endpointDisplay').textContent = `GET /federalleague/seasons/${year}/schedule`;
+    document.getElementById('urlDisplay').textContent = `https://api.baseball.example/v1/federalleague/seasons/${year}/schedule`;
+    document.getElementById('curlDisplay').textContent = `curl -s \\\n  "https://api.baseball.example/v1/federalleague/seasons/${year}/schedule" \\\n  | jq .`;
+  }
+
+  function copyText(id) {
+    navigator.clipboard.writeText(document.getElementById(id).textContent).catch(() => {});
+  }
+
+  // Standings bar chart
+  const ctx = document.getElementById('standingsChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['INF/NWK','CHF','SLF','BSF','BUF','BRF','KCF','PIF'],
+      datasets: [
+        {label:'1914 W', data:[88,87,62,84,80,77,67,60], backgroundColor:'rgba(245,158,11,0.7)', borderRadius:3},
+        {label:'1915 W', data:[80,86,87,47,74,70,56,60], backgroundColor:'rgba(245,158,11,0.3)', borderRadius:3},
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins:{legend:{labels:{color:'#6b7280',font:{size:10}}}},
+      scales:{
+        x:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'}},
+        y:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#252934'},title:{display:true,text:'Wins',color:'#6b7280',font:{size:9}}}
+      }
+    }
+  });
+</script>
+</body>
+</html>
