@@ -8,6 +8,7 @@
   import ApiPanel from '$lib/components/ApiPanel.svelte';
   import EraBadge from '$lib/components/EraBadge.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
+  import DatePicker from '$lib/components/DatePicker.svelte';
   import SearchInput from '$lib/components/SearchInput.svelte';
   import { EP } from '$lib/endpoints';
   import { eraForYear } from '$lib/eras';
@@ -67,6 +68,7 @@
   let dateToInput = $state('');
   let naturalQueryInput = $state('');
   let familyInput = $state<GameFamily>('mlb');
+  let perPageInput = $state(DEFAULT_PER_PAGE);
 
   const finderResource = new AsyncPaginatedListResource<GameRecord>();
   let lastFinderKey = '';
@@ -187,6 +189,7 @@
     parkIdInput = parkId;
     dateFromInput = dateFrom;
     dateToInput = dateTo;
+    perPageInput = perPage;
   }
 
   function updateGamesQuery(overrides: QueryOverrides): void {
@@ -234,6 +237,7 @@
       park_id: parkIdInput.trim() || null,
       date_from: dateFromInput.trim() || null,
       date_to: dateToInput.trim() || null,
+      per_page: perPageInput !== DEFAULT_PER_PAGE ? perPageInput : null,
       page: 1
     });
   }
@@ -241,7 +245,12 @@
   function runNaturalSearch(value = naturalQueryInput): void {
     const trimmed = value.trim();
     if (!trimmed) return;
-    updateGamesQuery({ mode: 'nl', q: trimmed, page: 1 });
+    updateGamesQuery({
+      mode: 'nl',
+      q: trimmed,
+      per_page: perPageInput !== DEFAULT_PER_PAGE ? perPageInput : null,
+      page: 1
+    });
   }
 
   function sharedFinderQuerySuffix(): string {
@@ -303,6 +312,20 @@
       <p class="mt-2 font-mono text-xxs text-muted">
         Uses <code>/v1/search/games</code> natural-language parsing.
       </p>
+      <div class="mt-2.5">
+        <label for="games-per-page-nl" class="mb-1 block font-mono text-[0.64rem] tracking-wider text-muted uppercase">
+          Results per page
+        </label>
+        <select
+          id="games-per-page-nl"
+          bind:value={perPageInput}
+          onchange={() => runNaturalSearch()}
+          class="w-full rounded border border-outline bg-surface px-2.5 py-1.5 font-mono text-xs text-foreground">
+          {#each [10, 25, 50, 100] as n (n)}
+            <option value={n}>{n}</option>
+          {/each}
+        </select>
+      </div>
     {:else}
       <div class="mb-2 grid grid-cols-3 gap-1.5">
         <button
@@ -387,11 +410,7 @@
                 class="mb-1 block font-mono text-[0.64rem] tracking-wider text-muted uppercase">
                 Date from
               </label>
-              <input
-                id="games-date-from"
-                type="date"
-                bind:value={dateFromInput}
-                class="w-full rounded border border-outline bg-surface px-2.5 py-1.5 font-mono text-xs text-foreground" />
+              <DatePicker id="games-date-from" bind:value={dateFromInput} placeholder="From date" />
             </div>
             <div>
               <label
@@ -399,14 +418,24 @@
                 class="mb-1 block font-mono text-[0.64rem] tracking-wider text-muted uppercase">
                 Date to
               </label>
-              <input
-                id="games-date-to"
-                type="date"
-                bind:value={dateToInput}
-                class="w-full rounded border border-outline bg-surface px-2.5 py-1.5 font-mono text-xs text-foreground" />
+              <DatePicker id="games-date-to" bind:value={dateToInput} placeholder="To date" />
             </div>
           </div>
         {/if}
+
+        <div>
+          <label for="games-per-page" class="mb-1 block font-mono text-[0.64rem] tracking-wider text-muted uppercase">
+            Results per page
+          </label>
+          <select
+            id="games-per-page"
+            bind:value={perPageInput}
+            class="w-full rounded border border-outline bg-surface px-2.5 py-1.5 font-mono text-xs text-foreground">
+            {#each [10, 25, 50, 100] as n (n)}
+              <option value={n}>{n}</option>
+            {/each}
+          </select>
+        </div>
 
         <button
           class="w-full rounded border border-primary/40 bg-primary/10 px-2.5 py-1.75 font-display text-[0.78rem] text-foreground transition-colors hover:bg-primary/15"
@@ -432,7 +461,7 @@
       </p>
     {:else}
       <div class="mt-4 panel-label">Results</div>
-      <div class="flex max-h-[40vh] flex-col gap-0.5 overflow-y-auto">
+      <div class="flex flex-col gap-0.5">
         {#each finderResource.items as game (game.id)}
           {@const gameYear = detectSeason(game)}
           {@const era = gameYear != null ? eraForYear(gameYear) : undefined}
@@ -462,8 +491,7 @@
             page={currentPage}
             {perPage}
             total={finderResource.total}
-            onPageChange={(nextPage) => updateGamesQuery({ page: nextPage })}
-            onPerPageChange={(nextPerPage) => updateGamesQuery({ page: 1, per_page: nextPerPage })} />
+            onPageChange={(nextPage) => updateGamesQuery({ page: nextPage })} />
         </div>
       {/if}
     {/if}

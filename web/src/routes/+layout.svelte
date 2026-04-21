@@ -103,7 +103,7 @@
         </a>
       {/each}
 
-      <DataNavigationMenu label="Dashboard" items={DATA_MENU_ITEMS} {pathname} />
+      <DataNavigationMenu label="Explore" items={DATA_MENU_ITEMS} {pathname} />
 
       <div class="flex items-center gap-1 border-l border-outline pl-2">
         <a

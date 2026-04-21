@@ -6,7 +6,7 @@ export const MAIN_TEAM_TABS = [
   { id: 'fielding', label: 'Fielding' },
   { id: 'schedule', label: 'Schedule' },
   { id: 'daily-trends', label: 'Daily Trends' },
-  { id: 'run-diff', label: 'Run Diff.' }
+  { id: 'run-diff', label: 'Run Differential' }
 ] as const;
 
 export const ALL_TEAM_TABS = [...MAIN_TEAM_TABS] as const;
@@ -23,7 +23,7 @@ export const MAIN_GAME_TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'events', label: 'Events' },
   { id: 'plays', label: 'Plays + Pitches' },
-  { id: 'win-prob', label: 'Win Prob.' }
+  { id: 'win-prob', label: 'Win Probability' }
 ] as const;
 
 export const ALL_GAME_TABS = [...MAIN_GAME_TABS] as const;
@@ -73,8 +73,8 @@ export const SALARIES_COLUMNS = [
 ];
 
 export const ADVANCED_PLAYER_TABS = [
-  { id: 'batting-adv', label: 'Batting Adv.' },
-  { id: 'pitching-adv', label: 'Pitching Adv.' },
+  { id: 'batting-adv', label: 'Batting Advanced' },
+  { id: 'pitching-adv', label: 'Pitching Advanced' },
   { id: 'war', label: 'WAR' },
   { id: 'splits', label: 'Splits' },
   { id: 'streaks', label: 'Streaks' }

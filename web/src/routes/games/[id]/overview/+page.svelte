@@ -7,6 +7,7 @@
   import EraBadge from '$lib/components/EraBadge.svelte';
   import EraDisclaimer from '$lib/components/EraDisclaimer.svelte';
   import { EP } from '$lib/endpoints';
+  import { eraForYear } from '$lib/eras';
   import {
     detectSeason,
     normalizeGameBoxscore,
@@ -18,8 +19,6 @@
     toCompactLineup
   } from '$lib/games/normalizers';
   import type { GameBoxscore, GameRecord, GameSummary } from '$lib/games/types';
-  import { eraForYear } from '$lib/eras';
-  import { meta } from '$lib/meta.svelte';
   import { AsyncValueResource } from '$lib/players/resources.svelte';
   import { onMount } from 'svelte';
 
@@ -296,9 +295,7 @@
 
     {#if selectedEra.caveat}
       <div class="mt-3">
-        <EraDisclaimer
-          eras={[selectedEra]}
-          message={`${meta.data?.era_labels?.[selectedEra.code] ?? selectedEra.label}: ${selectedEra.caveat}`} />
+        <EraDisclaimer eras={[selectedEra]} message={selectedEra.label} />
       </div>
     {/if}
   </div>
@@ -309,7 +306,7 @@
 
   <div class="mb-4 grid gap-3 md:grid-cols-2">
     <div class="rounded border border-outline bg-surface p-3">
-      <div class="mb-2 font-mono text-[0.63rem] tracking-wider text-muted uppercase">Game summary endpoint</div>
+      <div class="mb-2 font-mono text-[0.63rem] tracking-wider text-muted uppercase">Game Summary</div>
 
       {#if summaryResource.loading}
         <p class="font-mono text-[0.74rem] text-muted">Loading summary…</p>
@@ -327,7 +324,7 @@
     </div>
 
     <div class="rounded border border-outline bg-surface p-3">
-      <div class="mb-2 font-mono text-[0.63rem] tracking-wider text-muted uppercase">Boxscore endpoint</div>
+      <div class="mb-2 font-mono text-[0.63rem] tracking-wider text-muted uppercase">Boxscore</div>
 
       {#if boxscoreResource.loading}
         <p class="font-mono text-[0.74rem] text-muted">Loading boxscore…</p>

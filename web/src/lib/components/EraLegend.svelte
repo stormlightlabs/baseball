@@ -11,7 +11,7 @@
       <EraBadge {era} size={compact ? 'xs' : 'sm'} />
       <div class="min-w-0 flex-1">
         <span class="text-[0.78rem] text-foreground">{era.label}</span>
-        <span class="ml-1.5 font-mono text-[0.65rem] text-muted">{era.from}–{era.to}</span>
+        <span class="ml-1.5 font-mono text-xxs text-muted">{era.from}–{era.to}</span>
         {#if era.caveat}
           <span
             class="ml-1.5 inline-block rounded bg-warning/10 px-1 font-mono text-[0.6rem] text-warning"

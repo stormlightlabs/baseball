@@ -38,7 +38,7 @@
     {#if eras.some((e) => e.caveat)}
       <ul class="mt-1 space-y-0.5">
         {#each eras.filter((e) => e.caveat) as era (era.code)}
-          <li class="font-mono text-[0.65rem] text-warning/70">
+          <li class="font-mono text-xxs text-warning/70">
             <span class="font-medium">{eraLabel(era)}</span>: {era.caveat}
           </li>
         {/each}

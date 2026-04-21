@@ -142,22 +142,18 @@
     return Math.max(...seasons.map((season) => season.year));
   });
 
-  let selectedYear = $derived(queryYear > 0 ? queryYear : latestAvailableYear);
+  const selectedYear = $derived(queryYear > 0 ? queryYear : latestAvailableYear);
+  const selectedSeason = $derived(seasons.find((season) => season.year === selectedYear) ?? null);
+  const selectedEra = $derived(eraForYear(selectedYear));
 
-  let selectedSeason = $derived.by(() => {
-    return seasons.find((season) => season.year === selectedYear) ?? null;
-  });
-
-  let selectedEra = $derived(eraForYear(selectedYear));
-
-  let filteredTeams = $derived.by(() => {
+  const filteredTeams = $derived.by(() => {
     if (leagueFilter === 'both') return teamsPage.data;
     const league = leagueFilter.toUpperCase();
     return teamsPage.data.filter((team) => (team.league ?? '').toUpperCase() === league);
   });
 
-  let teamRows = $derived.by(() => {
-    return filteredTeams
+  const teamRows = $derived(
+    filteredTeams
       .map((team) => {
         const pct = winningPct(team.wins, team.losses);
         const runDiff =
@@ -188,8 +184,8 @@
         if (winsA !== winsB) return winsB - winsA;
 
         return a.team_id.localeCompare(b.team_id);
-      });
-  });
+      })
+  );
 
   const teamColumns = [
     {
@@ -305,9 +301,7 @@
     return counts;
   });
 
-  let scheduleDates = $derived.by(() => {
-    return Object.keys(scheduleCountsByDate).toSorted();
-  });
+  const scheduleDates = $derived(Object.keys(scheduleCountsByDate).toSorted());
 
   let fallbackDate = $derived.by(() => {
     const firstDate = scheduleDates.at(0);
@@ -325,9 +319,7 @@
     return `${selectedYear}-04`;
   });
 
-  let monthCells = $derived.by(() => {
-    return buildMonthCells(activeMonth, scheduleCountsByDate, activeDate);
-  });
+  let monthCells = $derived(buildMonthCells(activeMonth, scheduleCountsByDate, activeDate));
 
   let maxGamesInMonth = $derived.by(() => {
     const counts = monthCells.filter((cell) => cell.inMonth).map((cell) => cell.gameCount);
@@ -337,8 +329,8 @@
 
   let monthTitle = $derived(formatMonthLabel(activeMonth));
 
-  let dateGameRows = $derived.by(() => {
-    return dateGames
+  let dateGameRows = $derived(
+    dateGames
       .map((game) => {
         const away = game.away_team ?? 'Away';
         const home = game.home_team ?? 'Home';
@@ -351,8 +343,8 @@
           park: game.park_name ?? game.park_id ?? '—'
         };
       })
-      .toSorted((a, b) => a.id.localeCompare(b.id));
-  });
+      .toSorted((a, b) => a.id.localeCompare(b.id))
+  );
 
   const dateGameColumns = [
     {
@@ -505,7 +497,6 @@
       if (requestVersion !== seasonsRequestVersion) return;
       seasons = normalizeSeasons(payload);
 
-      // If the year is URL-defaulted, refresh season-specific modules after we discover the actual latest year.
       if (queryYear <= 0) {
         void refreshTeams(true);
         void refreshLeaders(true);
@@ -613,7 +604,6 @@
       scheduleExpectedTotal = result.expectedTotal;
       scheduleTruncated = result.truncated;
 
-      // activeDate can change when schedule data arrives (query date omitted), so force-refresh date games.
       void refreshDateGames(true);
     } catch (error) {
       if (requestVersion !== scheduleRequestVersion) return;
