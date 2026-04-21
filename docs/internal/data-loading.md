@@ -95,6 +95,13 @@ For VM-safe operations, prefer batched windows instead of one large full-history
 <BASEBALL_ETL> status
 ```
 
+If jobs are queued but not draining, inspect and clear stale running rows:
+
+```bash
+<BASEBALL_ETL> jobs ls --status running,started
+<BASEBALL_ETL> jobs clear --reason "recover stale running jobs"
+```
+
 ### 8) Cleanup transient Retrosheet artifacts (optional but recommended)
 
 ```bash
@@ -155,21 +162,21 @@ If validation fails due to stale/incomplete local source files, recover in this 
 
 1. Targeted refresh:
 
-```bash
-<BASEBALL_ETL> fetch retrosheet --force --years 2022-2025
-<BASEBALL_ETL> load players
-<BASEBALL_ETL> run --profile dev --years 2022-2025
-<BASEBALL_ETL> validate --profile dev --years 2022-2025
-```
+    ```bash
+    <BASEBALL_ETL> fetch retrosheet --force --years 2022-2025
+    <BASEBALL_ETL> load players
+    <BASEBALL_ETL> run --profile dev --years 2022-2025
+    <BASEBALL_ETL> validate --profile dev --years 2022-2025
+    ```
 
 2. If source state is broadly stale in Docker/Coolify:
 
-```bash
-docker compose stop app etl
-docker volume ls --format '{{.Name}}' | grep data_root
-docker volume rm <data_root_volume_name>
-docker compose up -d app etl
-```
+    ```bash
+    docker compose stop app etl
+    docker volume ls --format '{{.Name}}' | grep data_root
+    docker volume rm <data_root_volume_name>
+    docker compose up -d app etl
+    ```
 
 3. Re-run ETL + maintenance + validate for your slice.
 
@@ -209,7 +216,8 @@ Stage commands are first-class and expected in this worker model:
 - `<BASEBALL_ETL> maintenance`
 - `<BASEBALL_ETL> validate`
 - `<BASEBALL_ETL> status`
-- `<BASEBALL_ETL> maintenance`
+- `<BASEBALL_ETL> jobs ls`
+- `<BASEBALL_ETL> jobs clear`
 
 ## Retrosheet Era Contract
 

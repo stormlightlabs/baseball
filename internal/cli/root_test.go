@@ -28,6 +28,7 @@ func TestNewETLRootCmdUseAndSubcommands(t *testing.T) {
 		"fetch":       false,
 		"load":        false,
 		"cleanup":     false,
+		"jobs":        false,
 		"run":         false,
 		"maintenance": false,
 		"worker":      false,
@@ -91,6 +92,7 @@ func TestCLIHelpContractsForCanonicalFlow(t *testing.T) {
 		"worker":      {"--max-active-jobs", "--poll-interval"},
 		"validate":    {"--profile", "--years"},
 		"status":      {"--strict"},
+		"jobs":        {"ls", "clear"},
 	}
 	for cmdName, mustContain := range etlExpectations {
 		cmd := findCommand(t, etlRoot, cmdName)

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -85,6 +86,13 @@ type ETLJobTypeMetrics struct {
 	NetworkFailures    int
 	DBWriteFailures    int
 	ValidationFailures int
+}
+
+type ETLJobListFilter struct {
+	Statuses []ETLJobStatus
+	JobType  ETLJobType
+	Profile  string
+	Limit    int
 }
 
 func (db *DB) EnqueueETLJob(ctx context.Context, spec ETLJobSpec, maxQueuedJobs int) (int64, error) {
@@ -242,6 +250,88 @@ func (db *DB) AcquireNextETLJob(ctx context.Context, workerID string, maxActiveJ
 	return job, nil
 }
 
+func (db *DB) ListETLJobs(ctx context.Context, filter ETLJobListFilter) ([]ETLJob, error) {
+	clauses := make([]string, 0, 3)
+	args := make([]any, 0, 6)
+	argIdx := 1
+
+	if len(filter.Statuses) > 0 {
+		statusArgs := make([]string, 0, len(filter.Statuses))
+		for _, status := range filter.Statuses {
+			statusArgs = append(statusArgs, fmt.Sprintf("$%d", argIdx))
+			args = append(args, status)
+			argIdx++
+		}
+		clauses = append(clauses, fmt.Sprintf("j.status IN (%s)", strings.Join(statusArgs, ", ")))
+	}
+	if filter.JobType != "" {
+		clauses = append(clauses, fmt.Sprintf("j.job_type = $%d", argIdx))
+		args = append(args, filter.JobType)
+		argIdx++
+	}
+	if profile := strings.TrimSpace(filter.Profile); profile != "" {
+		clauses = append(clauses, fmt.Sprintf("j.profile = $%d", argIdx))
+		args = append(args, profile)
+		argIdx++
+	}
+
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 500 {
+		limit = 500
+	}
+
+	query := `
+		SELECT
+			j.id,
+			j.job_type,
+			j.priority,
+			j.status,
+			j.profile,
+			j.mode,
+			j.scope,
+			j.options,
+			j.max_retries,
+			j.attempts,
+			j.failure_class,
+			j.last_error,
+			j.row_count,
+			j.run_id,
+			j.queued_at,
+			j.started_at,
+			j.finished_at,
+			j.next_retry_at,
+			j.worker_id
+		FROM etl_jobs j
+	`
+	if len(clauses) > 0 {
+		query += "WHERE " + strings.Join(clauses, " AND ") + "\n"
+	}
+	query += fmt.Sprintf("ORDER BY j.id DESC LIMIT $%d", argIdx)
+	args = append(args, limit)
+
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ETL jobs: %w", err)
+	}
+	defer rows.Close()
+
+	jobs := make([]ETLJob, 0, limit)
+	for rows.Next() {
+		job, scanErr := scanETLJob(rows)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		jobs = append(jobs, *job)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed iterating ETL jobs: %w", err)
+	}
+	return jobs, nil
+}
+
 func (db *DB) MarkETLJobRunning(ctx context.Context, jobID int64) error {
 	_, err := db.ExecContext(ctx, `
 		UPDATE etl_jobs
@@ -317,6 +407,33 @@ func (db *DB) MarkETLJobCancelled(ctx context.Context, jobID int64, reason strin
 		return fmt.Errorf("failed to mark ETL job cancelled: %w", err)
 	}
 	return nil
+}
+
+func (db *DB) ClearRunningETLJobs(ctx context.Context, reason string) (int64, error) {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		reason = "cleared by operator"
+	}
+
+	result, err := db.ExecContext(ctx, `
+		UPDATE etl_jobs
+		SET status = 'retry_wait',
+			finished_at = NOW(),
+			next_retry_at = NOW(),
+			last_error = $1,
+			failure_class = 'operator_clear',
+			worker_id = NULL
+		WHERE status = 'running'
+	`, reason)
+	if err != nil {
+		return 0, fmt.Errorf("failed to clear running ETL jobs: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed reading cleared ETL job count: %w", err)
+	}
+	return rows, nil
 }
 
 func (db *DB) ETLJobQueueSnapshot(ctx context.Context) (ETLJobQueueSnapshot, error) {

@@ -91,7 +91,14 @@ For large Retrosheet slices, keep migration and recomputation separate, and proc
 Treat ETL as a batched worker flow on shared VMs: prefer scoped `--years` runs over unbounded full-history jobs unless you are operating a larger host.
 
 `run` is enqueue-first by default; use `--enqueue-only=false` only when you explicitly want one command to enqueue + drain locally.
-`maintenance` is also enqueue-first by default; use `--enqueue-only=false` to enqueue + drain maintenance locally.
+`maintenance` enqueues and drains by default; use `--enqueue-only=true` to enqueue-only.
+
+Queue operator commands:
+
+```bash
+./tmp/baseball-etl jobs ls --status queued,running,retry_wait --limit 100
+./tmp/baseball-etl jobs clear --reason "recover stale running jobs"
+```
 
 For exhaustive production-style ingestion:
 

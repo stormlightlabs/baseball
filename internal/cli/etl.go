@@ -31,6 +31,7 @@ func ETLCmd() *cobra.Command {
 	cmd.AddCommand(EtlFetchCmd())
 	cmd.AddCommand(EtlLoadCmd())
 	cmd.AddCommand(EtlCleanupCmd())
+	cmd.AddCommand(EtlJobsCmd())
 	cmd.AddCommand(EtlStatusCmd())
 	cmd.AddCommand(EtlRunCmd())
 	cmd.AddCommand(EtlMaintenanceCmd())

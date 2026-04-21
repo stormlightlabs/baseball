@@ -66,6 +66,7 @@ docker compose exec etl baseball-etl status
 `baseball-etl maintenance` processes queue jobs by default (`--enqueue-only=false`); pass `--enqueue-only=true` for enqueue-only behavior.
 
 `etl` is a worker service and should not be exposed publicly (Compose sets `traefik.enable=false`).
+API health probes are attached to `app` only; `etl` has healthcheck disabled.
 
 The image now bakes `repo/data` into `/home/app/data`.
 With the `data_root:/home/app/data` named volume, Docker initializes a new
@@ -108,6 +109,13 @@ If ETL validation fails due to stale or incomplete local source files (for examp
 Incremental/year-batched ETL now reuses an already-populated `retrosheet_players`
 table (instead of truncating/reloading every batch). If the table is empty, the
 worker reloads it automatically.
+
+If the queue is blocked by stale running jobs:
+
+```bash
+docker compose exec etl baseball-etl jobs ls --status running,started
+docker compose exec etl baseball-etl jobs clear --reason "recover stale in-flight jobs after restart"
+```
 
   If your data root is mounted outside the default path:
 
