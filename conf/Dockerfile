@@ -22,6 +22,7 @@ RUN adduser --disabled-password --gecos "" app && \
 WORKDIR /home/app
 COPY --from=build /baseball /usr/local/bin/baseball
 COPY --from=build /baseball-etl /usr/local/bin/baseball-etl
+COPY --from=build /app/data /home/app/data
 RUN mkdir -p /home/app/data && chown -R app:app /home/app/data
 
 USER app

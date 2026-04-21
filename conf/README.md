@@ -70,13 +70,19 @@ docker compose exec etl baseball-etl status
 `etl` should be kept running as the long-lived queue consumer service/process.
 `baseball-etl run` enqueues ETL jobs by default.
 
-If required files are missing under `/home/app/data`, the ETL pipeline
-should fetch required Retrosheet windows directly before load:
+The image now bakes `repo/data` into `/home/app/data`.
+With the `data_root:/home/app/data` named volume, Docker initializes a new
+empty volume with that baked content on first create.
+
+Retrosheet windows are still worker-fetched by ETL. For explicit fetches:
 
 ```bash
 docker compose exec etl baseball-etl fetch retrosheet --years 2022-2025
 docker compose exec etl baseball-etl fetch negroleagues
 ```
+
+If `data_root` already exists and is empty/stale, recreate that volume to
+re-seed from the latest image snapshot before starting services.
 
 If your data root is mounted outside the default path:
 
