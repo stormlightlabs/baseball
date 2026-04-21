@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Current Season — Baseball API Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    :root { --bg:#0d0f13; --surface:#13161c; --surface2:#1a1e27; --border:#252934; --text:#e2e8f0; --muted:#6b7280; --accent:#3b82f6; --accent2:#10b981; --warn:#f59e0b; --live:#ef4444; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh; }
+    h1,h2,h3 { font-family:'Google Sans',sans-serif; }
+    code,pre { font-family:'Google Sans Code',monospace; }
+
+    .site-header { border-bottom:1px solid var(--border); padding:0 2rem; display:flex; align-items:center; gap:1rem; height:56px; background:var(--surface); }
+    .logo { font-family:'Google Sans',sans-serif; font-size:1.1rem; font-weight:700; color:var(--text); text-decoration:none; }
+    .badge { font-family:'Google Sans Code',monospace; font-size:0.7rem; background:var(--border); color:var(--muted); padding:2px 8px; border-radius:4px; }
+    .nav-links { margin-left:auto; display:flex; gap:0.25rem; }
+    .nav-links a { font-size:0.8rem; color:var(--muted); text-decoration:none; padding:4px 10px; border-radius:4px; transition:color 0.15s,background 0.15s; }
+    .nav-links a:hover, .nav-links a.active { color:var(--text); background:var(--border); }
+
+    .page-header { padding:1.5rem 2rem; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:1.5rem; background:var(--surface); }
+    .page-title { font-family:'Google Sans',sans-serif; font-size:1.3rem; font-weight:700; }
+    .season-badge { font-family:'Google Sans Code',monospace; font-size:0.72rem; background:rgba(59,130,246,0.15); color:var(--accent); padding:3px 10px; border-radius:99px; border:1px solid rgba(59,130,246,0.25); }
+    .updated-at { font-family:'Google Sans Code',monospace; font-size:0.68rem; color:var(--muted); margin-left:auto; display:flex; align-items:center; gap:6px; }
+    .update-dot { width:6px; height:6px; border-radius:50%; background:var(--accent2); }
+
+    .layout { display:grid; grid-template-columns:1fr 340px; height:calc(100vh - 56px - 64px); }
+    .center { overflow-y:auto; padding:1.5rem; display:flex; flex-direction:column; gap:1rem; }
+    .right { border-left:1px solid var(--border); overflow-y:auto; padding:1.25rem; display:flex; flex-direction:column; gap:1rem; background:var(--surface); }
+
+    .panel { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1.25rem; }
+    .panel-label { font-family:'Google Sans Code',monospace; font-size:0.65rem; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.75rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border); }
+    .panel-label .source { font-size:0.6rem; color:var(--accent2); margin-left:8px; font-weight:400; }
+
+    /* Segment control */
+    .seg-ctrl { display:flex; background:var(--surface2); border-radius:6px; padding:2px; border:1px solid var(--border); margin-bottom:1rem; }
+    .seg-btn { flex:1; padding:6px 0; font-family:'Google Sans',sans-serif; font-size:0.78rem; font-weight:600; background:transparent; border:none; color:var(--muted); cursor:pointer; border-radius:4px; transition:all 0.15s; }
+    .seg-btn.active { background:var(--accent); color:#fff; }
+
+    /* Standings table */
+    .div-header { padding:0.6rem 0.75rem; background:var(--surface2); border-radius:6px; margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between; }
+    .div-name { font-family:'Google Sans',sans-serif; font-size:0.85rem; font-weight:700; }
+    .div-league { font-family:'Google Sans Code',monospace; font-size:0.62rem; color:var(--muted); }
+
+    table { width:100%; border-collapse:collapse; margin-bottom:1.25rem; }
+    th { font-family:'Google Sans Code',monospace; font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; padding:6px 8px; text-align:center; border-bottom:1px solid var(--border); }
+    th:first-child { text-align:left; padding-left:0; }
+    td { font-family:'Google Sans Code',monospace; font-size:0.75rem; padding:7px 8px; text-align:center; border-bottom:1px solid var(--border); }
+    td:first-child { text-align:left; padding-left:0; }
+    tr:hover td { background:var(--surface2); }
+
+    .team-cell { display:flex; align-items:center; gap:8px; }
+    .team-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .team-abbr { font-family:'Google Sans',sans-serif; font-weight:700; color:#f1f5f9; font-size:0.82rem; }
+    .team-w { color:var(--accent2); }
+    .team-l { color:var(--live); opacity:0.8; }
+    .gb-val { color:var(--muted); }
+    .pct-val { color:var(--text); font-weight:500; }
+    .streak-w { color:var(--accent2); }
+    .streak-l { color:var(--live); }
+    .rd-pos { color:var(--accent2); }
+    .rd-neg { color:var(--live); }
+
+    /* Leader cards */
+    .leader-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+    .leader-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:1rem; }
+    .leader-stat { font-family:'Google Sans Code',monospace; font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.5rem; }
+    .leader-item { display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid var(--border); }
+    .leader-item:last-child { border-bottom:none; }
+    .leader-rank { font-family:'Google Sans Code',monospace; font-size:0.65rem; color:var(--muted); width:16px; }
+    .leader-name { font-size:0.78rem; color:#f1f5f9; flex:1; }
+    .leader-team { font-family:'Google Sans Code',monospace; font-size:0.62rem; color:var(--muted); }
+    .leader-val { font-family:'Google Sans Code',monospace; font-size:0.82rem; font-weight:700; color:var(--accent); }
+
+    /* Pipeline status */
+    .pipeline-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:0.75rem; }
+    .pipe-row { display:flex; align-items:center; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); }
+    .pipe-row:last-child { border-bottom:none; }
+    .pipe-label { font-size:0.72rem; color:var(--text); }
+    .pipe-val { font-family:'Google Sans Code',monospace; font-size:0.68rem; }
+    .pipe-ok { color:var(--accent2); }
+    .pipe-warn { color:var(--warn); }
+    .pipe-stale { color:var(--live); }
+
+    .schedule-row { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border); }
+    .sched-date { font-family:'Google Sans Code',monospace; font-size:0.68rem; color:var(--muted); width:56px; }
+    .sched-teams { flex:1; font-size:0.78rem; }
+    .sched-score { font-family:'Google Sans Code',monospace; font-size:0.78rem; font-weight:700; width:48px; text-align:center; }
+    .sched-status { font-family:'Google Sans Code',monospace; font-size:0.6rem; padding:2px 6px; border-radius:99px; }
+    .status-final { background:rgba(16,185,129,0.1); color:var(--accent2); border:1px solid rgba(16,185,129,0.2); }
+    .status-live { background:rgba(239,68,68,0.1); color:var(--live); border:1px solid rgba(239,68,68,0.2); animation:pulse 1.5s infinite; }
+    .status-sched { background:rgba(107,114,128,0.15); color:var(--muted); border:1px solid var(--border); }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
+
+    .notice { font-family:'Google Sans Code',monospace; font-size:0.62rem; color:var(--muted); padding:8px 12px; background:var(--surface2); border-radius:6px; border:1px solid var(--border); display:flex; align-items:center; gap:6px; }
+    .notice-icon { color:var(--accent); }
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <a href="index.html" class="logo">Baseball API</a>
+  <span class="badge">current season</span>
+  <nav class="nav-links">
+    <a href="home.html">Home</a><a href="players.html">Players</a>
+    <a href="teams.html">Teams</a><a href="games.html">Games</a>
+    <a href="seasons.html" class="active">Seasons</a><a href="leaders.html">Leaders</a>
+    <a href="compare.html">Compare</a>
+    <a href="data-sources.html">Data</a><a href="docs.html">Docs</a>
+  </nav>
+</header>
+
+<div class="page-header">
+  <div class="page-title">2026 Season</div>
+  <span class="season-badge">current season</span>
+  <div class="updated-at"><div class="update-dot"></div> Updated 2h ago · next sync in 2h</div>
+</div>
+
+<div class="layout">
+<div class="center">
+
+  <!-- Standings -->
+  <div class="panel">
+    <div class="panel-label">Standings <span class="source">source: current_season.standings</span></div>
+    <div class="seg-ctrl">
+      <button class="seg-btn active">AL</button>
+      <button class="seg-btn">NL</button>
+      <button class="seg-btn">Both</button>
+    </div>
+
+    <div class="div-header"><span class="div-name">AL East</span><span class="div-league">American League</span></div>
+    <table>
+      <thead><tr><th>Team</th><th>W</th><th>L</th><th>PCT</th><th>GB</th><th>WC</th><th>Strk</th><th>L10</th><th>RD</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="team-cell"><div class="team-dot" style="background:#CE1141"></div><span class="team-abbr">BOS</span></div></td>
+          <td class="team-w">14</td><td class="team-l">7</td><td class="pct-val">.667</td><td class="gb-val">—</td><td class="gb-val">—</td><td class="streak-w">W3</td><td>7-3</td><td class="rd-pos">+28</td>
+        </tr>
+        <tr>
+          <td><div class="team-cell"><div class="team-dot" style="background:#003087"></div><span class="team-abbr">TB</span></div></td>
+          <td class="team-w">13</td><td class="team-l">8</td><td class="pct-val">.619</td><td class="gb-val">1</td><td class="gb-val">—</td><td class="streak-w">W1</td><td>6-4</td><td class="rd-pos">+15</td>
+        </tr>
+        <tr>
+          <td><div class="team-cell"><div class="team-dot" style="background:#003087"></div><span class="team-abbr">NYY</span></div></td>
+          <td class="team-w">12</td><td class="team-l">9</td><td class="pct-val">.571</td><td class="gb-val">2</td><td class="gb-val">—</td><td class="streak-l">L2</td><td>5-5</td><td class="rd-pos">+11</td>
+        </tr>
+        <tr>
+          <td><div class="team-cell"><div class="team-dot" style="background:#DF4601"></div><span class="team-abbr">BAL</span></div></td>
+          <td class="team-w">11</td><td class="team-l">10</td><td class="pct-val">.524</td><td class="gb-val">3</td><td class="gb-val">1</td><td class="streak-w">W2</td><td>6-4</td><td class="rd-pos">+4</td>
+        </tr>
+        <tr>
+          <td><div class="team-cell"><div class="team-dot" style="background:#134A8E"></div><span class="team-abbr">TOR</span></div></td>
+          <td class="team-w">8</td><td class="team-l">13</td><td class="pct-val">.381</td><td class="gb-val">6</td><td class="gb-val">4</td><td class="streak-l">L4</td><td>3-7</td><td class="rd-neg">-19</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="div-header"><span class="div-name">AL Central</span><span class="div-league">American League</span></div>
+    <table>
+      <thead><tr><th>Team</th><th>W</th><th>L</th><th>PCT</th><th>GB</th><th>WC</th><th>Strk</th><th>L10</th><th>RD</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="team-cell"><div class="team-dot" style="background:#0C2340"></div><span class="team-abbr">CLE</span></div></td>
+          <td class="team-w">13</td><td class="team-l">8</td><td class="pct-val">.619</td><td class="gb-val">—</td><td class="gb-val">—</td><td class="streak-w">W5</td><td>8-2</td><td class="rd-pos">+22</td>
+        </tr>
+        <tr>
+          <td><div class="team-cell"><div class="team-dot" style="background:#0C2C56"></div><span class="team-abbr">MIN</span></div></td>
+          <td class="team-w">11</td><td class="team-l">10</td><td class="pct-val">.524</td><td class="gb-val">2</td><td class="gb-val">1</td><td class="streak-l">L1</td><td>5-5</td><td class="rd-pos">+3</td>
+        </tr>
+        <tr>
+          <td><div class="team-cell"><div class="team-dot" style="background:#0C2340"></div><span class="team-abbr">DET</span></div></td>
+          <td class="team-w">10</td><td class="team-l">11</td><td class="pct-val">.476</td><td class="gb-val">3</td><td class="gb-val">2</td><td class="streak-w">W1</td><td>5-5</td><td class="rd-neg">-6</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Recent games -->
+  <div class="panel">
+    <div class="panel-label">Today's games <span class="source">source: current_season.games + /v1/mlb/schedule (live)</span></div>
+
+    <div class="schedule-row">
+      <div class="sched-date">Apr 21</div>
+      <div class="sched-teams">NYY @ BOS</div>
+      <div class="sched-score">3 - 5</div>
+      <span class="sched-status status-live">LIVE · B6</span>
+    </div>
+    <div class="schedule-row">
+      <div class="sched-date">Apr 21</div>
+      <div class="sched-teams">SF @ LAD</div>
+      <div class="sched-score">2 - 2</div>
+      <span class="sched-status status-live">LIVE · T4</span>
+    </div>
+    <div class="schedule-row">
+      <div class="sched-date">Apr 21</div>
+      <div class="sched-teams">CLE @ MIN</div>
+      <div class="sched-score">7 - 3</div>
+      <span class="sched-status status-final">Final</span>
+    </div>
+    <div class="schedule-row">
+      <div class="sched-date">Apr 21</div>
+      <div class="sched-teams">CHC @ STL</div>
+      <div class="sched-score">— - —</div>
+      <span class="sched-status status-sched">7:15 PM</span>
+    </div>
+    <div class="schedule-row">
+      <div class="sched-date">Apr 21</div>
+      <div class="sched-teams">PHI @ ATL</div>
+      <div class="sched-score">— - —</div>
+      <span class="sched-status status-sched">7:20 PM</span>
+    </div>
+  </div>
+
+  <!-- Leaders -->
+  <div class="panel">
+    <div class="panel-label">2026 season leaders <span class="source">source: current_season.batting / pitching</span></div>
+    <div class="seg-ctrl">
+      <button class="seg-btn active">Batting</button>
+      <button class="seg-btn">Pitching</button>
+    </div>
+    <div class="leader-grid">
+      <div class="leader-card">
+        <div class="leader-stat">HR</div>
+        <div class="leader-item"><span class="leader-rank">1</span><span class="leader-name">A. Judge</span><span class="leader-team">NYY</span><span class="leader-val">9</span></div>
+        <div class="leader-item"><span class="leader-rank">2</span><span class="leader-name">S. Ohtani</span><span class="leader-team">LAD</span><span class="leader-val">8</span></div>
+        <div class="leader-item"><span class="leader-rank">3</span><span class="leader-name">K. Schwarber</span><span class="leader-team">PHI</span><span class="leader-val">7</span></div>
+        <div class="leader-item"><span class="leader-rank">4</span><span class="leader-name">P. Alonso</span><span class="leader-team">NYM</span><span class="leader-val">7</span></div>
+        <div class="leader-item"><span class="leader-rank">5</span><span class="leader-name">M. Olson</span><span class="leader-team">ATL</span><span class="leader-val">6</span></div>
+      </div>
+      <div class="leader-card">
+        <div class="leader-stat">AVG</div>
+        <div class="leader-item"><span class="leader-rank">1</span><span class="leader-name">L. Arraez</span><span class="leader-team">SD</span><span class="leader-val">.382</span></div>
+        <div class="leader-item"><span class="leader-rank">2</span><span class="leader-name">S. Ohtani</span><span class="leader-team">LAD</span><span class="leader-val">.356</span></div>
+        <div class="leader-item"><span class="leader-rank">3</span><span class="leader-name">F. Freeman</span><span class="leader-team">LAD</span><span class="leader-val">.341</span></div>
+        <div class="leader-item"><span class="leader-rank">4</span><span class="leader-name">R. Acuña Jr.</span><span class="leader-team">ATL</span><span class="leader-val">.333</span></div>
+        <div class="leader-item"><span class="leader-rank">5</span><span class="leader-name">Y. Alvarez</span><span class="leader-team">HOU</span><span class="leader-val">.325</span></div>
+      </div>
+      <div class="leader-card">
+        <div class="leader-stat">RBI</div>
+        <div class="leader-item"><span class="leader-rank">1</span><span class="leader-name">A. Judge</span><span class="leader-team">NYY</span><span class="leader-val">22</span></div>
+        <div class="leader-item"><span class="leader-rank">2</span><span class="leader-name">M. Olson</span><span class="leader-team">ATL</span><span class="leader-val">19</span></div>
+        <div class="leader-item"><span class="leader-rank">3</span><span class="leader-name">P. Alonso</span><span class="leader-team">NYM</span><span class="leader-val">18</span></div>
+        <div class="leader-item"><span class="leader-rank">4</span><span class="leader-name">S. Ohtani</span><span class="leader-team">LAD</span><span class="leader-val">17</span></div>
+        <div class="leader-item"><span class="leader-rank">5</span><span class="leader-name">R. Devers</span><span class="leader-team">BOS</span><span class="leader-val">16</span></div>
+      </div>
+      <div class="leader-card">
+        <div class="leader-stat">SB</div>
+        <div class="leader-item"><span class="leader-rank">1</span><span class="leader-name">E. De La Cruz</span><span class="leader-team">CIN</span><span class="leader-val">11</span></div>
+        <div class="leader-item"><span class="leader-rank">2</span><span class="leader-name">B. Witt Jr.</span><span class="leader-team">KC</span><span class="leader-val">9</span></div>
+        <div class="leader-item"><span class="leader-rank">3</span><span class="leader-name">R. Acuña Jr.</span><span class="leader-team">ATL</span><span class="leader-val">8</span></div>
+        <div class="leader-item"><span class="leader-rank">4</span><span class="leader-name">C. Carroll</span><span class="leader-team">ARI</span><span class="leader-val">7</span></div>
+        <div class="leader-item"><span class="leader-rank">5</span><span class="leader-name">J. Chisholm</span><span class="leader-team">NYY</span><span class="leader-val">7</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="right">
+
+  <!-- Pipeline status -->
+  <div class="panel-label">Pipeline Status</div>
+  <div class="pipeline-card">
+    <div class="pipe-row"><span class="pipe-label">Batting stats</span><span class="pipe-val pipe-ok">12,847 rows · 2h ago</span></div>
+    <div class="pipe-row"><span class="pipe-label">Pitching stats</span><span class="pipe-val pipe-ok">4,218 rows · 2h ago</span></div>
+    <div class="pipe-row"><span class="pipe-label">Standings</span><span class="pipe-val pipe-ok">30 teams · 1h ago</span></div>
+    <div class="pipe-row"><span class="pipe-label">Games</span><span class="pipe-val pipe-ok">128 games · 1h ago</span></div>
+    <div class="pipe-row"><span class="pipe-label">Crosswalk gaps</span><span class="pipe-val pipe-warn">14 unmatched</span></div>
+    <div class="pipe-row"><span class="pipe-label">Next sync</span><span class="pipe-val">batting/pitching in 2h</span></div>
+  </div>
+
+  <div class="notice"><span class="notice-icon">i</span> Data refreshes every 4h (stats) / 1h (standings, scores). Live scores use MLB proxy.</div>
+
+  <!-- Player current season card example -->
+  <div class="panel-label">Player Card Preview</div>
+  <div class="panel" style="padding:1rem">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.75rem">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--muted)">SO</div>
+      <div>
+        <div style="font-family:'Google Sans',sans-serif;font-weight:700;font-size:0.9rem">Shohei Ohtani</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted)">LAD · DH/P · ohtansh01</div>
+      </div>
+      <span class="season-badge" style="margin-left:auto;font-size:0.6rem">2026</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center">
+      <div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.58rem;color:var(--muted);text-transform:uppercase">AVG</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.88rem;font-weight:700;color:var(--accent)">.356</div>
+      </div>
+      <div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.58rem;color:var(--muted);text-transform:uppercase">HR</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.88rem;font-weight:700;color:var(--accent)">8</div>
+      </div>
+      <div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.58rem;color:var(--muted);text-transform:uppercase">RBI</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.88rem;font-weight:700;color:var(--accent)">17</div>
+      </div>
+      <div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.58rem;color:var(--muted);text-transform:uppercase">OPS</div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.88rem;font-weight:700;color:var(--accent)">1.089</div>
+      </div>
+    </div>
+    <div style="font-family:'Google Sans Code',monospace;font-size:0.58rem;color:var(--muted);margin-top:8px;text-align:right">source: current_season · updated 2h ago</div>
+  </div>
+
+  <!-- Data source attribution -->
+  <div class="panel-label">Data Sources</div>
+  <div class="pipeline-card">
+    <div class="pipe-row"><span class="pipe-label">Historical</span><span class="pipe-val">Retrosheet + Lahman (1871–2025)</span></div>
+    <div class="pipe-row"><span class="pipe-label">Current season</span><span class="pipe-val pipe-ok">MLB Stats API → PostgreSQL</span></div>
+    <div class="pipe-row"><span class="pipe-label">Live scores</span><span class="pipe-val">MLB proxy → Redis (120s TTL)</span></div>
+    <div class="pipe-row"><span class="pipe-label">Handoff</span><span class="pipe-val">current_season truncated after Retrosheet release</span></div>
+  </div>
+
+  <!-- API endpoints -->
+  <div class="panel-label">Endpoints</div>
+  <div style="font-family:'Google Sans Code',monospace;font-size:0.68rem;display:flex;flex-direction:column;gap:4px">
+    <div style="color:var(--accent2)">GET /v1/standings?season=2026</div>
+    <div style="color:var(--accent2)">GET /v1/seasons/2026/leaders/batting</div>
+    <div style="color:var(--accent2)">GET /v1/seasons/2026/leaders/pitching</div>
+    <div style="color:var(--accent2)">GET /v1/players/{id}/stats/batting</div>
+    <div style="color:var(--muted)">↳ returns current_season row if active</div>
+    <div style="color:var(--accent2)">GET /v1/meta/datasets</div>
+    <div style="color:var(--muted)">↳ includes current_season table stats</div>
+  </div>
+
+</div>
+</div>
+</body>
+</html>

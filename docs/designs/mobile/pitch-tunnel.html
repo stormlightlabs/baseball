@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=390px, initial-scale=1.0" />
-  <title>Pitch Tunnel — Big Fly Mobile</title>
+  <title>Pitch Patterns — Big Fly Mobile</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -50,7 +50,7 @@
     .view-btn { font-size: 0.66rem; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-family: 'Google Sans Code', monospace; transition: all 0.15s; }
     .view-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.08); }
 
-    /* Pitch type legend */
+    /* Pitch call legend */
     .pitch-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .pitch-tag { display: flex; align-items: center; gap: 4px; font-size: 0.64rem; font-family: 'Google Sans Code', monospace; color: var(--muted); padding: 4px 8px; border-radius: 5px; border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
     .pitch-tag.active { border-color: currentColor; }
@@ -69,7 +69,7 @@
     .pd-val { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.78rem; color: #f1f5f9; }
     .pd-lbl { font-size: 0.56rem; color: var(--muted); font-family: 'Google Sans Code', monospace; }
 
-    /* Tunnel stats */
+    /* Pattern stats */
     .tunnel-stats { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
     .ts-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
     .ts-row:last-child { border-bottom: none; }
@@ -95,7 +95,7 @@
   </div>
 
   <div class="app-header">
-    <div class="app-title"><span class="back-btn">‹</span> Pitch Tunnel</div>
+    <div class="app-title"><span class="back-btn">‹</span> Pitch Patterns</div>
   </div>
 
   <div class="content">
@@ -103,22 +103,22 @@
     <div class="bio-strip">
       <div class="bio-avatar">◎</div>
       <div>
-        <div class="bio-name">Corbin Burnes</div>
-        <div class="bio-meta">burneco01 · SP · BAL · RHP</div>
+        <div class="bio-name">Shohei Ohtani</div>
+        <div class="bio-meta">ohtansh01 · SP/DH · LAA · RHP</div>
       </div>
     </div>
 
     <div class="panel">
-      <div class="panel-label">Pitch tunnel — batter's eye view — 2024</div>
+      <div class="panel-label">Pitch patterns — divergence view — 2024</div>
 
       <div class="tunnel-viewport">
         <div class="tunnel-scene">
           <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
-            <!-- Mound perspective lines (depth cues) -->
+            <!-- Pattern lanes -->
             <line x1="50" y1="0" x2="120" y2="300" stroke="var(--border)" stroke-width="0.3" opacity="0.3" />
             <line x1="350" y1="0" x2="280" y2="300" stroke="var(--border)" stroke-width="0.3" opacity="0.3" />
 
-            <!-- Strike zone (perspective) -->
+            <!-- Pattern frame -->
             <rect x="155" y="120" width="90" height="110" fill="none" stroke="var(--border)" stroke-width="1.5" rx="2" opacity="0.5" />
             <!-- Zone quadrants -->
             <line x1="185" y1="120" x2="185" y2="230" stroke="var(--border)" stroke-width="0.5" opacity="0.3" />
@@ -126,64 +126,64 @@
             <line x1="155" y1="157" x2="245" y2="157" stroke="var(--border)" stroke-width="0.5" opacity="0.3" />
             <line x1="155" y1="193" x2="245" y2="193" stroke="var(--border)" stroke-width="0.5" opacity="0.3" />
 
-            <!-- Release point cluster -->
+            <!-- Sequence root -->
             <circle cx="195" cy="15" r="4" fill="var(--muted)" opacity="0.2" />
 
-            <!-- Four-seam trajectory (FF) -->
+            <!-- Called strike lane -->
             <path d="M195 15 Q197 80 200 170" fill="none" stroke="var(--pitch-ff)" stroke-width="2.5" opacity="0.8" />
             <circle cx="200" cy="170" r="5" fill="var(--pitch-ff)" opacity="0.9" />
 
-            <!-- Slider trajectory (SL) -->
+            <!-- Ball lane -->
             <path d="M195 15 Q197 80 230 195" fill="none" stroke="var(--pitch-sl)" stroke-width="2.5" opacity="0.8" />
             <circle cx="230" cy="195" r="5" fill="var(--pitch-sl)" opacity="0.9" />
 
-            <!-- Changeup trajectory (CH) -->
+            <!-- Foul lane -->
             <path d="M195 15 Q197 80 190 210" fill="none" stroke="var(--pitch-ch)" stroke-width="2.5" opacity="0.8" />
             <circle cx="190" cy="210" r="5" fill="var(--pitch-ch)" opacity="0.9" />
 
-            <!-- Curveball trajectory (CB) -->
+            <!-- Swinging strike lane -->
             <path d="M195 15 Q196 90 185 240" fill="none" stroke="var(--pitch-cb)" stroke-width="2.5" opacity="0.8" />
             <circle cx="185" cy="240" r="5" fill="var(--pitch-cb)" opacity="0.9" />
 
-            <!-- Cutter trajectory (CT) -->
+            <!-- In-play lane -->
             <path d="M195 15 Q197 80 215 180" fill="none" stroke="var(--pitch-ct)" stroke-width="2.5" opacity="0.8" />
             <circle cx="215" cy="180" r="5" fill="var(--pitch-ct)" opacity="0.9" />
 
-            <!-- Tunnel point marker -->
+            <!-- Divergence marker -->
             <circle cx="197" cy="80" r="3" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.6">
               <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2s" repeatCount="indefinite" />
             </circle>
-            <text x="210" y="83" fill="#ffffff" font-size="7" font-family="Google Sans Code, monospace" opacity="0.6">tunnel point</text>
+            <text x="210" y="83" fill="#ffffff" font-size="7" font-family="Google Sans Code, monospace" opacity="0.6">split depth 2</text>
 
-            <!-- Pitch type labels at endpoints -->
-            <text x="200" y="162" fill="var(--pitch-ff)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="middle">FF</text>
-            <text x="230" y="188" fill="var(--pitch-sl)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="start">SL</text>
-            <text x="177" y="210" fill="var(--pitch-ch)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="end">CH</text>
-            <text x="172" y="244" fill="var(--pitch-cb)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="end">CB</text>
-            <text x="222" y="174" fill="var(--pitch-ct)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="start">CT</text>
+            <!-- Pitch-call labels at endpoints -->
+            <text x="200" y="162" fill="var(--pitch-ff)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="middle">C</text>
+            <text x="230" y="188" fill="var(--pitch-sl)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="start">B</text>
+            <text x="177" y="210" fill="var(--pitch-ch)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="end">F</text>
+            <text x="172" y="244" fill="var(--pitch-cb)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="end">S</text>
+            <text x="222" y="174" fill="var(--pitch-ct)" font-size="7" font-family="Google Sans Code, monospace" text-anchor="start">X</text>
           </svg>
         </div>
-        <div class="view-label">BATTER'S EYE</div>
-        <div class="swipe-hint">swipe to rotate</div>
+        <div class="view-label">OVERALL LENS</div>
+        <div class="swipe-hint">swipe to switch lens</div>
       </div>
 
       <div class="view-row">
-        <span class="view-btn active">Batter</span>
-        <span class="view-btn">Catcher</span>
-        <span class="view-btn">Overhead</span>
-        <span class="view-btn">Side</span>
+        <span class="view-btn active">Overall</span>
+        <span class="view-btn">vs LHB</span>
+        <span class="view-btn">vs RHB</span>
+        <span class="view-btn">2-Strike</span>
       </div>
 
       <div class="pitch-legend">
-        <div class="pitch-tag active" style="color:var(--pitch-ff)"><div class="pitch-dot" style="background:var(--pitch-ff)"></div>FF 95.2</div>
-        <div class="pitch-tag active" style="color:var(--pitch-sl)"><div class="pitch-dot" style="background:var(--pitch-sl)"></div>SL 87.4</div>
-        <div class="pitch-tag active" style="color:var(--pitch-ch)"><div class="pitch-dot" style="background:var(--pitch-ch)"></div>CH 87.1</div>
-        <div class="pitch-tag active" style="color:var(--pitch-cb)"><div class="pitch-dot" style="background:var(--pitch-cb)"></div>CB 79.8</div>
-        <div class="pitch-tag active" style="color:var(--pitch-ct)"><div class="pitch-dot" style="background:var(--pitch-ct)"></div>CT 91.3</div>
+        <div class="pitch-tag active" style="color:var(--pitch-ff)"><div class="pitch-dot" style="background:var(--pitch-ff)"></div>C 27.8%</div>
+        <div class="pitch-tag active" style="color:var(--pitch-sl)"><div class="pitch-dot" style="background:var(--pitch-sl)"></div>B 24.6%</div>
+        <div class="pitch-tag active" style="color:var(--pitch-ch)"><div class="pitch-dot" style="background:var(--pitch-ch)"></div>F 21.3%</div>
+        <div class="pitch-tag active" style="color:var(--pitch-cb)"><div class="pitch-dot" style="background:var(--pitch-cb)"></div>S 14.1%</div>
+        <div class="pitch-tag active" style="color:var(--pitch-ct)"><div class="pitch-dot" style="background:var(--pitch-ct)"></div>X 12.2%</div>
       </div>
 
       <div class="scrubber">
-        <div class="scrubber-label"><span>release</span><span>plate</span></div>
+        <div class="scrubber-label"><span>pitch 1</span><span>pitch 3+</span></div>
         <div class="scrubber-track">
           <div class="scrubber-fill"></div>
           <div class="scrubber-thumb"></div>
@@ -191,55 +191,55 @@
       </div>
     </div>
 
-    <!-- Selected pitch detail -->
+    <!-- Selected pattern detail -->
     <div class="panel">
-      <div class="panel-label">Four-seam fastball — selected</div>
+      <div class="panel-label">Sequence family `B-C-F` — selected</div>
       <div class="pitch-detail">
-        <div class="pd-item"><div class="pd-val">95.2</div><div class="pd-lbl">MPH</div></div>
-        <div class="pd-item"><div class="pd-val">2340</div><div class="pd-lbl">SPIN RPM</div></div>
-        <div class="pd-item"><div class="pd-val">14.8"</div><div class="pd-lbl">V-BREAK</div></div>
-        <div class="pd-item"><div class="pd-val">42%</div><div class="pd-lbl">USAGE</div></div>
+        <div class="pd-item"><div class="pd-val">184</div><div class="pd-lbl">COUNT</div></div>
+        <div class="pd-item"><div class="pd-val">11.6%</div><div class="pd-lbl">USAGE</div></div>
+        <div class="pd-item"><div class="pd-val">37%</div><div class="pd-lbl">TO IN-PLAY</div></div>
+        <div class="pd-item"><div class="pd-val">31%</div><div class="pd-lbl">TO K</div></div>
       </div>
     </div>
 
-    <!-- Tunnel distance stats -->
+    <!-- Pattern divergence stats -->
     <div class="tunnel-stats">
-      <div class="panel-label">Tunnel separation at decision point</div>
+      <div class="panel-label">Divergence at shared-prefix depth</div>
       <div class="ts-row">
         <div class="ts-pair">
           <div class="pitch-dot" style="background:var(--pitch-ff)"></div>
           <div class="pitch-dot" style="background:var(--pitch-sl)"></div>
         </div>
-        <div class="ts-label">FF → SL</div>
+        <div class="ts-label">`B-C` → `B-C-F`</div>
         <div class="ts-bar"><div class="ts-bar-fill" style="width:25%;background:var(--accent2)"></div></div>
-        <div class="ts-value">2.1"</div>
+        <div class="ts-value">depth 3</div>
       </div>
       <div class="ts-row">
         <div class="ts-pair">
           <div class="pitch-dot" style="background:var(--pitch-ff)"></div>
           <div class="pitch-dot" style="background:var(--pitch-ch)"></div>
         </div>
-        <div class="ts-label">FF → CH</div>
+        <div class="ts-label">`B-C` → `B-C-X`</div>
         <div class="ts-bar"><div class="ts-bar-fill" style="width:18%;background:var(--accent2)"></div></div>
-        <div class="ts-value">1.5"</div>
+        <div class="ts-value">depth 3</div>
       </div>
       <div class="ts-row">
         <div class="ts-pair">
           <div class="pitch-dot" style="background:var(--pitch-ff)"></div>
           <div class="pitch-dot" style="background:var(--pitch-cb)"></div>
         </div>
-        <div class="ts-label">FF → CB</div>
+        <div class="ts-label">`C-F` → `C-F-S`</div>
         <div class="ts-bar"><div class="ts-bar-fill" style="width:55%;background:var(--accent)"></div></div>
-        <div class="ts-value">4.8"</div>
+        <div class="ts-value">depth 3</div>
       </div>
       <div class="ts-row">
         <div class="ts-pair">
           <div class="pitch-dot" style="background:var(--pitch-ff)"></div>
           <div class="pitch-dot" style="background:var(--pitch-ct)"></div>
         </div>
-        <div class="ts-label">FF → CT</div>
+        <div class="ts-label">`B-S` → `B-S-X`</div>
         <div class="ts-bar"><div class="ts-bar-fill" style="width:12%;background:var(--accent2)"></div></div>
-        <div class="ts-value">1.1"</div>
+        <div class="ts-value">depth 3</div>
       </div>
     </div>
 

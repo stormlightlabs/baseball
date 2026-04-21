@@ -1,29 +1,59 @@
 # CHANGELOG
 
-All notable changes to this project will be documented in this file.
+All notable changes to [big fly](https://bigfly.tech) are documented here, based on
+[Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+Note: this is currently incomplete/non-exhaustive for post-release API changes, and web,
+as numerous stability fixes (as of 2026-04-21) are being rolled out.
 
-## [ALPHA] - 2025-12-16
+## Web
 
-### Added
+### Released
+
+#### 2026-04-19
+
+- Migrated docs into kit app with searchable titles, and anchored ToC
+
+#### 2026-04-18
+
+- Released initial SvelteKit/static web app with a basic API explorer and links to
+  Swagger docs.
+
+### Unreleased
+
+## Mobile
+
+### Released
+
+### Unreleased
+
+## API
+
+### 2026-04-21
+
+- Removed plumbing for authentication & API keys in favor of global open-access with
+  the 60 req/min. limit for non-first party clients.
+
+### 2025-12-16
+
+#### Added
 
 - Era-based, League-based date partitioning for plays table
 - Materialized views for season and career batting/pitching leaderboards
 - Retrosheet player data loading functionality
 - Command to list all registered API routes
 
-### Changed
+#### Changed
 
 - Renamed populate commands to repopulate for clarity
 
-### Fixed
+#### Fixed
 
 - League column denormalization eliminates expensive joins with games table
 
-## [ALPHA] - 2025-12-15
+### 2025-12-15
 
-### Added
+#### Added
 
 - Negro Leagues endpoints with comprehensive data coverage (1935-1949)
 - Per-game aggregations for batting, pitching, fielding, and team stats
@@ -33,14 +63,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Database indexes for Negro Leagues queries
 - Database recreate command for development workflows
 
-### Fixed
+#### Fixed
 
 - Pagination parameter handling for endpoint consistency & NULL database value handling
   across repositories
 
-## [ALPHA] - 2025-12-12
+### 2025-12-12
 
-### Added
+#### Added
 
 - Advanced analytics endpoints (wOBA, wRC+, WAR calculations)
 - Derived statistics endpoints (leverage index, win expectancy)
@@ -54,20 +84,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Pitch sequencing foundation and wOBA constants
 - Win expectancy table with batch query optimization
 
-### Changed
+#### Changed
 
 - Restructured ROADMAP into domain-specific overview documents
 - Embedded complex SQL queries in separate files for maintainability
 - Renamed error helper functions for consistency
 
-### Fixed
+#### Fixed
 
 - Middleware chain ordering for proper request handling
 - Retrosheet data field mappings
 
-## [ALPHA] - 2025-12-11
+### 2025-12-11
 
-### Added
+#### Added
 
 - Games and schedules endpoints (Retrosheet)
 - Play-by-play events and context endpoints
@@ -85,7 +115,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Database seeding and population commands
 - Docker development environment
 
-### Changed
+#### Changed
 
 - Initial repository structure and API architecture
 - Swagger documentation generation with swaggo

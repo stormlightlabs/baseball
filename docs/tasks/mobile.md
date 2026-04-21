@@ -2,7 +2,7 @@
 
 - Ref spec: `docs/specs/mobile.md`
 - Stack: Flutter 3.x, Dart, Flame engine, Material 3, BLoC
-- Backend: Go API additions under `/v1/mobile/*`, `/v1/mlb/*`, and `/v1/meta/*`
+- Backend: Go API additions under `/internal/mobile/*`, `/v1/mlb/*`, and `/v1/meta/*`
 - Scope: native mobile app + backend endpoints + design updates
 
 ## Phase 0: Project Scaffold
@@ -68,25 +68,28 @@ Acceptance:
 
 ### Backend
 
-- [ ] Add `GET /v1/mobile/spray-chart/{player_id}` endpoint in Go.
+- [ ] Add `GET /internal/mobile/spray-chart/{player_id}` endpoint in Go.
   - Query params: `season`, `vs` (L/R), `park_id`.
-  - Map Retrosheet hit-location codes to standardized field coordinates (origin at home plate, y toward CF, feet).
-  - Include park wall geometry as `[angle_deg, distance_ft]` control points.
-  - Return batted-ball events with `x`, `y`, `result`, `exit_velo`, `launch_angle`, `pitcher`, `pitch_type`, `date`.
-- [ ] Add park dimension data to the database (wall distances at standard survey angles for each park).
-- [ ] Seed park geometry for all active parks (30 current + historically significant parks).
+  - Map Retrosheet hit-location codes (`loc`, `hittype`) to standardized field coordinates (origin at home plate, y toward CF, feet).
+  - Return batted-ball events with `x`, `y`, `result`, `loc_code`, `hittype`, `pitcher`, `pitcher_hand`, `count`, `inning`, `outs`, `date`, `game_id`, `play_num`.
+- [ ] Add park geometry research + ingestion workstream:
+  - Research source options for park wall geometry and document provenance.
+  - Define ingestion schema for per-park control points and metadata quality flags.
+  - Define QA checks (angle coverage, monotonic ordering, outlier distances, season/park validity).
+  - Define fallback behavior to a generic field template when park geometry is missing.
+- [ ] Add explicit sample-query validation task using Shohei Ohtani IDs (`ohtansh01` / `ohtas001`) against local `plays` data.
 
 ### Frontend
 
 - [ ] Create `SprayChartPainter` extending `CustomPainter`:
   - Draw infield diamond (bases, foul lines, dirt cutout).
-  - Draw outfield wall from park geometry Bézier control points.
-  - Plot batted-ball events as circles (radius ∝ exit velo, color ∝ result).
+  - Draw outfield wall from park geometry when available; otherwise draw a generic field wall template.
+  - Plot batted-ball events as circles (color ∝ result, optional radius ∝ derived depth bucket).
   - Implement `hitTest` for tap detection on individual events.
 - [ ] Wrap in `InteractiveViewer` for pinch-to-zoom and pan.
-- [ ] Add filter controls: vs LHP/RHP, pitch type, count, season picker.
+- [ ] Add filter controls: vs LHP/RHP, hit type, count, season picker.
 - [ ] Add park overlay toggle (compare home vs. away park walls).
-- [ ] Tap event detail sheet: date, opponent, pitcher, exit velo, launch angle, result.
+- [ ] Tap event detail sheet: date, opponent, pitcher, result, loc/hittype, count/inning/outs.
 - [ ] Haptic feedback on tap (`HapticFeedback.selectionClick`).
 - [ ] Add as new tab on Player Detail screen.
 
@@ -94,63 +97,71 @@ Acceptance:
 
 - [ ] Spray chart renders 500+ events at 60fps.
 - [ ] Park wall overlay scales correctly with zoom.
-- [ ] Tapping an event shows detail bottom sheet with correct data.
+- [ ] Tapping an event shows detail bottom sheet with correct historical context fields.
+- [ ] Coordinate mapping is consistent for the same `loc`/`hittype` inputs across runs.
 
-## Phase 3: Pitch Tunnel Explorer
+## Phase 3: Pitch Pattern Explorer
 
 ### Backend
 
-- [ ] Add `GET /v1/mobile/pitch-tunnel/{pitcher_id}` endpoint.
-  - Query params: `season`, `pitch_types` (comma-separated codes).
-  - Aggregate pitch data by type: avg velocity, avg spin rate, spin axis, pfx_x, pfx_z, release point, usage %.
-  - Return per-type trajectory parameters.
-- [ ] Ensure pitch-level data includes movement vectors (pfx_x, pfx_z) where available.
+- [ ] Add `GET /internal/mobile/pitch-patterns/{pitcher_id}` endpoint.
+  - Query params: `season`, `vs_bat` (L/R).
+  - Aggregate Retrosheet pitch-call sequence data (`B`, `C`, `F`, `S`, `X`, etc.) into:
+    - usage and rates by call code
+    - sequence transitions by count state
+    - divergence groups by shared-prefix sequences
+  - Return split-ready summaries with handedness/count context.
+- [ ] Add explicit sample-query validation task using Shohei Ohtani IDs (`ohtansh01` / `ohtas001`) against local `plays.pitches`.
 
 ### Frontend
 
-- [ ] Create `PitchTunnelGame` Flame component:
-  - Fixed camera at batter's eye position (3.5 ft height, 1 ft behind plate).
-  - Render strike zone as semi-transparent rectangle.
-  - Compute pitch trajectories as cubic Bézier curves using Nathan physics model (RK4 integration with drag + Magnus force).
-  - Color-code by pitch type with labeled legend.
-- [ ] Implement view rotation: batter's eye, catcher, overhead, side (swipe gesture).
-- [ ] Add tunnel point markers (last point where two pitch types are within perceptual threshold).
-- [ ] Add time scrubber: slider to animate pitch progression from release to plate.
-- [ ] Tap trajectory to isolate and show pitch details.
-- [ ] Haptic bump at tunnel point and plate crossing.
+- [ ] Create `PitchPatternExplorer` widget:
+  - Render sequence lanes and divergence markers for pitch-call families.
+  - Color-code call-code groups with labeled legend.
+- [ ] Implement view/lens switching: overall, vs LHB, vs RHB, two-strike counts, hitter's counts.
+- [ ] Add divergence point markers (depth where shared-prefix branches split).
+- [ ] Add time/depth scrubber: slider to animate sequence depth (pitch 1 → pitch 2 → pitch 3+).
+- [ ] Tap sequence lane to isolate and show pattern details.
+- [ ] Haptic bump at selected divergence points.
 - [ ] Add as sub-view under Player Detail → Pitching tab, and standalone under More.
 
 Acceptance:
 
-- [ ] 6 simultaneous trajectories render at 60fps.
-- [ ] View rotation is smooth and gesture-driven.
-- [ ] Tunnel points visually mark where pitch types diverge.
+- [ ] 6 simultaneous sequence lanes render at 60fps.
+- [ ] Lens switching is smooth and gesture-driven.
+- [ ] Divergence markers reflect real sequence split depth.
+
+### Internal API Scope Alignment
+
+- [ ] Do a comprehensive internal API namespace consistency pass in docs/tasks:
+  - Use `/internal/mobile/*` for player-card, spray-chart, pitch-patterns, at-bat, and quiz routes.
+  - Remove stale legacy internal-route references.
 
 ## Phase 4: At-Bat Sequencer
 
 ### Backend
 
-- [ ] Add `GET /v1/mobile/at-bat/{game_id}/{ab_num}` endpoint.
-  - Return batter/pitcher info, pitch sequence (type, speed, location x/z, call, count), and at-bat result.
+- [ ] Add `GET /internal/mobile/at-bat/{game_id}/{ab_num}` endpoint.
+  - Return batter/pitcher info, pitch sequence (call, description, count, seq), and at-bat result.
   - Derive from existing `plays` and `pitches` tables.
 
 ### Frontend
 
 - [ ] Create `AtBatSequencerWidget`:
-  - `CustomPainter` draws strike zone scaled to batter height.
-  - Pitches animate in with trajectory arc (200ms per pitch).
+  - `CustomPainter` draws strike zone scaffold and sequence markers by pitch order.
+  - Pitches animate in as ordered sequence steps (200ms per pitch).
   - Count display updates with each pitch.
   - Horizontal timeline below zone shows sequence as labeled dots.
 - [ ] Auto-play mode: pitches appear at 1.5s intervals.
 - [ ] Manual mode: swipe left/right to step through.
-- [ ] Tap pitch dot for detail (type, speed, result, count).
+- [ ] Tap pitch dot for detail (call, description, result, count).
 - [ ] Long-press for pitcher's typical pattern comparison overlay.
 - [ ] Haptic tick on each pitch arrival (`HapticFeedback.lightImpact`).
 - [ ] Integrate into Game Detail: tap any plate appearance row to open sequencer.
 
 Acceptance:
 
-- [ ] Pitch locations render accurately within the strike zone.
+- [ ] Pitch sequence order and count progression render accurately.
 - [ ] Auto-play and manual modes both work smoothly.
 - [ ] Sequencer accessible from any game's play-by-play.
 
@@ -181,12 +192,12 @@ Acceptance:
 
 ### Backend
 
-- [ ] Add `GET /v1/mobile/quiz/situation` endpoint:
+- [ ] Add `GET /internal/mobile/quiz/situation` endpoint:
   - Pull random historical game state (inning, outs, runners, score, count).
   - Include actual outcome and win expectancy from materialized view.
-- [ ] Add `GET /v1/mobile/quiz/pitch-type` endpoint:
-  - Pull pitch trajectory data for identification challenge.
-  - Include 4 pitch type options with correct answer.
+- [ ] Add `GET /internal/mobile/quiz/pitch-type` endpoint:
+  - Pull pitch-call sequence context for pattern identification challenge.
+  - Include 4 likely next-call/outcome options with correct answer.
 
 ### Frontend
 
@@ -194,9 +205,9 @@ Acceptance:
 - [ ] **Rules & Scoring module**: animated diagrams explaining infield fly, balk, tag-up, force play.
   - Use Rive or Lottie animations for field diagrams.
 - [ ] **Pitch identification trainer**:
-  - Simplified pitch tunnel view showing single trajectory.
-  - 4-option multiple choice (e.g., four-seam, slider, changeup, curve).
-  - Difficulty scaling: reduce tunnel time, add similar pitch types.
+  - Simplified pitch-pattern view showing partial sequence context.
+  - 4-option multiple choice for likely next call/outcome.
+  - Difficulty scaling: reduce visible context, add lookalike pattern families.
 - [ ] **Situation quiz**:
   - Display game state visually (diamond with runners, scoreboard).
   - User guesses outcome or win probability range.
@@ -212,7 +223,7 @@ Acceptance:
 Acceptance:
 
 - [ ] All 5 learning modules functional.
-- [ ] Pitch identification trainer uses actual pitch trajectory rendering.
+- [ ] Pitch identification trainer uses actual historical pitch-call sequence rendering.
 - [ ] Progress persists across app sessions.
 
 ## Phase 7: Expanded MLB Proxy Namespace
@@ -387,9 +398,9 @@ Acceptance:
 - [ ] Add spray chart screen to `docs/designs/mobile/`:
   - Full-field view with park overlay and hit dots.
   - Filter controls and detail bottom sheet.
-- [ ] Add pitch tunnel screen:
-  - Batter's-eye perspective with multiple colored trajectories.
-  - View rotation controls and time scrubber.
+- [ ] Add pitch pattern screen:
+  - Sequence lanes with divergence markers and pattern legend.
+  - Lens switching controls and sequence-depth scrubber.
 - [ ] Add at-bat sequencer screen:
   - Strike zone with plotted pitches and timeline.
   - Auto-play and manual controls.
@@ -413,7 +424,7 @@ Acceptance:
 - [ ] Add today's leaders widget:
   - Stat category cards with ranked player lists.
 - [ ] Update `docs/designs/mobile/index.html` to include new screens in the gallery.
-- [ ] Update `docs/designs/mobile/players.html` to show spray chart and pitch tunnel tabs.
+- [ ] Update `docs/designs/mobile/players.html` to show spray chart and pitch patterns tabs.
 - [ ] Update `docs/designs/mobile/games.html` to show at-bat sequencer and live game tracker entry points.
 - [ ] Update `docs/designs/mobile/home.html` to show scoreboard and leaders widgets.
 
@@ -421,3 +432,4 @@ Acceptance:
 
 - [ ] All new feature screens match existing design system (colors, typography, spacing, dark mode).
 - [ ] Index gallery shows all screens including new additions.
+- [ ] Spec, tasks, and wireframes use consistent route names and historical payload semantics.
