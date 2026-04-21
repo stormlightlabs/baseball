@@ -1,10 +1,9 @@
 package middleware
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
-
-	"github.com/charmbracelet/log"
 )
 
 // responseWriter wraps http.ResponseWriter to capture status code
@@ -26,7 +25,7 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 }
 
 // Logger creates a logging middleware that logs HTTP requests.
-func Logger(logger *log.Logger) func(http.Handler) http.Handler {
+func Logger(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
@@ -36,14 +35,19 @@ func Logger(logger *log.Logger) func(http.Handler) http.Handler {
 
 			duration := time.Since(start)
 
-			logger.With(
+			attrs := []any{
 				"method", r.Method,
 				"path", r.URL.Path,
 				"status", wrapped.statusCode,
-				"duration", duration,
+				"duration_ms", duration.Milliseconds(),
 				"bytes", wrapped.written,
 				"ip", r.RemoteAddr,
-			).Infof("%s %s %d %s", r.Method, r.URL.Path, wrapped.statusCode, duration)
+			}
+			if traceID := TraceIDFromContext(r.Context()); traceID != "" {
+				attrs = append(attrs, "trace_id", traceID)
+			}
+
+			logger.InfoContext(r.Context(), "http.request", attrs...)
 		})
 	}
 }

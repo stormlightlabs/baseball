@@ -56,6 +56,7 @@ Quick local example for a complete representative slice:
 cp conf/conf.example.toml conf.toml
 ./tmp/baseball db recreate --config conf.toml
 ./tmp/baseball db migrate --config conf.toml
+./tmp/baseball-etl worker
 ./tmp/baseball-etl run --profile=dev
 ./tmp/baseball-etl validate --profile=dev
 ./tmp/baseball-etl status
@@ -83,8 +84,11 @@ For large Retrosheet slices, keep migration and recomputation separate, and proc
 
 `db migrate` is structural/idempotent; treat materialized view refresh as an explicit incremental operation.
 
-`./tmp/baseball-etl run` is the canonical ETL entrypoint.
+`./tmp/baseball-etl worker` is the long-running queue consumer.
+`./tmp/baseball-etl run` is the canonical enqueue entrypoint.
 Treat ETL as a batched worker flow on shared VMs: prefer scoped `--years` runs over unbounded full-history jobs unless you are operating a larger host.
+
+`run` is enqueue-first by default; use `--enqueue-only=false` only when you explicitly want one command to enqueue + drain locally.
 
 For exhaustive production-style ingestion:
 

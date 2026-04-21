@@ -6,8 +6,6 @@ import (
 	"encoding/hex"
 	"net/http"
 	"time"
-
-	"github.com/charmbracelet/log"
 )
 
 type ctxKey string
@@ -40,7 +38,6 @@ func newTraceID() string {
 //   - Extracted from the X-Trace-ID header if present
 //   - Generated as a random 16-byte hex string if not present
 //   - Stored in the request context
-//   - Added to the charmbracelet/log logger context
 //   - Echoed back in the X-Trace-ID response header
 //
 // This allows end-to-end tracing of requests across logs and services.
@@ -52,14 +49,6 @@ func TraceMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), traceIDKey, traceID)
-		logger := log.FromContext(ctx)
-		if logger == nil {
-			logger = log.Default()
-		}
-
-		logger = logger.With("trace_id", traceID)
-		ctx = log.WithContext(ctx, logger)
-
 		w.Header().Set("X-Trace-ID", traceID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

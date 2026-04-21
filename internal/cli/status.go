@@ -317,6 +317,44 @@ func status(cmd *cobra.Command, _ []string, strict bool) error {
 	}
 
 	echo.Info("")
+	echo.Info("• ETL Job Queue")
+	queueSnapshot, queueErr := database.ETLJobQueueSnapshot(ctx)
+	if queueErr != nil {
+		echo.Infof("  ⚠ ETL job queue unavailable: %v", queueErr)
+	} else {
+		echo.Successf("  ✓ Queue states: queued=%d started=%d running=%d retry_wait=%d succeeded=%d failed=%d cancelled=%d",
+			queueSnapshot.Queued,
+			queueSnapshot.Started,
+			queueSnapshot.Running,
+			queueSnapshot.RetryWait,
+			queueSnapshot.Succeeded,
+			queueSnapshot.Failed,
+			queueSnapshot.Cancelled,
+		)
+	}
+
+	jobMetrics, metricsErr := database.ETLJobMetricsByType(ctx)
+	if metricsErr != nil {
+		echo.Infof("  ⚠ ETL job metrics unavailable: %v", metricsErr)
+	} else if len(jobMetrics) == 0 {
+		echo.Infof("  • No ETL jobs recorded yet")
+	} else {
+		for _, metric := range jobMetrics {
+			echo.Infof("  • %s: succeeded=%d failed=%d cancelled=%d retry_wait=%d rows=%d failures(network=%d db=%d validation=%d)",
+				metric.JobType,
+				metric.SucceededJobs,
+				metric.FailedJobs,
+				metric.CancelledJobs,
+				metric.RetryWaitJobs,
+				metric.RowsProcessed,
+				metric.NetworkFailures,
+				metric.DBWriteFailures,
+				metric.ValidationFailures,
+			)
+		}
+	}
+
+	echo.Info("")
 	echo.Success("✓ Status check completed")
 	return nil
 }

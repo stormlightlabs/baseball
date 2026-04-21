@@ -94,6 +94,13 @@ ETL should execute as a batched job queue, even when manually triggered from CLI
 
 Primary objective: avoid VM saturation while still making forward progress on ingest and maintenance.
 
+Current runtime shape:
+
+- `baseball-etl run` enqueues scoped jobs (enqueue-first behavior).
+- `baseball-etl worker` is the long-lived process that polls and executes queued jobs.
+- Queue state is persisted in `etl_jobs` with durable statuses (`queued`, `started`, `running`, `retry_wait`, `succeeded`, `failed`, `cancelled`).
+- `etl status` surfaces queue state and per-job-type throughput/failure metrics.
+
 ## Retrosheet Lifecycle Contract
 
 For each ETL execution window:

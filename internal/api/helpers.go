@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -16,12 +16,12 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 	data, err := json.Marshal(v)
 	if err != nil {
-		log.Printf("writeJSON marshal error: %v", err)
+		slog.Error("writeJSON marshal error", "error", err)
 		return
 	}
 
 	if _, err := w.Write(data); err != nil {
-		log.Printf("writeJSON write error: %v", err)
+		slog.Error("writeJSON write error", "error", err)
 	}
 }
 

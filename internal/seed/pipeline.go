@@ -2,6 +2,7 @@ package seed
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"slices"
@@ -30,16 +31,19 @@ const (
 
 // PipelineOptions configures a full ETL pipeline run.
 type PipelineOptions struct {
-	Profile           PipelineProfile
-	Mode              PipelineMode
-	Years             []int
-	EraNames          []string
-	DataRoot          string
-	LahmanCSVDir      string
-	RetrosheetDataDir string
-	ChadwickDataDir   string
-	FanGraphsDir      string
-	SalaryDataDir     string
+	Profile             PipelineProfile
+	Mode                PipelineMode
+	Years               []int
+	EraNames            []string
+	DataRoot            string
+	LahmanCSVDir        string
+	RetrosheetDataDir   string
+	ChadwickDataDir     string
+	FanGraphsDir        string
+	SalaryDataDir       string
+	NetworkRetryMax     int
+	NetworkRetryBackoff time.Duration
+	LoadChunkSize       int
 }
 
 // PipelineRunResult summarizes a completed pipeline run.
@@ -111,6 +115,12 @@ func NormalizePipelineOptions(opts PipelineOptions) (PipelineOptions, error) {
 	if opts.SalaryDataDir == "" {
 		opts.SalaryDataDir = SalariesDir(opts.DataRoot)
 	}
+	if opts.NetworkRetryMax < 0 {
+		opts.NetworkRetryMax = 0
+	}
+	if opts.NetworkRetryBackoff <= 0 {
+		opts.NetworkRetryBackoff = defaultETLNetworkRetryBackoff
+	}
 
 	if opts.Profile != PipelineProfileDev && opts.Profile != PipelineProfileProd {
 		return opts, fmt.Errorf("invalid profile %q (valid: dev, prod)", opts.Profile)
@@ -149,13 +159,19 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	}
 
 	params := map[string]any{
-		"years":     opts.Years,
-		"eras":      opts.EraNames,
-		"data_root": opts.DataRoot,
+		"years":                 opts.Years,
+		"eras":                  opts.EraNames,
+		"data_root":             opts.DataRoot,
+		"network_retry_max":     opts.NetworkRetryMax,
+		"network_retry_backoff": opts.NetworkRetryBackoff.String(),
+		"load_chunk_size":       opts.LoadChunkSize,
 	}
 
 	runID, err := database.StartETLRun(ctx, string(opts.Profile), string(opts.Mode), params)
 	if err != nil {
+		return PipelineRunResult{}, err
+	}
+	if err := database.MarkETLRunRunning(ctx, runID); err != nil {
 		return PipelineRunResult{}, err
 	}
 
@@ -166,8 +182,16 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		Years:   slices.Clone(opts.Years),
 	}
 
-	runStatus := "completed"
+	runStatus := "succeeded"
 	runErrMsg := ""
+	markRunFailure := func(stepErr error) {
+		runErrMsg = stepErr.Error()
+		if errors.Is(stepErr, context.Canceled) || errors.Is(stepErr, context.DeadlineExceeded) {
+			runStatus = "cancelled"
+			return
+		}
+		runStatus = "failed"
+	}
 	defer func() {
 		if err := database.FinishETLRun(ctx, runID, runStatus, runErrMsg); err != nil {
 			echo.Infof("⚠ Failed to finalize ETL run %d: %v", runID, err)
@@ -183,33 +207,36 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	echo.Infof("Mode: %s", opts.Mode)
 	echo.Infof("Years: %s", summarizeYears(opts.Years))
 
-	rows, stepErr := runPipelineStep(ctx, database, runID, "extract.retrosheet", func(stepCtx context.Context) (int64, error) {
+	networkRetryPolicy := pipelineStepRetryPolicy{
+		MaxRetries: opts.NetworkRetryMax,
+		Backoff:    opts.NetworkRetryBackoff,
+		RetryClass: "network",
+	}
+
+	rows, stepErr := runPipelineStepWithRetry(ctx, database, runID, "extract.retrosheet", networkRetryPolicy, func(stepCtx context.Context) (int64, error) {
 		return 0, FetchRetrosheetData(stepCtx, opts.RetrosheetDataDir, opts.Years, force)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "extract.chadwick", func(stepCtx context.Context) (int64, error) {
+	rows, stepErr = runPipelineStepWithRetry(ctx, database, runID, "extract.chadwick", networkRetryPolicy, func(stepCtx context.Context) (int64, error) {
 		return 0, FetchChadwickRegisterData(stepCtx, opts.ChadwickDataDir, force)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "extract.negroleagues", func(stepCtx context.Context) (int64, error) {
+	rows, stepErr = runPipelineStepWithRetry(ctx, database, runID, "extract.negroleagues", networkRetryPolicy, func(stepCtx context.Context) (int64, error) {
 		return 0, FetchNegroLeaguesData(stepCtx, filepath.Join(opts.RetrosheetDataDir, "negroleagues"), force)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -218,8 +245,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -236,8 +262,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -246,8 +271,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -256,8 +280,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -270,8 +293,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -285,8 +307,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -295,8 +316,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -305,8 +325,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -315,8 +334,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -325,8 +343,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -335,8 +352,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
-		runStatus = "failed"
-		runErrMsg = stepErr.Error()
+		markRunFailure(stepErr)
 		return result, stepErr
 	}
 
@@ -404,7 +420,7 @@ func runPipelineStep(ctx context.Context, database *db.DB, runID int64, step str
 	rowCount, stepErr := fn(stepCtx)
 	if stepErr != nil {
 		_ = database.FinishETLStep(ctx, stepID, "failed", rowCount, stepErr.Error())
-		return rowCount, stepErr
+		return rowCount, fmt.Errorf("%s: %w", step, stepErr)
 	}
 
 	if err := database.FinishETLStep(ctx, stepID, "completed", rowCount, ""); err != nil {
@@ -413,6 +429,69 @@ func runPipelineStep(ctx context.Context, database *db.DB, runID int64, step str
 
 	echo.Successf("✓ %s (%s)", step, time.Since(start).Round(time.Second))
 	return rowCount, nil
+}
+
+type pipelineStepRetryPolicy struct {
+	MaxRetries int
+	Backoff    time.Duration
+	RetryClass string
+}
+
+func runPipelineStepWithRetry(
+	ctx context.Context,
+	database *db.DB,
+	runID int64,
+	step string,
+	policy pipelineStepRetryPolicy,
+	fn func(context.Context) (int64, error),
+) (int64, error) {
+	if policy.MaxRetries < 0 {
+		policy.MaxRetries = 0
+	}
+	if policy.Backoff <= 0 {
+		policy.Backoff = defaultETLNetworkRetryBackoff
+	}
+
+	var rows int64
+	var stepErr error
+
+	for attempt := 0; attempt <= policy.MaxRetries; attempt++ {
+		rows, stepErr = runPipelineStep(ctx, database, runID, step, fn)
+		if stepErr == nil {
+			return rows, nil
+		}
+		if attempt == policy.MaxRetries {
+			return rows, stepErr
+		}
+
+		delay := time.Duration(attempt+1) * policy.Backoff
+		echo.Infof("  Retrying step=%s attempt=%d/%d in %s due to: %v", step, attempt+2, policy.MaxRetries+1, delay.Round(time.Millisecond), stepErr)
+
+		recordETLPhaseEvent(
+			withETLStepContext(ctx, runID, step),
+			database,
+			step,
+			"retry_wait",
+			"retrying",
+			rows,
+			time.Now(),
+			map[string]any{
+				"attempt":      attempt + 2,
+				"max_attempts": policy.MaxRetries + 1,
+				"retry_class":  policy.RetryClass,
+				"delay_ms":     delay.Milliseconds(),
+			},
+			stepErr,
+		)
+
+		select {
+		case <-ctx.Done():
+			return rows, ctx.Err()
+		case <-time.After(delay):
+		}
+	}
+
+	return rows, stepErr
 }
 
 // ValidatePipeline verifies completeness for the chosen profile.

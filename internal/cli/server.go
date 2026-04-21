@@ -8,13 +8,14 @@ import (
 	"go/parser"
 	"go/token"
 	"io"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/log"
+	charmlog "github.com/charmbracelet/log"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/api"
@@ -330,12 +331,21 @@ func startServer(cmd *cobra.Command, args []string) error {
 		timeFmt = time.Kitchen
 	}
 
-	logger := log.NewWithOptions(cmd.OutOrStdout(), log.Options{
-		ReportTimestamp: true,
-		TimeFormat:      timeFmt,
-		Prefix:          "⚾️",
-		ReportCaller:    cfg.Server.DebugMode,
-	})
+	var logger *slog.Logger
+	if cfg.Server.DebugMode {
+		devHandler := charmlog.NewWithOptions(cmd.OutOrStdout(), charmlog.Options{
+			ReportTimestamp: true,
+			TimeFormat:      timeFmt,
+			Prefix:          "⚾",
+			ReportCaller:    true,
+		})
+		logger = slog.New(devHandler).With("env", "dev")
+	} else {
+		logger = slog.New(slog.NewJSONHandler(cmd.OutOrStdout(), &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})).With("env", "prod")
+	}
+	slog.SetDefault(logger)
 
 	userRepo := repository.NewUserRepository(database.DB)
 	tokenRepo := repository.NewOAuthTokenRepository(database.DB)

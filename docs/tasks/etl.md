@@ -46,19 +46,19 @@ Acceptance:
 
 ## Phase 3: Job-Oriented ETL Worker Behavior
 
-- [ ] Define ETL job types (`full-run`, `yearly-sync`, `validate-only`, `cleanup-only`, `maintenance`).
-- [ ] Add durable run-state transitions for start/running/succeeded/failed/cancelled.
-- [ ] Add job metadata for scope (`years`, `era`, profile/mode) and replayability.
-- [ ] Add clear retry policy for network/download failures separate from DB write failures.
-- [ ] Track throughput and failure class metrics per job type.
-- [ ] Add queue controls for VM safety (max active jobs, max queued jobs, job-priority policy).
-- [ ] Add batch controls (year-window chunking, load chunk sizes, optional inter-batch delay).
+- [x] Define ETL job types (`full-run`, `yearly-sync`, `validate-only`, `cleanup-only`, `maintenance`).
+- [x] Add durable run-state transitions for start/running/succeeded/failed/cancelled.
+- [x] Add job metadata for scope (`years`, `era`, profile/mode) and replayability.
+- [x] Add clear retry policy for network/download failures separate from DB write failures.
+- [x] Track throughput and failure class metrics per job type.
+- [x] Add queue controls for VM safety (max active jobs, max queued jobs, job-priority policy).
+- [x] Add batch controls (year-window chunking, load chunk sizes, optional inter-batch delay).
 
 Acceptance:
 
-- [ ] ETL behaves like a queue worker surface even when invoked manually.
-- [ ] Failed jobs can be resumed or retried with explicit scope.
-- [ ] Default queue/batch settings prevent host saturation on the production VM.
+- [x] ETL behaves like a queue worker surface even when invoked manually.
+- [x] Failed jobs can be resumed or retried with explicit scope.
+- [x] Default queue/batch settings prevent host saturation on the production VM.
 
 ## Phase 4: Dedicated ETL Container (Dev + Prod Compose)
 

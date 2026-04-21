@@ -60,10 +60,14 @@ Quick Docker/Coolify example for a representative complete slice (`2022-2025`) u
 
 ```bash
 docker compose exec app baseball db migrate
+docker compose exec app baseball-etl worker
 docker compose exec app baseball-etl run --profile dev --years 2022-2025
 docker compose exec app baseball-etl validate --profile dev --years 2022-2025
 docker compose exec app baseball-etl status
 ```
+
+`baseball-etl worker` should run as the long-lived queue consumer service/process.
+`baseball-etl run` enqueues ETL jobs by default.
 
 If required files are missing under `/home/app/data`, the ETL pipeline
 should fetch required Retrosheet windows directly before load:
