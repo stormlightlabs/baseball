@@ -108,12 +108,16 @@ If ETL validation fails due to stale or incomplete local source files (for examp
 
 3) Re-run ETL + validation.
 
-    If your data root is mounted outside the default path:
+Incremental/year-batched ETL now reuses an already-populated `retrosheet_players`
+table (instead of truncating/reloading every batch). If the table is empty, the
+worker reloads it automatically.
 
-    ```bash
-    docker compose exec etl baseball-etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
-    docker compose exec etl baseball-etl validate --profile dev --years 2022-2025 --data-root /path/to/baseball-data
-    ```
+  If your data root is mounted outside the default path:
+
+  ```bash
+  docker compose exec etl baseball-etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
+  docker compose exec etl baseball-etl validate --profile dev --years 2022-2025 --data-root /path/to/baseball-data
+  ```
 
 First-time full historical setup (production profile):
 

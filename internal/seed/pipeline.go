@@ -288,11 +288,7 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 	}
 
 	rows, stepErr = runPipelineStep(ctx, database, runID, "load.retrosheet_players", func(stepCtx context.Context) (int64, error) {
-		csvPath, err := EnsureRetrosheetPlayersCSV(opts.RetrosheetDataDir)
-		if err != nil {
-			return 0, err
-		}
-		return LoadRetrosheetPlayers(stepCtx, database, csvPath)
+		return ensureRetrosheetPlayersLoaded(stepCtx, database, opts)
 	})
 	result.TotalRows += rows
 	if stepErr != nil {
@@ -422,6 +418,40 @@ func runPipelineStep(ctx context.Context, database *db.DB, runID int64, step str
 
 	echo.Successf("✓ %s (%s)", step, time.Since(start).Round(time.Second))
 	return rowCount, nil
+}
+
+func ensureRetrosheetPlayersLoaded(ctx context.Context, database *db.DB, opts PipelineOptions) (int64, error) {
+	if opts.Mode == PipelineModeIncremental {
+		loaded, err := database.IsDatasetLoaded(ctx, "retrosheet_players")
+		if err != nil {
+			return 0, fmt.Errorf("failed checking retrosheet_players refresh state: %w", err)
+		}
+		if loaded {
+			var existingRows int64
+			if err := database.QueryRowContext(ctx, `SELECT COUNT(*) FROM retrosheet_players`).Scan(&existingRows); err != nil {
+				return 0, fmt.Errorf("failed counting retrosheet_players rows: %w", err)
+			}
+			if existingRows > 0 {
+				echo.Info("Retrosheet players already loaded, skipping")
+				return 0, nil
+			}
+			echo.Info("Retrosheet players refresh metadata exists but table is empty; reloading")
+		}
+	}
+
+	csvPath, err := EnsureRetrosheetPlayersCSV(opts.RetrosheetDataDir)
+	if err != nil {
+		return 0, err
+	}
+
+	rows, err := LoadRetrosheetPlayers(ctx, database, csvPath)
+	if err != nil {
+		return rows, err
+	}
+	if rows == 0 {
+		return 0, fmt.Errorf("retrosheet players load produced 0 rows")
+	}
+	return rows, nil
 }
 
 type pipelineStepRetryPolicy struct {
