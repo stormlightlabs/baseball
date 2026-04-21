@@ -25,6 +25,7 @@ services:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/baseball_dev?sslmode=disable
       REDIS_URL: redis://redis:6379/0
       BASEBALL_DATA_ROOT: /home/app/data
+      RATE_LIMIT_PUBLIC_PER_MINUTE: 60
     volumes:
       - data_root:/home/app/data
     expose:

@@ -16,7 +16,6 @@ type Config struct {
 	Database DatabaseConfig
 	Redis    RedisConfig
 	Cache    CacheConfig
-	OAuth    OAuthConfig
 }
 
 // ServerConfig contains server settings
@@ -26,11 +25,17 @@ type ServerConfig struct {
 	BaseURL   string
 	DebugMode bool
 	CORS      CORSConfig
+	RateLimit RateLimitConfig
 }
 
 // CORSConfig contains cross-origin request settings.
 type CORSConfig struct {
 	AllowedOrigins []string
+}
+
+// RateLimitConfig contains HTTP rate-limiting settings.
+type RateLimitConfig struct {
+	PublicPerMinute int
 }
 
 // DatabaseConfig contains database connection settings
@@ -59,20 +64,6 @@ type CacheTTLConfig struct {
 	Negative int // "Not found" responses
 }
 
-// OAuthConfig contains OAuth provider settings
-type OAuthConfig struct {
-	GitHub   OAuthProvider
-	Codeberg OAuthProvider
-}
-
-// OAuthProvider represents an OAuth provider configuration
-type OAuthProvider struct {
-	ClientID     string
-	ClientSecret string
-	CallbackURL  string
-	Enabled      bool
-}
-
 var globalConfig *Config
 
 // Load reads configuration from the specified file or environment variables.
@@ -95,6 +86,7 @@ func Load(configPath string) (*Config, error) {
 	v.SetDefault("server.base_url", "http://localhost:8080/v1/")
 	v.SetDefault("server.debug_mode", false)
 	v.SetDefault("server.cors_allowed_origins", []string{"http://localhost:5173", "http://127.0.0.1:5173"})
+	v.SetDefault("server.rate_limit_public_per_minute", 60)
 	v.SetDefault("database.url", "postgres://postgres:postgres@localhost:5432/baseball_dev?sslmode=disable")
 	v.SetDefault("redis.url", "redis://localhost:6379/0")
 
@@ -114,12 +106,9 @@ func Load(configPath string) (*Config, error) {
 	v.BindEnv("server.base_url", "SERVER_BASE_URL")
 	v.BindEnv("server.debug_mode", "DEBUG_MODE")
 	v.BindEnv("server.cors_allowed_origins", "CORS_ALLOWED_ORIGINS")
+	v.BindEnv("server.rate_limit_public_per_minute", "RATE_LIMIT_PUBLIC_PER_MINUTE")
 	v.BindEnv("cache.enabled", "CACHE_ENABLED")
 	v.BindEnv("cache.version", "CACHE_VERSION")
-	v.BindEnv("oauth.github.client_id", "GITHUB_CLIENT_ID")
-	v.BindEnv("oauth.github.client_secret", "GITHUB_CLIENT_SECRET")
-	v.BindEnv("oauth.codeberg.client_id", "CODEBERG_CLIENT_ID")
-	v.BindEnv("oauth.codeberg.client_secret", "CODEBERG_CLIENT_SECRET")
 
 	if err := v.ReadInConfig(); err != nil {
 		var notFoundErr viper.ConfigFileNotFoundError
@@ -139,6 +128,9 @@ func Load(configPath string) (*Config, error) {
 			CORS: CORSConfig{
 				AllowedOrigins: normalizedStringList(v.GetStringSlice("server.cors_allowed_origins"), v.GetString("server.cors_allowed_origins")),
 			},
+			RateLimit: RateLimitConfig{
+				PublicPerMinute: v.GetInt("server.rate_limit_public_per_minute"),
+			},
 		},
 		Database: DatabaseConfig{
 			URL: v.GetString("database.url"),
@@ -157,21 +149,9 @@ func Load(configPath string) (*Config, error) {
 				Negative: v.GetInt("cache.ttls.negative"),
 			},
 		},
-		OAuth: OAuthConfig{
-			GitHub: OAuthProvider{
-				ClientID:     v.GetString("oauth.github.client_id"),
-				ClientSecret: v.GetString("oauth.github.client_secret"),
-				CallbackURL:  v.GetString("oauth.github.callback_url"),
-				Enabled:      v.GetString("oauth.github.client_id") != "",
-			},
-			Codeberg: OAuthProvider{
-				ClientID:     v.GetString("oauth.codeberg.client_id"),
-				ClientSecret: v.GetString("oauth.codeberg.client_secret"),
-				CallbackURL:  v.GetString("oauth.codeberg.callback_url"),
-				Enabled:      v.GetString("oauth.codeberg.client_id") != "",
-			},
-		},
 	}
+
+	cfg.Server.RateLimit.PublicPerMinute = positiveOrDefault(cfg.Server.RateLimit.PublicPerMinute, 60)
 
 	if shouldPreferContainerServiceNetworking() {
 		cfg.Redis.URL = normalizeRedisURLForContainer(cfg.Redis.URL)
@@ -204,6 +184,13 @@ func normalizedStringList(values []string, raw string) []string {
 		}
 	}
 	return result
+}
+
+func positiveOrDefault(value, fallback int) int {
+	if value <= 0 {
+		return fallback
+	}
+	return value
 }
 
 func shouldPreferContainerServiceNetworking() bool {

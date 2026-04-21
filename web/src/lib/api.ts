@@ -49,7 +49,7 @@ function buildUrl(path: string, params?: Params): string {
 
 export async function apiFetch<T>(path: string, params?: Params): Promise<T> {
   const url = buildUrl(path, params);
-  const res = await fetch(url, { credentials: 'include' });
+  const res = await fetch(url, { credentials: 'include', headers: { 'X-BigFly-Client': 'web' } });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error((body as { error: string }).error ?? `HTTP ${res.status}`);

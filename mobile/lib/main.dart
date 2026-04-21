@@ -18,9 +18,7 @@ Future<void> main() async {
   final cacheBox = await Hive.openBox<String>(CacheStore.appBoxName);
   final cacheStore = HiveCacheStore(cacheBox);
 
-  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 5), receiveTimeout: const Duration(seconds: 5)));
-
-  dio.options.baseUrl = _resolveBaseUrl();
+  final dio = buildApiDio();
   final apiClient = BaseballApiClient(dio);
   final homeRepository = ApiHomeRepository(apiClient);
   final playerRepository = ApiPlayerRepository(apiClient, cacheStore);
@@ -38,6 +36,13 @@ Future<void> main() async {
       moreRepository: moreRepository,
     ),
   );
+}
+
+Dio buildApiDio() {
+  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 5), receiveTimeout: const Duration(seconds: 5)));
+  dio.options.baseUrl = _resolveBaseUrl();
+  dio.options.headers['X-BigFly-Client'] = 'mobile';
+  return dio;
 }
 
 String _resolveBaseUrl() {

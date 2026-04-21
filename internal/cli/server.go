@@ -306,7 +306,13 @@ func startServer(cmd *cobra.Command, args []string) error {
 	}
 	slog.SetDefault(logger)
 
-	rateLimiter := middleware.NewRateLimiter(redisClient, cfg.Server.DebugMode, 60, 10, time.Minute)
+	rateLimiter := middleware.NewRateLimiter(
+		redisClient,
+		cfg.Server.DebugMode,
+		cfg.Server.RateLimit.PublicPerMinute,
+		time.Minute,
+		cfg.Server.CORS.AllowedOrigins,
+	)
 
 	var handler http.Handler = server
 	handler = middleware.Logger(logger)(handler)
@@ -316,7 +322,8 @@ func startServer(cmd *cobra.Command, args []string) error {
 	if !cfg.Server.DebugMode && redisClient != nil {
 		handler = rateLimiter.Middleware(handler)
 		echo.Info("✓ Rate limiting enabled")
-		echo.Info("  10 req/min per IP")
+		echo.Infof("  Public: %d req/min per IP", cfg.Server.RateLimit.PublicPerMinute)
+		echo.Info("  First-party bypass: X-BigFly-Client=web|mobile")
 	} else if cfg.Server.DebugMode {
 		echo.Info("⚠ Rate limiting disabled (debug mode)")
 	} else if redisClient == nil {

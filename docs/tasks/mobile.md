@@ -56,7 +56,7 @@ Acceptance:
 
 ### Seasons, Leaders, Compare, Data Sources
 
-- [ ] Port remaining screens from mobile designs
+- [x] Port remaining screens from mobile designs
 
 Acceptance:
 

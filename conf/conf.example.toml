@@ -7,6 +7,7 @@ port = 8080
 base_url = "http://localhost:8080/v1/"
 debug_mode = true
 cors_allowed_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+rate_limit_public_per_minute = 60
 
 [database]
 # Local development (default)
@@ -16,13 +17,3 @@ url = "postgres://postgres:postgres@localhost:5432/baseball_dev?sslmode=disable"
 
 [redis]
 url = "redis://localhost:6379/0"
-
-[oauth.github]
-client_id = ""
-client_secret = ""
-callback_url = "http://localhost:8080/v1/auth/github/callback"
-
-[oauth.codeberg]
-client_id = ""
-client_secret = ""
-callback_url = "http://localhost:8080/v1/auth/codeberg/callback"

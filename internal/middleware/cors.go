@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const defaultCORSAllowedHeaders = "Accept, Authorization, Content-Type, X-Requested-With, X-Trace-ID"
+const defaultCORSAllowedHeaders = "Accept, Authorization, Content-Type, X-Requested-With, X-Trace-ID, X-BigFly-Client"
 const defaultCORSAllowedMethods = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
 
 // CORS returns a middleware that applies origin-based CORS headers and

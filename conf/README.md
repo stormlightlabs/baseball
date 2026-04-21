@@ -27,22 +27,24 @@ Production Postgres tuning is applied via `command: ["postgres", "-c", ...]` ent
 
 Configure environment variables in the docker deployment environment:
 
-| Variable                | Example                                                         | Notes                             |
-| ----------------------- | --------------------------------------------------------------- | --------------------------------- |
-| `DATABASE_URL`          | `postgres://postgres:pw@postgres:5432/baseball?sslmode=disable` | Host is the Compose service name  |
-| `SERVER_HOST`           | `0.0.0.0`                                                       | Bind API server to all interfaces |
-| `REDIS_URL`             | `redis://redis:6379/0`                                          |                                   |
-| `BASEBALL_DATA_ROOT`    | `/home/app/data`                                                | Shared ETL/API data root volume   |
-| `POSTGRES_PASSWORD`     | _(strong password)_                                             | Mark as sensitive                 |
-| `POSTGRES_DB`           | `baseball`                                                      |                                   |
-| `DB_MAX_OPEN_CONNS`     | `20`                                                            | App DB pool hard cap              |
-| `DB_MAX_IDLE_CONNS`     | `10`                                                            | App DB pool idle cap              |
-| `DB_CONN_MAX_LIFETIME`  | `30m`                                                           | App DB connection lifetime        |
-| `DB_CONN_MAX_IDLE_TIME` | `5m`                                                            | App DB idle connection timeout    |
-| `GOMEMLIMIT`            | `900MiB`                                                        | Go runtime heap soft limit        |
-| `GOMAXPROCS`            | `2`                                                             | Go runtime CPU concurrency cap    |
+| Variable                              | Example                                                         | Notes                             |
+| ------------------------------------- | --------------------------------------------------------------- | --------------------------------- |
+| `DATABASE_URL`                        | `postgres://postgres:pw@postgres:5432/baseball?sslmode=disable` | Host is the Compose service name  |
+| `SERVER_HOST`                         | `0.0.0.0`                                                       | Bind API server to all interfaces |
+| `CORS_ALLOWED_ORIGINS`                | `https://bigfly.tech,https://www.bigfly.tech`                   | Allowlist for browser origins     |
+| `RATE_LIMIT_PUBLIC_PER_MINUTE`        | `60`                                                            | Public/open API limit per IP      |
+| `REDIS_URL`                           | `redis://redis:6379/0`                                          |                                   |
+| `BASEBALL_DATA_ROOT`                  | `/home/app/data`                                                | Shared ETL/API data root volume   |
+| `POSTGRES_PASSWORD`                   | _(strong password)_                                             | Mark as sensitive                 |
+| `POSTGRES_DB`                         | `baseball`                                                      |                                   |
+| `DB_MAX_OPEN_CONNS`                   | `20`                                                            | App DB pool hard cap              |
+| `DB_MAX_IDLE_CONNS`                   | `10`                                                            | App DB pool idle cap              |
+| `DB_CONN_MAX_LIFETIME`                | `30m`                                                           | App DB connection lifetime        |
+| `DB_CONN_MAX_IDLE_TIME`               | `5m`                                                            | App DB idle connection timeout    |
+| `GOMEMLIMIT`                          | `900MiB`                                                        | Go runtime heap soft limit        |
+| `GOMAXPROCS`                          | `2`                                                             | Go runtime CPU concurrency cap    |
 
-Optional: `ETL_DB_MAX_OPEN_CONNS`, `ETL_DB_MAX_IDLE_CONNS`, `ETL_DB_CONN_MAX_LIFETIME`, `ETL_DB_CONN_MAX_IDLE_TIME`, `ETL_GOMEMLIMIT`, `ETL_GOMAXPROCS`, `ETL_MAX_ACTIVE_JOBS`, `ETL_MAX_QUEUED_JOBS`, `ETL_MV_WORK_MEM`, `ETL_MV_MAINTENANCE_WORK_MEM`, `ETL_MV_MAX_PARALLEL_WORKERS_PER_GATHER`, `ETL_MV_JIT`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `CODEBERG_CLIENT_ID`, `CODEBERG_CLIENT_SECRET`, `CACHE_ENABLED`, `CACHE_VERSION`.
+Optional: `ETL_DB_MAX_OPEN_CONNS`, `ETL_DB_MAX_IDLE_CONNS`, `ETL_DB_CONN_MAX_LIFETIME`, `ETL_DB_CONN_MAX_IDLE_TIME`, `ETL_GOMEMLIMIT`, `ETL_GOMAXPROCS`, `ETL_MAX_ACTIVE_JOBS`, `ETL_MAX_QUEUED_JOBS`, `ETL_MV_WORK_MEM`, `ETL_MV_MAINTENANCE_WORK_MEM`, `ETL_MV_MAX_PARALLEL_WORKERS_PER_GATHER`, `ETL_MV_JIT`, `CACHE_ENABLED`, `CACHE_VERSION`.
 
 1. Click **Deploy**.
 
@@ -86,25 +88,25 @@ re-seed from the latest image snapshot before starting services.
 
 If ETL validation fails due to stale or incomplete local source files (for example `retrosheet_players` empty), recover in this order:
 
-1) Targeted Retrosheet refresh + player reload:
+1. Targeted Retrosheet refresh + player reload:
 
-    ```bash
-    docker compose exec etl baseball-etl fetch retrosheet --force --years 2022-2025
-    docker compose exec etl baseball-etl load players
-    docker compose exec etl baseball-etl run --profile prod --years 2022-2025
-    docker compose exec etl baseball-etl validate --profile prod --years 2022-2025
-    ```
+   ```bash
+   docker compose exec etl baseball-etl fetch retrosheet --force --years 2022-2025
+   docker compose exec etl baseball-etl load players
+   docker compose exec etl baseball-etl run --profile prod --years 2022-2025
+   docker compose exec etl baseball-etl validate --profile prod --years 2022-2025
+   ```
 
-2) If broader source state is stale, recreate only the `data_root` volume (do not remove Postgres volume):
+2. If broader source state is stale, recreate only the `data_root` volume (do not remove Postgres volume):
 
-    ```bash
-    docker compose stop app etl
-    docker volume ls --format '{{.Name}}' | grep data_root
-    docker volume rm <data_root_volume_name>
-    docker compose up -d app etl
-    ```
+   ```bash
+   docker compose stop app etl
+   docker volume ls --format '{{.Name}}' | grep data_root
+   docker volume rm <data_root_volume_name>
+   docker compose up -d app etl
+   ```
 
-3) Re-run ETL + validation.
+3. Re-run ETL + validation.
 
 Incremental/year-batched ETL now reuses an already-populated `retrosheet_players`
 table (instead of truncating/reloading every batch). If the table is empty, the
@@ -117,12 +119,12 @@ docker compose exec etl baseball-etl jobs ls --status running,started
 docker compose exec etl baseball-etl jobs clear --reason "recover stale in-flight jobs after restart"
 ```
 
-  If your data root is mounted outside the default path:
+If your data root is mounted outside the default path:
 
-  ```bash
-  docker compose exec etl baseball-etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
-  docker compose exec etl baseball-etl validate --profile dev --years 2022-2025 --data-root /path/to/baseball-data
-  ```
+```bash
+docker compose exec etl baseball-etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
+docker compose exec etl baseball-etl validate --profile dev --years 2022-2025 --data-root /path/to/baseball-data
+```
 
 First-time full historical setup (production profile):
 
