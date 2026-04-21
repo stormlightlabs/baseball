@@ -24,7 +24,6 @@ import (
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
 	"stormlightlabs.org/baseball/internal/middleware"
-	"stormlightlabs.org/baseball/internal/repository"
 )
 
 type Route struct {
@@ -43,7 +42,6 @@ func ServerCmd() *cobra.Command {
 	cmd.AddCommand(ServerStartCmd())
 	cmd.AddCommand(ServerFetchCmd())
 	cmd.AddCommand(ServerHealthCmd())
-	cmd.AddCommand(ServerAuthCmd())
 	cmd.AddCommand(ServerRoutesCmd())
 	return cmd
 }
@@ -57,7 +55,7 @@ func ServerStartCmd() *cobra.Command {
 		RunE:  startServer,
 	}
 
-	cmd.Flags().Bool("debug", false, "Enable debug mode (disables authentication)")
+	cmd.Flags().Bool("debug", false, "Enable debug mode (disables rate limiting)")
 	return cmd
 }
 
@@ -75,8 +73,6 @@ Path should be relative to /v1/ (e.g., 'players?name=ruth' or 'teams/BOS?year=20
 
 	cmd.Flags().StringP("format", "f", "json", "Output format (json|table)")
 	cmd.Flags().BoolP("raw", "r", false, "Output raw JSON without colors or formatting (suitable for piping to jq)")
-	cmd.Flags().StringP("token", "t", "", "Bearer token for authentication")
-	cmd.Flags().StringP("api-key", "k", "", "API key for authentication")
 	return cmd
 }
 
@@ -87,16 +83,6 @@ func ServerHealthCmd() *cobra.Command {
 		Short: "Check server health",
 		Long:  "Perform health check on the running API server.",
 		RunE:  checkHealth,
-	}
-}
-
-// ServerAuthCmd creates the auth command
-func ServerAuthCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "auth",
-		Short: "Get API authentication instructions",
-		Long:  "Display instructions for authenticating with the Baseball API.",
-		RunE:  authInstructions,
 	}
 }
 
@@ -114,8 +100,6 @@ func fetchEndpoint(cmd *cobra.Command, args []string) error {
 	path := args[0]
 	format, _ := cmd.Flags().GetString("format")
 	raw, _ := cmd.Flags().GetBool("raw")
-	token, _ := cmd.Flags().GetString("token")
-	apiKey, _ := cmd.Flags().GetString("api-key")
 
 	configPath, _ := cmd.Flags().GetString("config")
 	cfg, err := config.Load(configPath)
@@ -134,12 +118,6 @@ func fetchEndpoint(cmd *cobra.Command, args []string) error {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return fmt.Errorf("error: failed to create request: %w", err)
-	}
-
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	} else if apiKey != "" {
-		req.Header.Set("Authorization", "Bearer "+apiKey)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
@@ -223,36 +201,6 @@ func checkHealth(cmd *cobra.Command, args []string) error {
 	return fmt.Errorf("error: server returned status: %s", resp.Status)
 }
 
-func authInstructions(cmd *cobra.Command, args []string) error {
-	echo.Header("API Authentication")
-	echo.Info("")
-	echo.Info("To access the Baseball API, you need an API key or session token.")
-	echo.Info("")
-	echo.Info("Step 1: Sign in")
-	echo.Info("  Use the web app Account page (for local dev: http://localhost:5173/account).")
-	echo.Info("  OAuth entrypoints:")
-	echo.Info("    • GitHub: http://localhost:8080/v1/auth/github")
-	echo.Info("    • Codeberg: http://localhost:8080/v1/auth/codeberg")
-	echo.Info("")
-	echo.Info("Step 2: Generate an API Key")
-	echo.Info("  After logging in, generate API keys from the Account page.")
-	echo.Info("  API keys allow programmatic access without logging in each time.")
-	echo.Info("")
-	echo.Info("Step 3: Use Your API Key")
-	echo.Info("  You can use your API key in two ways:")
-	echo.Info("")
-	echo.Info("  A. With the CLI fetch command:")
-	echo.Infof("     baseball server fetch 'players?name=ruth' --api-key 'sk_...'")
-	echo.Info("")
-	echo.Info("  B. With HTTP requests:")
-	echo.Info("     curl -H 'Authorization: Bearer sk_...' http://localhost:8080/v1/players")
-	echo.Info("")
-	echo.Success("✓ For local development, start the server with --debug to disable authentication")
-	echo.Infof("  baseball server start --debug")
-	echo.Info("")
-	return nil
-}
-
 func startServer(cmd *cobra.Command, args []string) error {
 	echo.Header("Starting Server")
 	echo.Info("Loading configuration...")
@@ -269,7 +217,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 	}
 
 	if cfg.Server.DebugMode {
-		echo.Info("⚠ Debug mode enabled - authentication disabled")
+		echo.Info("⚠ Debug mode enabled - rate limiting disabled")
 	}
 
 	echo.Info("Connecting to database...")
@@ -347,10 +295,6 @@ func startServer(cmd *cobra.Command, args []string) error {
 	}
 	slog.SetDefault(logger)
 
-	userRepo := repository.NewUserRepository(database.DB)
-	tokenRepo := repository.NewOAuthTokenRepository(database.DB)
-	apiKeyRepo := repository.NewAPIKeyRepository(database.DB)
-
 	rateLimiter := middleware.NewRateLimiter(redisClient, cfg.Server.DebugMode, 60, 10, time.Minute)
 
 	var handler http.Handler = server
@@ -361,20 +305,13 @@ func startServer(cmd *cobra.Command, args []string) error {
 	if !cfg.Server.DebugMode && redisClient != nil {
 		handler = rateLimiter.Middleware(handler)
 		echo.Info("✓ Rate limiting enabled")
-		echo.Info("  Authenticated (API key): 60 req/min per key")
-		echo.Info("  Unauthenticated: 10 req/min per IP")
+		echo.Info("  10 req/min per IP")
 	} else if cfg.Server.DebugMode {
 		echo.Info("⚠ Rate limiting disabled (debug mode)")
 	} else if redisClient == nil {
 		echo.Info("⚠ Rate limiting disabled (Redis unavailable)")
 	} else {
 		echo.Info("⚠ Rate limiting disabled (debug mode or Redis unavailable)")
-	}
-
-	if cfg.Server.DebugMode {
-		handler = api.AuthMiddleware(userRepo, tokenRepo, apiKeyRepo, true)(handler)
-	} else {
-		handler = api.OptionalAuthMiddleware(userRepo, tokenRepo, apiKeyRepo)(handler)
 	}
 
 	handler = middleware.CORS(cfg.Server.CORS.AllowedOrigins)(handler)
@@ -407,11 +344,6 @@ func startServer(cmd *cobra.Command, args []string) error {
 	}
 
 	echo.Success(fmt.Sprintf("✓ Server started on %s", addr))
-	if !cfg.Server.DebugMode {
-		echo.Info("ℹ Authentication enabled")
-		echo.Info("  GitHub OAuth: /v1/auth/github")
-		echo.Info("  Codeberg OAuth: /v1/auth/codeberg")
-	}
 	echo.Info("")
 	echo.Info("Press Ctrl+C to stop")
 	echo.Info("")

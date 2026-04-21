@@ -4,20 +4,13 @@ Big Fly exposes a versioned REST API under `/v1`.
 
 Swagger/OpenAPI explorer is available at [/explorer](/explorer).
 
-## Authentication & Health
+## Health & Readiness
 
-- Auth:
-  - `GET /v1/auth/github`
-  - `GET /v1/auth/codeberg`
-  - `GET /v1/auth/me`
-  - `POST /v1/auth/keys`
-  - `GET /v1/auth/keys`
-  - `DELETE /v1/auth/keys/{id}`
 - Service probes:
   - `GET /v1/health`
   - `GET /v1/ready`
 
-For auth details, see [Auth](/docs/api-auth). For metadata/probes, see [Meta & Utility](/docs/api-meta-utility).
+For metadata/probes, see [Meta & Utility](/docs/api-meta-utility).
 
 ## Endpoint Families
 

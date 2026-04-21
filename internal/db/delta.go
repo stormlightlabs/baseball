@@ -109,6 +109,47 @@ func (db *DB) DeltaPlayersForRun(ctx context.Context, runID int64) ([]string, er
 	return players, nil
 }
 
+func (db *DB) DeltaPlayersForYears(ctx context.Context, years []int) ([]string, error) {
+	years = dedupeYears(years)
+	if len(years) == 0 {
+		return nil, nil
+	}
+
+	rows, err := db.QueryContext(ctx, `
+		WITH scoped_games AS (
+			SELECT g.game_id
+			FROM games g
+			WHERE CAST(SUBSTRING(g.date, 1, 4) AS INTEGER) = ANY($1::int[])
+		)
+		SELECT DISTINCT v.player_id
+		FROM plays p
+		JOIN scoped_games sg ON sg.game_id = p.gid
+		CROSS JOIN LATERAL (
+			VALUES (p.batter), (p.pitcher), (p.f2), (p.f3), (p.f4), (p.f5), (p.f6), (p.f7), (p.f8), (p.f9)
+		) AS v(player_id)
+		WHERE COALESCE(v.player_id, '') <> ''
+		ORDER BY v.player_id ASC
+	`, years)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query changed players for years: %w", err)
+	}
+	defer rows.Close()
+
+	players := make([]string, 0)
+	for rows.Next() {
+		var playerID string
+		if err := rows.Scan(&playerID); err != nil {
+			return nil, fmt.Errorf("failed to scan changed player id: %w", err)
+		}
+		players = append(players, playerID)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed iterating changed players rows: %w", err)
+	}
+
+	return players, nil
+}
+
 func dedupeYears(years []int) []int {
 	if len(years) == 0 {
 		return nil

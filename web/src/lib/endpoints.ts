@@ -113,10 +113,6 @@ export const EP = {
   nlgSeasonTeamGames: (year: number | string, teamId: string) =>
     `/negroleagues/seasons/${year}/teams/${teamId}/games` as const,
 
-  authMe: '/auth/me' as const,
-  authKeys: '/auth/keys' as const,
-  authKey: (id: string) => `/auth/keys/${id}` as const,
-
   mlb: '/mlb' as const,
   mlbTeams: '/mlb/teams' as const,
   mlbSchedule: '/mlb/schedule' as const,

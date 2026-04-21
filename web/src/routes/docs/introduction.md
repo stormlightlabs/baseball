@@ -2,7 +2,7 @@
 
 Big Fly unifies historical baseball datasets behind one unified API, currently behind the namespace: `/v1`.
 
-Use these docs to understand coverage, query patterns, and authentication (to manage your keys).
+Use these docs to understand coverage and query patterns.
 
 ## Quick Start
 
@@ -10,8 +10,7 @@ Use these docs to understand coverage, query patterns, and authentication (to ma
    - `GET /v1/health`
    - `GET /v1/ready`
 2. Open Swagger (served by the API binary): [/explorer](/explorer)
-3. Create API keys from the web account page: [/account](/account)
-4. Start with endpoint families:
+3. Start with endpoint families:
    - `/v1/search/*`
    - `/v1/players/*`
    - `/v1/teams/*`

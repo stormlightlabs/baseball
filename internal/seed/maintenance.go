@@ -19,6 +19,229 @@ const (
 	maintenanceTypeWinExpPublish  = "mv.publish.win_expectancy"
 )
 
+type MVRefreshMode string
+
+const (
+	MVRefreshModeAuto          MVRefreshMode = "auto"
+	MVRefreshModeNonConcurrent MVRefreshMode = "non_concurrent"
+)
+
+func ParseMVRefreshMode(raw string) (MVRefreshMode, error) {
+	normalized := strings.ToLower(strings.TrimSpace(raw))
+	normalized = strings.ReplaceAll(normalized, "-", "_")
+	if normalized == "" {
+		return MVRefreshModeAuto, nil
+	}
+
+	switch MVRefreshMode(normalized) {
+	case MVRefreshModeAuto:
+		return MVRefreshModeAuto, nil
+	case MVRefreshModeNonConcurrent:
+		return MVRefreshModeNonConcurrent, nil
+	default:
+		return "", fmt.Errorf("invalid mv refresh mode %q (valid: auto, non_concurrent)", raw)
+	}
+}
+
+func (m MVRefreshMode) forceNonConcurrent() bool {
+	return m == MVRefreshModeNonConcurrent
+}
+
+func EnqueueMaintenanceJob(
+	ctx context.Context,
+	database *db.DB,
+	opts PipelineOptions,
+	workerOpts JobWorkerOptions,
+	refreshMode MVRefreshMode,
+) (int64, error) {
+	opts, err := NormalizePipelineOptions(opts)
+	if err != nil {
+		return 0, err
+	}
+	workerOpts = NormalizeJobWorkerOptions(workerOpts)
+	if refreshMode == "" {
+		refreshMode = MVRefreshModeAuto
+	}
+
+	scope := map[string]any{
+		"profile":   opts.Profile,
+		"mode":      opts.Mode,
+		"years":     opts.Years,
+		"era_names": opts.EraNames,
+		"data_root": opts.DataRoot,
+	}
+	jobID, err := database.EnqueueETLJob(ctx, db.ETLJobSpec{
+		JobType:    db.ETLJobTypeMaintenance,
+		Priority:   workerOpts.Priority,
+		Profile:    string(opts.Profile),
+		Mode:       string(opts.Mode),
+		Scope:      scope,
+		Options:    map[string]any{"mv_refresh_mode": string(refreshMode)},
+		MaxRetries: workerOpts.MaxJobRetries,
+	}, workerOpts.MaxQueuedJobs)
+	if err != nil {
+		return 0, err
+	}
+
+	return jobID, nil
+}
+
+func RunMaintenanceWindow(
+	ctx context.Context,
+	database *db.DB,
+	runID int64,
+	years []int,
+	refreshMode MVRefreshMode,
+) (int64, error) {
+	years = dedupeSortedYears(years)
+	if len(years) == 0 {
+		return 0, nil
+	}
+
+	refreshOpts := db.MaterializedViewRefreshOptions{
+		RunID:              optionalRunIDPtr(runID),
+		ForceNonConcurrent: refreshMode.forceNonConcurrent(),
+	}
+
+	var rows int64
+
+	if _, err := refreshNamedMaterializedViews(ctx, database, "maintenance.game_stats", []string{
+		"player_game_batting_stats",
+		"player_game_pitching_stats",
+		"player_game_fielding_stats",
+		"team_game_stats",
+	}, withRefreshStep(refreshOpts, "maintenance.game_stats.refresh")); err != nil {
+		return rows, err
+	}
+
+	count, err := syncServingTableBySeasons(ctx, database, "serving_player_game_batting_stats", "player_game_batting_stats", years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+	count, err = syncServingTableBySeasons(ctx, database, "serving_player_game_pitching_stats", "player_game_pitching_stats", years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+	count, err = syncServingTableBySeasons(ctx, database, "serving_player_game_fielding_stats", "player_game_fielding_stats", years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+	count, err = syncServingTableBySeasons(ctx, database, "serving_team_game_stats", "team_game_stats", years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+
+	if _, err := refreshNamedMaterializedViews(ctx, database, "maintenance.achievements", []string{
+		"no_hitters",
+		"cycles",
+		"multi_hr_games",
+		"triple_plays",
+		"extra_inning_games",
+	}, withRefreshStep(refreshOpts, "maintenance.achievements.refresh")); err != nil {
+		return rows, err
+	}
+
+	count, err = syncServingTableBySeasons(ctx, database, "serving_no_hitters", "no_hitters", years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+	count, err = syncServingTableBySeasons(ctx, database, "serving_cycles", "cycles", years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+	count, err = syncServingTableBySeasons(ctx, database, "serving_multi_hr_games", "multi_hr_games", years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+	count, err = syncServingTableBySeasons(ctx, database, "serving_triple_plays", "triple_plays", years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+	count, err = syncServingTableBySeasons(ctx, database, "serving_extra_inning_games", "extra_inning_games", years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+
+	if _, err := refreshNamedMaterializedViews(ctx, database, "maintenance.season_leaders", []string{
+		"season_batting_leaders",
+		"season_pitching_leaders",
+	}, withRefreshStep(refreshOpts, "maintenance.season_leaders.refresh")); err != nil {
+		return rows, err
+	}
+
+	count, err = syncServingTableBySeasons(ctx, database, "serving_season_batting_leaders", "season_batting_leaders", years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+	count, err = syncServingTableBySeasons(ctx, database, "serving_season_pitching_leaders", "season_pitching_leaders", years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+
+	if _, err := refreshNamedMaterializedViews(ctx, database, "maintenance.career_leaders", []string{
+		"career_batting_leaders",
+		"career_pitching_leaders",
+	}, withRefreshStep(refreshOpts, "maintenance.career_leaders.refresh")); err != nil {
+		return rows, err
+	}
+
+	players, err := changedPlayersForYearScope(ctx, database, years)
+	if err != nil {
+		return rows, err
+	}
+	if len(players) > 0 {
+		count, err = syncServingTableByPlayers(ctx, database, "serving_career_batting_leaders", "career_batting_leaders", players)
+		if err != nil {
+			return rows, err
+		}
+		rows += count
+		count, err = syncServingTableByPlayers(ctx, database, "serving_career_pitching_leaders", "career_pitching_leaders", players)
+		if err != nil {
+			return rows, err
+		}
+		rows += count
+	}
+
+	if _, err := refreshNamedMaterializedViews(ctx, database, "maintenance.crosswalk_views", []string{
+		"player_id_map",
+		"team_franchise_map",
+		"park_map",
+	}, withRefreshStep(refreshOpts, "maintenance.crosswalk_views.refresh")); err != nil {
+		return rows, err
+	}
+
+	count, err = rebuildWinExpectancyStateCounts(ctx, database, years)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+
+	count, err = publishWinExpectancyServingTable(ctx, database)
+	if err != nil {
+		return rows, err
+	}
+	rows += count
+
+	return rows, nil
+}
+
+func withRefreshStep(opts db.MaterializedViewRefreshOptions, step string) db.MaterializedViewRefreshOptions {
+	out := opts
+	out.Step = step
+	return out
+}
+
 func captureDeltaScopeForRun(ctx context.Context, database *db.DB, runID int64, years []int) error {
 	years = dedupeSortedYears(years)
 	if runID <= 0 || len(years) == 0 {
@@ -114,6 +337,14 @@ func executeMaintenanceJob(ctx context.Context, database *db.DB, job *db.ETLJob)
 	}
 	years = dedupeSortedYears(years)
 	runID := int64FromAny(job.Scope["run_id"])
+	refreshMode, err := ParseMVRefreshMode(stringFromAny(job.Options["mv_refresh_mode"]))
+	if err != nil {
+		return 0, err
+	}
+
+	if maintenanceType == "" {
+		return RunMaintenanceWindow(ctx, database, runID, years, refreshMode)
+	}
 
 	switch maintenanceType {
 	case maintenanceTypeGameStats:
@@ -293,6 +524,19 @@ func changedPlayersForRunScope(ctx context.Context, database *db.DB, runID int64
 		return nil, nil
 	}
 	players, err := database.DeltaPlayersForRun(ctx, runID)
+	if err != nil {
+		return nil, err
+	}
+	return players, nil
+}
+
+func changedPlayersForYearScope(ctx context.Context, database *db.DB, years []int) ([]string, error) {
+	years = dedupeSortedYears(years)
+	if len(years) == 0 {
+		return nil, nil
+	}
+
+	players, err := database.DeltaPlayersForYears(ctx, years)
 	if err != nil {
 		return nil, err
 	}

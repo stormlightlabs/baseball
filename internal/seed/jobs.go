@@ -16,7 +16,7 @@ import (
 
 const (
 	defaultETLMaxActiveJobs       = 1
-	defaultETLMaxQueuedJobs       = 16
+	defaultETLMaxQueuedJobs       = 128
 	defaultETLYearBatchSize       = 2
 	defaultETLPriority            = 50
 	defaultETLNetworkRetryMax     = 2

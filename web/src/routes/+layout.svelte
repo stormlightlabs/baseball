@@ -40,7 +40,7 @@
   ];
 
   const API_DOCS_ROUTE = '/explorer' as const;
-  type AppPath = (typeof MAIN_LINKS)[number]['href'] | (typeof DATA_LINKS)[number]['href'] | '/account';
+  type AppPath = (typeof MAIN_LINKS)[number]['href'] | (typeof DATA_LINKS)[number]['href'];
 
   const BADGES: Record<AppPath, string> = {
     '/': 'home',
@@ -51,13 +51,11 @@
     '/leaders': 'leaders',
     '/compare': 'compare',
     '/data': 'sources',
-    '/docs': 'about',
-    '/account': 'account'
+    '/docs': 'about'
   };
 
   let pathname = $derived(page.url.pathname);
   let badge = $derived.by(() => {
-    if (pathname.startsWith('/account')) return BADGES['/account'];
     const match =
       MAIN_LINKS.find((link) => isActivePath(link.href)) ?? DATA_LINKS.find((link) => isActivePath(link.href));
     if (!match) return 'dashboard';
@@ -115,18 +113,6 @@
           API
           <span class="ml-1 inline-flex items-center gap-0.5 text-xxs">
             <i class="i-tabler-external-link"></i>
-          </span>
-        </a>
-        <a
-          href={resolve('/account')}
-          class="rounded px-2 py-1 text-[0.75rem] whitespace-nowrap no-underline transition-colors duration-150 sm:px-2.5 sm:text-[0.8rem] {pathname.startsWith(
-            '/account'
-          )
-            ? 'bg-outline text-foreground'
-            : 'text-muted hover:bg-outline hover:text-foreground'}">
-          Account
-          <span class="ml-1 inline-flex items-center gap-0.5 text-xxs">
-            <i class="i-tabler-user"></i>
           </span>
         </a>
       </div>

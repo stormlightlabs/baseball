@@ -1,6 +1,6 @@
 # Database Loading Contract (Complete Slice)
 
-See also: [ETL Cutover & Narrow-Slice Runbook](./etl-cutover.md)
+See also: [ETL Cutover & Narrow-Slice Runbook](./etl.md)
 
 This is the source of truth for loading a complete database slice with an ETL-worker model:
 
@@ -47,7 +47,7 @@ Representative dev window:
 ```bash
 <BASEBALL_ETL> fetch retrosheet --years 2022-2025
 <BASEBALL_ETL> fetch negroleagues
-<BASEBALL_ETL> fetch chadwick
+<BASEBALL_ETL> fetch chadwick --force
 ```
 
 ### 4) Start the ETL worker (long-running queue consumer)
@@ -82,21 +82,27 @@ For VM-safe operations, prefer batched windows instead of one large full-history
 
 `run` is enqueue-first by default. To enqueue and drain in one command (local-only convenience), use `--enqueue-only=false`.
 
-### 6) Validate and inspect status
+### 6) Run maintenance for the same scope
+
+```bash
+<BASEBALL_ETL> maintenance --profile dev --years 2022-2025 --mv-refresh-mode auto
+```
+
+### 7) Validate and inspect status
 
 ```bash
 <BASEBALL_ETL> validate --profile dev
 <BASEBALL_ETL> status
 ```
 
-### 7) Cleanup transient Retrosheet artifacts (optional but recommended)
+### 8) Cleanup transient Retrosheet artifacts (optional but recommended)
 
 ```bash
 <BASEBALL_ETL> cleanup retrosheet --dry-run
 <BASEBALL_ETL> cleanup retrosheet
 ```
 
-### 8) API readiness checks
+### 9) API readiness checks
 
 ```bash
 curl http://localhost:8080/v1/ready
@@ -114,6 +120,7 @@ Use this when you want production-like behavior with a bounded local scope.
 ./tmp/baseball-etl fetch retrosheet --years 2024-2025
 ./tmp/baseball-etl worker --max-active-jobs 1 --poll-interval 5s
 ./tmp/baseball-etl run --profile dev --years 2024-2025 --year-batch-size 1
+./tmp/baseball-etl maintenance --profile dev --years 2024-2025 --mv-refresh-mode auto
 ./tmp/baseball-etl validate --profile dev --years 2024-2025
 ./tmp/baseball-etl status
 ```
@@ -149,13 +156,17 @@ Run heavy steps explicitly and in order:
 1. `db migrate`
 2. `baseball-etl fetch retrosheet ...` (if needed)
 3. `baseball-etl run ...`
-4. explicit partition maintenance/analysis for heavily changed tables
+4. `baseball-etl maintenance ...`
+5. explicit partition maintenance/analysis for heavily changed tables
 
 Queue and batching guidance:
 
 - keep one active ETL run at a time on shared VMs
+- keep one active ETL run at a time on shared VMs (`--max-active-jobs=1`)
+- keep queue depth bounded (`--max-queued-jobs`, default 128)
 - split full-history windows into smaller year batches
-- defer additional jobs until current batch validation passes
+- run maintenance once per scoped window (not once per batch)
+- defer additional jobs until current batch maintenance + validation passes
 
 Partition/load observability:
 
@@ -168,11 +179,13 @@ Stage commands are first-class and expected in this worker model:
 
 - `<BASEBALL_ETL> fetch retrosheet`
 - `<BASEBALL_ETL> fetch negroleagues`
-- `<BASEBALL_ETL> fetch chadwick`
+- `<BASEBALL_ETL> fetch chadwick --force` (explicit refresh)
 - `<BASEBALL_ETL> cleanup retrosheet`
 - `<BASEBALL_ETL> load <dataset>`
+- `<BASEBALL_ETL> maintenance`
 - `<BASEBALL_ETL> validate`
 - `<BASEBALL_ETL> status`
+- `<BASEBALL_ETL> maintenance`
 
 ## Retrosheet Era Contract
 

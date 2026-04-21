@@ -58,6 +58,7 @@ cp conf/conf.example.toml conf.toml
 ./tmp/baseball db migrate --config conf.toml
 ./tmp/baseball-etl worker
 ./tmp/baseball-etl run --profile=dev
+./tmp/baseball-etl maintenance --profile=dev --mv-refresh-mode=auto
 ./tmp/baseball-etl validate --profile=dev
 ./tmp/baseball-etl status
 ```
@@ -67,7 +68,7 @@ Fetch examples (when Retrosheet files for your window are not already present):
 ```bash
 ./tmp/baseball-etl fetch retrosheet --years=2023-2025
 ./tmp/baseball-etl fetch negroleagues
-./tmp/baseball-etl fetch chadwick
+./tmp/baseball-etl fetch chadwick --force
 ./tmp/baseball-etl cleanup retrosheet --dry-run
 ```
 
@@ -85,15 +86,18 @@ For large Retrosheet slices, keep migration and recomputation separate, and proc
 `db migrate` is structural/idempotent; treat materialized view refresh as an explicit incremental operation.
 
 `./tmp/baseball-etl worker` is the long-running queue consumer.
-`./tmp/baseball-etl run` is the canonical enqueue entrypoint.
+`./tmp/baseball-etl run` is the canonical enqueue entrypoint for extract/load.
+`./tmp/baseball-etl maintenance` is the canonical enqueue entrypoint for MV recompute + serving sync.
 Treat ETL as a batched worker flow on shared VMs: prefer scoped `--years` runs over unbounded full-history jobs unless you are operating a larger host.
 
 `run` is enqueue-first by default; use `--enqueue-only=false` only when you explicitly want one command to enqueue + drain locally.
+`maintenance` is also enqueue-first by default; use `--enqueue-only=false` to enqueue + drain maintenance locally.
 
 For exhaustive production-style ingestion:
 
 ```bash
 ./tmp/baseball-etl run --profile=prod --mode=full
+./tmp/baseball-etl maintenance --profile=prod --mv-refresh-mode=auto
 ./tmp/baseball-etl validate --profile=prod
 ```
 
@@ -107,36 +111,36 @@ Batched worker pattern (recommended for VM safety):
 ```bash
 ./tmp/baseball-etl fetch retrosheet --years=2022-2023
 ./tmp/baseball-etl run --profile=prod --years=2022-2023
+./tmp/baseball-etl maintenance --profile=prod --years=2022-2023 --mv-refresh-mode=auto
 ./tmp/baseball-etl validate --profile=prod --years=2022-2023
 
 ./tmp/baseball-etl fetch retrosheet --years=2024-2025
 ./tmp/baseball-etl run --profile=prod --years=2024-2025
+./tmp/baseball-etl maintenance --profile=prod --years=2024-2025 --mv-refresh-mode=auto
 ./tmp/baseball-etl validate --profile=prod --years=2024-2025
 ```
 
 ### Server
 
 ```bash
-# Start the HTTP API (pass --debug to bypass auth locally)
+# Start the HTTP API (pass --debug to disable rate limiting locally)
 ./tmp/baseball server start --config conf.toml
 
 # Smoke-test endpoints with formatted output
 ./tmp/baseball server fetch 'search/games?q=dodgers%202024'
 
-# Check readiness & view auth instructions
+# Check readiness
 ./tmp/baseball server health
-./tmp/baseball server auth
 ```
 
-Every command accepts `--config` to point at a custom `conf.toml`, inherits rate-limits/auth from your server configuration, and prints structured output
+Every command accepts `--config` to point at a custom `conf.toml`, inherits rate limits from your server configuration, and prints structured output
 
 ### Fetch
 
-Think of `baseball server fetch` as a built-in, auth-aware `curl`. It:
+Think of `baseball server fetch` as a built-in `curl` for API paths. It:
 
 - Accepts relative paths (e.g., `players?name=ruth`) and automatically targets `/v1`
 - Applies syntax highlighting/pretty-printing by default, or `--raw` when you need plain JSON for `jq`
-- Injects bearer tokens/API keys via `--token` or `--api-key` flags, so you can hit protected routes without manually crafting headers
 
 </details>
 
@@ -144,7 +148,7 @@ Think of `baseball server fetch` as a built-in, auth-aware `curl`. It:
 
 ### HTTP API
 
-The REST API lives at `/v1` (or the host/port defined in `conf.toml`), covering players, teams, stats, games, events, pitches, search, metadata, and auth.
+The REST API lives at `/v1` (or the host/port defined in `conf.toml`), covering players, teams, stats, games, events, pitches, search, and metadata.
 
 ### Pitch-Level Data
 
@@ -170,7 +174,6 @@ Recommended docs entry points:
 
 - [Introduction](./web/src/routes/docs/introduction.md)
 - [API Overview](./web/src/routes/docs/api-overview.md)
-- [Auth](./web/src/routes/docs/api-auth.md)
 - [Meta & Utility](./web/src/routes/docs/api-meta-utility.md)
 - [Search](./web/src/routes/docs/api-search.md)
 - [Players](./web/src/routes/docs/api-players.md)

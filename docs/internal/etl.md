@@ -40,21 +40,29 @@ This runbook is the operational source of truth for ETL cutover and day-to-day n
     baseball-etl run --profile prod --years 2024-2025 --year-batch-size 1
     ```
 
-5. Validate and inspect queue/run health.
+5. Run maintenance for the same window.
+
+    ```bash
+    baseball-etl maintenance --profile prod --years 2024-2025 --mv-refresh-mode auto
+    ```
+
+6. Validate and inspect queue/run health.
 
     ```bash
     baseball-etl validate --profile prod --years 2024-2025
     baseball-etl status
     ```
 
-6. Expand scope in bounded windows.
+7. Expand scope in bounded windows.
 
     ```bash
     baseball-etl run --profile prod --years 2022-2023 --year-batch-size 1
+    baseball-etl maintenance --profile prod --years 2022-2023 --mv-refresh-mode auto
     baseball-etl run --profile prod --years 2020-2021 --year-batch-size 1
+    baseball-etl maintenance --profile prod --years 2020-2021 --mv-refresh-mode auto
     ```
 
-7. Cleanup transient Retrosheet artifacts.
+8. Cleanup transient Retrosheet artifacts.
 
     ```bash
     baseball-etl cleanup retrosheet
@@ -90,7 +98,13 @@ Use this flow to replicate production behavior locally without a full-history lo
     ./tmp/baseball-etl run --profile dev --years 2024-2025 --year-batch-size 1
     ```
 
-5. Validate + inspect.
+5. Run maintenance for the same window.
+
+    ```bash
+    ./tmp/baseball-etl maintenance --profile dev --years 2024-2025 --mv-refresh-mode auto
+    ```
+
+6. Validate + inspect.
 
     ```bash
     ./tmp/baseball-etl validate --profile dev --years 2024-2025
@@ -107,3 +121,4 @@ Use this flow to replicate production behavior locally without a full-history lo
   - loader/queue tests (`internal/seed`)
   - API integration expectations (`internal/api`) where dataset shape/readiness is affected.
 - Treat `baseball-etl validate` + `baseball-etl status` as required acceptance checks after each scoped run.
+- Treat `baseball-etl maintenance` as a first-class post-run phase. `run` handles extract/load/validate; maintenance handles materialized-view recompute + serving sync.

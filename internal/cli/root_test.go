@@ -25,13 +25,14 @@ func TestNewETLRootCmdUseAndSubcommands(t *testing.T) {
 	}
 
 	required := map[string]bool{
-		"fetch":    false,
-		"load":     false,
-		"cleanup":  false,
-		"run":      false,
-		"worker":   false,
-		"validate": false,
-		"status":   false,
+		"fetch":       false,
+		"load":        false,
+		"cleanup":     false,
+		"run":         false,
+		"maintenance": false,
+		"worker":      false,
+		"validate":    false,
+		"status":      false,
 	}
 
 	for _, cmd := range root.Commands() {
@@ -85,10 +86,11 @@ func TestCLIHelpContractsForCanonicalFlow(t *testing.T) {
 	}
 
 	etlExpectations := map[string][]string{
-		"run":      {"--job-type", "--enqueue-only"},
-		"worker":   {"--max-active-jobs", "--poll-interval"},
-		"validate": {"--profile", "--years"},
-		"status":   {"--strict"},
+		"run":         {"--job-type", "--enqueue-only"},
+		"maintenance": {"--mv-refresh-mode", "--enqueue-only"},
+		"worker":      {"--max-active-jobs", "--poll-interval"},
+		"validate":    {"--profile", "--years"},
+		"status":      {"--strict"},
 	}
 	for cmdName, mustContain := range etlExpectations {
 		cmd := findCommand(t, etlRoot, cmdName)

@@ -147,10 +147,6 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 	achievementRepo := repository.NewAchievementRepository(db, cacheClient)
 	salaryRepo := repository.NewSalaryRepository(db)
 
-	userRepo := repository.NewUserRepository(db)
-	apiKeyRepo := repository.NewAPIKeyRepository(db)
-	tokenRepo := repository.NewOAuthTokenRepository(db)
-
 	echo.Info("Registering routes...")
 
 	server := newServer(
@@ -172,7 +168,6 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewEjectionRoutes(ejectionRepo),
 		NewDerivedRoutes(derivedRepo, weRepo),
 		NewComputedRoutes(advancedStatsRepo, leverageRepo, parkFactorRepo),
-		NewAuthRoutes(userRepo, tokenRepo, apiKeyRepo),
 		NewMLBStatsAPIRoutes(cacheClient, teamRepo),
 		NewFederalLeagueRoutes(gameRepo, playRepo, teamRepo),
 		NewNegroLeaguesRoutes(negroLeaguesRepo),

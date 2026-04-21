@@ -28,7 +28,6 @@ const DATA_ARCHITECTURE_SLUGS = new Set(['id-crosswalk', 'pitches', 'statistical
 
 const NAV_TITLE_OVERRIDES: Record<string, string> = {
   'api-achievements': 'Achievements',
-  'api-auth': 'Auth',
   'api-awards-postseason': 'Awards & Postseason',
   'api-computed': 'Computed & Advanced',
   'api-derived-advanced': 'Derived & Advanced',
