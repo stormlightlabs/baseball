@@ -121,9 +121,12 @@ tasks:
     cmds:
       - pnpm --dir web build
 
-  build:path:
-    desc: Build the binary and then put in directory in PATH for easy access
+  update:path:
+    deps:
+      - build:cli
+      - build:etl
+    desc: Update the PATH to include the build directory for easy CLI access
     cmds:
-      - task: build
-      - cp {{.BUILD_DIR}}/{{.BINARY_NAME}} /usr/local/bin/
-      - echo "✓ {{.BINARY_NAME}} is now available in your PATH (try running '{{.BINARY_NAME}} --help')"
+      - cp {{.BUILD_DIR}}/{{.BINARY_NAME}} /usr/local/bin/{{.BINARY_NAME}}
+      - cp {{.BUILD_DIR}}/{{.ETL_BINARY_NAME}} /usr/local/bin/{{.ETL_BINARY_NAME}}
+      - echo "✓ Updated PATH with {{.BINARY_NAME}} and {{.ETL_BINARY_NAME}} from {{.BUILD_DIR}}"

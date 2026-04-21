@@ -116,3 +116,11 @@ export type TeamDailyLog = {
   runs_allowed?: number;
   run_diff?: number;
 };
+
+export type TeamYearRange = {
+  team_id: string;
+  franchise_id?: string;
+  min_year: number;
+  max_year: number;
+  years: number[];
+};

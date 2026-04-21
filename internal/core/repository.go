@@ -50,6 +50,7 @@ type PlayerRepository interface {
 // TeamRepository handles team & franchise views.
 type TeamRepository interface {
 	GetTeamSeason(ctx context.Context, teamID TeamID, year SeasonYear) (*TeamSeason, error)
+	TeamSeasonYears(ctx context.Context, teamID TeamID, franchiseID *FranchiseID) ([]SeasonYear, error)
 	ListTeamSeasons(ctx context.Context, filter TeamFilter) ([]TeamSeason, error)
 	CountTeamSeasons(ctx context.Context, filter TeamFilter) (int, error)
 

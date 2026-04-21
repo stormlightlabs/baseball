@@ -9,7 +9,8 @@ import type {
   TeamFieldingStats,
   TeamPitchingStats,
   TeamResult,
-  TeamSeasonProfile
+  TeamSeasonProfile,
+  TeamYearRange
 } from './types';
 
 type ApiTeamPayload = Record<string, unknown>;
@@ -177,4 +178,24 @@ export function normalizeTeamDailyLogsPage(
   payload: PaginatedResponse<ApiTeamPayload>
 ): PaginatedResponse<TeamDailyLog> {
   return { ...payload, data: payload.data.map((r) => normalizeTeamDailyLog(r)) };
+}
+
+export function normalizeTeamYearRange(payload: ApiTeamPayload): TeamYearRange {
+  const years = Array.isArray(payload.years)
+    ? payload.years
+        .map((year) => toNum(year))
+        .filter((year): year is number => year != null)
+        .toSorted((a, b) => a - b)
+    : [];
+
+  const minYear = toNum(payload.min_year);
+  const maxYear = toNum(payload.max_year);
+
+  return {
+    team_id: toStr(payload.team_id) ?? '',
+    franchise_id: toStr(payload.franchise_id),
+    min_year: minYear ?? years[0] ?? 1871,
+    max_year: maxYear ?? years.at(-1) ?? new Date().getFullYear(),
+    years
+  };
 }

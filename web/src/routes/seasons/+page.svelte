@@ -1,4 +1,7 @@
 <script lang="ts">
+  // TODO: use the datepicker in the sidebar
+  // TODO: schedule, awards, leaders, postseason, & park factors (as parks) should be
+  // separate/nested routes
   import { afterNavigate, goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
@@ -1125,7 +1128,7 @@
     <div class="flex flex-col gap-5">
       <div class="rounded-lg border border-outline bg-crust p-4">
         <div class="flex flex-wrap items-center gap-3">
-          <div class="font-display text-[1.05rem] text-foreground">Season {selectedYear}</div>
+          <div class="font-display text-[1.05rem] text-foreground">{selectedYear} Season</div>
           {#if selectedEra}
             <EraBadge era={selectedEra} size="xs" />
           {/if}

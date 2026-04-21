@@ -24,7 +24,10 @@
       <button
         onclick={() => onsubmit?.(value)}
         class="rounded-r-md border-l border-outline bg-outline px-3 text-muted transition-colors hover:text-foreground">
-        →
+        <span class="flex items-center">
+          <i class="i-tabler-arrow-right"></i>
+        </span>
+        <span class="sr-only">Submit search</span>
       </button>
     {/if}
   </div>

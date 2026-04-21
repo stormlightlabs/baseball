@@ -1,8 +1,11 @@
 /**
- * Central endpoint map — single source of truth for all /v1/* API paths and their
+ * Central endpoint map
+ *
+ * Single source of truth for all /v1/* API paths and their
  * canonical query parameters. Derived from internal/docs/swagger.yaml.
  *
- * Add new endpoints here rather than hardcoding strings in page components.
+ * New endpoints should be added here rather than hardcoding strings in
+ * page components.
  */
 
 export const EP = {
@@ -48,6 +51,7 @@ export const EP = {
   franchise: (id: string) => `/franchises/${id}` as const,
   teams: '/teams' as const,
   team: (id: string) => `/teams/${id}` as const,
+  internalWebTeamYearRange: (id: string) => `/internal/web/teams/${id}/year-range` as const,
   teamDailyStats: (id: string) => `/teams/${id}/daily-stats` as const,
   teamRunDifferential: (teamId: string) => `/teams/${teamId}/run-differential` as const,
 

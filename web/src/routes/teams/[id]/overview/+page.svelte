@@ -149,29 +149,29 @@
     <div class="panel-label mb-3">Franchise</div>
     <div class="grid grid-cols-2 gap-x-6 gap-y-2 font-mono text-xs">
       <div>
-        <div class="text-xxs tracking-wider text-muted uppercase">Name</div>
-        <div class="text-foreground">{franchiseResource.value.name}</div>
+        <div class="kv-list--key">Name</div>
+        <div class="kv-list--value">{franchiseResource.value.name}</div>
       </div>
       <div>
-        <div class="text-xxs tracking-wider text-muted uppercase">Franchise ID</div>
-        <div class="text-foreground">{franchiseResource.value.id}</div>
+        <div class="kv-list--key">Franchise ID</div>
+        <div class="kv-list--value">{franchiseResource.value.id}</div>
       </div>
       {#if franchiseResource.value.league}
         <div>
-          <div class="text-xxs tracking-wider text-muted uppercase">League</div>
-          <div class="text-foreground">{franchiseResource.value.league}</div>
+          <div class="kv-list--key">League</div>
+          <div class="kv-list--value">{franchiseResource.value.league}</div>
         </div>
       {/if}
       {#if franchiseResource.value.location}
         <div>
-          <div class="text-xxs tracking-wider text-muted uppercase">Location</div>
-          <div class="text-foreground">{franchiseResource.value.location}</div>
+          <div class="kv-list--key">Location</div>
+          <div class="kv-list--value">{franchiseResource.value.location}</div>
         </div>
       {/if}
       {#if franchiseResource.value.active_from}
         <div>
-          <div class="text-xxs tracking-wider text-muted uppercase">Active</div>
-          <div class="text-foreground">
+          <div class="kv-list--key">Active</div>
+          <div class="kv-list--value">
             {franchiseResource.value.active_from}–{franchiseResource.value.active_to ?? 'pres.'}
           </div>
         </div>
@@ -180,7 +180,7 @@
 
     {#if franchiseEras.length > 0}
       <div class="mt-4 border-t border-outline pt-3">
-        <div class="mb-2 font-mono text-xxs tracking-wider text-muted uppercase">Franchise era span</div>
+        <div class="kv-list--key mb-2 font-mono">Franchise era span</div>
         <div class="flex flex-wrap gap-1">
           {#each franchiseEras as era (era.code)}
             <EraRangeChip {era} />
@@ -229,45 +229,45 @@
       {:else if seasonResource.error}
         <p class="font-mono text-xs text-warning">{seasonResource.error}</p>
       {:else if seasonResource.value}
-        <div class="grid grid-cols-2 gap-x-6 gap-y-2 font-mono text-xs">
+        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
           <div>
-            <div class="text-xxs tracking-wider text-muted uppercase">Team ID</div>
-            <div class="text-foreground">{seasonResource.value.id}</div>
+            <div class="kv-list--key">Team ID</div>
+            <div class="kv-list--value">{seasonResource.value.id}</div>
           </div>
           {#if seasonResource.value.franchise_id}
             <div>
-              <div class="text-xxs tracking-wider text-muted uppercase">Franchise ID</div>
-              <div class="text-foreground">{seasonResource.value.franchise_id}</div>
+              <div class="kv-list--key">Franchise ID</div>
+              <div class="kv-list--value">{seasonResource.value.franchise_id}</div>
             </div>
           {/if}
           {#if seasonResource.value.name}
             <div>
-              <div class="text-xxs tracking-wider text-muted uppercase">Team name</div>
-              <div class="text-foreground">{seasonResource.value.name}</div>
+              <div class="kv-list--key">Team name</div>
+              <div class="kv-list--value">{seasonResource.value.name}</div>
             </div>
           {/if}
           {#if seasonResource.value.wins != null || seasonResource.value.losses != null}
             <div>
-              <div class="text-xxs tracking-wider text-muted uppercase">Record</div>
-              <div class="text-foreground">{fmtRecord(seasonResource.value.wins, seasonResource.value.losses)}</div>
+              <div class="kv-list--key">Record</div>
+              <div class="kv-list--value">{fmtRecord(seasonResource.value.wins, seasonResource.value.losses)}</div>
             </div>
           {/if}
           {#if seasonResource.value.rank != null}
             <div>
-              <div class="text-xxs tracking-wider text-muted uppercase">Rank</div>
-              <div class="text-foreground">{seasonResource.value.rank}</div>
+              <div class="kv-list--key">Rank</div>
+              <div class="kv-list--value">{seasonResource.value.rank}</div>
             </div>
           {/if}
           {#if seasonResource.value.division}
             <div>
-              <div class="text-xxs tracking-wider text-muted uppercase">Division</div>
-              <div class="text-foreground">{seasonResource.value.division}</div>
+              <div class="kv-list--key">Division</div>
+              <div class="kv-list--value">{seasonResource.value.division}</div>
             </div>
           {/if}
           {#if seasonResource.value.park}
             <div class="col-span-2">
-              <div class="text-xxs tracking-wider text-muted uppercase">Park</div>
-              <div class="text-foreground">{seasonResource.value.park}</div>
+              <div class="kv-list--key">Park</div>
+              <div class="kv-list--value">{seasonResource.value.park}</div>
             </div>
           {/if}
         </div>
@@ -281,3 +281,15 @@
     </div>
   {/if}
 {/if}
+
+<style lang="postcss">
+  @reference '$tailwind';
+
+  .kv-list--key {
+    @apply font-mono text-xxs tracking-wider text-muted uppercase;
+  }
+
+  .kv-list--value {
+    @apply font-display text-sm text-foreground;
+  }
+</style>

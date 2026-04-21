@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
@@ -19,6 +20,7 @@ func (tr *TeamRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/teams", tr.handleListTeams)
 	mux.HandleFunc("GET /v1/teams/{id}", tr.handleGetTeam)
 	mux.HandleFunc("GET /v1/teams/{id}/daily-stats", tr.handleTeamDailyStats)
+	mux.HandleFunc("GET /v1/internal/web/teams/{id}/year-range", tr.handleInternalWebTeamYearRange)
 	mux.HandleFunc("GET /v1/seasons", tr.handleListSeasons)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams", tr.handleSeasonTeams)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/roster", tr.handleTeamRoster)
@@ -29,6 +31,39 @@ func (tr *TeamRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/daily-logs", tr.handleTeamDailyLogs)
 	mux.HandleFunc("GET /v1/franchises", tr.handleListFranchises)
 	mux.HandleFunc("GET /v1/franchises/{id}", tr.handleGetFranchise)
+}
+
+func (tr *TeamRoutes) handleInternalWebTeamYearRange(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	teamID := core.TeamID(strings.TrimSpace(r.PathValue("id")))
+	if teamID == "" {
+		writeBadRequest(w, "team id is required")
+		return
+	}
+
+	var franchiseID *core.FranchiseID
+	if rawFranchiseID := strings.TrimSpace(r.URL.Query().Get("franchise_id")); rawFranchiseID != "" {
+		id := core.FranchiseID(rawFranchiseID)
+		franchiseID = &id
+	}
+
+	years, err := tr.repo.TeamSeasonYears(ctx, teamID, franchiseID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if len(years) == 0 {
+		writeNotFound(w, "team year range")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, TeamYearRangeResponse{
+		TeamID:      teamID,
+		FranchiseID: franchiseID,
+		MinYear:     years[0],
+		MaxYear:     years[len(years)-1],
+		Years:       years,
+	})
 }
 
 // handleListTeams godoc

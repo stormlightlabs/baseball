@@ -6,7 +6,7 @@ import (
 	"stormlightlabs.org/baseball/internal/core"
 )
 
-// Anything that can add its endpoints to a mux.
+// interface Registrar defines anything that can add its endpoints to a request multiplexer.
 type Registrar interface {
 	RegisterRoutes(mux *http.ServeMux)
 }
@@ -85,6 +85,15 @@ type CareerPitchingLeadersResponse struct {
 type FranchisesResponse struct {
 	Franchises []core.Franchise `json:"franchises"`
 	Total      int              `json:"total"`
+}
+
+// TeamYearRangeResponse contains year bounds + discrete available years for team/franchise views.
+type TeamYearRangeResponse struct {
+	TeamID      core.TeamID       `json:"team_id"`
+	FranchiseID *core.FranchiseID `json:"franchise_id,omitempty"`
+	MinYear     core.SeasonYear   `json:"min_year"`
+	MaxYear     core.SeasonYear   `json:"max_year"`
+	Years       []core.SeasonYear `json:"years"`
 }
 
 // AwardsListResponse wraps awards list

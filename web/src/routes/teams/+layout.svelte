@@ -7,14 +7,20 @@
   import { endpointForTeamTab } from '$lib/common/tabs';
   import ApiPanel from '$lib/components/ApiPanel.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
+  import RangePicker from '$lib/components/RangePicker.svelte';
   import SearchInput from '$lib/components/SearchInput.svelte';
   import { EP } from '$lib/endpoints';
   import { erasInRange } from '$lib/eras';
   import ThreeColLayout from '$lib/layouts/ThreeColLayout.svelte';
   import { AsyncListResource, AsyncPaginatedListResource, AsyncValueResource } from '$lib/players/resources.svelte';
   import { QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
-  import { normalizeFranchiseProfile, normalizeSearchTeamsPage, normalizeTeamResult } from '$lib/teams/normalizers';
-  import type { FranchiseProfile, TeamResult } from '$lib/teams/types';
+  import {
+    normalizeFranchiseProfile,
+    normalizeSearchTeamsPage,
+    normalizeTeamResult,
+    normalizeTeamYearRange
+  } from '$lib/teams/normalizers';
+  import type { FranchiseProfile, TeamResult, TeamYearRange } from '$lib/teams/types';
   import { onMount, type Snippet } from 'svelte';
 
   let { children }: { children: Snippet } = $props();
@@ -53,11 +59,13 @@
   const searchResource = new AsyncPaginatedListResource<TeamResult>();
   const franchisesResource = new AsyncListResource<TeamResult>();
   const profileResource = new AsyncValueResource<FranchiseProfile>();
+  const yearRangeResource = new AsyncValueResource<TeamYearRange>();
 
   let searchInput = $state('');
   let yearInput = $state('');
   let lastSearchKey = '';
   let lastProfileKey = '';
+  let lastYearRangeKey = '';
 
   let franchiseEras = $derived.by(() => {
     const p = profileResource.value;
@@ -112,12 +120,36 @@
     });
   }
 
+  async function refreshYearRange(force = false): Promise<void> {
+    const selectedTeamId = teamId.trim();
+    if (!selectedTeamId) {
+      yearRangeResource.clear();
+      lastYearRangeKey = '';
+      return;
+    }
+
+    const selectedFranchiseId = franchiseId.trim();
+    const key = `${selectedTeamId}|${selectedFranchiseId}`;
+    if (!force && key === lastYearRangeKey) return;
+    lastYearRangeKey = key;
+
+    await yearRangeResource.load(async () => {
+      const params: Record<string, string> = {};
+      if (selectedFranchiseId) {
+        params.franchise_id = selectedFranchiseId;
+      }
+      const payload = await apiFetch<Record<string, unknown>>(EP.internalWebTeamYearRange(selectedTeamId), params);
+      return normalizeTeamYearRange(payload);
+    });
+  }
+
   onMount(() => {
     searchInput = q;
     yearInput = year;
     void refreshSearch(true);
     void refreshFranchises();
     void refreshProfile(true);
+    void refreshYearRange(true);
   });
 
   afterNavigate(() => {
@@ -125,6 +157,7 @@
     yearInput = year;
     void refreshSearch();
     void refreshProfile();
+    void refreshYearRange();
   });
 
   function teamQuerySuffix(nextFranchiseId?: string): string {
@@ -135,15 +168,6 @@
     if (franchiseLookupId) overrides.franchise_id = franchiseLookupId;
     const qs = new URLSearchParams(overrides).toString();
     return qs ? `?${qs}` : '';
-  }
-
-  function teamResultIdSummary(result: TeamResult): string {
-    const teamCode = result.team_id?.trim();
-    const franchiseCode = result.franchise_id?.trim();
-    if (teamCode && franchiseCode && teamCode !== franchiseCode) {
-      return `team ${teamCode} · franchise ${franchiseCode}`;
-    }
-    return teamCode ?? franchiseCode ?? result.id;
   }
 
   function handleSearch(value = searchInput): void {
@@ -220,7 +244,7 @@
           <div class="mb-1 text-center font-display text-[0.95rem] font-medium text-foreground">
             {profileResource.value.name}
           </div>
-          <div class="mb-2 text-center font-mono text-[0.65rem] text-muted">
+          <div class="mb-2 text-center font-mono text-xxs text-muted">
             team: {teamId} · franchise: {franchiseId || profileResource.value.id}
           </div>
           {#if profileResource.value.active_from}
@@ -242,20 +266,18 @@
 
           <div class="border-t border-outline pt-3">
             <div class="mb-1.5 font-mono text-[0.6rem] tracking-wider text-muted uppercase">Season year</div>
-            <input
-              type="number"
-              min="1871"
-              max="2025"
-              value={yearInput}
-              oninput={(e) => {
-                yearInput = (e.target as HTMLInputElement).value;
-              }}
-              onchange={(e) => handleYearChange((e.target as HTMLInputElement).value)}
-              onkeydown={(e) => {
-                if (e.key === 'Enter') handleYearChange((e.target as HTMLInputElement).value);
-              }}
-              class="w-full rounded border border-outline bg-mantle px-2 py-1.5 font-mono text-xs text-foreground placeholder-muted/50 focus:ring-1 focus:ring-primary/50 focus:outline-none"
-              placeholder="e.g. 2021" />
+            <RangePicker
+              bind:value={yearInput}
+              options={yearRangeResource.value?.years ?? []}
+              min={yearRangeResource.value?.min_year}
+              max={yearRangeResource.value?.max_year}
+              loading={yearRangeResource.loading}
+              error={yearRangeResource.error ?? void 0}
+              placeholder="Select season year"
+              loadingMessage="Loading year range…"
+              emptyMessage="Not enough season data to render slider."
+              dialogLabel="Season year picker"
+              oncommit={handleYearChange} />
           </div>
         {/if}
       </div>
@@ -278,10 +300,24 @@
               ? 'bg-surface'
               : ''}">
             <div class="font-display text-[0.8rem] text-foreground">{result.name}</div>
-            <div class="font-mono text-[0.68rem] text-muted">
-              {teamResultIdSummary(result)}{#if result.league}
-                · {result.league}{/if}{#if result.year}
-                · {result.year}{/if}
+            <div class="text-[0.68rem] text-muted">
+              <dl class="grid grid-cols-2 gap-1 py-2">
+                {#if result.franchise_id}
+                  <dt class="font-mono">Franchise</dt>
+                  <dl>{result.franchise_id}</dl>
+                {/if}
+                <dt class="font-mono">Team</dt>
+                <dl>{result.id}</dl>
+
+                {#if result.league}
+                  <dt class="font-mono">League</dt>
+                  <dl>{result.league}</dl>
+                {/if}
+                {#if result.year}
+                  <dt class="font-mono">Season</dt>
+                  <dl>{result.year}</dl>
+                {/if}
+              </dl>
             </div>
           </a>
         {/each}

@@ -86,6 +86,30 @@ func TestTeamEndpoints(t *testing.T) {
 		}
 	})
 
+	t.Run("GET /v1/internal/web/teams/{id}/year-range", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/internal/web/teams/NYA/year-range?franchise_id=NYY", nil)
+		req.SetPathValue("id", "NYA")
+		w := httptest.NewRecorder()
+
+		testServer.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		var resp TeamYearRangeResponse
+		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		if len(resp.Years) == 0 {
+			t.Error("expected at least one available season year")
+		}
+		if resp.MinYear > resp.MaxYear {
+			t.Errorf("expected min_year <= max_year, got %d > %d", resp.MinYear, resp.MaxYear)
+		}
+	})
+
 	t.Run("GET /v1/franchises", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/franchises", nil)
 		w := httptest.NewRecorder()

@@ -91,6 +91,57 @@ func (r *TeamRepository) GetTeamSeason(ctx context.Context, teamID core.TeamID, 
 	return &ts, nil
 }
 
+func (r *TeamRepository) TeamSeasonYears(
+	ctx context.Context,
+	teamID core.TeamID,
+	franchiseID *core.FranchiseID,
+) ([]core.SeasonYear, error) {
+	queryYears := func(query string, args ...any) ([]core.SeasonYear, error) {
+		rows, err := r.db.QueryContext(ctx, query, args...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list team season years: %w", err)
+		}
+		defer rows.Close()
+
+		years := make([]core.SeasonYear, 0, 32)
+		for rows.Next() {
+			var year core.SeasonYear
+			if err := rows.Scan(&year); err != nil {
+				return nil, fmt.Errorf("failed to scan team season year: %w", err)
+			}
+			years = append(years, year)
+		}
+		if err := rows.Err(); err != nil {
+			return nil, fmt.Errorf("failed to iterate team season years: %w", err)
+		}
+		return years, nil
+	}
+
+	const byFranchiseQuery = `
+		SELECT DISTINCT "yearID"
+		FROM "Teams"
+		WHERE "franchID" = $1
+		ORDER BY "yearID" ASC
+	`
+
+	if franchiseID != nil {
+		if years, err := queryYears(byFranchiseQuery, string(*franchiseID)); err != nil {
+			return nil, err
+		} else if len(years) > 0 {
+			return years, nil
+		}
+	}
+
+	const byTeamOrFranchiseQuery = `
+		SELECT DISTINCT "yearID"
+		FROM "Teams"
+		WHERE "teamID" = $1 OR "franchID" = $1
+		ORDER BY "yearID" ASC
+	`
+
+	return queryYears(byTeamOrFranchiseQuery, string(teamID))
+}
+
 func (r *TeamRepository) ListTeamSeasons(ctx context.Context, filter core.TeamFilter) ([]core.TeamSeason, error) {
 	query := `
 		SELECT
