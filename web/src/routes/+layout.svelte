@@ -79,7 +79,10 @@
   <header
     class="sticky top-0 z-50 flex flex-wrap items-center gap-3 border-b border-outline bg-crust px-3 py-2 sm:px-6 lg:px-8">
     <div class="flex min-w-0 items-center gap-2.5">
-      <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline">Big Fly</a>
+      <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline">
+        Big
+        <span class="text-primary">Fly</span>
+      </a>
       <span class="hidden rounded bg-outline px-2 py-0.5 font-mono text-[0.7rem] text-muted sm:inline-flex">
         {badge}
       </span>

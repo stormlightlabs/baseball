@@ -252,11 +252,11 @@ Ref: `docs/designs/docs.html`
 
 Ref: `docs/designs/data-sources.html`
 
-- [ ] Source cards for Lahman, Retrosheet, MLB StatsAPI.
-- [ ] Coverage timeline and caveats from `/api/v1/meta/datasets`.
-- [ ] Era matrix panel (static 9 eras + dynamic WE eras).
-- [ ] ID crosswalk table (Lahman, Retrosheet, MLB).
-- [ ] League-specific caveat block for Federal League and Negro Leagues routes.
+- [x] Source cards for Lahman, Retrosheet, MLB StatsAPI.
+- [x] Coverage timeline and caveats from `/api/v1/meta/datasets`.
+- [x] Era matrix panel (static 9 eras + dynamic WE eras).
+- [x] ID crosswalk table (Lahman, Retrosheet, MLB).
+- [x] League-specific caveat block for Federal League and Negro Leagues routes.
 
 ## League-Specific Views
 

@@ -107,7 +107,10 @@
 
 <main class="min-h-full bg-mantle pb-0">
   <section class="mx-auto max-w-3xl px-4 pt-10 pb-7 text-center sm:px-6 sm:pt-12 sm:pb-8 lg:px-8 lg:pt-14">
-    <h1 class="mb-3 font-display text-3xl font-bold text-foreground">Big Fly</h1>
+    <h1 class="mb-3 font-display text-3xl font-bold text-foreground">
+      Big
+      <span class="text-primary">Fly</span>
+    </h1>
     <div class="mb-8 flex flex-col gap-1 text-base text-muted">
       <p>Baseball data from 1871 to now.</p>
       <p>Powered by: Lahman · Retrosheet · MLB</p>
