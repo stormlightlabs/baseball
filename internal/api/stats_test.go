@@ -54,6 +54,17 @@ func TestStatsEndpoints(t *testing.T) {
 		}
 	})
 
+	t.Run("GET /v1/seasons/{year}/leaders/pitching historical null BK", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/seasons/1914/leaders/pitching?page=1&per_page=10&stat=era", nil)
+		w := httptest.NewRecorder()
+
+		testServer.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+	})
+
 	t.Run("GET /v1/stats/batting", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/stats/batting?season=2023", nil)
 		w := httptest.NewRecorder()

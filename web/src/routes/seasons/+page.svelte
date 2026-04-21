@@ -1348,7 +1348,15 @@
       </section>
 
       <section class="rounded-lg border border-outline bg-crust p-4">
-        <div class="panel-label mb-3">Park factors snapshot</div>
+        <div class="mb-2 flex items-center justify-between gap-2">
+          <div class="panel-label mb-0 border-0 p-0">Park factors snapshot</div>
+          <a
+            class="font-mono text-[0.68rem] text-primary underline-offset-2 hover:underline"
+            href={resolve('/docs/api-computed')}>
+            API docs
+          </a>
+        </div>
+        <p class="mb-3 font-mono text-[0.68rem] text-muted">Provider: Big Fly</p>
 
         {#if parkFactorsError}
           <p

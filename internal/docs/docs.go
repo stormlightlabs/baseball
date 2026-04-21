@@ -5193,6 +5193,12 @@ const docTemplate = `{
                         "description": "Team ID",
                         "name": "team_id",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Provider alias (bigfly, big-fly, big_fly, big fly, bf)",
+                        "name": "provider",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -5322,6 +5328,12 @@ const docTemplate = `{
                         "description": "Team ID",
                         "name": "team_id",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Provider alias (bigfly, big-fly, big_fly, big fly, bf)",
+                        "name": "provider",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -5385,6 +5397,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Team ID",
                         "name": "team_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Provider alias (bigfly, big-fly, big_fly, big fly, bf)",
+                        "name": "provider",
                         "in": "query"
                     }
                 ],
@@ -6050,6 +6068,12 @@ const docTemplate = `{
                         "description": "Filter by league (AL, NL)",
                         "name": "league",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Provider alias (bigfly, big-fly, big_fly, big fly, bf)",
+                        "name": "provider",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -6130,6 +6154,12 @@ const docTemplate = `{
                         "description": "Filter by team ID",
                         "name": "team_id",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Provider alias (bigfly, big-fly, big_fly, big fly, bf)",
+                        "name": "provider",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -6202,6 +6232,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by team ID",
                         "name": "team_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Provider alias (bigfly, big-fly, big_fly, big fly, bf)",
+                        "name": "provider",
                         "in": "query"
                     }
                 ],
@@ -11436,7 +11472,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "provider": {
-                    "description": "\"internal\", \"fangraphs-like\", etc.",
+                    "description": "\"Big Fly\", \"fangraphs-like\", etc.",
                     "type": "string"
                 },
                 "runs_factor": {
@@ -12731,7 +12767,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "provider": {
-                    "description": "fangraphs, bbref, internal",
+                    "description": "fangraphs, bbref, Big Fly",
                     "allOf": [
                         {
                             "$ref": "#/definitions/core.StatProvider"
@@ -12754,22 +12790,22 @@ const docTemplate = `{
                 "unknown",
                 "fangraphs",
                 "baseball_reference",
-                "internal"
+                "Big Fly"
             ],
             "x-enum-comments": {
-                "StatProviderInternal": "your own"
+                "StatProviderBigFly": "first-party formulas"
             },
             "x-enum-descriptions": [
                 "",
                 "",
                 "",
-                "your own"
+                "first-party formulas"
             ],
             "x-enum-varnames": [
                 "StatProviderUnknown",
                 "StatProviderFanGraphs",
                 "StatProviderBBRef",
-                "StatProviderInternal"
+                "StatProviderBigFly"
             ]
         },
         "core.Streak": {

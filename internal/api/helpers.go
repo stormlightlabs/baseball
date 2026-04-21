@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
@@ -84,4 +85,22 @@ func getFloatQuery(r *http.Request, key string, defaultVal float64) float64 {
 		return defaultVal
 	}
 	return f
+}
+
+// TODO: this should live in package core
+func parseStatProviderAlias(raw string) (*core.StatProvider, error) {
+	if strings.TrimSpace(raw) == "" {
+		return nil, nil
+	}
+
+	normalized := strings.ToLower(strings.TrimSpace(raw))
+	compact := strings.NewReplacer(" ", "", "-", "", "_", "").Replace(normalized)
+
+	switch compact {
+	case "bigfly", "bf":
+		provider := core.StatProviderBigFly
+		return &provider, nil
+	default:
+		return nil, fmt.Errorf("invalid provider %q: supported aliases are bigfly, big-fly, big_fly, big fly, bf", raw)
+	}
 }

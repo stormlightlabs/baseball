@@ -45,6 +45,7 @@ func (cr *ComputedRoutes) RegisterRoutes(mux *http.ServeMux) {
 //	@Param			player_id	path		string	true	"Player ID"
 //	@Param			season		query		integer	false	"Season year"	default(2024)
 //	@Param			team_id		query		string	false	"Team ID"
+//	@Param			provider	query		string	false	"Provider alias (bigfly, big-fly, big_fly, big fly, bf)"
 //	@Success		200			{object}	core.AdvancedBattingStats
 //	@Failure		400			{object}	ErrorResponse
 //	@Failure		404			{object}	ErrorResponse
@@ -64,6 +65,14 @@ func (cr *ComputedRoutes) handlePlayerAdvancedBatting(w http.ResponseWriter, r *
 	if teamIDStr := r.URL.Query().Get("team_id"); teamIDStr != "" {
 		teamID := core.TeamID(teamIDStr)
 		filter.TeamID = &teamID
+	}
+	if providerStr := r.URL.Query().Get("provider"); providerStr != "" {
+		provider, err := parseStatProviderAlias(providerStr)
+		if err != nil {
+			writeBadRequest(w, err.Error())
+			return
+		}
+		filter.Provider = provider
 	}
 
 	stats, err := cr.advancedRepo.PlayerAdvancedBatting(ctx, playerID, filter)
@@ -85,6 +94,7 @@ func (cr *ComputedRoutes) handlePlayerAdvancedBatting(w http.ResponseWriter, r *
 //	@Param			player_id	path		string	true	"Player ID"
 //	@Param			season		query		integer	false	"Season year"	default(2024)
 //	@Param			team_id		query		string	false	"Team ID"
+//	@Param			provider	query		string	false	"Provider alias (bigfly, big-fly, big_fly, big fly, bf)"
 //	@Success		200			{object}	core.AdvancedPitchingStats
 //	@Failure		400			{object}	ErrorResponse
 //	@Failure		404			{object}	ErrorResponse
@@ -104,6 +114,14 @@ func (cr *ComputedRoutes) handlePlayerAdvancedPitching(w http.ResponseWriter, r 
 	if teamIDStr := r.URL.Query().Get("team_id"); teamIDStr != "" {
 		teamID := core.TeamID(teamIDStr)
 		filter.TeamID = &teamID
+	}
+	if providerStr := r.URL.Query().Get("provider"); providerStr != "" {
+		provider, err := parseStatProviderAlias(providerStr)
+		if err != nil {
+			writeBadRequest(w, err.Error())
+			return
+		}
+		filter.Provider = provider
 	}
 
 	stats, err := cr.advancedRepo.PlayerAdvancedPitching(ctx, playerID, filter)
@@ -335,6 +353,7 @@ func (cr *ComputedRoutes) handlePlayerFielding(w http.ResponseWriter, r *http.Re
 //	@Param			player_id	path		string	true	"Player ID"
 //	@Param			season		query		integer	false	"Season year"	default(2024)
 //	@Param			team_id		query		string	false	"Team ID"
+//	@Param			provider	query		string	false	"Provider alias (bigfly, big-fly, big_fly, big fly, bf)"
 //	@Success		200			{object}	core.PlayerWARSummary
 //	@Failure		400			{object}	ErrorResponse
 //	@Failure		404			{object}	ErrorResponse
@@ -352,6 +371,14 @@ func (cr *ComputedRoutes) handlePlayerWAR(w http.ResponseWriter, r *http.Request
 	if teamIDStr := r.URL.Query().Get("team_id"); teamIDStr != "" {
 		teamID := core.TeamID(teamIDStr)
 		filter.TeamID = &teamID
+	}
+	if providerStr := r.URL.Query().Get("provider"); providerStr != "" {
+		provider, err := parseStatProviderAlias(providerStr)
+		if err != nil {
+			writeBadRequest(w, err.Error())
+			return
+		}
+		filter.Provider = provider
 	}
 
 	war, err := cr.advancedRepo.PlayerWAR(ctx, playerID, filter)
@@ -377,6 +404,7 @@ func (cr *ComputedRoutes) handlePlayerWAR(w http.ResponseWriter, r *http.Request
 //	@Param			min_pa		query		integer	false	"Minimum plate appearances"															default(502)
 //	@Param			team_id		query		string	false	"Filter by team ID"
 //	@Param			league		query		string	false	"Filter by league (AL, NL)"
+//	@Param			provider	query		string	false	"Provider alias (bigfly, big-fly, big_fly, big fly, bf)"
 //	@Success		200			{object}	PaginatedResponse
 //	@Failure		400			{object}	ErrorResponse
 //	@Failure		500			{object}	ErrorResponse
@@ -408,6 +436,14 @@ func (cr *ComputedRoutes) handleSeasonBattingLeaders(w http.ResponseWriter, r *h
 	if leagueStr := r.URL.Query().Get("league"); leagueStr != "" {
 		league := core.LeagueID(leagueStr)
 		filter.League = &league
+	}
+	if providerStr := r.URL.Query().Get("provider"); providerStr != "" {
+		provider, err := parseStatProviderAlias(providerStr)
+		if err != nil {
+			writeBadRequest(w, err.Error())
+			return
+		}
+		filter.Provider = provider
 	}
 
 	allLeaders, err := cr.advancedRepo.SeasonBattingLeaders(ctx, season, stat, 10000, filter)
@@ -451,6 +487,7 @@ func (cr *ComputedRoutes) handleSeasonBattingLeaders(w http.ResponseWriter, r *h
 //	@Param			per_page	query		integer	false	"Results per page"												default(10)
 //	@Param			min_ip		query		number	false	"Minimum innings pitched"										default(162)
 //	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			provider	query		string	false	"Provider alias (bigfly, big-fly, big_fly, big fly, bf)"
 //	@Success		200			{object}	PaginatedResponse
 //	@Failure		400			{object}	ErrorResponse
 //	@Failure		500			{object}	ErrorResponse
@@ -479,6 +516,14 @@ func (cr *ComputedRoutes) handleSeasonPitchingLeaders(w http.ResponseWriter, r *
 	if teamIDStr := r.URL.Query().Get("team_id"); teamIDStr != "" {
 		teamID := core.TeamID(teamIDStr)
 		filter.TeamID = &teamID
+	}
+	if providerStr := r.URL.Query().Get("provider"); providerStr != "" {
+		provider, err := parseStatProviderAlias(providerStr)
+		if err != nil {
+			writeBadRequest(w, err.Error())
+			return
+		}
+		filter.Provider = provider
 	}
 
 	allLeaders, err := cr.advancedRepo.SeasonPitchingLeaders(ctx, season, stat, 10000, filter)
@@ -521,6 +566,7 @@ func (cr *ComputedRoutes) handleSeasonPitchingLeaders(w http.ResponseWriter, r *
 //	@Param			per_page	query		integer	false	"Results per page"			default(10)
 //	@Param			min_pa		query		integer	false	"Minimum plate appearances"	default(502)
 //	@Param			team_id		query		string	false	"Filter by team ID"
+//	@Param			provider	query		string	false	"Provider alias (bigfly, big-fly, big_fly, big fly, bf)"
 //	@Success		200			{object}	PaginatedResponse
 //	@Failure		400			{object}	ErrorResponse
 //	@Failure		500			{object}	ErrorResponse
@@ -540,6 +586,14 @@ func (cr *ComputedRoutes) handleSeasonWARLeaders(w http.ResponseWriter, r *http.
 	if teamIDStr := r.URL.Query().Get("team_id"); teamIDStr != "" {
 		teamID := core.TeamID(teamIDStr)
 		filter.TeamID = &teamID
+	}
+	if providerStr := r.URL.Query().Get("provider"); providerStr != "" {
+		provider, err := parseStatProviderAlias(providerStr)
+		if err != nil {
+			writeBadRequest(w, err.Error())
+			return
+		}
+		filter.Provider = provider
 	}
 
 	allLeaders, err := cr.advancedRepo.SeasonWARLeaders(ctx, season, 10000, filter)

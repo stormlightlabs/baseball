@@ -44,6 +44,7 @@ UI and higher-level CLI summaries.
 - `GET /v1/parks/{park_id}/factors` requires a `season` query parameter.
 - `GET /v1/parks/{park_id}/factors/series` expects `from_season` and `to_season`, returning a chronological array you can graph.
 - `GET /v1/seasons/{season}/park-factors` optionally accepts `type` (e.g., `runs`, `hr`) to filter the response server-side.
+- Park factor responses use `provider: "Big Fly"` for first-party computed factors.
 
 ### Advanced Leaderboards
 

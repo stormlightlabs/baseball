@@ -7,14 +7,14 @@ const (
 	StatProviderUnknown   StatProvider = "unknown"
 	StatProviderFanGraphs StatProvider = "fangraphs"
 	StatProviderBBRef     StatProvider = "baseball_reference"
-	StatProviderInternal  StatProvider = "internal" // your own
+	StatProviderBigFly    StatProvider = "Big Fly" // first-party formulas
 )
 
 // StatContext anchors a stat line to season/league/park environment.
 type StatContext struct {
 	Season      SeasonYear   `json:"season"`           // 0 if multi-year or career
 	League      *LeagueID    `json:"league,omitempty"` // "AL","NL", etc.
-	Provider    StatProvider `json:"provider"`         // fangraphs, bbref, internal
+	Provider    StatProvider `json:"provider"`         // fangraphs, bbref, Big Fly
 	ParkNeutral bool         `json:"park_neutral"`     // already park-adjusted?
 	RegSeason   bool         `json:"regular_season"`   // true = reg season, false = postseason/mix
 }
@@ -166,7 +166,7 @@ type ParkFactor struct {
 	RunsFactorLHB *float64 `json:"runs_factor_lhb,omitempty"`
 	RunsFactorRHB *float64 `json:"runs_factor_rhb,omitempty"`
 	GamesSampled  int      `json:"games_sampled"` // # of games used
-	Provider      string   `json:"provider"`      // "internal", "fangraphs-like", etc.
+	Provider      string   `json:"provider"`      // "Big Fly", "fangraphs-like", etc.
 	MultiYear     bool     `json:"multi_year"`    // if you averaged multiple seasons
 }
 

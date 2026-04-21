@@ -580,16 +580,26 @@ func (r *TeamRepository) PitchingStats(ctx context.Context, year core.SeasonYear
 
 		for rows.Next() {
 			var ps core.PlayerPitchingSeason
+			var hbp, bk, wp sql.NullInt64
 
 			err := rows.Scan(
 				&ps.PlayerID, &ps.Year, &ps.TeamID, &ps.League,
 				&ps.W, &ps.L, &ps.G, &ps.GS, &ps.CG, &ps.SHO, &ps.SV, &ps.IPOuts,
-				&ps.H, &ps.ER, &ps.HR, &ps.BB, &ps.SO, &ps.HBP, &ps.BK, &ps.WP,
+				&ps.H, &ps.ER, &ps.HR, &ps.BB, &ps.SO, &hbp, &bk, &wp,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to scan player pitching: %w", err)
 			}
 
+			if hbp.Valid {
+				ps.HBP = int(hbp.Int64)
+			}
+			if bk.Valid {
+				ps.BK = int(bk.Int64)
+			}
+			if wp.Valid {
+				ps.WP = int(wp.Int64)
+			}
 			if ps.IPOuts > 0 {
 				ps.ERA = (float64(ps.ER) * 27.0) / float64(ps.IPOuts)
 				innings := float64(ps.IPOuts) / 3.0

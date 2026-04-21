@@ -40,7 +40,7 @@ func (r *ParkFactorRepository) ParkFactor(ctx context.Context, parkID core.ParkI
 		return nil, fmt.Errorf("failed to query park factor: %w", err)
 	}
 
-	pf.Provider = "internal"
+	pf.Provider = "Big Fly"
 	pf.MultiYear = false
 	return &pf, nil
 }
@@ -70,7 +70,7 @@ func (r *ParkFactorRepository) ParkFactorSeries(ctx context.Context, parkID core
 			return nil, fmt.Errorf("failed to scan park factor: %w", err)
 		}
 
-		pf.Provider = "internal"
+		pf.Provider = "Big Fly"
 		pf.MultiYear = false
 
 		factors = append(factors, pf)
@@ -108,7 +108,7 @@ func (r *ParkFactorRepository) SeasonParkFactors(ctx context.Context, season cor
 			return nil, fmt.Errorf("failed to scan park factor: %w", err)
 		}
 
-		pf.Provider = "internal"
+		pf.Provider = "Big Fly"
 		pf.MultiYear = false
 
 		factors = append(factors, pf)
@@ -147,7 +147,7 @@ func (r *ParkFactorRepository) MultiYearParkFactor(ctx context.Context, parkID c
 		RunsFactor:   totalRunsFactor / float64(totalGames),
 		HRFactor:     totalHRFactor / float64(totalGames),
 		GamesSampled: totalGames,
-		Provider:     "internal",
+		Provider:     "Big Fly",
 		MultiYear:    true,
 	}
 

@@ -84,7 +84,7 @@ func (r *AdvancedStatsRepository) PlayerAdvancedBatting(ctx context.Context, pla
 	stats.Context = core.StatContext{
 		Season:      core.SeasonYear(season),
 		League:      leagueID,
-		Provider:    core.StatProviderInternal,
+		Provider:    core.StatProviderBigFly,
 		ParkNeutral: false,
 		RegSeason:   true,
 	}
@@ -239,7 +239,7 @@ func (r *AdvancedStatsRepository) PlayerAdvancedPitching(
 
 	stats.Context = core.StatContext{
 		Season:      core.SeasonYear(season),
-		Provider:    core.StatProviderInternal,
+		Provider:    core.StatProviderBigFly,
 		ParkNeutral: false,
 		RegSeason:   true,
 	}
@@ -302,7 +302,7 @@ func (r *AdvancedStatsRepository) PlayerWAR(ctx context.Context, playerID core.P
 	war.Context = core.StatContext{
 		Season:      core.SeasonYear(season),
 		League:      leagueID,
-		Provider:    core.StatProviderInternal,
+		Provider:    core.StatProviderBigFly,
 		ParkNeutral: false,
 		RegSeason:   true,
 	}
@@ -395,7 +395,7 @@ func (r *AdvancedStatsRepository) SeasonBattingLeaders(ctx context.Context, seas
 		stats.Context = core.StatContext{
 			Season:      season,
 			League:      league,
-			Provider:    core.StatProviderInternal,
+			Provider:    core.StatProviderBigFly,
 			ParkNeutral: false,
 			RegSeason:   true,
 		}
@@ -472,7 +472,7 @@ func (r *AdvancedStatsRepository) SeasonPitchingLeaders(ctx context.Context, sea
 
 		stats.Context = core.StatContext{
 			Season:      season,
-			Provider:    core.StatProviderInternal,
+			Provider:    core.StatProviderBigFly,
 			ParkNeutral: false,
 			RegSeason:   true,
 		}
@@ -548,7 +548,7 @@ func (r *AdvancedStatsRepository) SeasonWARLeaders(ctx context.Context, season c
 		war.Context = core.StatContext{
 			Season:      season,
 			League:      leagueID,
-			Provider:    core.StatProviderInternal,
+			Provider:    core.StatProviderBigFly,
 			ParkNeutral: false,
 			RegSeason:   true,
 		}

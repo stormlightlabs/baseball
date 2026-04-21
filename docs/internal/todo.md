@@ -35,6 +35,11 @@ The doc file badge (ex. `docs/introduction.md`) should link to the Github source
 
 Featured Queries should link to dashboard pages, not the swagger docs/explorer-redirect
 
+### Live/Home Cards
+
+These have endpoints as a subtitle. We should turn these into a special component with a footer
+that displays the endpoint with Copy URL & Copy cURL buttons.
+
 ### Players
 
 Season Log Team column should link to team page, with a tooltip showing the full team name.

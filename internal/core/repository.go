@@ -358,7 +358,7 @@ type AdvancedStatsRepository interface {
 	PlayerFielding(ctx context.Context, playerID PlayerID, season SeasonYear, teamID *TeamID) (*FieldingStats, error)
 
 	// PlayerWAR computes WAR components and total WAR for a player
-	// Provider indicates which formula to use (fangraphs, bbref, internal)
+	// Provider indicates which formula to use (fangraphs, bbref, Big Fly)
 	PlayerWAR(ctx context.Context, playerID PlayerID, filter WARFilter) (*PlayerWARSummary, error)
 
 	// SeasonBattingLeaders returns top N players by advanced batting stat

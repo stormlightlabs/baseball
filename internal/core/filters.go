@@ -226,7 +226,7 @@ type AdvancedBattingFilter struct {
 	League     *LeagueID
 	MinPA      *int // Minimum plate appearances
 	Split      *SplitDimension
-	Provider   *StatProvider // fangraphs, bbref, internal
+	Provider   *StatProvider // fangraphs, bbref, Big Fly
 	ParkAdjust bool          // Apply park adjustments
 	Pagination Pagination
 }
@@ -252,7 +252,7 @@ type WARFilter struct {
 	League     *LeagueID
 	MinPA      *int          // For position players
 	MinIP      *float64      // For pitchers
-	Provider   *StatProvider // fangraphs, bbref, internal
+	Provider   *StatProvider // fangraphs, bbref, Big Fly
 	Pagination Pagination
 }
 

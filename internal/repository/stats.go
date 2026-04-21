@@ -337,15 +337,25 @@ func (r *StatsRepository) QueryPitchingStats(ctx context.Context, filter core.Pi
 	for rows.Next() {
 		var s core.PlayerPitchingSeason
 		var era sql.NullFloat64
+		var hbp, bk, wp sql.NullInt64
 
 		err := rows.Scan(
 			&s.PlayerID, &s.Year, &s.TeamID, &s.League,
-			&s.W, &s.L, &s.G, &s.GS, &s.CG, &s.SHO, &s.SV, &s.IPOuts, &s.H, &s.ER, &s.HR, &s.BB, &s.SO, &s.HBP, &s.BK, &s.WP, &era,
+			&s.W, &s.L, &s.G, &s.GS, &s.CG, &s.SHO, &s.SV, &s.IPOuts, &s.H, &s.ER, &s.HR, &s.BB, &s.SO, &hbp, &bk, &wp, &era,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan pitching stats: %w", err)
 		}
 
+		if hbp.Valid {
+			s.HBP = int(hbp.Int64)
+		}
+		if bk.Valid {
+			s.BK = int(bk.Int64)
+		}
+		if wp.Valid {
+			s.WP = int(wp.Int64)
+		}
 		if era.Valid {
 			s.ERA = era.Float64
 		}

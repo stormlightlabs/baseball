@@ -166,7 +166,7 @@ func (r *LeverageRepository) PlayerLeverageSummary(ctx context.Context, playerID
 		HighLeverageIPOuts:   highIPOuts,
 		Context: core.StatContext{
 			Season:      season,
-			Provider:    core.StatProviderInternal,
+			Provider:    core.StatProviderBigFly,
 			ParkNeutral: false,
 			RegSeason:   true,
 		},
