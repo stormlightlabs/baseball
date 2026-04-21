@@ -22,13 +22,13 @@ RUN adduser --disabled-password --gecos "" app && \
 WORKDIR /home/app
 COPY --from=build /baseball /usr/local/bin/baseball
 COPY --from=build /baseball-etl /usr/local/bin/baseball-etl
-RUN mkdir -p /home/app/tools/data && chown -R app:app /home/app/tools
+RUN mkdir -p /home/app/data && chown -R app:app /home/app/data
 
 USER app
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD ["/usr/local/bin/baseball", "server", "health"]
 
-ENV BASEBALL_DATA_ROOT=/home/app/tools/data
+ENV BASEBALL_DATA_ROOT=/home/app/data
 
 ENTRYPOINT ["/usr/local/bin/baseball"]
 CMD ["server", "start"]

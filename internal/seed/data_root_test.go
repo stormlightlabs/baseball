@@ -16,9 +16,6 @@ func TestResolveDataRootPrecedence(t *testing.T) {
 	if err := os.MkdirAll(DefaultDataRoot, 0755); err != nil {
 		t.Fatalf("mkdir default root: %v", err)
 	}
-	if err := os.MkdirAll(LegacyDataRoot, 0755); err != nil {
-		t.Fatalf("mkdir legacy root: %v", err)
-	}
 
 	got := ResolveDataRoot(filepath.Join("flag", "root"))
 	want := filepath.Join("flag", "root")
@@ -33,9 +30,6 @@ func TestResolveDataRootUsesEnvBeforeLocalDirs(t *testing.T) {
 	t.Setenv(DataRootEnvVar, filepath.Join("external", "snapshot"))
 	if err := os.MkdirAll(DefaultDataRoot, 0755); err != nil {
 		t.Fatalf("mkdir default root: %v", err)
-	}
-	if err := os.MkdirAll(LegacyDataRoot, 0755); err != nil {
-		t.Fatalf("mkdir legacy root: %v", err)
 	}
 
 	got := ResolveDataRoot("")
@@ -52,27 +46,10 @@ func TestResolveDataRootPrefersDefaultDataRootWhenPresent(t *testing.T) {
 	if err := os.MkdirAll(DefaultDataRoot, 0755); err != nil {
 		t.Fatalf("mkdir default root: %v", err)
 	}
-	if err := os.MkdirAll(LegacyDataRoot, 0755); err != nil {
-		t.Fatalf("mkdir legacy root: %v", err)
-	}
 
 	got := ResolveDataRoot("")
 	if got != DefaultDataRoot {
 		t.Fatalf("expected %q, got %q", DefaultDataRoot, got)
-	}
-}
-
-func TestResolveDataRootFallsBackToLegacyData(t *testing.T) {
-	withTempWorkingDir(t)
-
-	t.Setenv(DataRootEnvVar, "")
-	if err := os.MkdirAll(LegacyDataRoot, 0755); err != nil {
-		t.Fatalf("mkdir legacy root: %v", err)
-	}
-
-	got := ResolveDataRoot("")
-	if got != LegacyDataRoot {
-		t.Fatalf("expected %q, got %q", LegacyDataRoot, got)
 	}
 }
 

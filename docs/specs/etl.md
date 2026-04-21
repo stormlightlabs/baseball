@@ -1,6 +1,6 @@
 ---
 title: ETL Worker Architecture (No External Warehouse)
-updated: 2026-04-20
+updated: 2026-04-21
 ---
 
 ## Problem
@@ -69,7 +69,7 @@ Note: checked-in CSVs under `data/` are valid bootstrap inputs and reduce first-
                 [postgres] <-> [redis]
                      ^
                      |
-        [etl worker container: baseball-etl run/fetch/load/validate/status]
+        [etl worker container: baseball-etl worker]
                      |
                      v
              [local data root volume: data]
@@ -98,6 +98,7 @@ Current runtime shape:
 
 - `baseball-etl run` enqueues scoped jobs (enqueue-first behavior).
 - `baseball-etl worker` is the long-lived process that polls and executes queued jobs.
+- Worker deployments should keep `baseball-etl worker` continuously running (Sidekiq/Celery style) so new jobs are picked up without one-shot process churn.
 - Queue state is persisted in `etl_jobs` with durable statuses (`queued`, `started`, `running`, `retry_wait`, `succeeded`, `failed`, `cancelled`).
 - `etl status` surfaces queue state and per-job-type throughput/failure metrics.
 
@@ -306,6 +307,65 @@ To avoid API breakage during migration:
 - maintenance jobs complete in bounded batch windows
 - interrupted jobs resume from remaining scopes
 - API query surfaces continue to work under existing relation names
+
+## CLI and Runtime Simplification (Merged Refactor Plan)
+
+The backend refactor direction for CLI/runtime simplification is part of the ETL architecture plan and should be tracked here.
+
+### Context and Goals
+
+Current pain points:
+
+- command surface and handler count are larger than necessary for common operations
+- command logic still includes duplicated setup/wiring paths
+- status and validation behavior can drift without a shared contract
+
+Goals:
+
+- keep current backend functionality and data coverage intact
+- make the operational path obvious and minimal
+- reduce command-layer duplication and hidden coupling
+- preserve compatibility for existing command users during migration
+
+### Canonical Operational Path
+
+1. `baseball db recreate` (optional)
+2. `baseball db migrate`
+3. `baseball server start` (or keep `app` container running)
+4. `baseball-etl worker` in its own container/process
+5. `baseball-etl run` (enqueue scoped jobs)
+6. `baseball-etl validate`
+7. `baseball-etl status`
+
+Operational rule: API serving should remain online while ETL runs in the separate worker container/process.
+
+### Command Ownership and Boundaries
+
+- `baseball` should own API/server/cache and DB lifecycle operations (`server`, `db`, `cache`).
+- `baseball-etl` should own pipeline orchestration and stage operations (`fetch`, `load`, `run`, `worker`, `validate`, `status`, `cleanup`).
+- `db` commands should remain schema and explicit DB maintenance focused.
+- overlapping or legacy workflows should move behind clear deprecation/migration guidance.
+
+### Runtime Engineering Direction
+
+- centralize config/DB/cache setup in a shared runtime/bootstrap package
+- keep command handlers thin (Cobra wiring, parsing, output) and move operational logic to focused services
+- define one shared dataset registry used by both `status` and `validate`
+- replace brittle route-introspection strategies with registration-time route metadata for `server routes`
+
+### Compatibility Strategy
+
+- keep command names/flags stable during migration where behavior is still supported
+- add explicit deprecation notices before removals
+- preserve `--config`, ETL profile/mode/year/era semantics unless a replacement is fully equivalent
+
+### Success Criteria
+
+- one short workflow can take a new operator from DB setup to API serving
+- API and ETL can run in parallel, with ETL queued work not requiring API downtime
+- command-layer complexity and duplication decrease materially
+- `baseball-etl status` and `baseball-etl validate` are backed by one shared dataset contract
+- no ETL or API behavior regression during migration
 
 ## Non-Goals (Current Scope)
 

@@ -17,7 +17,7 @@ A complete slice means:
 | Environment | Prefix |
 | --- | --- |
 | Local | `./tmp/baseball` (db/server), `./tmp/baseball-etl` (etl) |
-| Docker/Coolify | `docker compose exec app baseball` (db/server), `docker compose exec app baseball-etl` (etl) |
+| Docker/Coolify | `docker compose exec app baseball` (db/server), `docker compose exec etl baseball-etl` (etl) |
 
 Examples below use:
 
@@ -55,6 +55,7 @@ Representative dev window:
 ```
 
 Run this in its own terminal/session/container.
+For Docker/Coolify, run `docker compose up -d etl` once and keep it running.
 
 ### 5) Enqueue ETL ingestion jobs
 

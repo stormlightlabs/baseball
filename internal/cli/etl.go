@@ -27,7 +27,7 @@ func ETLCmd() *cobra.Command {
 		},
 	}
 	addPipelineFlags(cmd, opts)
-	cmd.PersistentFlags().String("data-root", "", "Base dataset root (default resolution: --data-root, BASEBALL_DATA_ROOT, data, tools/data)")
+	cmd.PersistentFlags().String("data-root", "", "Base dataset root (default resolution: --data-root, BASEBALL_DATA_ROOT, data)")
 	cmd.AddCommand(EtlFetchCmd())
 	cmd.AddCommand(EtlLoadCmd())
 	cmd.AddCommand(EtlCleanupCmd())
@@ -604,7 +604,7 @@ func fetchLahman(cmd *cobra.Command, args []string) error {
 	echo.Success("✓ Data directory created successfully")
 	echo.Infof("  Directory: %s", dataDir)
 	echo.Info("")
-	echo.Info("After downloading, use: baseball etl load lahman")
+	echo.Info("After downloading, use: baseball-etl load lahman")
 	return nil
 }
 
