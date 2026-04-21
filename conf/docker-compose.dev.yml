@@ -24,9 +24,43 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/baseball_dev?sslmode=disable
       REDIS_URL: redis://redis:6379/0
+      BASEBALL_DATA_ROOT: /home/app/data
+    volumes:
+      - data_root:/home/app/data
     expose:
       - "8080"
     command: ["server", "start"]
+    restart: unless-stopped
+
+  etl:
+    build:
+      context: ..
+      dockerfile: conf/Dockerfile
+    image: baseball-app:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/baseball_dev?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      BASEBALL_DATA_ROOT: /home/app/data
+      DB_MAX_OPEN_CONNS: 8
+      DB_MAX_IDLE_CONNS: 4
+      DB_CONN_MAX_LIFETIME: 20m
+      DB_CONN_MAX_IDLE_TIME: 5m
+      GOMEMLIMIT: 700MiB
+      GOMAXPROCS: 1
+      ETL_MAX_ACTIVE_JOBS: 1
+      ETL_MAX_QUEUED_JOBS: 16
+    volumes:
+      - data_root:/home/app/data
+    entrypoint: ["/usr/local/bin/baseball-etl"]
+    command: ["worker"]
+    mem_limit: 900m
+    cpus: 1.0
+    pids_limit: 256
     restart: unless-stopped
 
   postgres:
@@ -68,3 +102,4 @@ volumes:
   redis_data:
   caddy_data:
   caddy_config:
+  data_root:

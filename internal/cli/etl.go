@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,12 +27,13 @@ func ETLCmd() *cobra.Command {
 		},
 	}
 	addPipelineFlags(cmd, opts)
-	cmd.PersistentFlags().String("data-root", "", "Base dataset root (default resolution: --data-root, BASEBALL_DATA_ROOT, data, tools/data)")
+	cmd.PersistentFlags().String("data-root", "", "Base dataset root (default resolution: --data-root, BASEBALL_DATA_ROOT, data)")
 	cmd.AddCommand(EtlFetchCmd())
 	cmd.AddCommand(EtlLoadCmd())
 	cmd.AddCommand(EtlCleanupCmd())
 	cmd.AddCommand(EtlStatusCmd())
 	cmd.AddCommand(EtlRunCmd())
+	cmd.AddCommand(EtlWorkerCmd())
 	cmd.AddCommand(EtlValidateCmd())
 	return cmd
 }
@@ -97,10 +99,32 @@ func RetrosheetCleanupCmd() *cobra.Command {
 }
 
 type pipelineCLIOptions struct {
-	profile string
-	mode    string
-	years   string
-	era     string
+	profile             string
+	mode                string
+	years               string
+	era                 string
+	jobType             string
+	priority            int
+	maxActiveJobs       int
+	maxQueuedJobs       int
+	yearBatchSize       int
+	batchDelay          time.Duration
+	networkRetries      int
+	networkRetryBackoff time.Duration
+	loadChunkSize       int
+	jobMaxRetries       int
+	enqueueOnly         bool
+}
+
+type workerCLIOptions struct {
+	maxActiveJobs       int
+	maxQueuedJobs       int
+	batchDelay          time.Duration
+	networkRetries      int
+	networkRetryBackoff time.Duration
+	loadChunkSize       int
+	jobMaxRetries       int
+	pollInterval        time.Duration
 }
 
 func addPipelineFlags(cmd *cobra.Command, opts *pipelineCLIOptions) {
@@ -108,6 +132,17 @@ func addPipelineFlags(cmd *cobra.Command, opts *pipelineCLIOptions) {
 	cmd.Flags().StringVar(&opts.mode, "mode", string(seed.PipelineModeIncremental), "Pipeline execution mode (incremental|full)")
 	cmd.Flags().StringVar(&opts.years, "years", "", "Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all")
 	cmd.Flags().StringVar(&opts.era, "era", "", "Comma-separated era names to include (fed,nlg,boomer,pitcher,turf,steroid,moneyball,statcast,modern)")
+	cmd.Flags().StringVar(&opts.jobType, "job-type", "auto", "Worker job type (auto|full-run|yearly-sync|validate-only|cleanup-only|maintenance)")
+	cmd.Flags().IntVar(&opts.priority, "priority", 50, "Queue priority (lower runs first)")
+	cmd.Flags().IntVar(&opts.maxActiveJobs, "max-active-jobs", 1, "Maximum active ETL jobs allowed concurrently")
+	cmd.Flags().IntVar(&opts.maxQueuedJobs, "max-queued-jobs", 16, "Maximum queued+active ETL jobs before enqueue is rejected")
+	cmd.Flags().IntVar(&opts.yearBatchSize, "year-batch-size", 2, "Year-window batch size when enqueuing run jobs")
+	cmd.Flags().DurationVar(&opts.batchDelay, "batch-delay", 0, "Delay between processed jobs (e.g. 2s)")
+	cmd.Flags().IntVar(&opts.networkRetries, "network-retries", 2, "Retries for network/download extraction steps")
+	cmd.Flags().DurationVar(&opts.networkRetryBackoff, "network-retry-backoff", 3*time.Second, "Backoff between network retries")
+	cmd.Flags().IntVar(&opts.loadChunkSize, "load-chunk-size", 0, "Optional load chunk size metadata for downstream loaders")
+	cmd.Flags().IntVar(&opts.jobMaxRetries, "job-max-retries", 2, "Maximum full job retries after a retryable failure")
+	cmd.Flags().BoolVar(&opts.enqueueOnly, "enqueue-only", true, "Enqueue jobs without processing the queue in this command")
 }
 
 func EtlRunCmd() *cobra.Command {
@@ -122,6 +157,31 @@ func EtlRunCmd() *cobra.Command {
 	}
 	addPipelineFlags(cmd, opts)
 	return cmd
+}
+
+func EtlWorkerCmd() *cobra.Command {
+	opts := &workerCLIOptions{}
+	cmd := &cobra.Command{
+		Use:   "worker",
+		Short: "Run the long-lived ETL queue worker",
+		Long:  "Run a long-lived ETL worker process that continuously polls and processes queued ETL jobs.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runETLWorker(cmd, opts)
+		},
+	}
+	addWorkerFlags(cmd, opts)
+	return cmd
+}
+
+func addWorkerFlags(cmd *cobra.Command, opts *workerCLIOptions) {
+	cmd.Flags().IntVar(&opts.maxActiveJobs, "max-active-jobs", 1, "Maximum active ETL jobs allowed concurrently")
+	cmd.Flags().IntVar(&opts.maxQueuedJobs, "max-queued-jobs", 16, "Maximum queued+active ETL jobs before enqueue is rejected")
+	cmd.Flags().DurationVar(&opts.batchDelay, "batch-delay", 0, "Delay between processed jobs (e.g. 2s)")
+	cmd.Flags().IntVar(&opts.networkRetries, "network-retries", 2, "Retries for network/download extraction steps")
+	cmd.Flags().DurationVar(&opts.networkRetryBackoff, "network-retry-backoff", 3*time.Second, "Backoff between network retries")
+	cmd.Flags().IntVar(&opts.loadChunkSize, "load-chunk-size", 0, "Optional load chunk size metadata for downstream loaders")
+	cmd.Flags().IntVar(&opts.jobMaxRetries, "job-max-retries", 2, "Maximum full job retries after a retryable failure")
+	cmd.Flags().DurationVar(&opts.pollInterval, "poll-interval", 5*time.Second, "Queue poll interval when no jobs are available")
 }
 
 func EtlValidateCmd() *cobra.Command {
@@ -315,30 +375,123 @@ func runETLPipeline(cmd *cobra.Command, opts *pipelineCLIOptions) error {
 
 	echo.Success("✓ Connected to database")
 
-	result, err := seed.RunPipeline(cmd.Context(), database, seed.PipelineOptions{
+	jobType, err := seed.ParseETLJobType(opts.jobType, seed.PipelineMode(strings.ToLower(strings.TrimSpace(opts.mode))), years)
+	if err != nil {
+		return err
+	}
+
+	workerOpts := seed.JobWorkerOptions{
+		JobType:             jobType,
+		Priority:            opts.priority,
+		MaxActiveJobs:       opts.maxActiveJobs,
+		MaxQueuedJobs:       opts.maxQueuedJobs,
+		YearBatchSize:       opts.yearBatchSize,
+		BatchDelay:          opts.batchDelay,
+		NetworkRetryMax:     opts.networkRetries,
+		NetworkRetryBackoff: opts.networkRetryBackoff,
+		LoadChunkSize:       opts.loadChunkSize,
+		MaxJobRetries:       opts.jobMaxRetries,
+	}
+
+	queueResult, err := seed.EnqueuePipelineJobs(cmd.Context(), database, seed.PipelineOptions{
 		Profile:  seed.PipelineProfile(strings.ToLower(strings.TrimSpace(opts.profile))),
 		Mode:     seed.PipelineMode(strings.ToLower(strings.TrimSpace(opts.mode))),
 		Years:    years,
 		EraNames: eras,
 		DataRoot: resolveDataRoot(cmd),
-	})
+	}, workerOpts)
+	if err != nil {
+		if errors.Is(err, db.ErrETLQueueFull) {
+			return fmt.Errorf("error: %w. Drain the queue or raise --max-queued-jobs", err)
+		}
+		return fmt.Errorf("error: %w", err)
+	}
+
+	echo.Successf("✓ Enqueued %d ETL job(s) type=%s", len(queueResult.JobIDs), queueResult.JobType)
+	for idx, jobID := range queueResult.JobIDs {
+		echo.Infof("  Job %d: id=%d years=%s", idx+1, jobID, describeYears(queueResult.BatchScopes[idx]))
+	}
+
+	if opts.enqueueOnly {
+		echo.Info("")
+		echo.Success("✓ Enqueue-only mode complete")
+		return nil
+	}
+
+	echo.Info("")
+	echo.Info("Processing ETL queue...")
+	processResult, err := seed.ProcessQueuedETLJobs(cmd.Context(), database, workerOpts)
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
 
-	warnings := result.Validation.Warnings()
-	if len(warnings) > 0 {
-		echo.Info("")
-		echo.Info("Validation warnings:")
-		for _, warning := range warnings {
-			echo.Infof("  • [%s] %s", warning.Dataset, warning.Message)
-		}
+	snapshot, err := database.ETLJobQueueSnapshot(cmd.Context())
+	if err != nil {
+		return fmt.Errorf("error: failed reading ETL queue snapshot: %w", err)
+	}
+	metrics, err := database.ETLJobMetricsByType(cmd.Context())
+	if err != nil {
+		return fmt.Errorf("error: failed reading ETL job metrics: %w", err)
 	}
 
 	echo.Info("")
-	echo.Success("✓ ETL pipeline completed successfully")
-	echo.Infof("  Run ID: %d", result.RunID)
-	echo.Infof("  Years: %s", describeYears(result.Years))
+	echo.Success("✓ ETL worker run completed")
+	echo.Infof("  Worker: %s", processResult.WorkerID)
+	echo.Infof("  Processed: %d", processResult.Processed)
+	echo.Infof("  Succeeded: %d", processResult.Succeeded)
+	echo.Infof("  Failed: %d", processResult.Failed)
+	echo.Infof("  Retried: %d", processResult.Retried)
+	echo.Infof("  Cancelled: %d", processResult.Cancelled)
+	echo.Infof("  Rows processed: %d", processResult.Rows)
+	echo.Infof("  Queue snapshot: queued=%d started=%d running=%d retry_wait=%d failed=%d",
+		snapshot.Queued, snapshot.Started, snapshot.Running, snapshot.RetryWait, snapshot.Failed)
+
+	if len(metrics) > 0 {
+		echo.Info("")
+		echo.Info("Job metrics by type:")
+		for _, metric := range metrics {
+			echo.Infof("  %s: succeeded=%d failed=%d cancelled=%d retry_wait=%d rows=%d failures(network=%d db=%d validation=%d)",
+				metric.JobType,
+				metric.SucceededJobs,
+				metric.FailedJobs,
+				metric.CancelledJobs,
+				metric.RetryWaitJobs,
+				metric.RowsProcessed,
+				metric.NetworkFailures,
+				metric.DBWriteFailures,
+				metric.ValidationFailures,
+			)
+		}
+	}
+	return nil
+}
+
+func runETLWorker(cmd *cobra.Command, opts *workerCLIOptions) error {
+	echo.Header("ETL Worker")
+	echo.Info("Connecting to database...")
+
+	database, err := db.Connect("")
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	defer database.Close()
+	echo.Success("✓ Connected to database")
+
+	workerOpts := seed.JobWorkerOptions{
+		MaxActiveJobs:       opts.maxActiveJobs,
+		MaxQueuedJobs:       opts.maxQueuedJobs,
+		BatchDelay:          opts.batchDelay,
+		NetworkRetryMax:     opts.networkRetries,
+		NetworkRetryBackoff: opts.networkRetryBackoff,
+		LoadChunkSize:       opts.loadChunkSize,
+		MaxJobRetries:       opts.jobMaxRetries,
+	}
+
+	echo.Infof("Starting worker loop (poll=%s)...", opts.pollInterval)
+	if err := seed.RunETLWorker(cmd.Context(), database, workerOpts, opts.pollInterval); err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+	echo.Success("✓ Worker stopped")
 	return nil
 }
 
@@ -451,7 +604,7 @@ func fetchLahman(cmd *cobra.Command, args []string) error {
 	echo.Success("✓ Data directory created successfully")
 	echo.Infof("  Directory: %s", dataDir)
 	echo.Info("")
-	echo.Info("After downloading, use: baseball etl load lahman")
+	echo.Info("After downloading, use: baseball-etl load lahman")
 	return nil
 }
 

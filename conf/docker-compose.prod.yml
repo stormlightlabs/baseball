@@ -12,6 +12,7 @@ services:
     environment:
       DATABASE_URL: host=${POSTGRES_HOST:-postgres} port=${POSTGRES_PORT:-5432} user=${POSTGRES_USER:-postgres} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB:-baseball} sslmode=${POSTGRES_SSLMODE:-disable}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      BASEBALL_DATA_ROOT: ${BASEBALL_DATA_ROOT:-/home/app/data}
       SERVER_HOST: ${SERVER_HOST:-0.0.0.0}
       SERVER_BASE_URL: ${SERVER_BASE_URL:-https://api.bigfly.tech/v1/}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://bigfly.tech,https://www.bigfly.tech}
@@ -21,12 +22,51 @@ services:
       DB_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-10}
       DB_CONN_MAX_LIFETIME: ${DB_CONN_MAX_LIFETIME:-30m}
       DB_CONN_MAX_IDLE_TIME: ${DB_CONN_MAX_IDLE_TIME:-5m}
+    volumes:
+      - data_root:/home/app/data
     expose:
       - "8080"
     command: ["server", "start"]
     mem_limit: 1200m
     cpus: 1.5
     pids_limit: 512
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  etl:
+    build:
+      context: .
+      dockerfile: conf/Dockerfile
+    image: baseball-app:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: host=${POSTGRES_HOST:-postgres} port=${POSTGRES_PORT:-5432} user=${POSTGRES_USER:-postgres} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB:-baseball} sslmode=${POSTGRES_SSLMODE:-disable}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      BASEBALL_DATA_ROOT: ${BASEBALL_DATA_ROOT:-/home/app/data}
+      GOMEMLIMIT: ${ETL_GOMEMLIMIT:-700MiB}
+      GOMAXPROCS: ${ETL_GOMAXPROCS:-1}
+      DB_MAX_OPEN_CONNS: ${ETL_DB_MAX_OPEN_CONNS:-12}
+      DB_MAX_IDLE_CONNS: ${ETL_DB_MAX_IDLE_CONNS:-6}
+      DB_CONN_MAX_LIFETIME: ${ETL_DB_CONN_MAX_LIFETIME:-20m}
+      DB_CONN_MAX_IDLE_TIME: ${ETL_DB_CONN_MAX_IDLE_TIME:-5m}
+      ETL_MAX_ACTIVE_JOBS: ${ETL_MAX_ACTIVE_JOBS:-1}
+      ETL_MAX_QUEUED_JOBS: ${ETL_MAX_QUEUED_JOBS:-16}
+    volumes:
+      - data_root:/home/app/data
+    entrypoint: ["/usr/local/bin/baseball-etl"]
+    command: ["worker"]
+    mem_limit: ${ETL_MEM_LIMIT:-900m}
+    cpus: ${ETL_CPUS:-1.0}
+    pids_limit: ${ETL_PIDS_LIMIT:-256}
     restart: unless-stopped
     deploy:
       replicas: 1
@@ -103,3 +143,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  data_root:

@@ -1897,13 +1897,10 @@ func resolveDataRoot() string {
 	if env := strings.TrimSpace(os.Getenv("BASEBALL_DATA_ROOT")); env != "" {
 		return env
 	}
-	if info, err := os.Stat("tools/data"); err == nil && info.IsDir() {
-		return "tools/data"
-	}
 	if info, err := os.Stat("data"); err == nil && info.IsDir() {
 		return "data"
 	}
-	return "tools/data"
+	return "data"
 }
 
 // LoadSalarySummary loads salary summary data (year, total, average, median) into the database.

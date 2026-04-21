@@ -42,17 +42,17 @@ func status(cmd *cobra.Command, _ []string, strict bool) error {
 		{
 			label: "Lahman CSVs",
 			path:  seed.LahmanCSVDir(dataRoot),
-			hint:  "Use `baseball etl fetch lahman` to scaffold/download the dataset",
+			hint:  "Use `baseball-etl fetch lahman` to scaffold/download the dataset",
 		},
 		{
 			label: "Retrosheet game logs",
 			path:  filepath.Join(seed.RetrosheetDir(dataRoot), "gamelogs"),
-			hint:  "Use `baseball etl fetch retrosheet` to download seasonal game logs",
+			hint:  "Use `baseball-etl fetch retrosheet` to download seasonal game logs",
 		},
 		{
 			label: "Retrosheet plays",
 			path:  filepath.Join(seed.RetrosheetDir(dataRoot), "plays"),
-			hint:  "Use `baseball etl fetch retrosheet` to download parsed play-by-play archives",
+			hint:  "Use `baseball-etl fetch retrosheet` to download parsed play-by-play archives",
 		},
 	}
 
@@ -106,7 +106,7 @@ func status(cmd *cobra.Command, _ []string, strict bool) error {
 	if lahmanPlayersErr != nil {
 		echo.Infof("  ⚠ Unable to read player table: %v", lahmanPlayersErr)
 	} else if lahmanPlayers == 0 {
-		echo.Infof("  • People table is empty. Run `baseball etl load lahman` after downloading CSVs.")
+		echo.Infof("  • People table is empty. Run `baseball-etl load lahman` after downloading CSVs.")
 	} else {
 		echo.Successf("  ✓ %d players and %d team seasons available", lahmanPlayers, lahmanTeams)
 	}
@@ -134,7 +134,7 @@ func status(cmd *cobra.Command, _ []string, strict bool) error {
 	if gamesErr != nil {
 		echo.Infof("  ⚠ Unable to read game logs: %v", gamesErr)
 	} else if gamesCount == 0 {
-		echo.Infof("  • Games table is empty. Run `baseball etl load retrosheet` after downloading archives.")
+		echo.Infof("  • Games table is empty. Run `baseball-etl load retrosheet` after downloading archives.")
 	} else {
 		echo.Successf("  ✓ %d game log rows loaded", gamesCount)
 	}
@@ -314,6 +314,44 @@ func status(cmd *cobra.Command, _ []string, strict bool) error {
 		echo.Infof("    Negro Leagues plays ETL: %s", formatRefresh(&entryCopy))
 	} else {
 		echo.Infof("    Negro Leagues plays ETL: never recorded")
+	}
+
+	echo.Info("")
+	echo.Info("• ETL Job Queue")
+	queueSnapshot, queueErr := database.ETLJobQueueSnapshot(ctx)
+	if queueErr != nil {
+		echo.Infof("  ⚠ ETL job queue unavailable: %v", queueErr)
+	} else {
+		echo.Successf("  ✓ Queue states: queued=%d started=%d running=%d retry_wait=%d succeeded=%d failed=%d cancelled=%d",
+			queueSnapshot.Queued,
+			queueSnapshot.Started,
+			queueSnapshot.Running,
+			queueSnapshot.RetryWait,
+			queueSnapshot.Succeeded,
+			queueSnapshot.Failed,
+			queueSnapshot.Cancelled,
+		)
+	}
+
+	jobMetrics, metricsErr := database.ETLJobMetricsByType(ctx)
+	if metricsErr != nil {
+		echo.Infof("  ⚠ ETL job metrics unavailable: %v", metricsErr)
+	} else if len(jobMetrics) == 0 {
+		echo.Infof("  • No ETL jobs recorded yet")
+	} else {
+		for _, metric := range jobMetrics {
+			echo.Infof("  • %s: succeeded=%d failed=%d cancelled=%d retry_wait=%d rows=%d failures(network=%d db=%d validation=%d)",
+				metric.JobType,
+				metric.SucceededJobs,
+				metric.FailedJobs,
+				metric.CancelledJobs,
+				metric.RetryWaitJobs,
+				metric.RowsProcessed,
+				metric.NetworkFailures,
+				metric.DBWriteFailures,
+				metric.ValidationFailures,
+			)
+		}
 	}
 
 	echo.Info("")

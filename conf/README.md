@@ -6,6 +6,7 @@ Deploy the Baseball API to a VPS using Coolify and Docker Compose.
 
 - **Coolify (Traefik)**: Reverse proxy, HTTPS, load balancing
 - **App**: Baseball API Go application
+- **ETL**: Long-lived `baseball-etl worker` queue consumer container
 - **Postgres**: PostgreSQL 17.5 with persistent storage
 - **Redis**: Redis 7.4 cache with AOF persistence
 
@@ -37,7 +38,7 @@ Production Postgres tuning is applied via `command: ["postgres", "-c", ...]` ent
     | `DATABASE_URL`          | `postgres://postgres:pw@postgres:5432/baseball?sslmode=disable` | Host is the Compose service name  |
     | `SERVER_HOST`           | `0.0.0.0`                                                       | Bind API server to all interfaces |
     | `REDIS_URL`             | `redis://redis:6379/0`                                          |                                   |
-    | `BASEBALL_DATA_ROOT`    | `/home/app/data`                                                | Default data root checked by ETL  |
+    | `BASEBALL_DATA_ROOT`    | `/home/app/data`                                                | Shared ETL/API data root volume   |
     | `POSTGRES_PASSWORD`     | _(strong password)_                                             | Mark as sensitive                 |
     | `POSTGRES_DB`           | `baseball`                                                      |                                   |
     | `DB_MAX_OPEN_CONNS`     | `20`                                                            | App DB pool hard cap              |
@@ -47,7 +48,7 @@ Production Postgres tuning is applied via `command: ["postgres", "-c", ...]` ent
     | `GOMEMLIMIT`            | `900MiB`                                                        | Go runtime heap soft limit        |
     | `GOMAXPROCS`            | `2`                                                             | Go runtime CPU concurrency cap    |
 
-    Optional: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `CODEBERG_CLIENT_ID`, `CODEBERG_CLIENT_SECRET`, `CACHE_ENABLED`, `CACHE_VERSION`.
+    Optional: `ETL_DB_MAX_OPEN_CONNS`, `ETL_DB_MAX_IDLE_CONNS`, `ETL_DB_CONN_MAX_LIFETIME`, `ETL_DB_CONN_MAX_IDLE_TIME`, `ETL_GOMEMLIMIT`, `ETL_GOMAXPROCS`, `ETL_MAX_ACTIVE_JOBS`, `ETL_MAX_QUEUED_JOBS`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `CODEBERG_CLIENT_ID`, `CODEBERG_CLIENT_SECRET`, `CACHE_ENABLED`, `CACHE_VERSION`.
 
 8. Click **Deploy**.
 
@@ -60,33 +61,38 @@ Quick Docker/Coolify example for a representative complete slice (`2022-2025`) u
 
 ```bash
 docker compose exec app baseball db migrate
-docker compose exec app baseball-etl run --profile dev --years 2022-2025
-docker compose exec app baseball-etl validate --profile dev --years 2022-2025
-docker compose exec app baseball-etl status
+docker compose up -d etl
+docker compose exec etl baseball-etl run --profile dev --years 2022-2025
+docker compose exec etl baseball-etl validate --profile dev --years 2022-2025
+docker compose exec etl baseball-etl status
 ```
+
+`etl` should be kept running as the long-lived queue consumer service/process.
+`baseball-etl run` enqueues ETL jobs by default.
 
 If required files are missing under `/home/app/data`, the ETL pipeline
 should fetch required Retrosheet windows directly before load:
 
 ```bash
-docker compose exec app baseball-etl fetch retrosheet --years 2022-2025
-docker compose exec app baseball-etl fetch negroleagues
+docker compose exec etl baseball-etl fetch retrosheet --years 2022-2025
+docker compose exec etl baseball-etl fetch negroleagues
 ```
 
 If your data root is mounted outside the default path:
 
 ```bash
-docker compose exec app baseball-etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
-docker compose exec app baseball-etl validate --profile dev --years 2022-2025 --data-root /path/to/baseball-data
+docker compose exec etl baseball-etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
+docker compose exec etl baseball-etl validate --profile dev --years 2022-2025 --data-root /path/to/baseball-data
 ```
 
 First-time full historical setup (production profile):
 
 ```bash
 docker compose exec app baseball db migrate
-docker compose exec app baseball-etl run --profile prod --mode full
-docker compose exec app baseball-etl validate --profile prod
-docker compose exec app baseball-etl status
+docker compose up -d etl
+docker compose exec etl baseball-etl run --profile prod --mode full
+docker compose exec etl baseball-etl validate --profile prod
+docker compose exec etl baseball-etl status
 ```
 
 Readiness validation:
@@ -108,21 +114,21 @@ docker compose exec app baseball db migrate
 For new seasons:
 
 ```bash
-docker compose exec app baseball-etl run --profile prod --years 2026
-docker compose exec app baseball-etl validate --profile prod --years 2026
-docker compose exec app baseball-etl status
+docker compose exec etl baseball-etl run --profile prod --years 2026
+docker compose exec etl baseball-etl validate --profile prod --years 2026
+docker compose exec etl baseball-etl status
 ```
 
 VM-safe batched pattern for new seasons or backfills:
 
 ```bash
-docker compose exec app baseball-etl fetch retrosheet --years 2022-2023
-docker compose exec app baseball-etl run --profile prod --years 2022-2023
-docker compose exec app baseball-etl validate --profile prod --years 2022-2023
+docker compose exec etl baseball-etl fetch retrosheet --years 2022-2023
+docker compose exec etl baseball-etl run --profile prod --years 2022-2023
+docker compose exec etl baseball-etl validate --profile prod --years 2022-2023
 
-docker compose exec app baseball-etl fetch retrosheet --years 2024-2025
-docker compose exec app baseball-etl run --profile prod --years 2024-2025
-docker compose exec app baseball-etl validate --profile prod --years 2024-2025
+docker compose exec etl baseball-etl fetch retrosheet --years 2024-2025
+docker compose exec etl baseball-etl run --profile prod --years 2024-2025
+docker compose exec etl baseball-etl validate --profile prod --years 2024-2025
 ```
 
 ## Scaling
@@ -151,8 +157,9 @@ ETL window checks:
 
 4 GB VM crash-prevention baseline:
 
-- Keep compose resource limits enabled for `app`, `postgres`, and `redis`.
+- Keep compose resource limits enabled for `app`, `etl`, `postgres`, and `redis`.
 - Keep app DB pool bounded (`DB_MAX_OPEN_CONNS=20`, `DB_MAX_IDLE_CONNS=10`) unless load tests justify raising.
+- Keep ETL DB pool bounded (`ETL_DB_MAX_OPEN_CONNS=12`, `ETL_DB_MAX_IDLE_CONNS=6`) unless load tests justify raising.
 - Keep Postgres parallelism conservative during ETL (`max_parallel_workers_per_gather=1`).
 
 ## Backup and recovery

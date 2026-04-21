@@ -16,7 +16,7 @@ func (db *DB) StartETLRun(ctx context.Context, profile, mode string, params map[
 	var runID int64
 	if err := db.QueryRowContext(
 		ctx,
-		`INSERT INTO etl_runs (profile, mode, params, status) VALUES ($1, $2, $3, 'running') RETURNING id`,
+		`INSERT INTO etl_runs (profile, mode, params, status) VALUES ($1, $2, $3, 'started') RETURNING id`,
 		profile,
 		mode,
 		paramsJSON,
@@ -27,7 +27,19 @@ func (db *DB) StartETLRun(ctx context.Context, profile, mode string, params map[
 	return runID, nil
 }
 
-// FinishETLRun marks an ETL run as completed or failed.
+// MarkETLRunRunning transitions a run from started to running.
+func (db *DB) MarkETLRunRunning(ctx context.Context, runID int64) error {
+	if _, err := db.ExecContext(ctx, `
+		UPDATE etl_runs
+		SET status = 'running'
+		WHERE id = $1
+	`, runID); err != nil {
+		return fmt.Errorf("failed to mark ETL run %d running: %w", runID, err)
+	}
+	return nil
+}
+
+// FinishETLRun marks an ETL run as succeeded, failed, or cancelled.
 func (db *DB) FinishETLRun(ctx context.Context, runID int64, status, errMsg string) error {
 	if _, err := db.ExecContext(ctx, `
 		UPDATE etl_runs
@@ -41,6 +53,11 @@ func (db *DB) FinishETLRun(ctx context.Context, runID int64, status, errMsg stri
 	}
 
 	return nil
+}
+
+// CancelETLRun marks a run as cancelled.
+func (db *DB) CancelETLRun(ctx context.Context, runID int64, reason string) error {
+	return db.FinishETLRun(ctx, runID, "cancelled", reason)
 }
 
 // StartETLStep creates a step record for a run and returns its ID.

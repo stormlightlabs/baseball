@@ -22,13 +22,12 @@ Acceptance:
 - [x] Keep shared orchestration in `internal/seed` (no logic fork).
 - [x] Consolidate command implementation into `internal/cli` and wire both binaries through that package.
 - [x] Remove deprecated `tools/data` git submodule from this repo.
-- [ ] Add smoke tests for `baseball-etl --help`, `run --help`, `validate --help`, `status --help`.
-- [ ] Remove ETL command registration from `internal/cli.NewBaseballRootCmd` once cutover is complete.
+- [x] Remove ETL command registration from `internal/cli.NewBaseballRootCmd` once cutover is complete.
 
 Acceptance:
 
 - [x] ETL can run without shipping server/cache command surfaces in its process.
-- [ ] Primary `baseball` CLI no longer exposes ETL commands after cutover.
+- [x] Primary `baseball` CLI no longer exposes ETL commands after cutover.
 
 ## Phase 2: Worker-Owned Data Lifecycle
 
@@ -46,35 +45,35 @@ Acceptance:
 
 ## Phase 3: Job-Oriented ETL Worker Behavior
 
-- [ ] Define ETL job types (`full-run`, `yearly-sync`, `validate-only`, `cleanup-only`, `maintenance`).
-- [ ] Add durable run-state transitions for start/running/succeeded/failed/cancelled.
-- [ ] Add job metadata for scope (`years`, `era`, profile/mode) and replayability.
-- [ ] Add clear retry policy for network/download failures separate from DB write failures.
-- [ ] Track throughput and failure class metrics per job type.
-- [ ] Add queue controls for VM safety (max active jobs, max queued jobs, job-priority policy).
-- [ ] Add batch controls (year-window chunking, load chunk sizes, optional inter-batch delay).
+- [x] Define ETL job types (`full-run`, `yearly-sync`, `validate-only`, `cleanup-only`, `maintenance`).
+- [x] Add durable run-state transitions for start/running/succeeded/failed/cancelled.
+- [x] Add job metadata for scope (`years`, `era`, profile/mode) and replayability.
+- [x] Add clear retry policy for network/download failures separate from DB write failures.
+- [x] Track throughput and failure class metrics per job type.
+- [x] Add queue controls for VM safety (max active jobs, max queued jobs, job-priority policy).
+- [x] Add batch controls (year-window chunking, load chunk sizes, optional inter-batch delay).
 
 Acceptance:
 
-- [ ] ETL behaves like a queue worker surface even when invoked manually.
-- [ ] Failed jobs can be resumed or retried with explicit scope.
-- [ ] Default queue/batch settings prevent host saturation on the production VM.
+- [x] ETL behaves like a queue worker surface even when invoked manually.
+- [x] Failed jobs can be resumed or retried with explicit scope.
+- [x] Default queue/batch settings prevent host saturation on the production VM.
 
 ## Phase 4: Dedicated ETL Container (Dev + Prod Compose)
 
-- [ ] Add `etl` service to `conf/docker-compose.dev.yml`.
-- [ ] Add `etl` service to `conf/docker-compose.prod.yml`.
-- [ ] Keep same image as `app` unless later split is justified.
-- [ ] Configure ETL-specific resource caps (`mem_limit`, `cpus`, `pids_limit`).
-- [ ] Configure ETL-specific DB pool env values (separate from API defaults).
-- [ ] Mount shared data root volume at `/home/app/data` for `app` + `etl`.
-- [ ] Keep ETL service internal-only (no exposed ports).
-- [ ] Document one-shot execution path (`docker compose run --rm etl ...`) as default.
+- [x] Add `etl` service to `conf/docker-compose.dev.yml`.
+- [x] Add `etl` service to `conf/docker-compose.prod.yml`.
+- [x] Keep same image as `app` unless later split is justified.
+- [x] Configure ETL-specific resource caps (`mem_limit`, `cpus`, `pids_limit`).
+- [x] Configure ETL-specific DB pool env values (separate from API defaults).
+- [x] Mount shared data root volume at `/home/app/data` for `app` + `etl`.
+- [x] Keep ETL service internal-only (no exposed ports).
+- [x] Document long-lived worker execution path (`docker compose up -d etl`) as default.
 
 Acceptance:
 
-- [ ] ETL can execute in its own container without `docker compose exec app`.
-- [ ] API service remains independently operable during ETL runs.
+- [x] ETL can execute in its own container without `docker compose exec app`.
+- [x] API service remains independently operable during ETL runs.
 
 ## Phase 5: Safety Rails + Throughput
 
@@ -125,10 +124,84 @@ Acceptance:
 - [ ] Maintenance jobs run in bounded batches and can resume after interruption.
 - [ ] API behavior remains stable during and after cutover.
 
+## Phase 8: CLI Baseline and Contract Safety (Merged from Backend Refactor Tasks)
+
+- [ ] Capture baseline command contracts for `baseball-etl --help`.
+- [ ] Capture baseline command contracts for `baseball-etl run --help`.
+- [ ] Capture baseline command contracts for `baseball-etl validate --help`.
+- [ ] Capture baseline command contracts for `baseball-etl status --help`.
+- [ ] Capture baseline command contracts for `baseball db --help`.
+- [ ] Capture baseline command contracts for `baseball server --help`.
+- [ ] Add focused tests for the golden path behavior (`db migrate`, `server start`, `baseball-etl worker`, `baseball-etl run`, `baseball-etl validate`, `baseball-etl status`).
+- [ ] Record current ETL/status outputs in fixtures where practical.
+
+Acceptance:
+
+- [ ] CLI regressions are detected early during refactor iterations.
+
+## Phase 9: Canonical CLI Flow and Deprecation
+
+- [ ] Keep docs/help text consistent with `baseball-etl` as canonical data workflow entrypoint.
+- [ ] Mark overlapping `db populate*` and `db reset` commands as deprecated in help/long descriptions.
+- [ ] Keep compatibility wrappers functional while emitting migration guidance.
+- [ ] Add a deprecation timeline and removal criteria for overlapping commands.
+
+Acceptance:
+
+- [ ] Users can complete setup with `db migrate -> server start + baseball-etl worker -> baseball-etl run -> baseball-etl validate -> baseball-etl status`.
+- [ ] Existing scripts using legacy commands keep working through migration window.
+
+## Phase 10: Shared Command Runtime Extraction
+
+- [ ] Create shared runtime/bootstrap package for config + DB + Redis/cache setup.
+- [ ] Move repeated command setup into reusable helpers/services.
+- [ ] Update command handlers to consume shared runtime constructors.
+
+Acceptance:
+
+- [ ] DB/cache initialization logic is not duplicated across handlers.
+- [ ] Command files become thinner and easier to reason about.
+
+## Phase 11: Command-Orchestration Consolidation
+
+- [ ] Keep command package focused on Cobra definitions, parsing, and output.
+- [ ] Keep ETL execution/orchestration originating from one service/orchestration layer.
+- [ ] Ensure `db` command responsibilities remain DB-lifecycle only.
+
+Acceptance:
+
+- [ ] Command layer no longer duplicates seed/pipeline orchestration behavior.
+
+## Phase 12: Shared Status/Validation Dataset Contract
+
+- [ ] Introduce one shared dataset check registry/contract for `baseball-etl status` and `baseball-etl validate`.
+- [ ] Refactor both commands to consume the shared contract with different output modes.
+- [ ] Preserve dataset coverage checks/thresholds unless explicitly changed.
+
+Acceptance:
+
+- [ ] No drift between status reporting and validation enforcement.
+- [ ] New dataset checks require one contract change, not two implementations.
+
+## Phase 13: Route Introspection and Migration Finish
+
+- [ ] Replace AST-based route discovery in `server routes` with registration-time metadata.
+- [ ] Ensure route listing includes runtime-registered and utility endpoints.
+- [ ] Publish a short migration guide for automation/scripts.
+- [ ] Update root README + data-loading runbooks when simplifications land.
+
+Acceptance:
+
+- [ ] `server routes` reflects actual runtime registration without AST fragility.
+- [ ] One clear workflow is documented for new users and migration path is explicit for existing users.
+
 ## Verification Checklist
 
 - [x] `go test ./...`
 - [ ] ETL lock/concurrency behavior validated with two concurrent start attempts.
-- [ ] `docker compose` ETL one-shot run succeeds in dev and prod layouts.
+- [ ] `docker compose` ETL long-lived worker flow succeeds in dev and prod layouts.
 - [ ] API readiness remains healthy during ETL run window.
 - [ ] Retrosheet fetch/cleanup behavior validated across repeated runs.
+- [ ] CLI golden-path smoke test passes locally.
+- [ ] Command help text is internally consistent and matches docs.
+- [ ] No API behavior regressions on `/v1` endpoints.

@@ -16,17 +16,13 @@ const (
 
 	// DefaultDataRoot is the preferred repository-local location for dataset snapshots.
 	DefaultDataRoot = "data"
-
-	// LegacyDataRoot is the historical in-repo dataset location.
-	LegacyDataRoot = "tools/data"
 )
 
 // ResolveDataRoot applies precedence for ETL dataset roots:
 // 1) explicit flag/option
 // 2) BASEBALL_DATA_ROOT environment variable
 // 3) data (if it exists)
-// 4) legacy tools/data (if it exists)
-// If neither location exists, data is returned as the default target.
+// If data does not exist yet, data is returned as the default target.
 func ResolveDataRoot(explicit string) string {
 	if value := normalizeRoot(explicit); value != "" {
 		return value
@@ -36,9 +32,6 @@ func ResolveDataRoot(explicit string) string {
 	}
 	if isDir(DefaultDataRoot) {
 		return DefaultDataRoot
-	}
-	if isDir(LegacyDataRoot) {
-		return LegacyDataRoot
 	}
 	return DefaultDataRoot
 }

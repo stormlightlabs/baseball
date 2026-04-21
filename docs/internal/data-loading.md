@@ -17,7 +17,7 @@ A complete slice means:
 | Environment | Prefix |
 | --- | --- |
 | Local | `./tmp/baseball` (db/server), `./tmp/baseball-etl` (etl) |
-| Docker/Coolify | `docker compose exec app baseball` (db/server), `docker compose exec app baseball-etl` (etl) |
+| Docker/Coolify | `docker compose exec app baseball` (db/server), `docker compose exec etl baseball-etl` (etl) |
 
 Examples below use:
 
@@ -48,7 +48,16 @@ Representative dev window:
 <BASEBALL_ETL> fetch chadwick
 ```
 
-### 4) Run ETL ingestion
+### 4) Start the ETL worker (long-running queue consumer)
+
+```bash
+<BASEBALL_ETL> worker
+```
+
+Run this in its own terminal/session/container.
+For Docker/Coolify, run `docker compose up -d etl` once and keep it running.
+
+### 5) Enqueue ETL ingestion jobs
 
 Representative dev slice:
 
@@ -69,21 +78,23 @@ For VM-safe operations, prefer batched windows instead of one large full-history
 <BASEBALL_ETL> run --profile prod --years 2024-2025
 ```
 
-### 5) Validate and inspect status
+`run` is enqueue-first by default. To enqueue and drain in one command (local-only convenience), use `--enqueue-only=false`.
+
+### 6) Validate and inspect status
 
 ```bash
 <BASEBALL_ETL> validate --profile dev
 <BASEBALL_ETL> status
 ```
 
-### 6) Cleanup transient Retrosheet artifacts (optional but recommended)
+### 7) Cleanup transient Retrosheet artifacts (optional but recommended)
 
 ```bash
 <BASEBALL_ETL> cleanup retrosheet --dry-run
 <BASEBALL_ETL> cleanup retrosheet
 ```
 
-### 7) API readiness checks
+### 8) API readiness checks
 
 ```bash
 curl http://localhost:8080/v1/ready
