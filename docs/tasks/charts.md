@@ -1,130 +1,179 @@
 # Chart and Data Visualization Tasks
 
 - Ref spec: `docs/specs/charts.md`
-- Stack: Chart.js 4, chartjs-plugin-annotation, chartjs-plugin-datalabels, Svelte 5
-- Scope: improve existing charts, add new chart types, establish shared conventions
+- Web stack: Chart.js 4 in Svelte 5
+- Mobile stack: `fl_chart` in Flutter
+- Goal: bring existing chart surfaces up to the spec before adding novel chart types
 
-## Phase 0: Foundation
+## Phase 0: Inventory, Semantics, and Shared Rules
 
-- [ ] Add `chartjs-plugin-annotation` and `chartjs-plugin-datalabels` to `web/package.json`.
-- [ ] Register both plugins in `Chart.svelte` alongside Chart.js registerables.
-- [ ] Define CSS custom properties for chart color tokens (`--chart-primary`, `--chart-secondary`, `--chart-muted`, `--chart-grid`, `--chart-surface`, `--chart-danger`, `--chart-warn`) in `layout.css`.
-- [ ] Create shared chart defaults module (`$lib/charts/defaults.ts`):
-  - Base scale config (muted y-grid only, no x-grid, no border).
-  - Base plugin config (legend hidden by default, datalabels off by default).
-  - Reduced-motion detection helper that disables Chart.js animations.
-  - Tooltip style defaults (dark background, small font, no caret).
-- [ ] Refactor `CHART_SCALES` in `$lib/players/constants.ts` to use the shared defaults.
-
-Acceptance:
-
-- [ ] Plugins register without error; shared defaults importable from `$lib/charts/defaults`.
-- [ ] `prefers-reduced-motion` disables chart animations globally.
-
-## Phase 1: Fix Existing Charts
-
-### Career Line Charts (Batting + Pitching)
-
-- [ ] Remove area fill (`fill: false`).
-- [ ] Reduce tension to `0.1` and point radius to `2`.
-- [ ] Remove x-axis grid lines entirely.
-- [ ] Reduce y-axis grid to barely visible (`#1a1e27`, no border).
-- [ ] Display rate stats as decimals (`.300`) instead of scaled integers (`300`).
-  - Update y-axis tick callback for rate stats.
-  - Store raw decimal values in dataset, not multiplied.
-- [ ] Add league-average reference line as a second dataset:
-  - Dashed gray line, no points, no legend entry.
-  - Source: hardcoded era-average lookup or future API endpoint.
-- [ ] Hide legend box (single-dataset charts don't need it).
-
-### HOF Voting Bar Chart
-
-- [ ] Remove x-axis grid lines.
-- [ ] Add 75% threshold line via annotation plugin (dashed, labeled "75%").
-- [ ] Add direct value labels above bars via datalabels plugin.
-- [ ] Highlight the decisive ballot bar (the one where inducted) in a distinct color.
-
-### Dataset Coverage Chart (Home Page)
-
-- [ ] Remove tooltip and legend disabling hacks; use shared defaults.
-- [ ] Add direct era labels above each decade group.
-- [ ] Mute grid to match new shared scale config.
+- [ ] Update internal chart inventory references so docs and planning match the actual app surface:
+  - Web: batting, pitching, Hall of Fame, win probability.
+  - Web gap: no run-differential chart yet.
+  - Mobile: player metric line chart, team monthly run-differential bar chart.
+- [ ] Document metric availability windows in code-facing notes where needed:
+  - Statcast-era visualizations are 2015+.
+  - Several quality-of-contact metrics are 2016+.
+  - Bat-tracking metrics are 2023+ with partial 2023 coverage.
+- [ ] Define shared chart-copy rules for both clients:
+  - Rate stats display in baseball notation (`.300`, `.812`, `3.45`).
+  - Time-series axes use real years/dates, not ordinal sequence, unless sequence is the story.
+  - Missing periods are handled intentionally, not silently interpolated.
 
 Acceptance:
 
-- [ ] All existing charts render with reduced ink, no area fills, minimal grid.
-- [ ] Rate stats display as readable decimals.
-- [ ] HOF chart shows threshold line and direct labels.
+- [ ] Spec, tasks, and implementation inventory no longer contradict each other.
+- [ ] Historical/statcast coverage constraints are explicit in planning notes.
 
-## Phase 2: Era Band Overlays
+## Phase 1: Web Chart Foundation
 
-- [ ] Create era band annotation generator (`$lib/charts/era-bands.ts`):
-  - Input: year range of the chart's x-axis.
-  - Output: array of `chartjs-plugin-annotation` box annotations.
-  - Alternating opacity (`0.03` / `0.06`) using `--chart-surface`.
-  - Abbreviated era label at top of each band.
-- [ ] Apply era bands to career batting and pitching line charts.
-- [ ] Apply era bands to any future time-series chart via shared helper.
-
-Acceptance:
-
-- [ ] Era bands visible as subtle background stripes on career charts.
-- [ ] Bands auto-clip to the chart's actual year range.
-
-## Phase 3: Sparklines
-
-- [ ] Create `Sparkline.svelte` component:
-  - Minimal Chart.js line config: no axes, no grid, no tooltips, no legend.
-  - Fixed height (20-24px), fluid width.
-  - Single-pixel line, zero point radius.
-  - Color inherits from text (muted default, primary on row hover).
-  - Props: `data: number[]`, optional `color`, optional `height`.
-- [ ] Add sparklines to player batting stats table (trailing trend for selected stat).
-- [ ] Add sparklines to player pitching stats table (ERA trend).
-- [ ] Add sparklines to salary table (salary trend).
+- [ ] Create shared Chart.js defaults module for web:
+  - muted horizontal grid only
+  - no chart border
+  - legend off by default
+  - direct-label/annotation-friendly plugin defaults
+  - reduced-motion-aware animation defaults
+- [ ] Register annotation/datalabel plugins centrally in the Svelte chart wrapper.
+- [ ] Replace hardcoded chart hex colors with theme/CSS token reads.
+- [ ] Add a small formatting helper module for baseball chart values:
+  - leading-dot rate stats
+  - percentages
+  - signed point changes for win probability
 
 Acceptance:
 
-- [ ] Sparklines render inline in stat tables without layout shift.
-- [ ] Sparklines are purely decorative — no tooltips, no interaction.
+- [ ] Web charts share one visual baseline instead of per-chart config drift.
+- [ ] No web chart needs to hand-roll basic grid/color/motion defaults.
 
-## Phase 4: Percentile Strips
+## Phase 2: Mobile Chart Foundation
 
-- [ ] Create `PercentileStrip.svelte` component:
-  - Horizontal bar, 0-100 scale.
-  - Sequential single-hue fill (blue gradient via canvas).
-  - Player dot + direct label at their percentile.
-  - Props: `value: number`, `label: string`, optional `thresholds`.
-- [ ] Use on advanced batting tab for key metrics (if available from API): hard hit%, K%, BB%, barrel%.
-- [ ] Use on WAR tab for positional percentile context.
-
-Acceptance:
-
-- [ ] Strips render at correct percentiles with readable labels.
-- [ ] Color scale is perceptually uniform (sequential blue, not rainbow).
-
-## Phase 5: Accessibility
-
-- [ ] Add `aria-label` or visually hidden description to every `<Chart>` instance summarizing the trend in text.
-- [ ] Ensure all multi-series charts use dash patterns or point shapes alongside color.
-- [ ] Verify all chart text labels meet 4.5:1 contrast against `--color-crust`.
-- [ ] Verify `prefers-reduced-motion` fully disables transitions (test with system setting).
-- [ ] Replace hardcoded hex values in chart configs with CSS custom property reads (via `getComputedStyle`).
+- [ ] Create shared `fl_chart` helpers for mobile:
+  - grid style
+  - axis text style
+  - zero-line / threshold rule styling
+  - reduced-motion behavior where supported
+- [ ] Add common baseball number formatters for chart axes and summary labels.
+- [ ] Ensure mobile chart widgets accept real x-axis labels instead of deriving labels from list index.
 
 Acceptance:
 
-- [ ] Screen reader announces chart summary on focus.
-- [ ] Charts are distinguishable without color perception.
-- [ ] No hardcoded color hex values remain in chart config code.
+- [ ] Player and team mobile charts no longer encode seasons as `1, 2, 3...`.
+- [ ] Mobile chart styling is consistent across screens.
 
-## Phase 6: Future Chart Types (Blocked on API/Data)
+## Phase 3: Fix Existing Player Trend Charts
 
-These require endpoints or data not yet available. Track here for planning.
+### Web batting + pitching
 
-- [ ] **Win probability line chart** — needs `GET /v1/games/{id}/win-probability`.
-- [ ] **Pitch movement scatter plot** — needs pitch-level data with pfx_x/pfx_z.
-- [ ] **Spray chart** — needs batted-ball coordinate data.
-- [ ] **Rolling average overlay** — needs game-log granularity; compute client-side from `game-logs/*`.
-- [ ] **Small multiples for comparison** — needs `/compare` page buildout; reuse career chart in grid layout.
-- [ ] **Leaderboard sparklines** — needs `/leaders` page buildout.
-- [ ] **Run differential trend** — needs `GET /v1/teams/{id}/daily-stats` integration on teams page.
+- [ ] Remove area fills.
+- [ ] Reduce curve smoothing to near-linear.
+- [ ] Display batting rate stats as raw decimals, not x1000 integers.
+- [ ] Use only faint horizontal rules; remove vertical grid.
+- [ ] Add comparison/reference context where available:
+  - league average line for selected stat
+  - career high marker
+  - era band overlays for multi-era careers
+- [ ] Add accessible chart summary text below or on the chart container.
+
+### Mobile batting + pitching
+
+- [ ] Remove below-line fill for standard trend views.
+- [ ] Reduce curvature or use straight segments unless smoothing is justified.
+- [ ] Change bottom-axis labels from season index to actual year.
+- [ ] Keep detailed values outside the plot area; do not rely on precise touch hitboxes alone.
+
+Acceptance:
+
+- [ ] Player trend charts in both apps read as baseball season timelines, not generic app charts.
+- [ ] Rate-stat formatting is correct everywhere.
+
+## Phase 4: Hall of Fame Threshold View
+
+### Web
+
+- [ ] Add 75% threshold annotation.
+- [ ] Add direct value labels for small ballot histories.
+- [ ] Highlight inducted season without relying on color alone.
+- [ ] Re-evaluate whether long ballot histories should switch from bars to dots.
+
+### Mobile
+
+- [ ] Add a compact Hall of Fame summary chart when vote percentages exist.
+- [ ] Keep the existing list as the detailed fallback.
+- [ ] Prefer a simple threshold visualization over a dense multi-interaction chart.
+
+Acceptance:
+
+- [ ] Hall of Fame charts communicate threshold crossing first, raw vote totals second.
+
+## Phase 5: Win Probability Cleanup (Web First)
+
+- [ ] Refactor web win-probability chart from dual complementary series to one focal home-team curve.
+- [ ] Add 50% reference rule.
+- [ ] Annotate biggest swing(s), walk-off/final event, and optionally lead changes.
+- [ ] Keep leverage rows/table beneath the chart as supporting context.
+- [ ] Add an explicit note about game-state density / sparse historical context when applicable.
+
+Acceptance:
+
+- [ ] The chart tells the game story at a glance without requiring tooltip hunting.
+- [ ] Home vs away is still obvious even though only one probability line is plotted.
+
+## Phase 6: Run Differential Views
+
+### Web
+
+- [ ] Add a primary run-differential chart to `teams/[id]/run-diff` using the existing endpoint.
+- [ ] Make cumulative run differential the default first view.
+- [ ] Add a rolling-window toggle if the API payload already supports it cleanly.
+- [ ] Keep the sortable game table as the audit/detail view.
+
+### Mobile
+
+- [ ] Keep monthly run-differential bars as a compact overview card.
+- [ ] Add a season-shape chart when the mobile data model exposes cumulative/rolling values.
+- [ ] Ensure zero is visually explicit and symmetric in any differential chart.
+
+Acceptance:
+
+- [ ] Web no longer exposes run differential only as a table.
+- [ ] Mobile monthly bars become summary, not the only run-diff story.
+
+## Phase 7: Baseball-Specific Future Chart Families
+
+Only start these after existing surfaces are coherent.
+
+- [ ] Sparklines in tables/lists for recent trend context.
+- [ ] Percentile strips for advanced player profiles.
+- [ ] Spray charts for batted-ball direction and depth.
+- [ ] Strike-zone heatmaps for pitch location / outcome views.
+- [ ] Pitch-movement scatter plots for arsenal shape.
+- [ ] Small multiples for player/team comparison screens.
+
+For each new family, require before implementation:
+
+- [ ] clear baseball question
+- [ ] confirmed data availability window
+- [ ] web/mobile interaction plan
+- [ ] accessibility fallback
+
+## Phase 8: Accessibility and QA
+
+- [ ] Add chart summaries / accessible names for all production charts.
+- [ ] Verify colorblind-safe distinctions for all multi-series states.
+- [ ] Verify reduced-motion behavior on web and sensible non-distracting transitions on mobile.
+- [ ] Test chart readability at mobile widths before accepting direct labels or annotations.
+- [ ] Add screenshot/regression coverage for key chart states where practical.
+- [ ] Add formatter tests for baseball decimal/percentage display.
+
+Acceptance:
+
+- [ ] Charts remain understandable without hover precision.
+- [ ] Accessibility and formatting regressions are covered by tests or explicit QA steps.
+
+## Data / API Follow-Ups
+
+- [ ] Expose league-average series for player trend metrics if not already available.
+- [ ] Confirm run-differential payload shape in mobile domain models for cumulative and rolling windows.
+- [ ] Define sample-size rules for spatial charts and percentile strips.
+- [ ] Define era-band source of truth so UI overlays are not coupled to ad hoc labels.
+- [ ] Decide whether historical win-probability views need era-scoped lookup controls in the UI.

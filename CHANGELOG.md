@@ -4,23 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
-
-## [2026-04-16]
-
-### Mobile
-
-### Web
-
-### API
-
-## [2026-04-15]
-
-### Web
-
-### API
-
-## [2025-12-16]
+## [ALPHA] - 2025-12-16
 
 ### Added
 
@@ -37,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - League column denormalization eliminates expensive joins with games table
 
-## [2025-12-15]
+## [ALPHA] - 2025-12-15
 
 ### Added
 
@@ -54,7 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Pagination parameter handling for endpoint consistency & NULL database value handling
   across repositories
 
-## [2025-12-12]
+## [ALPHA] - 2025-12-12
 
 ### Added
 
@@ -81,7 +65,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Middleware chain ordering for proper request handling
 - Retrosheet data field mappings
 
-## [2025-12-11]
+## [ALPHA] - 2025-12-11
 
 ### Added
 

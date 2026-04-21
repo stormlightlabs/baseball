@@ -247,7 +247,7 @@
           <div class="font-mono text-xs text-muted">No win expectancy eras loaded.</div>
         {:else}
           <div class="space-y-1">
-            {#each weEras as era (era.start_year)}
+            {#each weEras as era (`${era.label}:${era.start_year}_${era.end_year}`)}
               <div class="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-surface">
                 <div class="min-w-0 flex-1 text-xs text-foreground">
                   {era.label || `${era.start_year}–${era.end_year}`}

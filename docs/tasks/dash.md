@@ -118,7 +118,7 @@ Ref: `docs/designs/players.html`
 - [x] Show era chip on each season row.
 - [x] Show career-spans-era summary near player header.
 
-## Team and Franchise Explorer (`/teams`)
+## Team and Franchise Explorer (`/teams`) ✓
 
 Ref: `docs/designs/teams.html`
 
@@ -153,7 +153,7 @@ Ref: `docs/designs/teams.html`
 - [x] Franchise continuity timeline segmented by era bands.
 - [x] Warn when comparing across coverage gaps (e.g., Negro Leagues vs modern).
 
-## Game Finder and Detail (`/games`)
+## Game Finder and Detail (`/games`) ✓
 
 Ref: `docs/designs/games.html`
 
@@ -179,7 +179,7 @@ Ref: `docs/designs/games.html`
 
 - [x] Show event-density confidence indicator by era.
 
-## Season Hub (`/seasons`)
+## Season Hub (`/seasons`) ✓
 
 Ref: `docs/designs/seasons.html`
 
@@ -235,7 +235,7 @@ Ref: `docs/designs/compare.html`
 - [x] Add direct Swagger docsite link in top-level app navigation.
 - [x] Route former `/explorer` dashboard path to Swagger docs for compatibility.
 
-## Docs (`/docs`)
+## Docs (`/docs`) ✓
 
 Ref: `docs/designs/docs.html`
 
@@ -248,7 +248,7 @@ Ref: `docs/designs/docs.html`
 - [x] Apply prose stylesheet matching dark dashboard theme (headings, tables, code blocks, inline code).
 - [x] Redirect `/docs` to first doc (e.g. `/docs/README` or `/docs/api-players`).
 
-## Data Sources (`/data`)
+## Data Sources (`/data`) ✓
 
 Ref: `docs/designs/data-sources.html`
 

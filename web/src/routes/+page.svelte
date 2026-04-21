@@ -113,7 +113,7 @@
     </h1>
     <div class="mb-8 flex flex-col gap-1 text-base text-muted">
       <p>Baseball data from 1871 to now.</p>
-      <p>Powered by: Lahman · Retrosheet · MLB</p>
+      <p>Powered by: SABR · Retrosheet · MLB</p>
     </div>
     <SearchInput bind:value={searchQuery} placeholder="Search players, teams, games…" onsubmit={handleSearch} />
 
