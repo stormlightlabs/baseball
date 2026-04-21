@@ -68,6 +68,8 @@ services:
     cpus: 1.0
     pids_limit: 256
     restart: unless-stopped
+    labels:
+      - traefik.enable=false
 
   postgres:
     image: postgres:17.5

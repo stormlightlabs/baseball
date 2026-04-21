@@ -74,6 +74,8 @@ services:
     cpus: ${ETL_CPUS:-1.0}
     pids_limit: ${ETL_PIDS_LIMIT:-256}
     restart: unless-stopped
+    labels:
+      - traefik.enable=false
     deploy:
       replicas: 1
       restart_policy:

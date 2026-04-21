@@ -63,6 +63,9 @@ docker compose exec etl baseball-etl status
 
 `etl` should be kept running as the long-lived queue consumer service/process.
 `baseball-etl run` enqueues ETL jobs by default.
+`baseball-etl maintenance` processes queue jobs by default (`--enqueue-only=false`); pass `--enqueue-only=true` for enqueue-only behavior.
+
+`etl` is a worker service and should not be exposed publicly (Compose sets `traefik.enable=false`).
 
 The image now bakes `repo/data` into `/home/app/data`.
 With the `data_root:/home/app/data` named volume, Docker initializes a new

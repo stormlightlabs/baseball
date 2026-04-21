@@ -222,7 +222,7 @@ func addMaintenanceFlags(cmd *cobra.Command, opts *maintenanceCLIOptions) {
 	cmd.Flags().IntVar(&opts.maxQueuedJobs, "max-queued-jobs", 128, "Maximum queued+active ETL jobs before enqueue is rejected")
 	cmd.Flags().DurationVar(&opts.batchDelay, "batch-delay", 0, "Delay between processed jobs (e.g. 2s)")
 	cmd.Flags().IntVar(&opts.jobMaxRetries, "job-max-retries", 2, "Maximum maintenance job retries after failure")
-	cmd.Flags().BoolVar(&opts.enqueueOnly, "enqueue-only", true, "Enqueue maintenance job without processing in this command")
+	cmd.Flags().BoolVar(&opts.enqueueOnly, "enqueue-only", false, "Enqueue maintenance job without processing in this command")
 }
 
 func EtlValidateCmd() *cobra.Command {
