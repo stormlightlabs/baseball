@@ -180,6 +180,8 @@ Use ETL job queue semantics for maintenance work:
 - bounded batches by year or game-id window
 - idempotent jobs and resumable checkpoints
 
+Current implementation detail: maintenance work is queued through `etl_jobs` with `job_type='maintenance'` and a scoped `maintenance_type` payload.
+
 #### 2) Intermediary Layers
 
 For each heavy MV family:
@@ -192,9 +194,9 @@ For each heavy MV family:
 
 Add scope tables to drive only affected recomputes:
 
-- `etl_changed_games(run_id, game_id, season)`
-- `etl_changed_seasons(run_id, season)`
-- `etl_changed_players(run_id, player_id, season)`
+- `etl_delta_games(run_id, game_id, season)`
+- `etl_delta_seasons(run_id, season)`
+- `etl_delta_players(run_id, player_id, season)`
 
 Populate these from ETL load steps and use them to fan out downstream batch jobs.
 
@@ -220,7 +222,7 @@ Populate these from ETL load steps and use them to fan out downstream batch jobs
 #### Wave 0: Queue and Scope Foundations
 
 - add ETL maintenance queue table(s)
-- add changed-scope tables (`etl_changed_*`)
+- add delta-scope tables (`etl_delta_*`)
 - instrument enqueue/dequeue/attempt timing
 
 #### Wave 1: Game-Log Serving Tables (Highest Impact)

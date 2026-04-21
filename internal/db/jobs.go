@@ -155,7 +155,7 @@ func (db *DB) EnqueueETLJob(ctx context.Context, spec ETLJobSpec, maxQueuedJobs 
 	return jobID, nil
 }
 
-func (db *DB) AcquireNextETLJob(ctx context.Context, workerID string, maxActiveJobs int) (*ETLJob, error) {
+func (db *DB) AcquireNextETLJob(ctx context.Context, workerID string, maxActiveJobs int, jobType ETLJobType) (*ETLJob, error) {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin ETL dequeue transaction: %w", err)
@@ -184,6 +184,7 @@ func (db *DB) AcquireNextETLJob(ctx context.Context, workerID string, maxActiveJ
 			SELECT id
 			FROM etl_jobs
 			WHERE status IN ('queued', 'retry_wait')
+			  AND (NULLIF($2, '') IS NULL OR job_type = $2)
 			  AND (next_retry_at IS NULL OR next_retry_at <= NOW())
 			ORDER BY priority ASC, queued_at ASC, id ASC
 			FOR UPDATE SKIP LOCKED
@@ -221,8 +222,8 @@ func (db *DB) AcquireNextETLJob(ctx context.Context, workerID string, maxActiveJ
 				j.next_retry_at,
 				j.worker_id
 		)
-		SELECT * FROM updated
-	`, workerID)
+			SELECT * FROM updated
+		`, workerID, jobType)
 
 	job, err := scanETLJob(row)
 	if err != nil {

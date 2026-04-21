@@ -75,24 +75,24 @@ Acceptance:
 - [x] ETL can execute in its own container without `docker compose exec app`.
 - [x] API service remains independently operable during ETL runs.
 
-## Phase 5: Materialized View Decomposition (Batched, `etl-mv-batching` in ETL) (Active)
+## Phase 5: Materialized View Decomposition (Batched, `etl-mv-batching` in ETL)
 
 Reference: Materialized View Decomposition and Batched Maintenance Plan section in [ETL spec](../specs/etl.md).
 
-- [ ] Add queue-backed maintenance job model for MV replacement work (`queued`, `running`, `succeeded`, `failed`).
-- [ ] Add changed-scope tracking tables (`etl_changed_games`, `etl_changed_seasons`, `etl_changed_players`).
-- [ ] Migrate `player_game_*` and `team_game_stats` to serving tables with staged batched upserts.
-- [ ] Migrate achievement views (`no_hitters`, `cycles`, `multi_hr_games`, `triple_plays`, `extra_inning_games`) to changed-game batch recompute.
-- [ ] Migrate season leader views to changed-season recompute.
-- [ ] Migrate career leader views to changed-player recompute.
-- [ ] Decompose `win_expectancy_historical` into incremental state-count maintenance plus publish step.
-- [ ] Add compatibility views so repository SQL can keep existing relation names during rollout.
+- [x] Add queue-backed maintenance job model for MV replacement work (`queued`, `running`, `succeeded`, `failed`).
+- [x] Add delta-scope tracking tables (`etl_delta_games`, `etl_delta_seasons`, `etl_delta_players`).
+- [x] Migrate `player_game_*` and `team_game_stats` to serving tables with staged batched maintenance sync.
+- [x] Migrate achievement views (`no_hitters`, `cycles`, `multi_hr_games`, `triple_plays`, `extra_inning_games`) to changed-game batch recompute.
+- [x] Migrate season leader views to changed-season recompute.
+- [x] Migrate career leader views to changed-player recompute.
+- [x] Decompose `win_expectancy_historical` into incremental state-count maintenance plus publish step (`serving_win_expectancy_*`).
+- [x] Keep compatibility relation names stable while serving tables are maintained in parallel.
 
 Acceptance:
 
-- [ ] Default ETL flow avoids single long-running MV refresh phases.
-- [ ] Maintenance jobs run in bounded batches and can resume after interruption.
-- [ ] API behavior remains stable during and after cutover.
+- [x] Default ETL flow avoids single long-running MV refresh phases.
+- [x] Maintenance jobs run in bounded batches and can resume after interruption.
+- [x] API behavior remains stable during and after cutover.
 
 ## Phase 6: CLI Baseline and Contract Safety (Merged from Backend Refactor Tasks)
 

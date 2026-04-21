@@ -356,14 +356,53 @@ func RunPipeline(ctx context.Context, database *db.DB, opts PipelineOptions) (Pi
 		return result, stepErr
 	}
 
-	rows, stepErr = runPipelineStep(ctx, database, runID, "refresh.materialized_views", func(stepCtx context.Context) (int64, error) {
-		refreshRunID := runID
-		views, err := RefreshPipelineMaterializedViews(stepCtx, database, db.MaterializedViewRefreshOptions{
-			RunID:              &refreshRunID,
-			Step:               "refresh.materialized_views",
-			ForceNonConcurrent: true,
-		})
-		return int64(views), err
+	rows, stepErr = runPipelineStep(ctx, database, runID, "maintenance.capture_delta_scope", func(stepCtx context.Context) (int64, error) {
+		if err := captureDeltaScopeForRun(stepCtx, database, runID, opts.Years); err != nil {
+			return 0, err
+		}
+		return int64(len(opts.Years)), nil
+	})
+	result.TotalRows += rows
+	if stepErr != nil {
+		runStatus = "failed"
+		runErrMsg = stepErr.Error()
+		return result, stepErr
+	}
+
+	maintenanceWorkerOpts := NormalizeJobWorkerOptions(JobWorkerOptions{
+		JobType:             db.ETLJobTypeMaintenance,
+		Priority:            defaultETLPriority,
+		YearBatchSize:       defaultETLYearBatchSize,
+		MaxActiveJobs:       defaultETLMaxActiveJobs,
+		MaxQueuedJobs:       defaultETLMaxQueuedJobs,
+		NetworkRetryMax:     opts.NetworkRetryMax,
+		NetworkRetryBackoff: opts.NetworkRetryBackoff,
+		MaxJobRetries:       defaultETLMaxJobRetries,
+	})
+
+	rows, stepErr = runPipelineStep(ctx, database, runID, "maintenance.enqueue_jobs", func(stepCtx context.Context) (int64, error) {
+		jobIDs, err := enqueueMaintenanceJobsForRun(stepCtx, database, runID, opts, maintenanceWorkerOpts)
+		if err != nil {
+			if errors.Is(err, db.ErrETLQueueFull) {
+				return 0, fmt.Errorf("maintenance queue is full: %w", err)
+			}
+			return 0, err
+		}
+		return int64(len(jobIDs)), nil
+	})
+	result.TotalRows += rows
+	if stepErr != nil {
+		runStatus = "failed"
+		runErrMsg = stepErr.Error()
+		return result, stepErr
+	}
+
+	rows, stepErr = runPipelineStep(ctx, database, runID, "maintenance.process_jobs", func(stepCtx context.Context) (int64, error) {
+		processResult, err := ProcessQueuedETLJobs(stepCtx, database, maintenanceWorkerOpts)
+		if err != nil {
+			return processResult.Rows, err
+		}
+		return processResult.Rows, nil
 	})
 	result.TotalRows += rows
 	if stepErr != nil {

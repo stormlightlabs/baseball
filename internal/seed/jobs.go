@@ -190,7 +190,7 @@ func ProcessQueuedETLJobs(ctx context.Context, database *db.DB, workerOpts JobWo
 			return result, err
 		}
 
-		job, err := database.AcquireNextETLJob(ctx, workerOpts.WorkerID, workerOpts.MaxActiveJobs)
+		job, err := database.AcquireNextETLJob(ctx, workerOpts.WorkerID, workerOpts.MaxActiveJobs, workerOpts.JobType)
 		if err != nil {
 			return result, err
 		}
@@ -291,24 +291,18 @@ func executeETLJob(
 	job *db.ETLJob,
 	workerOpts JobWorkerOptions,
 ) (int64, *int64, string, bool, error) {
-	opts, err := pipelineOptionsFromJob(job)
-	if err != nil {
-		return 0, nil, "db_write", false, err
-	}
-	opts.NetworkRetryMax = workerOpts.NetworkRetryMax
-	opts.NetworkRetryBackoff = workerOpts.NetworkRetryBackoff
-	if v := intFromAny(job.Options["network_retry_max"]); v >= 0 {
-		opts.NetworkRetryMax = v
-	}
-	if ms := int64FromAny(job.Options["network_retry_backoff_ms"]); ms > 0 {
-		opts.NetworkRetryBackoff = time.Duration(ms) * time.Millisecond
-	}
-	if chunk := intFromAny(job.Options["load_chunk_size"]); chunk > 0 {
-		opts.LoadChunkSize = chunk
-	}
-
 	switch job.JobType {
+	case db.ETLJobTypeMaintenance:
+		rows, err := executeMaintenanceJob(ctx, database, job)
+		if err != nil {
+			return rows, nil, "db_write", false, err
+		}
+		return rows, nil, "", false, nil
 	case db.ETLJobTypeValidate:
+		opts, err := pipelineOptionsFromJob(job)
+		if err != nil {
+			return 0, nil, "db_write", false, err
+		}
 		validation, err := ValidatePipeline(ctx, database, opts.Profile, opts.Years)
 		if err != nil {
 			return 0, nil, "db_write", false, err
@@ -322,20 +316,31 @@ func executeETLJob(
 		}
 		return int64(len(validation.Issues)), nil, "", false, nil
 	case db.ETLJobTypeCleanup:
+		opts, err := pipelineOptionsFromJob(job)
+		if err != nil {
+			return 0, nil, "db_write", false, err
+		}
 		cleanupResult, err := CleanupRetrosheetArtifacts(opts.RetrosheetDataDir, false)
 		if err != nil {
 			return 0, nil, "db_write", false, err
 		}
 		return int64(len(cleanupResult.Removed)), nil, "", false, nil
-	case db.ETLJobTypeMaintenance:
-		views, err := RefreshPipelineMaterializedViews(ctx, database, db.MaterializedViewRefreshOptions{
-			ForceNonConcurrent: true,
-		})
+	case db.ETLJobTypeFullRun, db.ETLJobTypeYearlySync:
+		opts, err := pipelineOptionsFromJob(job)
 		if err != nil {
 			return 0, nil, "db_write", false, err
 		}
-		return int64(views), nil, "", false, nil
-	case db.ETLJobTypeFullRun, db.ETLJobTypeYearlySync:
+		opts.NetworkRetryMax = workerOpts.NetworkRetryMax
+		opts.NetworkRetryBackoff = workerOpts.NetworkRetryBackoff
+		if v := intFromAny(job.Options["network_retry_max"]); v >= 0 {
+			opts.NetworkRetryMax = v
+		}
+		if ms := int64FromAny(job.Options["network_retry_backoff_ms"]); ms > 0 {
+			opts.NetworkRetryBackoff = time.Duration(ms) * time.Millisecond
+		}
+		if chunk := intFromAny(job.Options["load_chunk_size"]); chunk > 0 {
+			opts.LoadChunkSize = chunk
+		}
 		result, err := RunPipeline(ctx, database, opts)
 		if err != nil {
 			failureClass, retryable := classifyPipelineFailure(err)
