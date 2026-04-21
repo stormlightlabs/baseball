@@ -54,6 +54,10 @@ services:
       GOMAXPROCS: 1
       ETL_MAX_ACTIVE_JOBS: 1
       ETL_MAX_QUEUED_JOBS: 16
+      ETL_MV_WORK_MEM: 16MB
+      ETL_MV_MAINTENANCE_WORK_MEM: 64MB
+      ETL_MV_MAX_PARALLEL_WORKERS_PER_GATHER: 0
+      ETL_MV_JIT: off
     volumes:
       - data_root:/home/app/data
     entrypoint: ["/usr/local/bin/baseball-etl"]

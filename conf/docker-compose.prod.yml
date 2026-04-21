@@ -60,6 +60,10 @@ services:
       DB_CONN_MAX_IDLE_TIME: ${ETL_DB_CONN_MAX_IDLE_TIME:-5m}
       ETL_MAX_ACTIVE_JOBS: ${ETL_MAX_ACTIVE_JOBS:-1}
       ETL_MAX_QUEUED_JOBS: ${ETL_MAX_QUEUED_JOBS:-16}
+      ETL_MV_WORK_MEM: ${ETL_MV_WORK_MEM:-16MB}
+      ETL_MV_MAINTENANCE_WORK_MEM: ${ETL_MV_MAINTENANCE_WORK_MEM:-64MB}
+      ETL_MV_MAX_PARALLEL_WORKERS_PER_GATHER: ${ETL_MV_MAX_PARALLEL_WORKERS_PER_GATHER:-0}
+      ETL_MV_JIT: ${ETL_MV_JIT:-off}
     volumes:
       - data_root:/home/app/data
     entrypoint: ["/usr/local/bin/baseball-etl"]
@@ -88,7 +92,7 @@ services:
       - -c
       - work_mem=32MB
       - -c
-      - maintenance_work_mem=512MB
+      - maintenance_work_mem=128MB
       - -c
       - max_wal_size=12GB
       - -c
