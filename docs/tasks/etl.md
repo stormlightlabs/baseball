@@ -75,37 +75,7 @@ Acceptance:
 - [x] ETL can execute in its own container without `docker compose exec app`.
 - [x] API service remains independently operable during ETL runs.
 
-## Phase 5: Safety Rails + Throughput
-
-- [ ] Add single-active ETL run guard (advisory lock or `etl_run_locks` table).
-- [ ] Add per-step timeout and cancellation policy for heavy ETL phases.
-- [ ] Add explicit post-load `ANALYZE` for heavily changed tables/partitions.
-- [ ] Add DB backpressure throttling hooks (latency/WAL-sensitive pacing).
-- [ ] Add admission-control guardrails that reject or defer new ETL jobs when host pressure is high.
-- [ ] Add host-level alerting for free disk and WAL growth thresholds.
-- [ ] Add runbook actions for WAL pressure (pause ETL, archive/prune strategy, checkpoint analysis).
-- [ ] Add `pg_stat_bgwriter` trend capture (`checkpoints_req` / `checkpoints_timed`).
-
-Acceptance:
-
-- [ ] Concurrent ETL starts are rejected safely.
-- [ ] Operators have deterministic controls for pause/resume/recovery.
-
-## Phase 6: Database Maintenance Jobs
-
-- [ ] Mark broad materialized-view refresh loops as legacy and keep them off default ETL run path.
-- [ ] Define explicit maintenance jobs for partition/table hygiene and targeted recompute.
-- [ ] Add partition management policy (create/attach/retire) for high-churn datasets.
-- [ ] Remove API/query dependencies on MV-only objects over time.
-- [ ] Replace MV-centric observability/reporting with table/partition load metrics and checks.
-- [ ] Add runbook queries for partition skew, stale partitions, and slow upsert phases.
-
-Acceptance:
-
-- [ ] ETL maintenance scales by changed data scope instead of full-history refreshes.
-- [ ] Interrupted runs can resume without full rerun.
-
-## Phase 7: Materialized View Decomposition (Batched, `etl-mv-batching` in ETL)
+## Phase 5: Materialized View Decomposition (Batched, `etl-mv-batching` in ETL) (Active)
 
 Reference: Materialized View Decomposition and Batched Maintenance Plan section in [ETL spec](../specs/etl.md).
 
@@ -124,84 +94,29 @@ Acceptance:
 - [ ] Maintenance jobs run in bounded batches and can resume after interruption.
 - [ ] API behavior remains stable during and after cutover.
 
-## Phase 8: CLI Baseline and Contract Safety (Merged from Backend Refactor Tasks)
+## Phase 6: CLI Baseline and Contract Safety (Merged from Backend Refactor Tasks)
 
-- [ ] Capture baseline command contracts for `baseball-etl --help`.
-- [ ] Capture baseline command contracts for `baseball-etl run --help`.
-- [ ] Capture baseline command contracts for `baseball-etl validate --help`.
-- [ ] Capture baseline command contracts for `baseball-etl status --help`.
-- [ ] Capture baseline command contracts for `baseball db --help`.
-- [ ] Capture baseline command contracts for `baseball server --help`.
-- [ ] Add focused tests for the golden path behavior (`db migrate`, `server start`, `baseball-etl worker`, `baseball-etl run`, `baseball-etl validate`, `baseball-etl status`).
-- [ ] Record current ETL/status outputs in fixtures where practical.
-
-Acceptance:
-
-- [ ] CLI regressions are detected early during refactor iterations.
-
-## Phase 9: Canonical CLI Flow and Deprecation
-
-- [ ] Keep docs/help text consistent with `baseball-etl` as canonical data workflow entrypoint.
-- [ ] Mark overlapping `db populate*` and `db reset` commands as deprecated in help/long descriptions.
-- [ ] Keep compatibility wrappers functional while emitting migration guidance.
-- [ ] Add a deprecation timeline and removal criteria for overlapping commands.
+- [x] Capture baseline command contracts for `baseball-etl --help`.
+- [x] Capture baseline command contracts for `baseball-etl run --help`.
+- [x] Capture baseline command contracts for `baseball-etl validate --help`.
+- [x] Capture baseline command contracts for `baseball-etl status --help`.
+- [x] Capture baseline command contracts for `baseball db --help`.
+- [x] Capture baseline command contracts for `baseball server --help`.
+- [x] Add focused tests for the golden path behavior (`db migrate`, `server start`, `baseball-etl worker`, `baseball-etl run`, `baseball-etl validate`, `baseball-etl status`).
+- [x] Record current ETL/status command contracts in unit tests.
 
 Acceptance:
 
-- [ ] Users can complete setup with `db migrate -> server start + baseball-etl worker -> baseball-etl run -> baseball-etl validate -> baseball-etl status`.
-- [ ] Existing scripts using legacy commands keep working through migration window.
+- [x] CLI regressions are detected early during refactor iterations.
 
-## Phase 10: Shared Command Runtime Extraction
+## Phase 7: Canonical CLI Flow and Command Consolidation
 
-- [ ] Create shared runtime/bootstrap package for config + DB + Redis/cache setup.
-- [ ] Move repeated command setup into reusable helpers/services.
-- [ ] Update command handlers to consume shared runtime constructors.
-
-Acceptance:
-
-- [ ] DB/cache initialization logic is not duplicated across handlers.
-- [ ] Command files become thinner and easier to reason about.
-
-## Phase 11: Command-Orchestration Consolidation
-
-- [ ] Keep command package focused on Cobra definitions, parsing, and output.
-- [ ] Keep ETL execution/orchestration originating from one service/orchestration layer.
-- [ ] Ensure `db` command responsibilities remain DB-lifecycle only.
+- [x] Keep docs/help text consistent with `baseball-etl` as canonical data workflow entrypoint.
+- [x] Remove overlapping `db populate*` and `db reset` commands from `baseball db`.
+- [x] Keep `db` command scope focused on schema and explicit DB maintenance operations.
+- [x] Update canonical run flow to keep API online while ETL worker runs independently.
 
 Acceptance:
 
-- [ ] Command layer no longer duplicates seed/pipeline orchestration behavior.
-
-## Phase 12: Shared Status/Validation Dataset Contract
-
-- [ ] Introduce one shared dataset check registry/contract for `baseball-etl status` and `baseball-etl validate`.
-- [ ] Refactor both commands to consume the shared contract with different output modes.
-- [ ] Preserve dataset coverage checks/thresholds unless explicitly changed.
-
-Acceptance:
-
-- [ ] No drift between status reporting and validation enforcement.
-- [ ] New dataset checks require one contract change, not two implementations.
-
-## Phase 13: Route Introspection and Migration Finish
-
-- [ ] Replace AST-based route discovery in `server routes` with registration-time metadata.
-- [ ] Ensure route listing includes runtime-registered and utility endpoints.
-- [ ] Publish a short migration guide for automation/scripts.
-- [ ] Update root README + data-loading runbooks when simplifications land.
-
-Acceptance:
-
-- [ ] `server routes` reflects actual runtime registration without AST fragility.
-- [ ] One clear workflow is documented for new users and migration path is explicit for existing users.
-
-## Verification Checklist
-
-- [x] `go test ./...`
-- [ ] ETL lock/concurrency behavior validated with two concurrent start attempts.
-- [ ] `docker compose` ETL long-lived worker flow succeeds in dev and prod layouts.
-- [ ] API readiness remains healthy during ETL run window.
-- [ ] Retrosheet fetch/cleanup behavior validated across repeated runs.
-- [ ] CLI golden-path smoke test passes locally.
-- [ ] Command help text is internally consistent and matches docs.
-- [ ] No API behavior regressions on `/v1` endpoints.
+- [x] Users can complete setup with `db migrate -> server start + baseball-etl worker -> baseball-etl run -> baseball-etl validate -> baseball-etl status`.
+- [x] Legacy `db` data-loading wrappers are removed to prevent redundant operational paths.

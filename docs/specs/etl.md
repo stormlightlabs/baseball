@@ -135,20 +135,13 @@ Cleanup intent:
 - Remove warehouse/snapshot-factory assumptions from docs and runbooks.
 - Make ETL worker ownership explicit for fetch/load/cleanup responsibilities.
 
-### Phase B: Worker Job Hardening
-
-- Complete single-active lock/cancellation guarantees.
-- Add VM-safe batching controls (job chunk sizing, queue depth, optional pacing between batches).
-- Harden Retrosheet download + cleanup behavior for partial/interrupted runs.
-- Add explicit maintenance jobs for DB-side recompute/partition hygiene.
-
-### Phase C: Surface Simplification
+### Phase B: Surface Simplification
 
 - Keep `baseball-etl` as canonical data operations surface.
 - Keep `db` command group schema/maintenance focused.
 - Retire stale config/doc references that imply external warehouse ownership.
 
-### Phase D: Decompose Long MV Refreshes
+### Phase C: Decompose Long MV Refreshes
 
 - Replace monolithic materialized-view refresh maintenance with queue-driven batch jobs.
 - Introduce staged intermediaries and serving tables for high-cost derived datasets.
@@ -325,7 +318,7 @@ Goals:
 - keep current backend functionality and data coverage intact
 - make the operational path obvious and minimal
 - reduce command-layer duplication and hidden coupling
-- preserve compatibility for existing command users during migration
+- remove redundant command paths that duplicate ETL worker behavior
 
 ### Canonical Operational Path
 
@@ -344,7 +337,7 @@ Operational rule: API serving should remain online while ETL runs in the separat
 - `baseball` should own API/server/cache and DB lifecycle operations (`server`, `db`, `cache`).
 - `baseball-etl` should own pipeline orchestration and stage operations (`fetch`, `load`, `run`, `worker`, `validate`, `status`, `cleanup`).
 - `db` commands should remain schema and explicit DB maintenance focused.
-- overlapping or legacy workflows should move behind clear deprecation/migration guidance.
+- overlapping legacy data-loading workflows under `db` should be removed instead of maintained as compatibility wrappers.
 
 ### Runtime Engineering Direction
 
@@ -355,9 +348,9 @@ Operational rule: API serving should remain online while ETL runs in the separat
 
 ### Compatibility Strategy
 
-- keep command names/flags stable during migration where behavior is still supported
-- add explicit deprecation notices before removals
+- keep `baseball-etl` command names/flags stable for pipeline behavior
 - preserve `--config`, ETL profile/mode/year/era semantics unless a replacement is fully equivalent
+- avoid duplicate command entrypoints that can drift from canonical ETL worker behavior
 
 ### Success Criteria
 
