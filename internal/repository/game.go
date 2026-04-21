@@ -33,8 +33,8 @@ func NewGameRepository(db *sql.DB, cacheClient *cache.Client) *GameRepository {
 	}
 }
 
-// GetByID retrieves a single game by its Retrosheet game ID.
-// The game ID format is constructed from date + game number + home team.
+// GetByID retrieves a single game by its Retrosheet game ID,
+// of format home team + date + game number.
 func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Game, error) {
 	var game core.Game
 	if r.cache.Entity.Get(ctx, string(id), &game) {
@@ -97,7 +97,7 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 
 	var g core.Game
 	var date string
-	var attendance, durationMin sql.NullInt64
+	var attendance, durationMin, innings sql.NullInt64
 	var umpHome, umpHomeName, umpFirst, umpFirstName sql.NullString
 	var umpSecond, umpSecondName, umpThird, umpThirdName sql.NullString
 	var umpLeft, umpLeftName, umpRight, umpRightName sql.NullString
@@ -121,7 +121,7 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 		&homeLeague,
 		&g.AwayScore,
 		&g.HomeScore,
-		&g.Innings,
+		&innings,
 		&dayOfWeek,
 		&attendance,
 		&durationMin,
@@ -197,7 +197,9 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 	g.Date = parsedDate
 	g.Season = core.SeasonYear(parsedDate.Year())
 
-	g.Innings = g.Innings / 3
+	if innings.Valid {
+		g.Innings = int(innings.Int64) / 3
+	}
 
 	if gameType.Valid {
 		g.IsPostseason = gameType.String != "regular"
@@ -461,7 +463,7 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 			return nil, fmt.Errorf("failed to scan game: %w", err)
 		}
 
-		g.ID = core.GameID(fmt.Sprintf("%s%d%s", date, gameNumber, homeTeam))
+		g.ID = core.GameID(fmt.Sprintf("%s%s%d", homeTeam, date, gameNumber))
 		g.HomeTeam = core.TeamID(homeTeam)
 		g.AwayTeam = core.TeamID(awayTeam)
 		if homeLeague.Valid {
@@ -685,24 +687,20 @@ func (r *GameRepository) GetBoxscore(ctx context.Context, id core.GameID) (*core
 
 	err := r.db.QueryRowContext(ctx, query, string(id)).Scan(
 		&date,
-		&visitingTeam,
-		&homeTeam,
-		&box.AwayScore,
-		&box.HomeScore,
+		&visitingTeam, &homeTeam,
+		&box.AwayScore, &box.HomeScore,
 		&vStats.AB, &vStats.H, &vStats.Doubles, &vStats.Triples, &vStats.HR,
 		&vStats.RBI, &vStats.SH, &vStats.SF, &vStats.HBP,
 		&vStats.BB, &vStats.IBB, &vStats.SO, &vStats.SB,
 		&vStats.CS, &vStats.GDP, &vStats.LOB, &vStats.PitchersUsed,
 		&vStats.ER, &vStats.WP, &vStats.Balks, &vStats.PO,
-		&vStats.A, &vStats.E, &vStats.PB, &vStats.DP,
-		&vStats.TP,
+		&vStats.A, &vStats.E, &vStats.PB, &vStats.DP, &vStats.TP,
 		&hStats.AB, &hStats.H, &hStats.Doubles, &hStats.Triples, &hStats.HR,
 		&hStats.RBI, &hStats.SH, &hStats.SF, &hStats.HBP,
 		&hStats.BB, &hStats.IBB, &hStats.SO, &hStats.SB,
 		&hStats.CS, &hStats.GDP, &hStats.LOB, &hStats.PitchersUsed,
 		&hStats.ER, &hStats.WP, &hStats.Balks, &hStats.PO,
-		&hStats.A, &hStats.E, &hStats.PB, &hStats.DP,
-		&hStats.TP,
+		&hStats.A, &hStats.E, &hStats.PB, &hStats.DP, &hStats.TP,
 		&vP1ID, &vP1Name, &vP1Pos,
 		&vP2ID, &vP2Name, &vP2Pos,
 		&vP3ID, &vP3Name, &vP3Pos,

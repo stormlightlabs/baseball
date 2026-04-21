@@ -198,7 +198,7 @@ func (r *UmpireRepository) GamesForUmpire(ctx context.Context, id core.UmpireID,
 			return nil, fmt.Errorf("failed to scan game: %w", err)
 		}
 
-		g.ID = core.GameID(fmt.Sprintf("%s%d%s", date, gameNumber, homeTeam))
+		g.ID = core.GameID(fmt.Sprintf("%s%s%d", homeTeam, date, gameNumber))
 		g.HomeTeam = core.TeamID(homeTeam)
 		g.AwayTeam = core.TeamID(awayTeam)
 		g.HomeLeague = core.LeagueID(homeLeague)
