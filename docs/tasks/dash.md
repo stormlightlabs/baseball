@@ -265,13 +265,6 @@ Ref: `docs/designs/data-sources.html`
   - `/api/v1/negroleagues/games`, `/teams`, `/plays`, `/seasons/{year}/schedule`, `/seasons/{year}/teams/{team_id}/games`
 - [ ] Show these as first-class historical contexts, not hidden filters.
 
-## Account and API Keys (`/account`)
-
-- [ ] Auth state wiring to `/api/v1/auth/me`.
-- [ ] API key list/create/revoke against `/api/v1/auth/keys`.
-- [ ] OAuth launch links for GitHub/Codeberg.
-- [ ] Usage dashboard remains TBD pending dedicated usage endpoint.
-
 ## Live & Current-Season Data
 
 ### Home: Live Scoreboard
@@ -373,4 +366,3 @@ Ref: `docs/designs/data-sources.html`
 | Compare      | Player/team/season endpoints + `/api/v1/win-expectancy*`                                                                                             |
 | API Docs     | Swagger UI docsite at `/api/v1/docs/`                                                                                                                |
 | Data Sources | `/api/v1/meta/datasets`, `/api/v1/win-expectancy/eras`, league-specific families                                                                     |
-| Account      | `/api/v1/auth/*`                                                                                                                                     |

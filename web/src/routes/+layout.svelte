@@ -17,7 +17,6 @@
 
   const MAIN_LINKS = [
     { href: '/', label: 'Home' },
-    { href: '/compare', label: 'Compare' },
     { href: '/docs', label: 'About' }
   ] as const;
 
@@ -49,7 +48,6 @@
     '/games': 'games',
     '/seasons': 'seasons',
     '/leaders': 'leaders',
-    '/compare': 'compare',
     '/data': 'sources',
     '/docs': 'about'
   };

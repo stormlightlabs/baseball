@@ -115,6 +115,9 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 		return nil, err
 	}
 
+	var minSalary, maxSalary sql.NullInt64
+	_ = r.db.QueryRowContext(ctx, `SELECT MIN("yearID"), MAX("yearID") FROM "Salaries"`).Scan(&minSalary, &maxSalary)
+
 	return []core.DatasetStatus{
 		r.datasetStatus(
 			"lahman",
@@ -195,13 +198,13 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 		r.datasetStatus(
 			"salary_summary",
 			"Salary summary",
-			"https://github.com/stormlightlabs/baseball",
+			"https://legacy.baseballprospectus.com/compensation/cots/",
 			false,
 			map[string]int64{
 				"salary_summary": r.tableCount(ctx, "salary_summary", `SELECT COUNT(*) FROM salary_summary`),
 			},
-			nil,
-			nil,
+			seasonPtr(toSeasonYear(minSalary)),
+			seasonPtr(toSeasonYear(maxSalary)),
 			refreshes,
 			[]string{"salaries"},
 		),

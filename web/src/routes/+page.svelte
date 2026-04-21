@@ -2,8 +2,6 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import ApiMirrorStrip from '$lib/components/ApiMirrorStrip.svelte';
-  import Chart from '$lib/components/Chart.svelte';
-  import CoverageBar from '$lib/components/CoverageBar.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
   import LeaderCards from '$lib/components/LeaderCards.svelte';
   import Pill from '$lib/components/Pill.svelte';
@@ -16,11 +14,9 @@
     ENTITY_TYPES,
     FEATURED_GROUPS,
     FEATURED_QUERIES,
-    QUICK_LINKS,
-    SOURCE_COLORS
+    QUICK_LINKS
   } from '$lib/home/constants';
   import { meta } from '$lib/meta.svelte.js';
-  import { type ChartConfiguration } from 'chart.js';
   import { onMount } from 'svelte';
 
   onMount(() => meta.init());
@@ -56,102 +52,55 @@
 
   const visibleQueries = $derived(FEATURED_QUERIES.filter((q) => q.group === featuredGroup));
 
-  let coverageChartConfig = $derived.by((): ChartConfiguration => {
-    const coverage = meta.coverage;
-    const decades = Array.from({ length: 16 }, (_, i) => 1870 + i * 10);
+  type CoverageVariant = 'primary' | 'secondary' | 'warning';
 
-    const datasets = Object.entries(coverage).map(([key, cov]) => ({
-      label: key.charAt(0).toUpperCase() + key.slice(1),
-      backgroundColor: SOURCE_COLORS[key] ?? '#6b7280',
-      borderRadius: 2,
-      data: decades.map((d) => {
-        const from = cov.from ?? 9999;
-        const to = cov.to ?? 0;
-        return d >= from - 5 && d <= to ? 1 : 0;
-      })
-    }));
-
-    if (datasets.length === 0) {
-      datasets.push(
-        { label: 'Lahman', backgroundColor: '#3b82f6', borderRadius: 2, data: decades.map((d) => (d >= 1871 ? 1 : 0)) },
-        {
-          label: 'Retrosheet',
-          backgroundColor: '#10b981',
-          borderRadius: 2,
-          data: decades.map((d) => (d >= 1871 ? 1 : 0))
-        }
-      );
-    }
-
-    return {
-      type: 'bar',
-      data: { labels: decades.map((d) => `'${String(d).slice(2)}`), datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-        scales: {
-          x: {
-            stacked: true,
-            grid: { display: false },
-            border: { display: false },
-            ticks: { color: '#6b7280', font: { size: 9 }, maxRotation: 0 }
-          },
-          y: { stacked: true, display: false, max: Math.max(2, Object.keys(coverage).length) + 0.5 }
-        },
-        animation: { duration: 600 }
-      }
-    };
-  });
-
-  type CoverageBarItem = {
+  type CoverageEntry = {
     id: string;
     label: string;
     range: string;
     percent: number;
-    variant: 'primary' | 'secondary' | 'warning';
+    variant: CoverageVariant;
     href?: string;
     tooltip?: string;
   };
 
-  let coverageBars = $derived.by((): CoverageBarItem[] => {
+  const coverageData = $derived.by((): CoverageEntry[] => {
     const coverageFrom = meta.dataFromYear ?? 1871;
     const coverageTo = meta.dataToYear ?? new Date().getFullYear();
     const coverageSpan = Math.max(1, coverageTo - coverageFrom);
 
     if (meta.datasets.length > 0) {
       return meta.datasets.map((ds) => {
+        const fallbackCov = meta.coverage[ds.id];
+        const covFrom = ds.coverage_from ?? fallbackCov?.from ?? null;
+        const covTo = ds.coverage_to ?? fallbackCov?.to ?? null;
+
         let percent = 0;
-        if (ds.coverage_from != null && ds.coverage_to != null) {
-          const from = ds.coverage_from;
-          const to = ds.coverage_to;
-          percent = Math.round(((to - from) / coverageSpan) * 100);
+        if (covFrom != null && covTo != null) {
+          percent = Math.round(((covTo - covFrom) / coverageSpan) * 100);
         } else if (ds.row_count > 0) {
           percent = 100;
         }
 
-        let variant: CoverageBarItem['variant'] = 'secondary';
+        let variant: CoverageVariant = 'secondary';
         if (ds.healthy === false) variant = 'warning';
         else if (ds.id === 'lahman') variant = 'primary';
 
         return {
           id: ds.id,
           label: ds.name,
-          range:
-            ds.coverage_from != null && ds.coverage_to != null
-              ? `${ds.coverage_from} – ${ds.coverage_to}`
-              : `${ds.row_count.toLocaleString()} rows`,
+          range: covFrom != null && covTo != null ? `${covFrom} – ${covTo}` : `${ds.row_count.toLocaleString()} rows`,
           percent,
           variant,
-          href: DATASET_UI_HINTS[ds.id]?.href,
+          href: ds.source || undefined,
           tooltip: DATASET_UI_HINTS[ds.id]?.tooltip
         };
       });
     }
     return [
-      { id: 'lahman', label: 'Lahman Database', range: '1871 – 2023', percent: 98, variant: 'primary' as const },
-      { id: 'retrosheet', label: 'Retrosheet', range: '1871 – 2023', percent: 95, variant: 'secondary' as const },
-      { id: 'mlb-statsapi', label: 'MLB StatsAPI', range: '2000 – present', percent: 75, variant: 'warning' as const }
+      { id: 'lahman', label: 'Lahman Database', range: '1871 – 2023', percent: 98, variant: 'primary' },
+      { id: 'retrosheet', label: 'Retrosheet', range: '1871 – 2023', percent: 95, variant: 'secondary' },
+      { id: 'mlb-statsapi', label: 'MLB StatsAPI', range: '2000 – present', percent: 75, variant: 'warning' }
     ];
   });
 </script>
@@ -187,13 +136,8 @@
     </div>
   </section>
 
-  <section class="mx-auto max-w-6xl px-4 pb-6 sm:px-6 lg:px-8">
-    <ScoreboardStrip />
-  </section>
-
-  <section class="mx-auto max-w-6xl px-4 pb-6 sm:px-6 lg:px-8">
-    <LeaderCards />
-  </section>
+  <ScoreboardStrip />
+  <LeaderCards />
 
   <div class="mx-auto max-w-6xl px-4 pb-6 sm:px-6 lg:px-8">
     <div class="grid grid-cols-1 gap-px overflow-hidden rounded-lg bg-outline md:grid-cols-2 xl:grid-cols-3">
@@ -312,39 +256,55 @@
         {/if}
       </div>
 
-      <div class="bg-crust p-5 md:col-span-2">
-        <div class="panel-label">Dataset coverage</div>
-        <div class="mb-4 space-y-2">
-          {#each coverageBars as bar (bar.id)}
-            <CoverageBar
-              label={bar.label}
-              range={bar.range}
-              percent={bar.percent}
-              variant={bar.variant}
-              href={bar.href}
-              tooltip={bar.tooltip} />
-          {/each}
+      <div class="col-span-3 flex gap-0.5">
+        <div class="flex flex-1 flex-col bg-crust p-5">
+          <div class="panel-label">Dataset coverage</div>
+          <div class="grid flex-1 grid-cols-2 gap-1">
+            {#each coverageData as item (item.id)}
+              <div class="flex flex-1 flex-col items-center gap-3 rounded border border-outline p-2 hover:bg-surface">
+                <div class="flex w-full items-center justify-baseline gap-2">
+                  {#if item.href}
+                    <a
+                      href={item.href}
+                      target="_blank"
+                      rel="external"
+                      class="inline-flex min-w-0 flex-1 items-center gap-1 truncate font-sans text-sm no-underline hover:underline"
+                      title={item.tooltip ?? item.label}>
+                      <span>
+                        {item.label}
+                      </span>
+                      <i class="i-tabler-external-link"></i>
+                    </a>
+                  {:else}
+                    <span
+                      class="min-w-0 flex-1 truncate font-sans text-sm text-foreground"
+                      title={item.tooltip ?? item.label}>
+                      {item.label}
+                    </span>
+                  {/if}
+                </div>
+                <span class="w-full font-mono text-sm text-muted">{item.range}</span>
+              </div>
+            {/each}
+          </div>
         </div>
-        <div class="h-20">
-          <Chart config={coverageChartConfig} height={80} />
-        </div>
-      </div>
 
-      <div class="bg-crust p-5">
-        <div class="panel-label">Endpoints</div>
-        <ul class="space-y-1.5">
-          {#each ALL_ENDPOINTS as ep (ep)}
-            <li>
-              <a
-                href={resolve(API_DOCS_ROUTE)}
-                target="_blank"
-                rel="noreferrer"
-                class="block font-mono text-[0.72rem] text-primary no-underline opacity-80 transition-opacity hover:opacity-100">
-                {ep}
-              </a>
-            </li>
-          {/each}
-        </ul>
+        <div class="flex-1 bg-crust p-5">
+          <div class="panel-label">Endpoints</div>
+          <ul class="space-y-1.5">
+            {#each ALL_ENDPOINTS as ep (ep)}
+              <li>
+                <a
+                  href={resolve(API_DOCS_ROUTE)}
+                  target="_blank"
+                  rel="noreferrer"
+                  class="block font-mono text-[0.72rem] text-primary no-underline opacity-80 transition-opacity hover:opacity-100">
+                  {ep}
+                </a>
+              </li>
+            {/each}
+          </ul>
+        </div>
       </div>
     </div>
   </div>

@@ -23,7 +23,8 @@ export const QUICK_LINKS = [
     path: '/seasons',
     hint: '/v1/seasons/{year}/teams',
     desc: 'Season hub: teams, schedule, date explorer'
-  }
+  },
+  { label: 'Compare', path: '/compare', hint: '/compare', desc: 'Side-by-side player and team comparisons' }
 ] as const;
 
 export type FeaturedQueryGroup = 'standard' | 'derived' | 'historical';
@@ -80,14 +81,9 @@ export const ALL_ENDPOINTS = [
   '/v1/meta'
 ] as const;
 
-export const SOURCE_COLORS: Record<string, string> = { lahman: '#3b82f6', retrosheet: '#10b981' };
-
-export type DatasetUiHints = { href?: string; tooltip?: string };
+export type DatasetUiHints = { tooltip?: string };
 
 export const DATASET_UI_HINTS: Record<string, DatasetUiHints> = {
-  fangraphs_constants: {
-    href: 'https://www.fangraphs.com/tools/guts',
-    tooltip: 'FanGraphs Guts constants used for advanced stat calculations.'
-  },
+  fangraphs_constants: { tooltip: 'FanGraphs Guts constants used for advanced stat calculations.' },
   salary_summary: { tooltip: 'Enriched data: normalized salary rollups derived from multiple salary inputs.' }
 };
