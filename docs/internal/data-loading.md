@@ -149,6 +149,30 @@ Operational guidance:
 - Use `baseball-etl fetch chadwick --force` when you intentionally refresh `people.csv` from upstream.
 - Prune transient ETL artifacts periodically with `baseball-etl cleanup retrosheet` to keep disk usage bounded.
 
+## Stale Data Recovery
+
+If validation fails due to stale/incomplete local source files, recover in this order:
+
+1. Targeted refresh:
+
+```bash
+<BASEBALL_ETL> fetch retrosheet --force --years 2022-2025
+<BASEBALL_ETL> load players
+<BASEBALL_ETL> run --profile dev --years 2022-2025
+<BASEBALL_ETL> validate --profile dev --years 2022-2025
+```
+
+2. If source state is broadly stale in Docker/Coolify:
+
+```bash
+docker compose stop app etl
+docker volume ls --format '{{.Name}}' | grep data_root
+docker volume rm <data_root_volume_name>
+docker compose up -d app etl
+```
+
+3. Re-run ETL + maintenance + validate for your slice.
+
 ## Large Dataset Guidance
 
 Run heavy steps explicitly and in order:

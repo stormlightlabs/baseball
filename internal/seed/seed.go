@@ -878,6 +878,9 @@ func LoadRetrosheetPlayers(ctx context.Context, database *db.DB, csvPath string)
 		}
 
 		rows = tag.RowsAffected()
+		if rows == 0 {
+			return fmt.Errorf("failed to copy data: allplayers.csv contains no player rows")
+		}
 
 		_, err = pgxConn.Exec(connCtx, `
 			INSERT INTO retrosheet_players (

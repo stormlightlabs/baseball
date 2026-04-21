@@ -58,6 +58,8 @@ services:
       - data_root:/home/app/data
     entrypoint: ["/usr/local/bin/baseball-etl"]
     command: ["worker"]
+    healthcheck:
+      disable: true
     mem_limit: 900m
     cpus: 1.0
     pids_limit: 256

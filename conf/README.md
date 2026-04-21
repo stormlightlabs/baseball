@@ -84,12 +84,36 @@ docker compose exec etl baseball-etl fetch negroleagues
 If `data_root` already exists and is empty/stale, recreate that volume to
 re-seed from the latest image snapshot before starting services.
 
-If your data root is mounted outside the default path:
+### Stale Data Recovery
 
-```bash
-docker compose exec etl baseball-etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
-docker compose exec etl baseball-etl validate --profile dev --years 2022-2025 --data-root /path/to/baseball-data
-```
+If ETL validation fails due to stale or incomplete local source files (for example `retrosheet_players` empty), recover in this order:
+
+1) Targeted Retrosheet refresh + player reload:
+
+    ```bash
+    docker compose exec etl baseball-etl fetch retrosheet --force --years 2022-2025
+    docker compose exec etl baseball-etl load players
+    docker compose exec etl baseball-etl run --profile prod --years 2022-2025
+    docker compose exec etl baseball-etl validate --profile prod --years 2022-2025
+    ```
+
+2) If broader source state is stale, recreate only the `data_root` volume (do not remove Postgres volume):
+
+    ```bash
+    docker compose stop app etl
+    docker volume ls --format '{{.Name}}' | grep data_root
+    docker volume rm <data_root_volume_name>
+    docker compose up -d app etl
+    ```
+
+3) Re-run ETL + validation.
+
+    If your data root is mounted outside the default path:
+
+    ```bash
+    docker compose exec etl baseball-etl run --profile dev --years 2022-2025 --data-root /path/to/baseball-data
+    docker compose exec etl baseball-etl validate --profile dev --years 2022-2025 --data-root /path/to/baseball-data
+    ```
 
 First-time full historical setup (production profile):
 

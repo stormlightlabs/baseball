@@ -2,6 +2,7 @@ package seed
 
 import (
 	"archive/zip"
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -164,8 +165,10 @@ func EnsureRetrosheetPlayersCSV(dataDir string) (string, error) {
 	}
 
 	csvPath := filepath.Join(dataDir, "allplayers.csv")
-	if _, err := os.Stat(csvPath); err == nil {
+	if hasRows, err := csvHasDataRows(csvPath); err == nil && hasRows {
 		return csvPath, nil
+	} else if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return "", fmt.Errorf("failed to inspect allplayers.csv at %s: %w", csvPath, err)
 	}
 
 	zipPath := filepath.Join(dataDir, "allplayers.zip")
@@ -176,8 +179,41 @@ func EnsureRetrosheetPlayersCSV(dataDir string) (string, error) {
 	if err := extractZipEntry(zipPath, "allplayers.csv", csvPath); err != nil {
 		return "", err
 	}
+	hasRows, err := csvHasDataRows(csvPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to inspect extracted allplayers.csv at %s: %w", csvPath, err)
+	}
+	if !hasRows {
+		return "", fmt.Errorf("allplayers.csv at %s has no data rows", csvPath)
+	}
 
 	return csvPath, nil
+}
+
+func csvHasDataRows(path string) (bool, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	if !scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+
+	for scanner.Scan() {
+		if strings.TrimSpace(scanner.Text()) != "" {
+			return true, nil
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return false, err
+	}
+	return false, nil
 }
 
 // ExtractBiodataArchive extracts biodata CSV files into a temporary directory.

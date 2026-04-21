@@ -78,12 +78,14 @@ Path should be relative to /v1/ (e.g., 'players?name=ruth' or 'teams/BOS?year=20
 
 // ServerHealthCmd creates the health command
 func ServerHealthCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "health",
 		Short: "Check server health",
 		Long:  "Perform health check on the running API server.",
 		RunE:  checkHealth,
 	}
+	cmd.Flags().Bool("ready", false, "Check readiness at /v1/ready instead of liveness at /v1/health")
+	return cmd
 }
 
 // ServerRoutesCmd creates the routes command
@@ -166,7 +168,12 @@ func fetchEndpoint(cmd *cobra.Command, args []string) error {
 func checkHealth(cmd *cobra.Command, args []string) error {
 	echo.Header("Health Check")
 
-	serverURL := "http://localhost:8080/v1/ready"
+	readyCheck, _ := cmd.Flags().GetBool("ready")
+	path := "/v1/health"
+	if readyCheck {
+		path = "/v1/ready"
+	}
+	serverURL := "http://localhost:8080" + path
 	echo.Infof("Checking: %s", serverURL)
 	echo.Info("")
 
@@ -190,11 +197,15 @@ func checkHealth(cmd *cobra.Command, args []string) error {
 	}
 
 	if resp.StatusCode == http.StatusOK {
-		echo.Successf("✓ Server is ready (Status: %s)", resp.Status)
+		if readyCheck {
+			echo.Successf("✓ Server is ready (Status: %s)", resp.Status)
+		} else {
+			echo.Successf("✓ Server is healthy (Status: %s)", resp.Status)
+		}
 		return nil
 	}
 
-	if resp.StatusCode == http.StatusServiceUnavailable {
+	if readyCheck && resp.StatusCode == http.StatusServiceUnavailable {
 		return fmt.Errorf("error: server is live but not ready: %s", resp.Status)
 	}
 
