@@ -1367,7 +1367,6 @@
             API docs
           </a>
         </div>
-        <p class="mb-3 font-mono text-[0.68rem] text-muted">Provider: Big Fly</p>
 
         {#if parkFactorsError}
           <p

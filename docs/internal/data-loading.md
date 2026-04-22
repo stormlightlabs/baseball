@@ -32,10 +32,12 @@ Execution should flow through one queue consumer (`worker`):
 
 - `<BASEBALL_ETL> worker --max-active-jobs <n> --poll-interval <dur>`
   - long-lived consumer, executes queued ETL jobs
-- `<BASEBALL_ETL> run --profile <dev|prod> --years <scope> [--year-batch-size <n>] [--enqueue-only=<bool>]`
+- `<BASEBALL_ETL> run --profile <dev|prod|current-season> --years <scope> [--year-batch-size <n>] [--enqueue-only=<bool>]`
   - enqueue ingestion jobs (default enqueue-only)
 - `<BASEBALL_ETL> maintenance --profile <dev|prod> --years <scope> --mv-refresh-mode <auto|non_concurrent> [--enqueue-only=<bool>]`
   - enqueue maintenance jobs; use `--enqueue-only=true` for production-like operation so maintenance also runs in the main worker loop
+- `<BASEBALL_ETL> cron [--schedule <expr>|--schedule <sync_type=expr>] [--schedule-config <path>] [--disable-scheduler]`
+  - scheduler+worker process for `current-season-sync` queue jobs
 
 Current-season cron model from `docs/specs/current.md`:
 
@@ -43,7 +45,9 @@ Current-season cron model from `docs/specs/current.md`:
 - Cron enqueues jobs and should not introduce a separate execution path.
 - Scheduled jobs are still processed by the worker loop.
 - Cron should run alongside the worker in the same process/container when enabled.
-- Use cron settings/flags to enable or disable scheduled task registration without changing worker-loop ownership of execution.
+- `--schedule` supports `<expr>` (defaults `sync_type=all`) or `<sync_type=expr>`.
+- Supported sync types: `all`, `stats`, `standings`, `schedule`, `rosters`.
+- Queue de-dup skips new ticks while a matching `profile + sync_type + season` job is pending.
 
 ## Primary Operational Flow
 
@@ -137,6 +141,68 @@ curl http://localhost:8080/v1/meta/datasets?strict=true
 curl http://localhost:8080/v1/health
 ```
 
+### 10) Backfill current year after historical load (no full reload)
+
+Use this when Lahman/Retrosheet history is already loaded and you only need the current-season bridge tables populated.
+
+1. Ensure migration `015_current_season.sql` is applied:
+
+   ```bash
+   <BASEBALL> db migrate
+   ```
+
+2. Run an on-demand `current-season-sync` job:
+
+   This refreshes current-season tables up to the latest upstream MLB API state (including games through today) without requiring cron.
+
+   - If worker is already running:
+
+     ```bash
+     <BASEBALL_ETL> run --profile current-season --years <current_year>
+     ```
+
+   - If worker is not running:
+
+     ```bash
+     <BASEBALL_ETL> run --profile current-season --years <current_year> --enqueue-only=false
+     ```
+
+3. Enable recurring refresh with cron (recommended after baseline seed):
+
+   Add to your config file (for example `conf.toml`):
+
+   ```toml
+   [current_season]
+   enabled = true
+   season = 2026 # set to the season being backfilled
+   cron_stats = "0 */4 * * *"
+   cron_standings = "0 * * * *"
+   cron_schedule = "0 6 * * *"
+   cron_rosters = "0 8 * * *"
+   active_window = "03-20/11-15"
+   ```
+
+   Start scheduler+worker:
+
+   ```bash
+   <BASEBALL_ETL> cron --config conf.toml --profile current-season
+   ```
+
+4. Verify current-season backfill:
+
+   ```bash
+   <BASEBALL_ETL> jobs ls --job-type current-season-sync --limit 10
+   curl http://localhost:8080/v1/meta/datasets
+   curl http://localhost:8080/v1/meta/readiness
+   ```
+
+Notes:
+
+- This path does not require re-running full historical ETL.
+- Re-running the same command is safe; current-season tables are updated via upserts.
+- API merges avoid duplicate season rows when Lahman already has that season.
+- Off-season handoff is still manual; no `baseball-etl current-season handoff` subcommand yet.
+
 ## Narrow Slice Quickstart (Local)
 
 Use this when you want production-like behavior with a bounded local scope.
@@ -183,7 +249,7 @@ If validation fails due to stale/incomplete local source files, recover in this 
 
    ```bash
    <BASEBALL_ETL> fetch retrosheet --force --years 2022-2025
-   <BASEBALL_ETL> load players
+   <BASEBALL_ETL> load retrosheet players
    <BASEBALL_ETL> run --profile dev --years 2022-2025
    <BASEBALL_ETL> validate --profile dev --years 2022-2025
    ```
@@ -212,7 +278,7 @@ Run heavy steps explicitly and in order:
 Queue and batching guidance:
 
 - keep one active ETL run at a time on shared VMs
-- keep one active ETL run at a time on shared VMs (`--max-active-jobs=1`)
+- keep `--max-active-jobs=1` on shared VMs
 - keep queue depth bounded (`--max-queued-jobs`, default 128)
 - split full-history windows into smaller year batches
 - run maintenance once per scoped window (not once per batch)
