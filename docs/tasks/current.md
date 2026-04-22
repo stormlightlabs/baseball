@@ -27,15 +27,15 @@ Acceptance:
 
 ## Phase 1: Cron Scheduler in ETL Binary
 
-- [ ] Add `robfig/cron/v3` dependency
-- [ ] Create `internal/cli/etl_cron.go`:
+- [x] Add `robfig/cron/v3` dependency
+- [x] Create `internal/cli/etl_cron.go`:
   - `EtlCronCmd()` → `baseball-etl cron`
-  - Flags: `--schedule`, `--profile`, `--config` (TOML schedule file)
+  - Flags: `--schedule`, `--profile`, `--config` (global config), `--schedule-config` (optional dedicated TOML schedule file), `--disable-scheduler`
   - Starts embedded cron scheduler + worker loop in same process
   - Scheduler enqueues `current-season-sync` jobs into `etl_jobs` via existing `EnqueueETLJob()`
   - De-duplication guard: skip enqueue if a job of same type is already queued/running
-- [ ] Add `EtlCronCmd()` to `ETLCmd()` subcommand tree in `internal/cli/etl.go`
-- [ ] Add TOML config parsing for multi-schedule support:
+- [x] Add `EtlCronCmd()` to `ETLCmd()` subcommand tree in `internal/cli/etl.go`
+- [x] Add TOML config parsing for multi-schedule support:
 
   ```toml
   [current_season]
@@ -48,14 +48,14 @@ Acceptance:
   active_window = "03-20/11-15"
   ```
 
-- [ ] Wire active-window check: cron ticks outside the configured date range are no-ops
-- [ ] Add graceful shutdown (context cancellation stops cron + drains active job)
+- [x] Wire active-window check: cron ticks outside the configured date range are no-ops
+- [x] Add graceful shutdown (context cancellation stops cron + drains active job)
 
 Acceptance:
 
-- [ ] `baseball-etl cron --schedule "*/5 * * * *" --profile dev` enqueues a job every 5 minutes
-- [ ] Duplicate enqueue is skipped when a job is already queued
-- [ ] `Ctrl+C` shuts down cleanly
+- [x] `baseball-etl cron --schedule "*/5 * * * *" --profile dev` enqueues a job every 5 minutes
+- [x] Duplicate enqueue is skipped when a job is already queued
+- [x] `Ctrl+C` shuts down cleanly
 
 ## Phase 2: Current-Season Sync Job
 
@@ -104,11 +104,11 @@ Acceptance:
   - Include `last_updated` from `fetched_at`
 - [ ] Add swagger annotations
 
-### Schedule/Games Merge
+### Schedule/Games
 
 - [ ] Modify `GET /v1/seasons/{year}/schedule`:
-  - For current season: reads from `current_season.games`
-  - Merge with any Retrosheet games if partial overlap exists
+  - For current season: reads exclusively from `current_season.games` (no Retrosheet merge)
+  - Disallow mixed-source schedule payloads for current-season requests
 - [ ] Modify `GET /v1/games` filter:
   - Accept current-season `game_pk` as game IDs for games without Retrosheet IDs
 
@@ -124,6 +124,7 @@ Acceptance:
 - [ ] `GET /v1/players/{id}/stats/batting` returns current-season row for an active player
 - [ ] `GET /v1/seasons/2026/leaders/batting` returns ranked current-season leaders
 - [ ] `GET /v1/standings?season=2026` returns division standings
+- [ ] `GET /v1/seasons/2026/schedule` responses contain no Retrosheet/current-season mixed payloads
 - [ ] `GET /v1/meta/datasets` shows `current_season` table freshness
 - [ ] Swagger docs are updated
 

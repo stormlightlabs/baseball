@@ -35,6 +35,7 @@ func ETLCmd() *cobra.Command {
 	cmd.AddCommand(EtlStatusCmd())
 	cmd.AddCommand(EtlRunCmd())
 	cmd.AddCommand(EtlMaintenanceCmd())
+	cmd.AddCommand(EtlCronCmd())
 	cmd.AddCommand(EtlWorkerCmd())
 	cmd.AddCommand(EtlValidateCmd())
 	return cmd
@@ -147,7 +148,7 @@ func addPipelineFlags(cmd *cobra.Command, opts *pipelineCLIOptions) {
 	cmd.Flags().StringVar(&opts.mode, "mode", string(seed.PipelineModeIncremental), "Pipeline execution mode (incremental|full)")
 	cmd.Flags().StringVar(&opts.years, "years", "", "Comma-separated years, ranges, or 'all', e.g. 2022,2023-2025,all")
 	cmd.Flags().StringVar(&opts.era, "era", "", "Comma-separated era names to include (fed,nlg,boomer,pitcher,turf,steroid,moneyball,statcast,modern)")
-	cmd.Flags().StringVar(&opts.jobType, "job-type", "auto", "Worker job type (auto|full-run|yearly-sync|validate-only|cleanup-only|maintenance)")
+	cmd.Flags().StringVar(&opts.jobType, "job-type", "auto", "Worker job type (auto|full-run|yearly-sync|validate-only|cleanup-only|maintenance|current-season-sync)")
 	cmd.Flags().IntVar(&opts.priority, "priority", 50, "Queue priority (lower runs first)")
 	cmd.Flags().IntVar(&opts.maxActiveJobs, "max-active-jobs", 1, "Maximum active ETL jobs allowed concurrently")
 	cmd.Flags().IntVar(&opts.maxQueuedJobs, "max-queued-jobs", 128, "Maximum queued+active ETL jobs before enqueue is rejected")

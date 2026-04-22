@@ -59,3 +59,7 @@ Remove `core.MLBTeamCrosswalk* structs` if no longer needed anywhere.
 Repository-level unit tests for crosswalk query ambiguity behavior beyond API integration tests.
 
 Slog for prod, "pretty" charmbracelet/log for dev
+
+Split package cli into packages server & etl within the existing cli directory. db commands
+should go in cli/shared (package shared), such that both binaries can access db management
+commands.

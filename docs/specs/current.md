@@ -165,9 +165,10 @@ Current-season data merges into existing endpoints transparently:
 | `GET /v1/stats/batting?season={current}` | Falls through to `current_season.batting` when requested season has no Lahman data      |
 | `GET /v1/seasons/{year}/leaders/*`       | Queries `current_season.batting`/`pitching` for the current year's leaderboards         |
 | `GET /v1/standings`                      | New endpoint backed by `current_season.standings`                                       |
-| `GET /v1/seasons/{year}/schedule`        | Merges Retrosheet games (historical) with `current_season.games` (current)              |
+| `GET /v1/seasons/{year}/schedule`        | For current season, reads exclusively from `current_season.games` (no Retrosheet merge) |
 
 **Source attribution:** API responses include a `source` field (`"retrosheet"`, `"lahman"`, or `"current_season"`) so clients can distinguish data provenance.
+**Schedule payload guardrail:** current-season schedule endpoints must not return mixed-source payloads. A response for the active season is sourced entirely from `current_season.games`, while historical season responses continue to use historical sources.
 
 ### Lifecycle: Season Handoff
 

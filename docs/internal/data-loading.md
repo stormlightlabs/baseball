@@ -16,9 +16,9 @@ A complete slice means:
 
 ## Command Prefixes
 
-| Environment | Prefix |
-| --- | --- |
-| Local | `./tmp/baseball` (db/server), `./tmp/baseball-etl` (etl) |
+| Environment    | Prefix                                                                                       |
+| -------------- | -------------------------------------------------------------------------------------------- |
+| Local          | `./tmp/baseball` (db/server), `./tmp/baseball-etl` (etl)                                     |
 | Docker/Coolify | `docker compose exec app baseball` (db/server), `docker compose exec etl baseball-etl` (etl) |
 
 Examples below use:
@@ -42,6 +42,8 @@ Current-season cron model from `docs/specs/current.md`:
 - `baseball-etl cron` is a scheduling surface.
 - Cron enqueues jobs and should not introduce a separate execution path.
 - Scheduled jobs are still processed by the worker loop.
+- Cron should run alongside the worker in the same process/container when enabled.
+- Use cron settings/flags to enable or disable scheduled task registration without changing worker-loop ownership of execution.
 
 ## Primary Operational Flow
 
@@ -179,21 +181,21 @@ If validation fails due to stale/incomplete local source files, recover in this 
 
 1. Targeted refresh:
 
-    ```bash
-    <BASEBALL_ETL> fetch retrosheet --force --years 2022-2025
-    <BASEBALL_ETL> load players
-    <BASEBALL_ETL> run --profile dev --years 2022-2025
-    <BASEBALL_ETL> validate --profile dev --years 2022-2025
-    ```
+   ```bash
+   <BASEBALL_ETL> fetch retrosheet --force --years 2022-2025
+   <BASEBALL_ETL> load players
+   <BASEBALL_ETL> run --profile dev --years 2022-2025
+   <BASEBALL_ETL> validate --profile dev --years 2022-2025
+   ```
 
 2. If source state is broadly stale in Docker/Coolify:
 
-    ```bash
-    docker compose stop app etl
-    docker volume ls --format '{{.Name}}' | grep data_root
-    docker volume rm <data_root_volume_name>
-    docker compose up -d app etl
-    ```
+   ```bash
+   docker compose stop app etl
+   docker volume ls --format '{{.Name}}' | grep data_root
+   docker volume rm <data_root_volume_name>
+   docker compose up -d app etl
+   ```
 
 3. Re-run ETL + maintenance enqueue + validate for your slice.
 

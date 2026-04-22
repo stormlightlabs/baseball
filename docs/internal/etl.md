@@ -26,7 +26,8 @@ Cron model (target for `docs/specs/current.md` Phase 1):
 
 - `baseball-etl cron` is a scheduler surface that enqueues jobs on cadence.
 - Cron does not get a separate execution path; scheduled jobs are still processed by the worker loop.
-- If cron is run in a combined process, it should still reuse the same worker loop implementation used by `baseball-etl worker`.
+- Cron should run alongside the worker in the same process/container when enabled.
+- `baseball-etl cron` should only register/disable cron tasks; job execution remains in the worker loop implementation used by `baseball-etl worker`.
 
 ## Concurrency semantics
 

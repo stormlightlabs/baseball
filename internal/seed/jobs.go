@@ -109,6 +109,8 @@ func ParseETLJobType(raw string, mode PipelineMode, years []int) (db.ETLJobType,
 		return db.ETLJobTypeCleanup, nil
 	case string(db.ETLJobTypeMaintenance):
 		return db.ETLJobTypeMaintenance, nil
+	case string(db.ETLJobTypeCurrentSync):
+		return db.ETLJobTypeCurrentSync, nil
 	default:
 		return "", fmt.Errorf("invalid job type %q", raw)
 	}
@@ -325,6 +327,12 @@ func executeETLJob(
 			return 0, nil, "db_write", false, err
 		}
 		return int64(len(cleanupResult.Removed)), nil, "", false, nil
+	case db.ETLJobTypeCurrentSync:
+		// Phase 1 scaffolds scheduler/queue plumbing. Phase 2 wires full sync handlers.
+		syncType := stringFromAny(job.Scope["sync_type"])
+		season := intFromAny(job.Scope["season"])
+		echo.Infof("current-season-sync placeholder executed job=%d sync_type=%s season=%d", job.ID, syncType, season)
+		return 0, nil, "", false, nil
 	case db.ETLJobTypeFullRun, db.ETLJobTypeYearlySync:
 		opts, err := pipelineOptionsFromJob(job)
 		if err != nil {

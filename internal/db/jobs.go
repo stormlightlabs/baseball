@@ -335,6 +335,25 @@ func (db *DB) ListETLJobs(ctx context.Context, filter ETLJobListFilter) ([]ETLJo
 	return jobs, nil
 }
 
+func (db *DB) HasPendingETLJob(ctx context.Context, jobType ETLJobType, profile, syncType, season string) (bool, error) {
+	var exists bool
+	err := db.QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			FROM etl_jobs
+			WHERE job_type = $1
+			  AND status IN ('queued', 'started', 'running', 'retry_wait')
+			  AND (NULLIF($2, '') IS NULL OR profile = $2)
+			  AND (NULLIF($3, '') IS NULL OR COALESCE(scope->>'sync_type', '') = $3)
+			  AND (NULLIF($4, '') IS NULL OR COALESCE(scope->>'season', '') = $4)
+		)
+	`, jobType, strings.TrimSpace(profile), strings.TrimSpace(syncType), strings.TrimSpace(season)).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to inspect pending ETL jobs: %w", err)
+	}
+	return exists, nil
+}
+
 func (db *DB) MarkETLJobRunning(ctx context.Context, jobID int64) error {
 	_, err := db.ExecContext(ctx, `
 		UPDATE etl_jobs
