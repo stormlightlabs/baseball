@@ -7,6 +7,7 @@ export type LeaderCategory = {
   label: string;
   group: LeaderGroup;
   statKey: string;
+  localStatKey: string;
   descending: boolean;
   fallbackDisplay: string;
 };
@@ -17,20 +18,101 @@ export type LeaderRow = {
   teamAbbr: string;
   displayValue: string;
   playerMlbID?: number;
+  localPlayerID?: string;
   group: LeaderGroup;
 };
 
 export const LEADER_CATEGORIES: LeaderCategory[] = [
-  { id: 'HR', label: 'HR', group: 'hitting', statKey: 'homeRuns', descending: true, fallbackDisplay: '0' },
-  { id: 'AVG', label: 'AVG', group: 'hitting', statKey: 'avg', descending: true, fallbackDisplay: '.000' },
-  { id: 'OPS', label: 'OPS', group: 'hitting', statKey: 'ops', descending: true, fallbackDisplay: '.000' },
-  { id: 'RBI', label: 'RBI', group: 'hitting', statKey: 'rbi', descending: true, fallbackDisplay: '0' },
-  { id: 'SB', label: 'SB', group: 'hitting', statKey: 'stolenBases', descending: true, fallbackDisplay: '0' },
-  { id: 'ERA', label: 'ERA', group: 'pitching', statKey: 'era', descending: false, fallbackDisplay: '0.00' },
-  { id: 'SO', label: 'SO', group: 'pitching', statKey: 'strikeOuts', descending: true, fallbackDisplay: '0' },
-  { id: 'W', label: 'W', group: 'pitching', statKey: 'wins', descending: true, fallbackDisplay: '0' },
-  { id: 'SV', label: 'SV', group: 'pitching', statKey: 'saves', descending: true, fallbackDisplay: '0' },
-  { id: 'WHIP', label: 'WHIP', group: 'pitching', statKey: 'whip', descending: false, fallbackDisplay: '0.00' }
+  {
+    id: 'HR',
+    label: 'HR',
+    group: 'hitting',
+    statKey: 'homeRuns',
+    localStatKey: 'hr',
+    descending: true,
+    fallbackDisplay: '0'
+  },
+  {
+    id: 'AVG',
+    label: 'AVG',
+    group: 'hitting',
+    statKey: 'avg',
+    localStatKey: 'avg',
+    descending: true,
+    fallbackDisplay: '.000'
+  },
+  {
+    id: 'OPS',
+    label: 'OPS',
+    group: 'hitting',
+    statKey: 'ops',
+    localStatKey: 'ops',
+    descending: true,
+    fallbackDisplay: '.000'
+  },
+  {
+    id: 'RBI',
+    label: 'RBI',
+    group: 'hitting',
+    statKey: 'rbi',
+    localStatKey: 'rbi',
+    descending: true,
+    fallbackDisplay: '0'
+  },
+  {
+    id: 'SB',
+    label: 'SB',
+    group: 'hitting',
+    statKey: 'stolenBases',
+    localStatKey: 'sb',
+    descending: true,
+    fallbackDisplay: '0'
+  },
+  {
+    id: 'ERA',
+    label: 'ERA',
+    group: 'pitching',
+    statKey: 'era',
+    localStatKey: 'era',
+    descending: false,
+    fallbackDisplay: '0.00'
+  },
+  {
+    id: 'SO',
+    label: 'SO',
+    group: 'pitching',
+    statKey: 'strikeOuts',
+    localStatKey: 'so',
+    descending: true,
+    fallbackDisplay: '0'
+  },
+  {
+    id: 'W',
+    label: 'W',
+    group: 'pitching',
+    statKey: 'wins',
+    localStatKey: 'w',
+    descending: true,
+    fallbackDisplay: '0'
+  },
+  {
+    id: 'SV',
+    label: 'SV',
+    group: 'pitching',
+    statKey: 'saves',
+    localStatKey: 'sv',
+    descending: true,
+    fallbackDisplay: '0'
+  },
+  {
+    id: 'WHIP',
+    label: 'WHIP',
+    group: 'pitching',
+    statKey: 'whip',
+    localStatKey: 'whip',
+    descending: false,
+    fallbackDisplay: '0.00'
+  }
 ];
 
 function normalizeRateDisplay(value: string): string {
@@ -141,6 +223,68 @@ export function buildLeaderBoardByCategory(
         teamAbbr: row.teamAbbr,
         displayValue: row.displayValue,
         playerMlbID: row.playerMlbID,
+        group: row.group
+      }));
+  }
+
+  return categoryRows;
+}
+
+type LocalLeaderLike = Record<string, unknown> & { player_id?: unknown; team_id?: unknown };
+
+function localStatValueForSort(stat: Record<string, unknown>, key: string): number {
+  return toNumber(stat[key]) ?? Number.NaN;
+}
+
+function localTeamAbbr(teamID: unknown): string {
+  const team = toString(teamID);
+  if (!team) return '—';
+  return team.toUpperCase();
+}
+
+export function buildLocalLeaderBoardByCategory(
+  hittingRows: LocalLeaderLike[],
+  pitchingRows: LocalLeaderLike[],
+  size = 5
+): Record<LeaderCategory['id'], LeaderRow[]> {
+  const categoryRows = {} as Record<LeaderCategory['id'], LeaderRow[]>;
+
+  for (const category of LEADER_CATEGORIES) {
+    const source = category.group === 'hitting' ? hittingRows : pitchingRows;
+    const rows = source
+      .map((entry) => {
+        const stat = entry as Record<string, unknown>;
+        const sortValue = localStatValueForSort(stat, category.localStatKey);
+        if (Number.isNaN(sortValue)) return null;
+
+        const localPlayerID = toString(entry.player_id);
+        if (!localPlayerID) return null;
+
+        return {
+          sortValue,
+          localPlayerID,
+          teamAbbr: localTeamAbbr(entry.team_id),
+          displayValue: displayForStat(stat[category.localStatKey], category.fallbackDisplay),
+          group: category.group
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row != null);
+
+    rows.sort((a, b) => {
+      const delta = a.sortValue - b.sortValue;
+      if (delta === 0) return a.localPlayerID.localeCompare(b.localPlayerID);
+      if (category.descending) return delta > 0 ? -1 : 1;
+      return delta < 0 ? -1 : 1;
+    });
+
+    categoryRows[category.id] = rows
+      .slice(0, size)
+      .map((row, index) => ({
+        rank: index + 1,
+        playerName: row.localPlayerID,
+        teamAbbr: row.teamAbbr,
+        displayValue: row.displayValue,
+        localPlayerID: row.localPlayerID,
         group: row.group
       }));
   }

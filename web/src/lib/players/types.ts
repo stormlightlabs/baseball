@@ -59,6 +59,8 @@ export type BattingSeason = {
   team?: string;
   team_id?: string;
   team_name?: string;
+  source?: string;
+  fetched_at?: string;
   g: number;
   ab: number;
   h: number;
@@ -76,6 +78,8 @@ export type PitchingSeason = {
   team?: string;
   team_id?: string;
   team_name?: string;
+  source?: string;
+  fetched_at?: string;
   g: number;
   gs?: number;
   w: number;

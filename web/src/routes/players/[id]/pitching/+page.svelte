@@ -3,6 +3,7 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { apiFetch } from '$lib/api';
+  import { formatRelativeTimeFromNow } from '$lib/common/time';
   import Chart from '$lib/components/Chart.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import SortableTable from '$lib/components/SortableTable.svelte';
@@ -29,9 +30,16 @@
       const team = season.team?.trim() ?? '';
       const teamDisplay = team || teamId || '?';
       const era = eraForYear(season.year);
+      const source = season.source?.trim() ?? '';
+      const isCurrentSeason = source === 'current_season';
+      const updatedRelative = isCurrentSeason ? formatRelativeTimeFromNow(season.fetched_at) : null;
+      const yearLabel = isCurrentSeason ? `${season.year} (current)` : String(season.year);
+      const yearTooltip = updatedRelative ? `Updated ${updatedRelative}` : undefined;
 
       return {
         ...season,
+        year_label: yearLabel,
+        year_tooltip: yearTooltip,
         team: teamDisplay,
         team_display: teamDisplay,
         team_lookup: teamId || teamDisplay,
@@ -42,7 +50,13 @@
   );
 
   const pitchingColumns = [
-    { key: 'year', label: 'Year', sortable: true, href: (value: unknown) => `/seasons?year=${value}` },
+    {
+      key: 'year_label',
+      label: 'Year',
+      sortable: true,
+      href: (_value: unknown, row: Record<string, unknown>) => `/seasons?year=${row.year ?? ''}`,
+      tooltip: (_value: unknown, row: Record<string, unknown>) => String(row.year_tooltip ?? '')
+    },
     {
       key: 'team_display',
       label: 'Team',

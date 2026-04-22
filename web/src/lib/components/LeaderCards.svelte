@@ -6,21 +6,52 @@
   import { EP } from '$lib/endpoints';
   import {
     buildLeaderBoardByCategory,
+    buildLocalLeaderBoardByCategory,
     LEADER_CATEGORIES,
     normalizeMlbTeamsAbbrByIDFromDetails,
     type LeaderCategory,
     type LeaderRow
   } from '$lib/home/leaders';
   import { onMount } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
 
   type CategoryID = LeaderCategory['id'];
+  type SourceMode = 'local' | 'mlb';
+
+  type LocalBattingLeader = {
+    player_id?: string;
+    team_id?: string;
+    hr?: number;
+    avg?: number;
+    ops?: number;
+    rbi?: number;
+    sb?: number;
+  };
+
+  type LocalPitchingLeader = {
+    player_id?: string;
+    team_id?: string;
+    era?: number;
+    so?: number;
+    w?: number;
+    sv?: number;
+    whip?: number;
+  };
+
+  type SeasonLeadersPayload<T> = { leaders?: T[] };
+
+  type PlayerHref = `/players/${string}/batting` | `/players/${string}/pitching` | `/players?${string}`;
 
   const CURRENT_SEASON = new Date().getFullYear();
+  const MLB_STATS_HINT = `/v1${EP.mlbStats}?stats=season&group={hitting|pitching}&season=${CURRENT_SEASON}&playerPool=qualified&include=details`;
+  const LOCAL_STATS_HINT = `/v1${EP.seasonLeadersBatting(CURRENT_SEASON)} + /v1${EP.seasonLeadersPitching(CURRENT_SEASON)}`;
 
   let loading = $state(true);
   let refreshing = $state(false);
   let errorMessage = $state<string | null>(null);
   let activeCategory = $state<CategoryID>('HR');
+  let sourceMode = $state<SourceMode>('local');
+  let localFallbackUsed = $state(false);
 
   let board = $state<Record<CategoryID, LeaderRow[]>>({
     HR: [],
@@ -34,15 +65,11 @@
     SV: [],
     WHIP: []
   });
+
   let crosswalkByMLBID = $state<Record<number, string>>({});
 
-  const category = $derived.by(
-    () => LEADER_CATEGORIES.find((entry) => entry.id === activeCategory) ?? LEADER_CATEGORIES[0]
-  );
   const rows = $derived(board[activeCategory] ?? []);
-  const activeStatsEndpoint = $derived(
-    `/v1${EP.mlbStats}?stats=season&group=${category.group}&season=${CURRENT_SEASON}&playerPool=qualified&include=details`
-  );
+  const activeStatsEndpoint = $derived(sourceMode === 'local' ? LOCAL_STATS_HINT : MLB_STATS_HINT);
 
   onMount(() => {
     void refreshLeaders('initial');
@@ -56,32 +83,20 @@
     }
 
     try {
-      const [hittingPayload, pitchingPayload] = await Promise.all([
-        apiFetch<unknown>(EP.mlbStats, {
-          stats: 'season',
-          group: 'hitting',
-          season: CURRENT_SEASON,
-          playerPool: 'qualified',
-          include: 'details'
-        }),
-        apiFetch<unknown>(EP.mlbStats, {
-          stats: 'season',
-          group: 'pitching',
-          season: CURRENT_SEASON,
-          playerPool: 'qualified',
-          include: 'details'
-        })
-      ]);
+      let localLoaded = false;
+      try {
+        localLoaded = await refreshFromLocalLeaders();
+      } catch {
+        localLoaded = false;
+      }
 
-      const teamAbbrByID = {
-        ...normalizeMlbTeamsAbbrByIDFromDetails(hittingPayload),
-        ...normalizeMlbTeamsAbbrByIDFromDetails(pitchingPayload)
-      };
-      board = buildLeaderBoardByCategory(hittingPayload, pitchingPayload, teamAbbrByID, 5);
-      crosswalkByMLBID = {
-        ...extractPlayerCrosswalkByMLBID(hittingPayload),
-        ...extractPlayerCrosswalkByMLBID(pitchingPayload)
-      };
+      if (!localLoaded) {
+        localFallbackUsed = true;
+        await refreshFromMLBProxy();
+      } else {
+        localFallbackUsed = false;
+      }
+
       errorMessage = null;
     } catch (error) {
       const message = error instanceof Error && error.message ? error.message : 'Failed to load today’s leaders.';
@@ -92,21 +107,163 @@
     }
   }
 
+  async function refreshFromLocalLeaders(): Promise<boolean> {
+    const [battingPayload, pitchingPayload] = await Promise.all([
+      apiFetch<SeasonLeadersPayload<LocalBattingLeader>>(EP.seasonLeadersBatting(CURRENT_SEASON), {
+        stat: 'hr',
+        page: 1,
+        per_page: 3000
+      }),
+      apiFetch<SeasonLeadersPayload<LocalPitchingLeader>>(EP.seasonLeadersPitching(CURRENT_SEASON), {
+        stat: 'era',
+        page: 1,
+        per_page: 3000
+      })
+    ]);
+
+    const battingRows = battingPayload.leaders ?? [];
+    const pitchingRows = pitchingPayload.leaders ?? [];
+    if (battingRows.length === 0 && pitchingRows.length === 0) return false;
+
+    const localBoard = buildLocalLeaderBoardByCategory(
+      battingRows as Record<string, unknown>[],
+      pitchingRows as Record<string, unknown>[],
+      5
+    );
+
+    const hasRows = Object.values(localBoard).some((entries) => entries.length > 0);
+    if (!hasRows) return false;
+
+    const localIDs = new SvelteSet<string>();
+    for (const entries of Object.values(localBoard)) {
+      for (const row of entries) {
+        if (row.localPlayerID) {
+          localIDs.add(row.localPlayerID);
+        }
+      }
+    }
+
+    const localNames = await resolveLocalPlayerNames([...localIDs]);
+    board = mapLeaderNames(localBoard, localNames);
+    crosswalkByMLBID = {};
+    sourceMode = 'local';
+    return true;
+  }
+
+  async function refreshFromMLBProxy(): Promise<void> {
+    const [hittingPayload, pitchingPayload] = await Promise.all([
+      apiFetch<unknown>(EP.mlbStats, {
+        stats: 'season',
+        group: 'hitting',
+        season: CURRENT_SEASON,
+        playerPool: 'qualified',
+        include: 'details'
+      }),
+      apiFetch<unknown>(EP.mlbStats, {
+        stats: 'season',
+        group: 'pitching',
+        season: CURRENT_SEASON,
+        playerPool: 'qualified',
+        include: 'details'
+      })
+    ]);
+
+    const teamAbbrByID = {
+      ...normalizeMlbTeamsAbbrByIDFromDetails(hittingPayload),
+      ...normalizeMlbTeamsAbbrByIDFromDetails(pitchingPayload)
+    };
+
+    board = buildLeaderBoardByCategory(hittingPayload, pitchingPayload, teamAbbrByID, 5);
+    crosswalkByMLBID = {
+      ...extractPlayerCrosswalkByMLBID(hittingPayload),
+      ...extractPlayerCrosswalkByMLBID(pitchingPayload)
+    };
+    sourceMode = 'mlb';
+  }
+
+  function mapLeaderNames(
+    source: Record<CategoryID, LeaderRow[]>,
+    namesByLocalID: Record<string, string>
+  ): Record<CategoryID, LeaderRow[]> {
+    return {
+      HR: mapCategoryRows(source.HR, namesByLocalID),
+      AVG: mapCategoryRows(source.AVG, namesByLocalID),
+      OPS: mapCategoryRows(source.OPS, namesByLocalID),
+      RBI: mapCategoryRows(source.RBI, namesByLocalID),
+      SB: mapCategoryRows(source.SB, namesByLocalID),
+      ERA: mapCategoryRows(source.ERA, namesByLocalID),
+      SO: mapCategoryRows(source.SO, namesByLocalID),
+      W: mapCategoryRows(source.W, namesByLocalID),
+      SV: mapCategoryRows(source.SV, namesByLocalID),
+      WHIP: mapCategoryRows(source.WHIP, namesByLocalID)
+    };
+  }
+
+  function mapCategoryRows(rowsToMap: LeaderRow[], namesByLocalID: Record<string, string>): LeaderRow[] {
+    return rowsToMap.map((row) => {
+      if (!row.localPlayerID) return row;
+      const mapped = namesByLocalID[row.localPlayerID];
+      if (!mapped) return row;
+      return { ...row, playerName: mapped };
+    });
+  }
+
+  async function resolveLocalPlayerNames(localIDs: string[]): Promise<Record<string, string>> {
+    const namesByID: Record<string, string> = {};
+    if (localIDs.length === 0) return namesByID;
+
+    const lookups = await Promise.allSettled(
+      localIDs.map(async (playerID) => {
+        const payload = await apiFetch<unknown>(EP.player(playerID));
+        const root = toObject(payload);
+        const explicit = toString(root.name);
+        if (explicit && explicit.trim().length > 0) {
+          return { playerID, displayName: explicit.trim() };
+        }
+
+        const first = toString(root.first_name) ?? '';
+        const last = toString(root.last_name) ?? '';
+        const combined = `${first} ${last}`.trim();
+        if (combined.length > 0) {
+          return { playerID, displayName: combined };
+        }
+
+        return { playerID, displayName: playerID };
+      })
+    );
+
+    for (const entry of lookups) {
+      if (entry.status === 'fulfilled') {
+        namesByID[entry.value.playerID] = entry.value.displayName;
+      }
+    }
+
+    return namesByID;
+  }
+
   function categoryButtonClass(id: CategoryID): string {
     if (id === activeCategory) return 'bg-primary/20 text-primary';
     return 'text-muted hover:text-foreground';
   }
 
-  type PlayerHref = `/players/${string}/batting` | `/players/${string}/pitching` | `/players?${string}`;
-
   function playerHref(row: LeaderRow): PlayerHref {
-    const localID = row.playerMlbID != null ? crosswalkByMLBID[row.playerMlbID] : undefined;
+    const localID = row.localPlayerID?.trim();
     if (localID) {
+      const encoded = encodeURIComponent(localID);
       if (row.group === 'pitching') {
-        return `/players/${encodeURIComponent(localID)}/pitching`;
+        return `/players/${encoded}/pitching`;
       }
-      return `/players/${encodeURIComponent(localID)}/batting`;
+      return `/players/${encoded}/batting`;
     }
+
+    const crosswalkID = row.playerMlbID != null ? crosswalkByMLBID[row.playerMlbID] : undefined;
+    if (crosswalkID) {
+      if (row.group === 'pitching') {
+        return `/players/${encodeURIComponent(crosswalkID)}/pitching`;
+      }
+      return `/players/${encodeURIComponent(crosswalkID)}/batting`;
+    }
+
     return `/players?q=${encodeURIComponent(row.playerName)}`;
   }
 
@@ -190,8 +347,13 @@
         </li>
       {/each}
     </ul>
-    <p class="mt-2 text-xs text-muted">
-      Showing top 5 by {category?.label}. Player links resolve from MLBAM IDs via `/v1/meta/crosswalk/players`.
-    </p>
+
+    {#if sourceMode === 'local'}
+      <p class="mt-2 text-xs text-muted">Updated every 4h from local current-season leaders.</p>
+    {:else if localFallbackUsed}
+      <p class="mt-2 text-xs text-muted">Local leaders were empty. Showing live MLB proxy leaders.</p>
+    {:else}
+      <p class="mt-2 text-xs text-muted">Showing live leaders from MLB proxy.</p>
+    {/if}
   {/if}
 </LiveHomeCard>

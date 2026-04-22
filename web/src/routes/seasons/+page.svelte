@@ -11,6 +11,7 @@
   import EraDisclaimer from '$lib/components/EraDisclaimer.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
   import SortableTable from '$lib/components/SortableTable.svelte';
+  import StandingsPanel from '$lib/components/StandingsPanel.svelte';
   import { EP } from '$lib/endpoints';
   import { eraForYear, STATIC_ERAS, type Era } from '$lib/eras';
   import ThreeColLayout from '$lib/layouts/ThreeColLayout.svelte';
@@ -72,6 +73,7 @@
   const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
   const MAX_SCHEDULE_PAGES = 30;
+  const CURRENT_YEAR = new Date().getFullYear();
 
   let queryYear = $derived(intParam(page.url.searchParams, 'year', 0));
   let rawLeague = $derived(page.url.searchParams.get('league'));
@@ -146,6 +148,7 @@
   });
 
   const selectedYear = $derived(queryYear > 0 ? queryYear : latestAvailableYear);
+  const isCurrentSeason = $derived(selectedYear === CURRENT_YEAR);
   const selectedSeason = $derived(seasons.find((season) => season.year === selectedYear) ?? null);
   const selectedEra = $derived(eraForYear(selectedYear));
 
@@ -1144,6 +1147,14 @@
           </div>
         </div>
       </div>
+
+      {#if isCurrentSeason}
+        <div class="rounded-lg border border-primary/35 bg-primary/10 px-3 py-2 font-mono text-[0.72rem] text-primary">
+          Data refreshes every 4 hours for season stats. Standings and schedule update hourly.
+        </div>
+      {/if}
+
+      <StandingsPanel season={selectedYear} title="Standings" showEndpointHint={false} />
 
       <section class="rounded-lg border border-outline bg-crust p-4">
         <div class="mb-3 flex items-center justify-between gap-2">

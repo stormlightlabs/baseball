@@ -149,29 +149,29 @@ Ref designs: `docs/designs/current-standings.html`, `docs/designs/current-leader
 
 ### Standings
 
-- [ ] Add `/standings` route (or segment under `/teams`):
+- [x] Add `/standings` route (or segment under `/teams`):
   - Fetch `GET /api/v1/standings?season={current}`
   - Render division-grouped tables: Rank, Team, W, L, PCT, GB, WC GB, Streak, L10, Run Diff
   - Team names link to `/teams/[franchise_id]` with current season
   - Segment control: AL / NL / Both
   - "Updated {time}" footer from `last_updated`
-- [ ] Add standings link to home page and teams page nav
+- [x] Add standings link to home page and teams page nav
 
 ### Season Leaders (Local)
 
-- [ ] Update `LeaderCards` component to detect current season:
+- [x] Update `LeaderCards` component to detect current season:
   - When season matches current year, fetch from `/api/v1/seasons/{year}/leaders/*` (local data) instead of `/v1/mlb/stats`
   - Show "Updated every 4h" attribution instead of "Live from MLB"
   - Fallback to MLB proxy if local data is empty
 
 ### Player Current Season Badge
 
-- [ ] In player stats tables, add "current season" visual indicator for rows where `source = "current_season"`
-- [ ] Show `fetched_at` as "Updated {relative_time}" tooltip
+- [x] In player stats tables, add "current season" visual indicator for rows where `source = "current_season"`
+- [x] Show `fetched_at` as "Updated {relative_time}" tooltip
 
 ### Season 2026 Page
 
-- [ ] Ensure `/seasons/2026` route works with current-season data:
+- [x] Ensure `/seasons/2026` route works with current-season data:
   - Schedule calendar populated from `current_season.games`
   - Standings widget from `current_season.standings`
   - Leaders from `current_season.batting`/`pitching`
@@ -179,10 +179,10 @@ Ref designs: `docs/designs/current-standings.html`, `docs/designs/current-leader
 
 Acceptance:
 
-- [ ] Standings page renders with current-season data
-- [ ] Season leaders load from local data with update attribution
-- [ ] Player detail shows current-season stats with source badge
-- [ ] `/seasons/2026` is fully functional
+- [x] Standings page renders with current-season data
+- [x] Season leaders load from local data with update attribution
+- [x] Player detail shows current-season stats with source badge
+- [x] `/seasons/2026` is fully functional
 
 ## Phase 6: Mobile Updates
 

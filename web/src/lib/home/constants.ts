@@ -11,6 +11,12 @@ export const ENTITY_TYPES: EntityType[] = [
 export const QUICK_LINKS = [
   { label: 'Players', path: '/players', hint: '/v1/players', desc: 'Career stats, batting, pitching, awards' },
   { label: 'Teams', path: '/teams', hint: '/v1/franchises', desc: 'Franchise history and season records' },
+  {
+    label: 'Standings',
+    path: '/standings',
+    hint: '/v1/standings?season={year}',
+    desc: 'Current season standings backed by local pipeline tables'
+  },
   { label: 'Games', path: '/games', hint: '/v1/games', desc: 'Game log & play-by-play browser with advanced filters' },
   {
     label: 'Leaders',
@@ -73,6 +79,7 @@ export const ALL_ENDPOINTS = [
   '/v1/games',
   '/v1/seasons/{year}/teams',
   '/v1/seasons/{year}/leaders/{type}',
+  '/v1/standings?season={year}',
   '/v1/stats/batting',
   '/v1/stats/pitching',
   '/v1/win-expectancy',

@@ -23,6 +23,7 @@
   const DATA_LINKS = [
     { href: '/players', label: 'Players' },
     { href: '/teams', label: 'Teams' },
+    { href: '/standings', label: 'Standings' },
     { href: '/games', label: 'Games' },
     { href: '/seasons', label: 'Seasons' },
     { href: '/leaders', label: 'Leaders' },
@@ -32,6 +33,7 @@
   const DATA_MENU_ITEMS = [
     { href: '/players', label: 'Players', description: 'Player search, profiles, splits, streaks, and season logs.' },
     { href: '/teams', label: 'Teams', description: 'Team/franchise lookup, rosters, schedules, and run differential.' },
+    { href: '/standings', label: 'Standings', description: 'Current and historical season standings from local data.' },
     { href: '/games', label: 'Games', description: 'Game explorer with events, plays, pitches, and win probability.' },
     { href: '/seasons', label: 'Seasons', description: 'Season schedules, awards, postseason, and park factors.' },
     { href: '/leaders', label: 'Leaders', description: 'Batting, pitching, and advanced leaderboard endpoints.' },
@@ -45,6 +47,7 @@
     '/': 'HOME',
     '/players': 'PLAYERS',
     '/teams': 'TEAMS',
+    '/standings': 'STANDINGS',
     '/games': 'GAMES',
     '/seasons': 'SEASONS',
     '/leaders': 'LEADERS',

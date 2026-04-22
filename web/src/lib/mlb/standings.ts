@@ -38,6 +38,8 @@ export type StandingsRow = {
   localFranchiseID?: string;
 };
 
+export type SeasonStandingsPayload = { season: number; lastUpdated?: string; rows: StandingsRow[] };
+
 function toBool(value: unknown): boolean {
   const parsed = toBoolean(value);
   if (parsed != null) return parsed;
@@ -86,6 +88,13 @@ function cleanDivisionLabel(raw: string | undefined, league: LeagueCode): string
   return 'League';
 }
 
+function leagueCodeForSeasonStanding(leagueRaw: string | undefined, divisionName: string | undefined): LeagueCode {
+  const leagueValue = (leagueRaw ?? '').toUpperCase().trim();
+  if (leagueValue === 'AL') return 'AL';
+  if (leagueValue === 'NL') return 'NL';
+  return leagueCodeFor(leagueRaw, divisionName);
+}
+
 function leagueCodeFor(leagueLabel: string | undefined, divisionLabel: string | undefined): LeagueCode {
   const label = `${leagueLabel ?? ''} ${divisionLabel ?? ''}`.toUpperCase();
   if (label.includes('AMERICAN') || label.includes(' AL')) return 'AL';
@@ -100,6 +109,14 @@ function parseStreakValue(raw: string): number {
   if (!Number.isFinite(count)) return 0;
   if ((matched[1] ?? '').toUpperCase() === 'W') return count;
   return -count;
+}
+
+function parseLastTenWins(display: string): number {
+  const matched = display.match(/^(\d+)-(\d+)$/u);
+  if (!matched) return 0;
+  const wins = Number.parseInt(matched[1] ?? '0', 10);
+  if (!Number.isFinite(wins)) return 0;
+  return wins;
 }
 
 function parseLastTenRecord(teamRecord: Record<string, unknown>): { display: string; wins: number } {
@@ -248,6 +265,111 @@ export function extractSeasonFromStandings(payload: unknown): number | undefined
   }
 
   return;
+}
+
+function normalizeTeamAbbrFromSeasonStanding(teamID: string | undefined, teamName: string): string {
+  if (teamID && teamID.trim().length > 0) {
+    return teamID.trim().toUpperCase();
+  }
+  const words = teamName
+    .trim()
+    .split(/\s+/u)
+    .filter((word) => word.length > 0);
+  if (words.length === 0) return '—';
+  if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
+  return words
+    .slice(-2)
+    .map((word) => word[0] ?? '')
+    .join('')
+    .toUpperCase();
+}
+
+export function buildStandingsRowsFromSeasonStandingsPayload(payload: unknown): SeasonStandingsPayload {
+  const root = toObject(payload);
+  const responseSeason = toNumber(root.season) ?? new Date().getFullYear();
+  const lastUpdated = toString(root.last_updated) ?? undefined;
+  const rowsInput = toArray(root.standings).map((entry) => toObject(entry));
+
+  const rows: StandingsRow[] = [];
+  for (const row of rowsInput) {
+    const division = toString(row.division_name) ?? 'Division';
+    const league = leagueCodeForSeasonStanding(toString(row.league), division);
+    const teamName = toString(row.team_name) ?? toString(row.team_id) ?? 'Unknown Team';
+    const teamID = toString(row.team_id) ?? undefined;
+    const teamAbbr = normalizeTeamAbbrFromSeasonStanding(teamID, teamName);
+    const teamMlbID = toNumber(row.team_mlb_id) ?? undefined;
+
+    const wins = toNumber(row.w) ?? 0;
+    const losses = toNumber(row.l) ?? 0;
+    const pctValue = toNumber(row.pct) ?? (wins + losses > 0 ? Math.max(0, Math.min(1, wins / (wins + losses))) : 0);
+    const pct = normalizePct(toString(row.pct), pctValue);
+
+    const gb = normalizeGamesBack(toString(row.gb));
+    const wcGb = normalizeGamesBack(toString(row.wc_gb));
+    const streak = toString(row.streak) ?? '—';
+    const l10 = toString(row.l10) ?? '—';
+
+    let runDiff = toNumber(row.run_diff);
+    if (runDiff == null) {
+      const rs = toNumber(row.rs);
+      const ra = toNumber(row.ra);
+      if (rs != null && ra != null) runDiff = rs - ra;
+    }
+
+    rows.push({
+      league,
+      division,
+      rank: Number.MAX_SAFE_INTEGER,
+      teamName,
+      teamAbbr,
+      teamMlbID,
+      wins,
+      losses,
+      pct,
+      pctValue,
+      gamesBack: gb,
+      gamesBackValue: gamesBackValue(gb),
+      wildCardGamesBack: wcGb,
+      wildCardGamesBackValue: gamesBackValue(wcGb),
+      streak,
+      streakValue: parseStreakValue(streak),
+      runDiff: runDiff ?? 0,
+      last10: l10,
+      last10Wins: parseLastTenWins(l10),
+      divisionLeader: gb === '-',
+      localFranchiseID: toString(row.franchise_id) ?? undefined
+    });
+  }
+
+  const grouped = new Map<string, StandingsRow[]>();
+  const groupOrder: string[] = [];
+  for (const row of rows) {
+    const key = `${row.league}:${row.division}`;
+    const existing = grouped.get(key);
+    if (existing) {
+      existing.push(row);
+      continue;
+    }
+    grouped.set(key, [row]);
+    groupOrder.push(key);
+  }
+
+  const rankedRows: StandingsRow[] = [];
+  for (const key of groupOrder) {
+    const divisionRows = grouped.get(key) ?? [];
+    const sorted = [...divisionRows].toSorted((left, right) => {
+      if (left.wins !== right.wins) return right.wins - left.wins;
+      if (left.losses !== right.losses) return left.losses - right.losses;
+      if (left.pctValue !== right.pctValue) return right.pctValue - left.pctValue;
+      return left.teamName.localeCompare(right.teamName);
+    });
+    for (const [idx, element] of sorted.entries()) {
+      const rank = idx + 1;
+      rankedRows.push({ ...element, rank, divisionLeader: rank === 1 });
+    }
+  }
+
+  return { season: responseSeason, lastUpdated, rows: rankedRows };
 }
 
 export function buildStandingsRows(

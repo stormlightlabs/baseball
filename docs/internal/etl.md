@@ -1,6 +1,6 @@
-# ETL Cutover & Narrow-Slice Runbook
+# ETL
 
-This runbook is the operational source of truth for ETL cutover and day-to-day narrow-slice development.
+This runbook is the operational source of truth for ETL development.
 
 ## Command signatures and execution model
 

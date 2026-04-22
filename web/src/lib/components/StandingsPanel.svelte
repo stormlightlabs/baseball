@@ -4,40 +4,59 @@
   import SegmentControl from '$lib/components/SegmentControl.svelte';
   import { EP } from '$lib/endpoints';
   import {
-    buildMlbTeamAbbrByIDFromDetails,
-    buildStandingsRows,
-    extractSeasonFromStandings,
-    normalizeFranchiseIDByMlbTeamID,
+    buildStandingsRowsFromSeasonStandingsPayload,
     sortStandingsRows,
+    type SeasonStandingsPayload,
     type StandingsRow,
     type StandingsSortKey
   } from '$lib/mlb/standings';
   import { teamPrimaryHexFor } from '$lib/mlb/team-branding';
-  import { onMount } from 'svelte';
+  import { SvelteURLSearchParams } from 'svelte/reactivity';
 
   type LeagueFilter = 'both' | 'AL' | 'NL';
+  type TeamHref = `/teams/${string}/overview?${string}` | `/teams?${string}`;
 
-  const DEFAULT_SEASON = new Date().getFullYear();
-  const STANDINGS_HINT = `/v1${EP.mlbStandings}?season=${DEFAULT_SEASON}&standingsTypes=regularSeason&include=details`;
+  let {
+    season: seasonProp = new Date().getFullYear(),
+    title = 'Current standings',
+    showEndpointHint = true
+  }: { season?: number; title?: string; showEndpointHint?: boolean } = $props();
 
   const LEAGUE_OPTIONS = [
-    { id: 'both', label: 'Both' },
     { id: 'AL', label: 'AL' },
-    { id: 'NL', label: 'NL' }
+    { id: 'NL', label: 'NL' },
+    { id: 'both', label: 'Both' }
   ];
 
   let loading = $state(true);
   let refreshing = $state(false);
   let errorMessage = $state<string | null>(null);
-  let season = $state(DEFAULT_SEASON);
+  let season = $state(new Date().getFullYear());
+  let lastUpdated = $state<string | null>(null);
   let leagueFilter = $state<LeagueFilter>('both');
   let sort = $state<{ key: StandingsSortKey; dir: 'asc' | 'desc' }>({ key: 'rank', dir: 'asc' });
-
   let rows = $state<StandingsRow[]>([]);
+
+  let lastRequestKey = '';
+
+  const selectedSeason = $derived.by(() => {
+    const parsed = Number(seasonProp);
+    if (Number.isFinite(parsed) && parsed > 0) return Math.round(parsed);
+    return new Date().getFullYear();
+  });
+
+  const standingsHint = $derived(`/v1${EP.standings}?season=${selectedSeason}`);
 
   const filteredRows = $derived.by(() => {
     if (leagueFilter === 'both') return rows;
     return rows.filter((row) => row.league === leagueFilter);
+  });
+
+  const lastUpdatedLabel = $derived.by(() => {
+    if (!lastUpdated) return null;
+    const parsed = new Date(lastUpdated);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   });
 
   type DivisionGroup = { division: string; rows: StandingsRow[] };
@@ -47,26 +66,34 @@
     const orderedDivisions: string[] = [];
 
     for (const row of filteredRows) {
-      const existing = byDivision[row.division];
+      const key = `${row.league}:${row.division}`;
+      const existing = byDivision[key];
       if (existing) {
         existing.push(row);
       } else {
-        byDivision[row.division] = [row];
-        orderedDivisions.push(row.division);
+        byDivision[key] = [row];
+        orderedDivisions.push(key);
       }
     }
 
-    return orderedDivisions.map((division) => {
-      const groupRows = byDivision[division] ?? [];
-      return { division, rows: sortStandingsRows(groupRows, sort.key, sort.dir) };
+    return orderedDivisions.map((key) => {
+      const groupRows = byDivision[key] ?? [];
+      const first = groupRows[0];
+      const divisionName = first ? first.division : key;
+      return { division: divisionName, rows: sortStandingsRows(groupRows, sort.key, sort.dir) };
     });
   });
 
-  onMount(() => {
+  $effect(() => {
     void refreshStandings('initial');
   });
 
   async function refreshStandings(mode: 'initial' | 'manual'): Promise<void> {
+    const requestSeason = selectedSeason;
+    const requestKey = String(requestSeason);
+    if (mode === 'initial' && requestKey === lastRequestKey) return;
+    lastRequestKey = requestKey;
+
     if (mode === 'initial') {
       loading = true;
     } else {
@@ -74,23 +101,18 @@
     }
 
     try {
-      const [standingsPayload, crosswalkPayload] = await Promise.all([
-        apiFetch<unknown>(EP.mlbStandings, {
-          season: DEFAULT_SEASON,
-          standingsTypes: 'regularSeason',
-          include: 'details'
-        }),
-        apiFetch<unknown>(EP.metaCrosswalkTeams, { season: DEFAULT_SEASON, include: 'details' })
-      ]);
-
-      const teamAbbrByID = buildMlbTeamAbbrByIDFromDetails(standingsPayload);
-      const franchiseIDByMlbTeamID = normalizeFranchiseIDByMlbTeamID(crosswalkPayload);
-      rows = buildStandingsRows(standingsPayload, teamAbbrByID, {}, franchiseIDByMlbTeamID);
-      season = extractSeasonFromStandings(standingsPayload) ?? DEFAULT_SEASON;
+      const payload = await apiFetch<unknown>(EP.standings, { season: requestSeason });
+      const normalized: SeasonStandingsPayload = buildStandingsRowsFromSeasonStandingsPayload(payload);
+      rows = normalized.rows;
+      season = normalized.season || requestSeason;
+      lastUpdated = normalized.lastUpdated ?? null;
       errorMessage = null;
     } catch (error) {
-      const message = error instanceof Error && error.message ? error.message : 'Failed to load current standings.';
+      const message = error instanceof Error && error.message ? error.message : 'Failed to load season standings.';
       errorMessage = message;
+      rows = [];
+      season = requestSeason;
+      lastUpdated = null;
     } finally {
       loading = false;
       refreshing = false;
@@ -102,7 +124,11 @@
       sort = { key, dir: sort.dir === 'asc' ? 'desc' : 'asc' };
       return;
     }
-    const defaultDir = key === 'rank' || key === 'gb' || key === 'wcGb' || key === 'losses' ? 'asc' : 'desc';
+
+    let defaultDir: 'asc' | 'desc' = 'desc';
+    if (key === 'rank' || key === 'gb' || key === 'wcGb' || key === 'losses') {
+      defaultDir = 'asc';
+    }
     sort = { key, dir: defaultDir };
   }
 
@@ -112,14 +138,17 @@
     return '↓';
   }
 
-  function teamHref(row: StandingsRow): string {
+  function teamHref(row: StandingsRow): TeamHref {
+    const query = new SvelteURLSearchParams({ year: String(season) });
     if (row.localFranchiseID) {
-      const encodedFranchiseID = encodeURIComponent(row.localFranchiseID);
-      const params = new URLSearchParams({ franchise_id: row.localFranchiseID, year: String(season) }).toString();
-      return `/teams/${encodedFranchiseID}/overview?${params}`;
+      query.set('franchise_id', row.localFranchiseID);
+      const encoded = encodeURIComponent(row.localFranchiseID);
+      return `/teams/${encoded}/overview?${query.toString()}`;
     }
-    const params = new URLSearchParams({ q: row.teamName }).toString();
-    return `/teams?${params}`;
+
+    const lookup = row.teamAbbr && row.teamAbbr !== '—' ? row.teamAbbr : row.teamName;
+    const params = new URLSearchParams({ q: lookup, year: String(season) });
+    return `/teams?${params.toString()}`;
   }
 
   function teamColor(row: StandingsRow): string {
@@ -146,9 +175,11 @@
 <section class="rounded-lg border border-outline bg-crust p-4">
   <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
     <div>
-      <h2 class="font-mono text-[0.74rem] tracking-[0.08em] text-muted uppercase">Current standings</h2>
+      <h2 class="font-mono text-[0.74rem] tracking-[0.08em] text-muted uppercase">{title}</h2>
       <p class="text-[0.75rem] text-muted">Season {season}</p>
-      <p class="font-mono text-[0.63rem] text-muted">{STANDINGS_HINT}</p>
+      {#if showEndpointHint}
+        <p class="font-mono text-[0.63rem] text-muted">{standingsHint}</p>
+      {/if}
     </div>
     <button
       type="button"
@@ -233,13 +264,13 @@
                     </button>
                   </th>
                   <th class="px-2 py-1.5 text-right font-mono text-[0.62rem] text-muted uppercase">
-                    <button type="button" class="hover:text-foreground" onclick={() => toggleSort('runDiff')}>
-                      Run Diff {arrowFor('runDiff')}
+                    <button type="button" class="hover:text-foreground" onclick={() => toggleSort('last10')}>
+                      L10 {arrowFor('last10')}
                     </button>
                   </th>
                   <th class="px-2 py-1.5 text-right font-mono text-[0.62rem] text-muted uppercase">
-                    <button type="button" class="hover:text-foreground" onclick={() => toggleSort('last10')}>
-                      L10 {arrowFor('last10')}
+                    <button type="button" class="hover:text-foreground" onclick={() => toggleSort('runDiff')}>
+                      Run Diff {arrowFor('runDiff')}
                     </button>
                   </th>
                 </tr>
@@ -251,8 +282,9 @@
                     <td class="px-2 py-1.5 font-mono text-[0.72rem]">
                       <div class="flex items-center gap-2">
                         <span class="h-2 w-2 rounded-full" style={`background-color:${teamColor(row)}`}></span>
-                        <a href={resolve(teamHref(row) as '/teams')} class="text-primary no-underline hover:underline"
-                          >{row.teamName}</a>
+                        <a
+                          href={resolve(teamHref(row) as `/teams/${string}/overview`)}
+                          class="text-primary no-underline hover:underline">{row.teamName}</a>
                         <span class="text-[0.64rem] text-muted">{row.teamAbbr}</span>
                       </div>
                     </td>
@@ -264,9 +296,9 @@
                       >{row.wildCardGamesBack}</td>
                     <td class="px-2 py-1.5 text-right font-mono text-[0.72rem] {streakToneClass(row.streak)}"
                       >{row.streak}</td>
+                    <td class="px-2 py-1.5 text-right font-mono text-[0.72rem] text-foreground">{row.last10}</td>
                     <td class="px-2 py-1.5 text-right font-mono text-[0.72rem] text-foreground"
                       >{runDiffLabel(row.runDiff)}</td>
-                    <td class="px-2 py-1.5 text-right font-mono text-[0.72rem] text-foreground">{row.last10}</td>
                   </tr>
                 {/each}
               </tbody>
@@ -275,5 +307,9 @@
         </details>
       {/each}
     </div>
+  {/if}
+
+  {#if lastUpdatedLabel}
+    <p class="mt-3 font-mono text-[0.63rem] text-muted">Updated {lastUpdatedLabel}</p>
   {/if}
 </section>

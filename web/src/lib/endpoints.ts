@@ -1,11 +1,10 @@
 /**
  * Central endpoint map
  *
- * Single source of truth for all /v1/* API paths and their
- * canonical query parameters. Derived from internal/docs/swagger.yaml.
+ * Single source of truth for all /v1/* API paths and their canonical query parameters.
+ * Derived from internal/docs/swagger.yaml.
  *
- * New endpoints should be added here rather than hardcoding strings in
- * page components.
+ * New endpoints should be added here rather than hardcoding strings in page components.
  */
 
 export const EP = {
@@ -77,6 +76,7 @@ export const EP = {
   seasonLeadersBattingAdv: (season: number | string) => `/seasons/${season}/leaders/batting/advanced` as const,
   seasonLeadersPitchingAdv: (season: number | string) => `/seasons/${season}/leaders/pitching/advanced` as const,
   seasonLeadersWar: (season: number | string) => `/seasons/${season}/leaders/war` as const,
+  standings: '/standings' as const,
 
   games: '/games' as const,
   game: (id: string) => `/games/${id}` as const,

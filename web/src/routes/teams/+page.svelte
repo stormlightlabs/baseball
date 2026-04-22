@@ -1,10 +1,22 @@
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
   import StandingsPanel from '$lib/components/StandingsPanel.svelte';
   import { STATIC_ERAS } from '$lib/eras';
 </script>
 
 <div class="flex h-full flex-col gap-4">
+  <div class="flex justify-end">
+    <a
+      href={resolve('/standings')}
+      class="inline-flex items-center gap-1 rounded border border-outline px-2.5 py-1 font-mono text-[0.68rem] text-muted no-underline transition-colors hover:bg-surface hover:text-foreground">
+      <span class="flex items-center">
+        <i class="i-tabler-table"></i>
+      </span>
+      Full standings
+    </a>
+  </div>
+
   <StandingsPanel />
 
   <div
