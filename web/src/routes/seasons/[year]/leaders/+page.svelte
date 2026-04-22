@@ -269,9 +269,9 @@
     {/if}
 
     {#if battingLoading}
-      <p class="font-mono text-[0.75rem] text-muted">Loading batting leaders...</p>
+      <p class="font-mono text-xs text-muted">Loading batting leaders...</p>
     {:else if battingRows.length === 0}
-      <p class="font-mono text-[0.75rem] text-muted">No batting leader rows found.</p>
+      <p class="font-mono text-xs text-muted">No batting leader rows found.</p>
     {:else}
       <SortableTable columns={battingColumns} rows={battingRows} />
     {/if}
@@ -297,9 +297,9 @@
     {/if}
 
     {#if pitchingLoading}
-      <p class="font-mono text-[0.75rem] text-muted">Loading pitching leaders...</p>
+      <p class="font-mono text-xs text-muted">Loading pitching leaders...</p>
     {:else if pitchingRows.length === 0}
-      <p class="font-mono text-[0.75rem] text-muted">No pitching leader rows found.</p>
+      <p class="font-mono text-xs text-muted">No pitching leader rows found.</p>
     {:else}
       <SortableTable columns={pitchingColumns} rows={pitchingRows} />
     {/if}

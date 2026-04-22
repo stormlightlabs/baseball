@@ -114,9 +114,9 @@
   {/if}
 
   {#if awardsLoading}
-    <p class="font-mono text-[0.75rem] text-muted">Loading season awards...</p>
+    <p class="font-mono text-xs text-muted">Loading season awards...</p>
   {:else if awardsRows.length === 0}
-    <p class="font-mono text-[0.75rem] text-muted">No awards were returned for this season.</p>
+    <p class="font-mono text-xs text-muted">No awards were returned for this season.</p>
   {:else}
     <SortableTable columns={awardsColumns} rows={awardsRows} />
   {/if}

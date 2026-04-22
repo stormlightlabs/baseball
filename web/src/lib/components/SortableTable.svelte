@@ -67,7 +67,7 @@
 </script>
 
 <div class="overflow-x-auto">
-  <table class="w-full border-collapse text-[0.75rem]">
+  <table class="w-full border-collapse text-xs">
     <thead>
       <tr>
         {#each columns as col (col.label)}

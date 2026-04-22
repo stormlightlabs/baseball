@@ -176,7 +176,7 @@
   <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
     <div>
       <h2 class="font-mono text-[0.74rem] tracking-[0.08em] text-muted uppercase">{title}</h2>
-      <p class="text-[0.75rem] text-muted">Season {season}</p>
+      <p class="text-xs text-muted">Season {season}</p>
       {#if showEndpointHint}
         <p class="font-mono text-[0.63rem] text-muted">{standingsHint}</p>
       {/if}

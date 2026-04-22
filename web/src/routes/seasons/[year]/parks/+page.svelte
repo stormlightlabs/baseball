@@ -122,9 +122,9 @@
   {/if}
 
   {#if parkFactorsLoading}
-    <p class="font-mono text-[0.75rem] text-muted">Loading park factors...</p>
+    <p class="font-mono text-xs text-muted">Loading park factors...</p>
   {:else if parkFactorRows.length === 0}
-    <p class="font-mono text-[0.75rem] text-muted">No park factor rows were returned for this season.</p>
+    <p class="font-mono text-xs text-muted">No park factor rows were returned for this season.</p>
   {:else}
     <SortableTable columns={parkFactorColumns} rows={parkFactorRows} />
   {/if}

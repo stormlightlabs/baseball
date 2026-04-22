@@ -97,7 +97,7 @@
       {#each MAIN_LINKS as { href, label } (href)}
         <a
           href={resolve(href)}
-          class="rounded px-2 py-1 text-[0.75rem] whitespace-nowrap no-underline transition-colors duration-150 sm:px-2.5 sm:text-[0.8rem] {isActive(
+          class="rounded px-2 py-1 text-xs whitespace-nowrap no-underline transition-colors duration-150 sm:px-2.5 sm:text-[0.8rem] {isActive(
             href
           )
             ? 'bg-outline text-foreground'
@@ -113,7 +113,7 @@
           href={resolve(API_DOCS_ROUTE)}
           target="_blank"
           rel="noreferrer"
-          class="rounded px-2 py-1 text-[0.75rem] whitespace-nowrap text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground sm:px-2.5 sm:text-[0.8rem]">
+          class="rounded px-2 py-1 text-xs whitespace-nowrap text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground sm:px-2.5 sm:text-[0.8rem]">
           API
           <span class="ml-1 inline-flex items-center gap-0.5 text-xxs">
             <i class="i-tabler-external-link"></i>

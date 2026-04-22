@@ -188,6 +188,6 @@
   }
 
   :global(.doc-body th) {
-    @apply bg-surface font-mono text-[0.75rem] tracking-[0.02em] text-muted uppercase;
+    @apply bg-surface font-mono text-xs tracking-[0.02em] text-muted uppercase;
   }
 </style>

@@ -83,7 +83,7 @@
       <p class="font-mono text-[0.78rem] text-muted">No schedule data found for {year}.</p>
     {:else}
       <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-[0.75rem]">
+        <table class="w-full border-collapse text-xs">
           <thead>
             <tr>
               {#each ['Date', 'Era', 'Away', 'Home', 'Score', 'Park'] as col (col)}

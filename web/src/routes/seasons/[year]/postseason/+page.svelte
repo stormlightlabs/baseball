@@ -99,7 +99,7 @@
   {/if}
 
   {#if postseasonLoading}
-    <p class="font-mono text-[0.75rem] text-muted">Loading postseason data...</p>
+    <p class="font-mono text-xs text-muted">Loading postseason data...</p>
   {:else}
     <div class="mb-2 flex items-center justify-between rounded border border-outline bg-surface px-3 py-2">
       <span class="font-mono text-[0.68rem] text-muted uppercase">Postseason games</span>
@@ -107,7 +107,7 @@
     </div>
 
     {#if postseasonSeriesRows.length === 0}
-      <p class="font-mono text-[0.75rem] text-muted">No postseason series returned for this season.</p>
+      <p class="font-mono text-xs text-muted">No postseason series returned for this season.</p>
     {:else}
       <SortableTable columns={postseasonSeriesColumns} rows={postseasonSeriesRows} />
     {/if}

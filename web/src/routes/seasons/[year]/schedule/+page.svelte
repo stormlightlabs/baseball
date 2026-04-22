@@ -341,7 +341,7 @@
   {/if}
 
   {#if scheduleLoading}
-    <p class="font-mono text-[0.75rem] text-muted">Loading schedule...</p>
+    <p class="font-mono text-xs text-muted">Loading schedule...</p>
   {:else}
     {#if scheduleTruncated}
       <p class="mb-2 font-mono text-[0.68rem] text-warning">
@@ -388,9 +388,9 @@
     {/if}
 
     {#if dateGamesLoading}
-      <p class="font-mono text-[0.75rem] text-muted">Loading date games...</p>
+      <p class="font-mono text-xs text-muted">Loading date games...</p>
     {:else if dateGameRows.length === 0}
-      <p class="font-mono text-[0.75rem] text-muted">No games were returned for this date.</p>
+      <p class="font-mono text-xs text-muted">No games were returned for this date.</p>
     {:else}
       <SortableTable columns={dateGameColumns} rows={dateGameRows} />
     {/if}

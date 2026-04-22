@@ -252,9 +252,9 @@
   {/if}
 
   {#if teamsLoading}
-    <p class="font-mono text-[0.75rem] text-muted">Loading season teams...</p>
+    <p class="font-mono text-xs text-muted">Loading season teams...</p>
   {:else if teamRows.length === 0}
-    <p class="font-mono text-[0.75rem] text-muted">No team rows for this season and league filter.</p>
+    <p class="font-mono text-xs text-muted">No team rows for this season and league filter.</p>
   {:else}
     <SortableTable columns={teamColumns} rows={teamRows} />
   {/if}

@@ -51,7 +51,7 @@
     type="button"
     onclick={toggleMenu}
     aria-expanded={expanded}
-    class="inline-flex items-center gap-1 rounded px-2 py-1 text-[0.75rem] transition-colors duration-150 sm:px-2.5 sm:text-[0.8rem] {active
+    class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs transition-colors duration-150 sm:px-2.5 sm:text-[0.8rem] {active
       ? 'bg-outline text-foreground'
       : 'text-muted hover:bg-outline hover:text-foreground'}">
     <span>{label}</span>
