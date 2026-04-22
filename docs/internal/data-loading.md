@@ -26,6 +26,23 @@ Examples below use:
 - `<BASEBALL>` for db/server commands
 - `<BASEBALL_ETL>` for ETL commands
 
+## ETL command signatures and queue ownership
+
+Execution should flow through one queue consumer (`worker`):
+
+- `<BASEBALL_ETL> worker --max-active-jobs <n> --poll-interval <dur>`
+  - long-lived consumer, executes queued ETL jobs
+- `<BASEBALL_ETL> run --profile <dev|prod> --years <scope> [--year-batch-size <n>] [--enqueue-only=<bool>]`
+  - enqueue ingestion jobs (default enqueue-only)
+- `<BASEBALL_ETL> maintenance --profile <dev|prod> --years <scope> --mv-refresh-mode <auto|non_concurrent> [--enqueue-only=<bool>]`
+  - enqueue maintenance jobs; use `--enqueue-only=true` for production-like operation so maintenance also runs in the main worker loop
+
+Current-season cron model from `docs/specs/current.md`:
+
+- `baseball-etl cron` is a scheduling surface.
+- Cron enqueues jobs and should not introduce a separate execution path.
+- Scheduled jobs are still processed by the worker loop.
+
 ## Primary Operational Flow
 
 ### 1) Ensure data root is present
@@ -82,10 +99,10 @@ For VM-safe operations, prefer batched windows instead of one large full-history
 
 `run` is enqueue-first by default. To enqueue and drain in one command (local-only convenience), use `--enqueue-only=false`.
 
-### 6) Run maintenance for the same scope
+### 6) Enqueue maintenance for the same scope (worker executes it)
 
 ```bash
-<BASEBALL_ETL> maintenance --profile dev --years 2022-2025 --mv-refresh-mode auto
+<BASEBALL_ETL> maintenance --profile dev --years 2022-2025 --mv-refresh-mode auto --enqueue-only
 ```
 
 ### 7) Validate and inspect status
@@ -127,7 +144,7 @@ Use this when you want production-like behavior with a bounded local scope.
 ./tmp/baseball-etl fetch retrosheet --years 2024-2025
 ./tmp/baseball-etl worker --max-active-jobs 1 --poll-interval 5s
 ./tmp/baseball-etl run --profile dev --years 2024-2025 --year-batch-size 1
-./tmp/baseball-etl maintenance --profile dev --years 2024-2025 --mv-refresh-mode auto
+./tmp/baseball-etl maintenance --profile dev --years 2024-2025 --mv-refresh-mode auto --enqueue-only
 ./tmp/baseball-etl validate --profile dev --years 2024-2025
 ./tmp/baseball-etl status
 ```
@@ -178,7 +195,7 @@ If validation fails due to stale/incomplete local source files, recover in this 
     docker compose up -d app etl
     ```
 
-3. Re-run ETL + maintenance + validate for your slice.
+3. Re-run ETL + maintenance enqueue + validate for your slice.
 
 ## Large Dataset Guidance
 
@@ -187,7 +204,7 @@ Run heavy steps explicitly and in order:
 1. `db migrate`
 2. `baseball-etl fetch retrosheet ...` (if needed)
 3. `baseball-etl run ...`
-4. `baseball-etl maintenance ...`
+4. `baseball-etl maintenance ... --enqueue-only`
 5. explicit partition maintenance/analysis for heavily changed tables
 
 Queue and batching guidance:
@@ -197,6 +214,7 @@ Queue and batching guidance:
 - keep queue depth bounded (`--max-queued-jobs`, default 128)
 - split full-history windows into smaller year batches
 - run maintenance once per scoped window (not once per batch)
+- enqueue maintenance jobs and let the main worker loop execute them
 - defer additional jobs until current batch maintenance + validation passes
 
 Partition/load observability:

@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
+	"stormlightlabs.org/baseball/internal/utils"
 )
 
 func EtlJobsCmd() *cobra.Command {
@@ -37,7 +38,7 @@ func EtlJobsLsCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&statusFilter, "status", "", "Comma-separated statuses (queued,started,running,retry_wait,succeeded,failed,cancelled)")
-	cmd.Flags().StringVar(&jobTypeFilter, "job-type", "", "Job type filter (full-run,yearly-sync,validate-only,cleanup-only,maintenance)")
+	cmd.Flags().StringVar(&jobTypeFilter, "job-type", "", "Job type filter (full-run,yearly-sync,validate-only,cleanup-only,maintenance,current-season-sync)")
 	cmd.Flags().StringVar(&profileFilter, "profile", "", "Profile filter (dev|prod)")
 	cmd.Flags().IntVar(&limit, "limit", 50, "Maximum jobs to return (1-500)")
 	return cmd
@@ -101,14 +102,14 @@ func listETLJobs(cmd *cobra.Command, rawStatuses, rawJobType, rawProfile string,
 			job.ID,
 			job.Status,
 			job.JobType,
-			blankAsDash(job.Profile),
-			blankAsDash(job.Mode),
+			utils.BlankAsDash(job.Profile),
+			utils.BlankAsDash(job.Mode),
 			job.Attempts,
 			job.MaxRetries+1,
 			job.QueuedAt.Format(time.RFC3339),
-			formatNullableTime(job.StartedAt),
-			blankAsDash(job.WorkerID),
-			compactError(job.LastError),
+			utils.FormatNullableTime(job.StartedAt),
+			utils.BlankAsDash(job.WorkerID),
+			utils.CompactError(job.LastError),
 		)
 	}
 
@@ -174,36 +175,10 @@ func parseETLJobTypeFilter(raw string) (db.ETLJobType, error) {
 		db.ETLJobTypeYearlySync,
 		db.ETLJobTypeValidate,
 		db.ETLJobTypeCleanup,
-		db.ETLJobTypeMaintenance:
+		db.ETLJobTypeMaintenance,
+		db.ETLJobTypeCurrentSync:
 		return value, nil
 	default:
 		return "", fmt.Errorf("error: invalid ETL job type %q", raw)
 	}
-}
-
-func formatNullableTime(value *time.Time) string {
-	if value == nil {
-		return "-"
-	}
-	return value.UTC().Format(time.RFC3339)
-}
-
-func compactError(value string) string {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return "-"
-	}
-	const maxLen = 100
-	if len(value) <= maxLen {
-		return value
-	}
-	return value[:maxLen-3] + "..."
-}
-
-func blankAsDash(value string) string {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return "-"
-	}
-	return value
 }

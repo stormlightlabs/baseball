@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 )
 
 // formatYearRange formats a slice of years into a compact string representation.
@@ -106,4 +107,38 @@ func FormatLargeNumber(n int64) string {
 	}
 
 	return string(result)
+}
+
+func FormatNullableTime(value *time.Time) string {
+	if value == nil {
+		return "-"
+	}
+	return value.UTC().Format(time.RFC3339)
+}
+
+func CompactError(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "-"
+	}
+	const maxLen = 100
+	if len(value) <= maxLen {
+		return value
+	}
+	return value[:maxLen-3] + "..."
+}
+
+func BlankAsDash(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "-"
+	}
+	return value
+}
+
+func NonNilMap(input map[string]any) map[string]any {
+	if input != nil {
+		return input
+	}
+	return map[string]any{}
 }

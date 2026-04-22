@@ -10,20 +10,20 @@ updated: 2026-04-21
 
 ## Phase 0: Schema & Migration
 
-- [ ] Create migration `015_current_season.sql`:
+- [x] Create migration `015_current_season.sql`:
   - `CREATE SCHEMA IF NOT EXISTS current_season`
   - `current_season.batting` table (see spec for columns)
   - `current_season.pitching` table
   - `current_season.standings` table
   - `current_season.games` table
   - Indexes on `game_date`, `season`, composite PKs
-- [ ] Add `current-season-sync` to `etl_jobs.job_type` CHECK constraint
-- [ ] Run migration locally and verify schema exists
+- [x] Add `current-season-sync` to `etl_jobs.job_type` CHECK constraint
+- [x] Run migration locally and verify schema exists
 
 Acceptance:
 
-- [ ] `\dt current_season.*` shows all four tables
-- [ ] `etl_jobs` accepts `job_type = 'current-season-sync'`
+- [x] `\dt current_season.*` shows all four tables
+- [x] `etl_jobs` accepts `job_type = 'current-season-sync'`
 
 ## Phase 1: Cron Scheduler in ETL Binary
 

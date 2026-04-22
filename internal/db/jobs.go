@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"stormlightlabs.org/baseball/internal/utils"
 )
 
 type ETLJobType string
@@ -18,6 +20,7 @@ const (
 	ETLJobTypeValidate    ETLJobType = "validate-only"
 	ETLJobTypeCleanup     ETLJobType = "cleanup-only"
 	ETLJobTypeMaintenance ETLJobType = "maintenance"
+	ETLJobTypeCurrentSync ETLJobType = "current-season-sync"
 )
 
 type ETLJobStatus string
@@ -103,11 +106,11 @@ func (db *DB) EnqueueETLJob(ctx context.Context, spec ETLJobSpec, maxQueuedJobs 
 		spec.MaxRetries = 0
 	}
 
-	scopeJSON, err := json.Marshal(nonNilMap(spec.Scope))
+	scopeJSON, err := json.Marshal(utils.NonNilMap(spec.Scope))
 	if err != nil {
 		return 0, fmt.Errorf("failed to marshal ETL job scope: %w", err)
 	}
-	optionsJSON, err := json.Marshal(nonNilMap(spec.Options))
+	optionsJSON, err := json.Marshal(utils.NonNilMap(spec.Options))
 	if err != nil {
 		return 0, fmt.Errorf("failed to marshal ETL job options: %w", err)
 	}
@@ -591,11 +594,4 @@ func scanETLJob(scanner etlJobScanner) (*ETLJob, error) {
 	}
 
 	return &job, nil
-}
-
-func nonNilMap(input map[string]any) map[string]any {
-	if input != nil {
-		return input
-	}
-	return map[string]any{}
 }
