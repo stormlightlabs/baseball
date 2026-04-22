@@ -11,7 +11,16 @@ import (
 	"stormlightlabs.org/baseball/internal/core"
 )
 
-func (r *StatsRepository) shouldUseCurrentSeasonBatting(ctx context.Context, year core.SeasonYear) (bool, error) {
+// CurrentSeasonStatsRepository serves current-season stats from current_season schema.
+type CurrentSeasonStatsRepository struct {
+	db *sql.DB
+}
+
+func NewCurrentSeasonStatsRepository(db *sql.DB) *CurrentSeasonStatsRepository {
+	return &CurrentSeasonStatsRepository{db: db}
+}
+
+func (r *CurrentSeasonStatsRepository) ShouldUseBattingSeason(ctx context.Context, year core.SeasonYear) (bool, error) {
 	hasCurrent, err := r.currentSeasonRowsForYear(ctx, "batting", year)
 	if err != nil {
 		return false, err
@@ -29,7 +38,7 @@ func (r *StatsRepository) shouldUseCurrentSeasonBatting(ctx context.Context, yea
 	return !hasLahman, nil
 }
 
-func (r *StatsRepository) shouldUseCurrentSeasonPitching(ctx context.Context, year core.SeasonYear) (bool, error) {
+func (r *CurrentSeasonStatsRepository) ShouldUsePitchingSeason(ctx context.Context, year core.SeasonYear) (bool, error) {
 	hasCurrent, err := r.currentSeasonRowsForYear(ctx, "pitching", year)
 	if err != nil {
 		return false, err
@@ -47,7 +56,7 @@ func (r *StatsRepository) shouldUseCurrentSeasonPitching(ctx context.Context, ye
 	return !hasLahman, nil
 }
 
-func (r *StatsRepository) lahmanRowsForYear(ctx context.Context, table, yearColumn string, year core.SeasonYear) (bool, error) {
+func (r *CurrentSeasonStatsRepository) lahmanRowsForYear(ctx context.Context, table, yearColumn string, year core.SeasonYear) (bool, error) {
 	query := fmt.Sprintf(`SELECT EXISTS (SELECT 1 FROM "%s" WHERE "%s" = $1 LIMIT 1)`, table, yearColumn)
 	var exists bool
 	if err := r.db.QueryRowContext(ctx, query, int(year)).Scan(&exists); err != nil {
@@ -56,7 +65,7 @@ func (r *StatsRepository) lahmanRowsForYear(ctx context.Context, table, yearColu
 	return exists, nil
 }
 
-func (r *StatsRepository) currentSeasonRowsForYear(ctx context.Context, table string, year core.SeasonYear) (bool, error) {
+func (r *CurrentSeasonStatsRepository) currentSeasonRowsForYear(ctx context.Context, table string, year core.SeasonYear) (bool, error) {
 	query := fmt.Sprintf(`SELECT EXISTS (SELECT 1 FROM current_season.%s WHERE season = $1 LIMIT 1)`, table)
 	var exists bool
 	if err := r.db.QueryRowContext(ctx, query, int(year)).Scan(&exists); err != nil {
@@ -68,7 +77,7 @@ func (r *StatsRepository) currentSeasonRowsForYear(ctx context.Context, table st
 	return exists, nil
 }
 
-func (r *StatsRepository) currentSeasonBattingLeaders(ctx context.Context, year core.SeasonYear, stat string, limit, offset int, league *core.LeagueID) ([]core.PlayerBattingSeason, error) {
+func (r *CurrentSeasonStatsRepository) SeasonBattingLeaders(ctx context.Context, year core.SeasonYear, stat string, limit, offset int, league *core.LeagueID) ([]core.PlayerBattingSeason, error) {
 	orderExpr := map[string]string{
 		"avg": "COALESCE(cs.avg, 0)",
 		"hr":  "COALESCE(cs.hr, 0)",
@@ -143,7 +152,7 @@ func (r *StatsRepository) currentSeasonBattingLeaders(ctx context.Context, year 
 	return leaders, nil
 }
 
-func (r *StatsRepository) currentSeasonPitchingLeaders(ctx context.Context, year core.SeasonYear, stat string, limit, offset int, league *core.LeagueID) ([]core.PlayerPitchingSeason, error) {
+func (r *CurrentSeasonStatsRepository) SeasonPitchingLeaders(ctx context.Context, year core.SeasonYear, stat string, limit, offset int, league *core.LeagueID) ([]core.PlayerPitchingSeason, error) {
 	orderExpr := map[string]string{
 		"era":   "COALESCE(cs.era, 999)",
 		"so":    "COALESCE(cs.so, 0)",
@@ -219,7 +228,7 @@ func (r *StatsRepository) currentSeasonPitchingLeaders(ctx context.Context, year
 	return leaders, nil
 }
 
-func (r *StatsRepository) queryCurrentSeasonBattingStats(ctx context.Context, filter core.BattingStatsFilter) ([]core.PlayerBattingSeason, error) {
+func (r *CurrentSeasonStatsRepository) QueryBattingStats(ctx context.Context, filter core.BattingStatsFilter) ([]core.PlayerBattingSeason, error) {
 	query := `
 		SELECT
 			cs.player_id,
@@ -331,7 +340,7 @@ func (r *StatsRepository) queryCurrentSeasonBattingStats(ctx context.Context, fi
 	return stats, nil
 }
 
-func (r *StatsRepository) queryCurrentSeasonBattingStatsCount(ctx context.Context, filter core.BattingStatsFilter) (int, error) {
+func (r *CurrentSeasonStatsRepository) QueryBattingStatsCount(ctx context.Context, filter core.BattingStatsFilter) (int, error) {
 	query := `
 		SELECT COUNT(*)
 		FROM current_season.batting cs
@@ -386,7 +395,7 @@ func (r *StatsRepository) queryCurrentSeasonBattingStatsCount(ctx context.Contex
 	return count, nil
 }
 
-func (r *StatsRepository) queryCurrentSeasonPitchingStats(ctx context.Context, filter core.PitchingStatsFilter) ([]core.PlayerPitchingSeason, error) {
+func (r *CurrentSeasonStatsRepository) QueryPitchingStats(ctx context.Context, filter core.PitchingStatsFilter) ([]core.PlayerPitchingSeason, error) {
 	query := `
 		SELECT
 			cs.player_id,
@@ -497,7 +506,7 @@ func (r *StatsRepository) queryCurrentSeasonPitchingStats(ctx context.Context, f
 	return stats, nil
 }
 
-func (r *StatsRepository) queryCurrentSeasonPitchingStatsCount(ctx context.Context, filter core.PitchingStatsFilter) (int, error) {
+func (r *CurrentSeasonStatsRepository) QueryPitchingStatsCount(ctx context.Context, filter core.PitchingStatsFilter) (int, error) {
 	query := `
 		SELECT COUNT(*)
 		FROM current_season.pitching cs

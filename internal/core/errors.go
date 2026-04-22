@@ -1,6 +1,9 @@
 package core
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // NotFoundError represents a resource that could not be found.
 type NotFoundError struct {
@@ -26,9 +29,14 @@ func NewNotFoundError(resource, id string) error {
 
 // IsNotFound checks if an error is a NotFoundError.
 func IsNotFound(err error) bool {
+	return IsNotFoundError(err)
+}
+
+// IsNotFoundError checks if an error is or wraps a NotFoundError.
+func IsNotFoundError(err error) bool {
 	if err == nil {
 		return false
 	}
-	_, ok := err.(*NotFoundError)
-	return ok
+	var notFoundErr *NotFoundError
+	return errors.As(err, &notFoundErr)
 }

@@ -11,7 +11,16 @@ import (
 	"stormlightlabs.org/baseball/internal/core"
 )
 
-func (r *GameRepository) shouldUseCurrentSeasonGames(ctx context.Context, filter core.GameFilter) (bool, error) {
+// CurrentSeasonGameRepository serves current-season game data from current_season.games.
+type CurrentSeasonGameRepository struct {
+	db *sql.DB
+}
+
+func NewCurrentSeasonGameRepository(db *sql.DB) *CurrentSeasonGameRepository {
+	return &CurrentSeasonGameRepository{db: db}
+}
+
+func (r *CurrentSeasonGameRepository) ShouldUse(ctx context.Context, filter core.GameFilter) (bool, error) {
 	if filter.Season == nil {
 		if filter.ID == nil {
 			return false, nil
@@ -41,7 +50,7 @@ func (r *GameRepository) shouldUseCurrentSeasonGames(ctx context.Context, filter
 	return !hasHistorical, nil
 }
 
-func (r *GameRepository) currentSeasonGameRowsForSeason(ctx context.Context, season core.SeasonYear) (bool, error) {
+func (r *CurrentSeasonGameRepository) currentSeasonGameRowsForSeason(ctx context.Context, season core.SeasonYear) (bool, error) {
 	var exists bool
 	if err := r.db.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM current_season.games WHERE season = $1 LIMIT 1)`, int(season)).Scan(&exists); err != nil {
 		return false, nil
@@ -49,7 +58,15 @@ func (r *GameRepository) currentSeasonGameRowsForSeason(ctx context.Context, sea
 	return exists, nil
 }
 
-func (r *GameRepository) getCurrentSeasonGameByPK(ctx context.Context, gamePK int) (*core.Game, error) {
+func (r *CurrentSeasonGameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Game, error) {
+	gamePK, err := strconv.Atoi(string(id))
+	if err != nil {
+		return nil, core.NewNotFoundError("game", string(id))
+	}
+	return r.getByPK(ctx, gamePK)
+}
+
+func (r *CurrentSeasonGameRepository) getByPK(ctx context.Context, gamePK int) (*core.Game, error) {
 	query := `
 		SELECT
 			g.game_pk,
@@ -87,7 +104,7 @@ func (r *GameRepository) getCurrentSeasonGameByPK(ctx context.Context, gamePK in
 	return game, nil
 }
 
-func (r *GameRepository) listCurrentSeasonGames(ctx context.Context, filter core.GameFilter) ([]core.Game, error) {
+func (r *CurrentSeasonGameRepository) List(ctx context.Context, filter core.GameFilter) ([]core.Game, error) {
 	query := `
 		SELECT
 			g.game_pk,
@@ -191,7 +208,7 @@ func (r *GameRepository) listCurrentSeasonGames(ctx context.Context, filter core
 	return games, nil
 }
 
-func (r *GameRepository) countCurrentSeasonGames(ctx context.Context, filter core.GameFilter) (int, error) {
+func (r *CurrentSeasonGameRepository) Count(ctx context.Context, filter core.GameFilter) (int, error) {
 	query := `
 		SELECT COUNT(*)
 		FROM current_season.games g
@@ -335,12 +352,4 @@ func scanCurrentSeasonGameRow(scanner interface {
 		game.ParkID = core.ParkID(v)
 	}
 	return game, nil
-}
-
-func errorsIsNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	var nf *core.NotFoundError
-	return errors.As(err, &nf)
 }

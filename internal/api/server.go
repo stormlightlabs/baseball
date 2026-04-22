@@ -125,8 +125,10 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 	teamRepo := repository.NewTeamRepository(db, cacheClient)
 	standingsRepo := repository.NewStandingsRepository(db)
 	statsRepo := repository.NewStatsRepository(db, cacheClient)
+	currentSeasonStatsRepo := repository.NewCurrentSeasonStatsRepository(db)
 	awardRepo := repository.NewAwardRepository(db, cacheClient)
 	gameRepo := repository.NewGameRepository(db, cacheClient)
+	currentSeasonGameRepo := repository.NewCurrentSeasonGameRepository(db)
 	playRepo := repository.NewPlayRepository(db)
 	pitchRepo := repository.NewPitchRepository(db)
 	metaRepo := repository.NewMetaRepository(db)
@@ -154,9 +156,9 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 		NewPlayerRoutes(playerRepo, awardRepo),
 		NewTeamRoutes(teamRepo, gameRepo),
 		NewStandingsRoutes(standingsRepo),
-		NewStatsRoutes(statsRepo),
+		NewStatsRoutes(statsRepo, currentSeasonStatsRepo),
 		NewAwardRoutes(awardRepo),
-		NewGameRoutes(gameRepo, playRepo),
+		NewGameRoutes(gameRepo, currentSeasonGameRepo, playRepo),
 		NewPlayRoutes(playRepo, playerRepo),
 		NewPitchRoutes(pitchRepo),
 		NewMetaRoutes(metaRepo, crosswalkRepo),

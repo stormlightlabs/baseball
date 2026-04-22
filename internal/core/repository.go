@@ -93,6 +93,14 @@ type GameRepository interface {
 	ResolveTeamAlias(ctx context.Context, alias string, season *int) (TeamID, bool)
 }
 
+// CurrentSeasonGameRepository serves games from current_season schema.
+type CurrentSeasonGameRepository interface {
+	ShouldUse(ctx context.Context, filter GameFilter) (bool, error)
+	GetByID(ctx context.Context, id GameID) (*Game, error)
+	List(ctx context.Context, filter GameFilter) ([]Game, error)
+	Count(ctx context.Context, filter GameFilter) (int, error)
+}
+
 // PlayRepository manages play-by-play data from Retrosheet.
 type PlayRepository interface {
 	// List retrieves plays based on filter criteria
@@ -184,6 +192,21 @@ type StatsRepository interface {
 
 	TeamFieldingStats(ctx context.Context, filter TeamStatsFilter) ([]TeamFieldingStats, error)
 	TeamFieldingStatsCount(ctx context.Context, filter TeamStatsFilter) (int, error)
+}
+
+// CurrentSeasonStatsRepository serves stats from current_season schema.
+type CurrentSeasonStatsRepository interface {
+	ShouldUseBattingSeason(ctx context.Context, year SeasonYear) (bool, error)
+	ShouldUsePitchingSeason(ctx context.Context, year SeasonYear) (bool, error)
+
+	SeasonBattingLeaders(ctx context.Context, year SeasonYear, stat string, limit, offset int, league *LeagueID) ([]PlayerBattingSeason, error)
+	SeasonPitchingLeaders(ctx context.Context, year SeasonYear, stat string, limit, offset int, league *LeagueID) ([]PlayerPitchingSeason, error)
+
+	QueryBattingStats(ctx context.Context, filter BattingStatsFilter) ([]PlayerBattingSeason, error)
+	QueryBattingStatsCount(ctx context.Context, filter BattingStatsFilter) (int, error)
+
+	QueryPitchingStats(ctx context.Context, filter PitchingStatsFilter) ([]PlayerPitchingSeason, error)
+	QueryPitchingStatsCount(ctx context.Context, filter PitchingStatsFilter) (int, error)
 }
 
 // MetaRepository for API/dataset metadata.

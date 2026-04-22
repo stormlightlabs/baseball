@@ -24,16 +24,6 @@ func NewStatsRepository(db *sql.DB, cacheClient *cache.Client) *StatsRepository 
 
 // QueryBattingStats provides flexible batting stats querying with various filters.
 func (r *StatsRepository) QueryBattingStats(ctx context.Context, filter core.BattingStatsFilter) ([]core.PlayerBattingSeason, error) {
-	if filter.Season != nil {
-		useCurrentSeason, err := r.shouldUseCurrentSeasonBatting(ctx, *filter.Season)
-		if err != nil {
-			return nil, err
-		}
-		if useCurrentSeason {
-			return r.queryCurrentSeasonBattingStats(ctx, filter)
-		}
-	}
-
 	params := battingStatsFilterToParams(filter)
 	var cached []core.PlayerBattingSeason
 	if r.cache.List.Get(ctx, params, &cached) {
@@ -186,16 +176,6 @@ func (r *StatsRepository) QueryBattingStats(ctx context.Context, filter core.Bat
 
 // QueryBattingStatsCount returns the total count for the filter.
 func (r *StatsRepository) QueryBattingStatsCount(ctx context.Context, filter core.BattingStatsFilter) (int, error) {
-	if filter.Season != nil {
-		useCurrentSeason, err := r.shouldUseCurrentSeasonBatting(ctx, *filter.Season)
-		if err != nil {
-			return 0, err
-		}
-		if useCurrentSeason {
-			return r.queryCurrentSeasonBattingStatsCount(ctx, filter)
-		}
-	}
-
 	query := `SELECT COUNT(*) FROM "Batting" WHERE 1=1`
 
 	args := []any{}
@@ -254,16 +234,6 @@ func (r *StatsRepository) QueryBattingStatsCount(ctx context.Context, filter cor
 
 // QueryPitchingStats provides flexible pitching stats querying with various filters.
 func (r *StatsRepository) QueryPitchingStats(ctx context.Context, filter core.PitchingStatsFilter) ([]core.PlayerPitchingSeason, error) {
-	if filter.Season != nil {
-		useCurrentSeason, err := r.shouldUseCurrentSeasonPitching(ctx, *filter.Season)
-		if err != nil {
-			return nil, err
-		}
-		if useCurrentSeason {
-			return r.queryCurrentSeasonPitchingStats(ctx, filter)
-		}
-	}
-
 	params := pitchingStatsFilterToParams(filter)
 	var cached []core.PlayerPitchingSeason
 	if r.cache.List.Get(ctx, params, &cached) {
@@ -411,16 +381,6 @@ func (r *StatsRepository) QueryPitchingStats(ctx context.Context, filter core.Pi
 
 // QueryPitchingStatsCount returns the total count for the filter.
 func (r *StatsRepository) QueryPitchingStatsCount(ctx context.Context, filter core.PitchingStatsFilter) (int, error) {
-	if filter.Season != nil {
-		useCurrentSeason, err := r.shouldUseCurrentSeasonPitching(ctx, *filter.Season)
-		if err != nil {
-			return 0, err
-		}
-		if useCurrentSeason {
-			return r.queryCurrentSeasonPitchingStatsCount(ctx, filter)
-		}
-	}
-
 	query := `SELECT COUNT(*) FROM "Pitching" WHERE 1=1`
 
 	args := []any{}

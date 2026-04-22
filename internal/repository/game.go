@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"strconv"
 	"time"
 
 	"stormlightlabs.org/baseball/internal/cache"
@@ -165,16 +164,6 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 	)
 
 	if err == sql.ErrNoRows {
-		if gamePK, convErr := strconv.Atoi(string(id)); convErr == nil {
-			currentSeasonGame, currentErr := r.getCurrentSeasonGameByPK(ctx, gamePK)
-			if currentErr == nil {
-				_ = r.cache.Entity.Set(ctx, string(id), currentSeasonGame)
-				return currentSeasonGame, nil
-			}
-			if !errorsIsNotFound(currentErr) {
-				return nil, currentErr
-			}
-		}
 		return nil, core.NewNotFoundError("game", string(id))
 	}
 	if err != nil {
@@ -341,14 +330,6 @@ func (r *GameRepository) GetByID(ctx context.Context, id core.GameID) (*core.Gam
 
 // List retrieves games based on filter criteria with pagination.
 func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]core.Game, error) {
-	useCurrentSeason, err := r.shouldUseCurrentSeasonGames(ctx, filter)
-	if err != nil {
-		return nil, err
-	}
-	if useCurrentSeason {
-		return r.listCurrentSeasonGames(ctx, filter)
-	}
-
 	query := `
 		SELECT
 			g.date,
@@ -562,14 +543,6 @@ func (r *GameRepository) List(ctx context.Context, filter core.GameFilter) ([]co
 
 // Count returns the total number of games matching the filter.
 func (r *GameRepository) Count(ctx context.Context, filter core.GameFilter) (int, error) {
-	useCurrentSeason, err := r.shouldUseCurrentSeasonGames(ctx, filter)
-	if err != nil {
-		return 0, err
-	}
-	if useCurrentSeason {
-		return r.countCurrentSeasonGames(ctx, filter)
-	}
-
 	query := `SELECT COUNT(*) FROM games WHERE 1=1`
 
 	args := []any{}
@@ -646,8 +619,7 @@ func (r *GameRepository) Count(ctx context.Context, filter core.GameFilter) (int
 	}
 
 	var count int
-	err = r.db.QueryRowContext(ctx, query, args...).Scan(&count)
-	if err != nil {
+	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&count); err != nil {
 		return 0, fmt.Errorf("failed to count games: %w", err)
 	}
 

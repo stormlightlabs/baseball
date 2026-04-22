@@ -1,17 +1,19 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
 
 type StatsRoutes struct {
-	repo core.StatsRepository
+	repo              core.StatsRepository
+	currentSeasonRepo core.CurrentSeasonStatsRepository
 }
 
-func NewStatsRoutes(repo core.StatsRepository) *StatsRoutes {
-	return &StatsRoutes{repo: repo}
+func NewStatsRoutes(repo core.StatsRepository, currentSeasonRepo core.CurrentSeasonStatsRepository) *StatsRoutes {
+	return &StatsRoutes{repo: repo, currentSeasonRepo: currentSeasonRepo}
 }
 
 func (sr *StatsRoutes) RegisterRoutes(mux *http.ServeMux) {
@@ -25,6 +27,80 @@ func (sr *StatsRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/stats/teams/batting", sr.handleTeamBattingStats)
 	mux.HandleFunc("GET /v1/stats/teams/pitching", sr.handleTeamPitchingStats)
 	mux.HandleFunc("GET /v1/stats/teams/fielding", sr.handleTeamFieldingStats)
+}
+
+type seasonBattingLeadersRepository interface {
+	SeasonBattingLeaders(ctx context.Context, year core.SeasonYear, stat string, limit, offset int, league *core.LeagueID) ([]core.PlayerBattingSeason, error)
+}
+
+type seasonPitchingLeadersRepository interface {
+	SeasonPitchingLeaders(ctx context.Context, year core.SeasonYear, stat string, limit, offset int, league *core.LeagueID) ([]core.PlayerPitchingSeason, error)
+}
+
+type battingStatsQueryRepository interface {
+	QueryBattingStats(ctx context.Context, filter core.BattingStatsFilter) ([]core.PlayerBattingSeason, error)
+	QueryBattingStatsCount(ctx context.Context, filter core.BattingStatsFilter) (int, error)
+}
+
+type pitchingStatsQueryRepository interface {
+	QueryPitchingStats(ctx context.Context, filter core.PitchingStatsFilter) ([]core.PlayerPitchingSeason, error)
+	QueryPitchingStatsCount(ctx context.Context, filter core.PitchingStatsFilter) (int, error)
+}
+
+func (sr *StatsRoutes) battingLeadersRepository(ctx context.Context, year core.SeasonYear) (seasonBattingLeadersRepository, error) {
+	if sr.currentSeasonRepo == nil {
+		return sr.repo, nil
+	}
+	useCurrentSeason, err := sr.currentSeasonRepo.ShouldUseBattingSeason(ctx, year)
+	if err != nil {
+		return nil, err
+	}
+	if useCurrentSeason {
+		return sr.currentSeasonRepo, nil
+	}
+	return sr.repo, nil
+}
+
+func (sr *StatsRoutes) pitchingLeadersRepository(ctx context.Context, year core.SeasonYear) (seasonPitchingLeadersRepository, error) {
+	if sr.currentSeasonRepo == nil {
+		return sr.repo, nil
+	}
+	useCurrentSeason, err := sr.currentSeasonRepo.ShouldUsePitchingSeason(ctx, year)
+	if err != nil {
+		return nil, err
+	}
+	if useCurrentSeason {
+		return sr.currentSeasonRepo, nil
+	}
+	return sr.repo, nil
+}
+
+func (sr *StatsRoutes) battingStatsRepository(ctx context.Context, filter core.BattingStatsFilter) (battingStatsQueryRepository, error) {
+	if sr.currentSeasonRepo == nil || filter.Season == nil {
+		return sr.repo, nil
+	}
+	useCurrentSeason, err := sr.currentSeasonRepo.ShouldUseBattingSeason(ctx, *filter.Season)
+	if err != nil {
+		return nil, err
+	}
+	if useCurrentSeason {
+		return sr.currentSeasonRepo, nil
+	}
+	return sr.repo, nil
+}
+
+func (sr *StatsRoutes) pitchingStatsRepository(ctx context.Context, filter core.PitchingStatsFilter) (pitchingStatsQueryRepository, error) {
+	if sr.currentSeasonRepo == nil || filter.Season == nil {
+		return sr.repo, nil
+	}
+	useCurrentSeason, err := sr.currentSeasonRepo.ShouldUsePitchingSeason(ctx, *filter.Season)
+	if err != nil {
+		return nil, err
+	}
+	if useCurrentSeason {
+		return sr.currentSeasonRepo, nil
+	}
+	return sr.repo, nil
 }
 
 // handleBattingLeaders godoc
@@ -62,13 +138,19 @@ func (sr *StatsRoutes) handleBattingLeaders(w http.ResponseWriter, r *http.Reque
 		league = &lgID
 	}
 
-	leaders, err := sr.repo.SeasonBattingLeaders(ctx, year, stat, limit, offset, league)
+	repo, err := sr.battingLeadersRepository(ctx, year)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	allLeaders, err := sr.repo.SeasonBattingLeaders(ctx, year, stat, 10000, 0, league)
+	leaders, err := repo.SeasonBattingLeaders(ctx, year, stat, limit, offset, league)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	allLeaders, err := repo.SeasonBattingLeaders(ctx, year, stat, 10000, 0, league)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -121,13 +203,19 @@ func (sr *StatsRoutes) handlePitchingLeaders(w http.ResponseWriter, r *http.Requ
 		league = &lgID
 	}
 
-	leaders, err := sr.repo.SeasonPitchingLeaders(ctx, year, stat, limit, offset, league)
+	repo, err := sr.pitchingLeadersRepository(ctx, year)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	allLeaders, err := sr.repo.SeasonPitchingLeaders(ctx, year, stat, 10000, 0, league)
+	leaders, err := repo.SeasonPitchingLeaders(ctx, year, stat, limit, offset, league)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	allLeaders, err := repo.SeasonPitchingLeaders(ctx, year, stat, 10000, 0, league)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -218,13 +306,19 @@ func (sr *StatsRoutes) handleQueryBattingStats(w http.ResponseWriter, r *http.Re
 		filter.SortOrder = core.SortDesc
 	}
 
-	stats, err := sr.repo.QueryBattingStats(ctx, filter)
+	repo, err := sr.battingStatsRepository(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	total, err := sr.repo.QueryBattingStatsCount(ctx, filter)
+	stats, err := repo.QueryBattingStats(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := repo.QueryBattingStatsCount(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -317,13 +411,19 @@ func (sr *StatsRoutes) handleQueryPitchingStats(w http.ResponseWriter, r *http.R
 		filter.SortOrder = core.SortDesc
 	}
 
-	stats, err := sr.repo.QueryPitchingStats(ctx, filter)
+	repo, err := sr.pitchingStatsRepository(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	total, err := sr.repo.QueryPitchingStatsCount(ctx, filter)
+	stats, err := repo.QueryPitchingStats(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := repo.QueryPitchingStatsCount(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return

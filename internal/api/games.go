@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -8,12 +9,13 @@ import (
 )
 
 type GameRoutes struct {
-	repo     core.GameRepository
-	playRepo core.PlayRepository
+	repo              core.GameRepository
+	currentSeasonRepo core.CurrentSeasonGameRepository
+	playRepo          core.PlayRepository
 }
 
-func NewGameRoutes(repo core.GameRepository, playRepo core.PlayRepository) *GameRoutes {
-	return &GameRoutes{repo: repo, playRepo: playRepo}
+func NewGameRoutes(repo core.GameRepository, currentSeasonRepo core.CurrentSeasonGameRepository, playRepo core.PlayRepository) *GameRoutes {
+	return &GameRoutes{repo: repo, currentSeasonRepo: currentSeasonRepo, playRepo: playRepo}
 }
 
 func (gr *GameRoutes) RegisterRoutes(mux *http.ServeMux) {
@@ -27,6 +29,45 @@ func (gr *GameRoutes) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/seasons/{year}/dates/{date}/games", gr.handleGamesByDate)
 	mux.HandleFunc("GET /v1/seasons/{year}/teams/{team_id}/games", gr.handleTeamGames)
 	mux.HandleFunc("GET /v1/seasons/{year}/parks/{park_id}/games", gr.handleParkGames)
+}
+
+type gameListRepository interface {
+	List(ctx context.Context, filter core.GameFilter) ([]core.Game, error)
+	Count(ctx context.Context, filter core.GameFilter) (int, error)
+}
+
+func (gr *GameRoutes) listRepositoryForFilter(ctx context.Context, filter core.GameFilter) (gameListRepository, error) {
+	if gr.currentSeasonRepo == nil {
+		return gr.repo, nil
+	}
+
+	useCurrentSeason, err := gr.currentSeasonRepo.ShouldUse(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	if useCurrentSeason {
+		return gr.currentSeasonRepo, nil
+	}
+	return gr.repo, nil
+}
+
+func (gr *GameRoutes) getGameByID(ctx context.Context, id core.GameID) (*core.Game, error) {
+	game, err := gr.repo.GetByID(ctx, id)
+	if err == nil {
+		return game, nil
+	}
+	if gr.currentSeasonRepo == nil || !core.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	currentSeasonGame, currentErr := gr.currentSeasonRepo.GetByID(ctx, id)
+	if currentErr == nil {
+		return currentSeasonGame, nil
+	}
+	if !core.IsNotFoundError(currentErr) {
+		return nil, currentErr
+	}
+	return nil, err
 }
 
 // handleGetGame godoc
@@ -45,7 +86,7 @@ func (gr *GameRoutes) handleGetGame(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := core.GameID(r.PathValue("id"))
 
-	game, err := gr.repo.GetByID(ctx, id)
+	game, err := gr.getGameByID(ctx, id)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -143,13 +184,19 @@ func (gr *GameRoutes) handleListGames(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	games, err := gr.repo.List(ctx, filter)
+	listRepo, err := gr.listRepositoryForFilter(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	total, err := gr.repo.Count(ctx, filter)
+	games, err := listRepo.List(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := listRepo.Count(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -188,13 +235,19 @@ func (gr *GameRoutes) handleSeasonSchedule(w http.ResponseWriter, r *http.Reques
 		},
 	}
 
-	games, err := gr.repo.List(ctx, filter)
+	listRepo, err := gr.listRepositoryForFilter(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	total, err := gr.repo.Count(ctx, filter)
+	games, err := listRepo.List(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := listRepo.Count(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -237,7 +290,24 @@ func (gr *GameRoutes) handleGamesByDate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	games, err := gr.repo.ListByDate(ctx, targetDate)
+	season := core.SeasonYear(year)
+	filter := core.GameFilter{
+		Season:   &season,
+		DateFrom: &targetDate,
+		DateTo:   &targetDate,
+		Pagination: core.Pagination{
+			Page:    1,
+			PerPage: 100,
+		},
+	}
+
+	listRepo, err := gr.listRepositoryForFilter(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	games, err := listRepo.List(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -270,19 +340,25 @@ func (gr *GameRoutes) handleTeamGames(w http.ResponseWriter, r *http.Request) {
 		PerPage: getIntQuery(r, "per_page", 100),
 	}
 
-	games, err := gr.repo.ListByTeamSeason(ctx, teamID, year, pagination)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-
 	filter := core.GameFilter{
 		HomeTeam:   &teamID,
 		Season:     &year,
 		Pagination: pagination,
 	}
 
-	total, err := gr.repo.Count(ctx, filter)
+	listRepo, err := gr.listRepositoryForFilter(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	games, err := listRepo.List(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := listRepo.Count(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -326,13 +402,19 @@ func (gr *GameRoutes) handleParkGames(w http.ResponseWriter, r *http.Request) {
 		Pagination: pagination,
 	}
 
-	games, err := gr.repo.List(ctx, filter)
+	listRepo, err := gr.listRepositoryForFilter(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	total, err := gr.repo.Count(ctx, filter)
+	games, err := listRepo.List(ctx, filter)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	total, err := listRepo.Count(ctx, filter)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -362,7 +444,7 @@ func (gr *GameRoutes) handleGetGameSummary(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 	id := core.GameID(r.PathValue("id"))
 
-	game, err := gr.repo.GetByID(ctx, id)
+	game, err := gr.getGameByID(ctx, id)
 	if err != nil {
 		writeError(w, err)
 		return
