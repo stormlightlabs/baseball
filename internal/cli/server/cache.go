@@ -1,4 +1,4 @@
-package cli
+package server
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"stormlightlabs.org/baseball/internal/cache"
 	"stormlightlabs.org/baseball/internal/config"
 	"stormlightlabs.org/baseball/internal/echo"
+	"stormlightlabs.org/baseball/internal/utils"
 )
 
 // CacheCmd creates the cache command group
@@ -267,7 +268,7 @@ func listCacheKeys(cmd *cobra.Command, args []string) error {
 		}
 
 		ttl, _ := cacheClient.Redis.TTL(ctx, key).Result()
-		ttlStr := formatTTL(ttl)
+		ttlStr := utils.FormatTTL(ttl)
 
 		parts := strings.Split(key, ":")
 		if len(parts) >= 4 {
@@ -308,7 +309,7 @@ func getCacheValue(cmd *cobra.Command, args []string) error {
 
 	ttl, _ := cacheClient.Redis.TTL(ctx, key).Result()
 
-	echo.Infof("TTL: %s", formatTTL(ttl))
+	echo.Infof("TTL: %s", utils.FormatTTL(ttl))
 	echo.Info("")
 	echo.Info("Value:")
 	echo.Info(val)

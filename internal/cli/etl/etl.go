@@ -1,4 +1,5 @@
-package cli
+// package etl implements the `etl` command group for managing ETL pipelines.
+package etl
 
 import (
 	"errors"

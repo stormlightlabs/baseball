@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	cli "stormlightlabs.org/baseball/internal/cli"
+	servercli "stormlightlabs.org/baseball/internal/cli/server"
 )
 
 func main() {
-	if err := cli.NewBaseballRootCmd().Execute(); err != nil {
+	if err := servercli.NewRootCmd().Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}

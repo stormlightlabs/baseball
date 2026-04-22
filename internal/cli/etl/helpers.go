@@ -1,4 +1,4 @@
-package cli
+package etl
 
 import (
 	"fmt"
@@ -13,19 +13,6 @@ import (
 )
 
 const defaultRetrosheetYears = "2023-2025"
-
-func formatTTL(ttl time.Duration) string {
-	if ttl < 0 {
-		return "No expiry"
-	}
-	if ttl < time.Minute {
-		return fmt.Sprintf("%ds", int(ttl.Seconds()))
-	}
-	if ttl < time.Hour {
-		return fmt.Sprintf("%dm", int(ttl.Minutes()))
-	}
-	return fmt.Sprintf("%.1fh", ttl.Hours())
-}
 
 func formatRefresh(entry *db.DatasetRefresh) string {
 	if entry == nil || entry.LastLoadedAt.IsZero() {
@@ -46,21 +33,6 @@ func humanizeModTime(t time.Time) string {
 
 	ago := time.Since(t)
 	return fmt.Sprintf("%s (%s ago)", t.Format("2006-01-02 15:04"), ago.Round(time.Minute))
-}
-
-func padRight(s string, length int) string {
-	if len(s) >= length {
-		return s
-	}
-	return s + strings.Repeat(" ", length-len(s))
-}
-
-func parsePattern(pattern string) (method, path string) {
-	parts := strings.SplitN(pattern, " ", 2)
-	if len(parts) == 2 {
-		return parts[0], parts[1]
-	}
-	return "ALL", pattern
 }
 
 func retrosheetEraNames() []string {
@@ -177,4 +149,8 @@ func resolveDataRoot(cmd *cobra.Command) string {
 		return seed.ResolveDataRoot(value)
 	}
 	return seed.ResolveDataRoot("")
+}
+
+func quoteIdentifier(id string) string {
+	return `"` + strings.ReplaceAll(id, `"`, `""`) + `"`
 }

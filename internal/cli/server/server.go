@@ -1,4 +1,5 @@
-package cli
+// package server implements the `server` command group for managing the API server.
+package server
 
 import (
 	"bytes"
@@ -15,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	charmlog "github.com/charmbracelet/log"
+	clog "github.com/charmbracelet/log"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
 	"stormlightlabs.org/baseball/internal/api"
@@ -24,6 +25,7 @@ import (
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
 	"stormlightlabs.org/baseball/internal/middleware"
+	"stormlightlabs.org/baseball/internal/utils"
 )
 
 type Route struct {
@@ -292,7 +294,7 @@ func startServer(cmd *cobra.Command, args []string) error {
 
 	var logger *slog.Logger
 	if cfg.Server.DebugMode {
-		devHandler := charmlog.NewWithOptions(cmd.OutOrStdout(), charmlog.Options{
+		devHandler := clog.NewWithOptions(cmd.OutOrStdout(), clog.Options{
 			ReportTimestamp: true,
 			TimeFormat:      timeFmt,
 			Prefix:          "⚾",
@@ -435,7 +437,7 @@ func extractRoutesFromAST(dir string) ([]Route, error) {
 			}
 
 			pattern := strings.Trim(patternLit.Value, "\"")
-			method, path := parsePattern(pattern)
+			method, path := utils.ParsePattern(pattern)
 			if path != "" {
 				routes = append(routes, Route{Method: method, Path: path})
 			}
@@ -468,13 +470,13 @@ func printRoutesTable(routes []Route) {
 		}
 	}
 
-	headerMethod := padRight("METHOD", maxMethodLen)
-	headerPath := padRight("PATH", maxPathLen)
+	headerMethod := utils.PadRight("METHOD", maxMethodLen)
+	headerPath := utils.PadRight("PATH", maxPathLen)
 	echo.Info(fmt.Sprintf("%s  %s", headerMethod, headerPath))
 	echo.Info(strings.Repeat("-", maxMethodLen+2+maxPathLen))
 
 	for _, r := range routes {
-		method := padRight(r.Method, maxMethodLen)
+		method := utils.PadRight(r.Method, maxMethodLen)
 		echo.Info(fmt.Sprintf("%s  %s", method, r.Path))
 	}
 }

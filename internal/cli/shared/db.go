@@ -1,4 +1,6 @@
-package cli
+// package shared contains command interfaces common to all built binaries,
+// namely database management commands.
+package shared
 
 import (
 	"fmt"
@@ -171,11 +173,11 @@ func quoteIdentifier(id string) string {
 }
 
 func loadConfigForCmd(cmd *cobra.Command) (*config.Config, error) {
-	configPath := findConfigPath(cmd)
+	configPath := FindConfigPath(cmd)
 	return config.Load(configPath)
 }
 
-func findConfigPath(cmd *cobra.Command) string {
+func FindConfigPath(cmd *cobra.Command) string {
 	if cmd == nil {
 		return ""
 	}
@@ -184,7 +186,7 @@ func findConfigPath(cmd *cobra.Command) string {
 		return flag.Value.String()
 	}
 
-	return findConfigPath(cmd.Parent())
+	return FindConfigPath(cmd.Parent())
 }
 
 // DbRefreshViewsCmd creates the refresh-views command

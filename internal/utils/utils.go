@@ -142,3 +142,31 @@ func NonNilMap(input map[string]any) map[string]any {
 	}
 	return map[string]any{}
 }
+
+func FormatTTL(ttl time.Duration) string {
+	if ttl < 0 {
+		return "No expiry"
+	}
+	if ttl < time.Minute {
+		return fmt.Sprintf("%ds", int(ttl.Seconds()))
+	}
+	if ttl < time.Hour {
+		return fmt.Sprintf("%dm", int(ttl.Minutes()))
+	}
+	return fmt.Sprintf("%.1fh", ttl.Hours())
+}
+
+func PadRight(s string, length int) string {
+	if len(s) >= length {
+		return s
+	}
+	return s + strings.Repeat(" ", length-len(s))
+}
+
+func ParsePattern(pattern string) (method, path string) {
+	parts := strings.SplitN(pattern, " ", 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return "ALL", pattern
+}

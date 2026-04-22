@@ -1,4 +1,4 @@
-package cli
+package etl
 
 import (
 	"context"
@@ -15,6 +15,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
+	"stormlightlabs.org/baseball/internal/cli/shared"
 	"stormlightlabs.org/baseball/internal/db"
 	"stormlightlabs.org/baseball/internal/echo"
 	"stormlightlabs.org/baseball/internal/seed"
@@ -228,7 +229,7 @@ func resolveCronTasks(cmd *cobra.Command, opts *cronCLIOptions) ([]cronTask, err
 
 	configPath := strings.TrimSpace(opts.scheduleConfig)
 	if configPath == "" {
-		configPath = strings.TrimSpace(findConfigPath(cmd))
+		configPath = strings.TrimSpace(shared.FindConfigPath(cmd))
 	}
 
 	cfg, cfgErr := loadCurrentSeasonCronConfig(configPath)
