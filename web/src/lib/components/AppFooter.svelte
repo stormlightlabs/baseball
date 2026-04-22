@@ -56,6 +56,15 @@
         </a>
       {/each}
       <a
+        href="https://bsky.app/profile/bigfly.tech"
+        target="_blank"
+        class="inline-flex items-center gap-1 rounded text-sm text-muted no-underline transition-colors duration-150 hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        <span class="flex items-center">
+          <i class="i-tabler-brand-bluesky"></i>
+        </span>
+        Bluesky
+      </a>
+      <a
         href="mailto:admin@bigfly.tech"
         class="inline-flex items-center gap-1 rounded text-sm text-muted no-underline transition-colors duration-150 hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
         <span class="flex items-center">

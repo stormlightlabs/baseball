@@ -36,6 +36,25 @@ export function isGameTabId(value: string): value is GameTabId {
   return ALL_GAME_TABS.some((tab) => tab.id === value);
 }
 
+export const MAIN_SEASON_TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'leaders', label: 'Leaders' },
+  { id: 'schedule', label: 'Schedule' },
+  { id: 'awards', label: 'Awards' },
+  { id: 'postseason', label: 'Postseason' },
+  { id: 'parks', label: 'Parks' }
+] as const;
+
+export const ALL_SEASON_TABS = [...MAIN_SEASON_TABS] as const;
+
+export type SeasonTabId = (typeof ALL_SEASON_TABS)[number]['id'];
+
+export const DEFAULT_SEASON_TAB: SeasonTabId = 'overview';
+
+export function isSeasonTabId(value: string): value is SeasonTabId {
+  return ALL_SEASON_TABS.some((tab) => tab.id === value);
+}
+
 export const BATTING_STATS = [
   { value: 'hr', label: 'Home Runs (HR)' },
   { value: 'avg', label: 'Batting Avg (AVG)' },
