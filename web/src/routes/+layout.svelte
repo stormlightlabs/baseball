@@ -133,9 +133,15 @@
     </span>
     <div class="flex max-w-5xl flex-col">
       <span>
-        Big Fly is in early alpha for the next few weeks. Expect bugs, breaking changes, and incomplete features.
+        Big Fly is in early alpha for the next few weeks. While the API is functionally complete, data coverage is still
+        being backfilled and the UI is in active development. Expect bugs, breaking changes, and incomplete features.</span>
+      <span>
+        We appreciate your patience and <a
+          class="underline hover:no-underline"
+          href="https://github.com/stormlightlabs/baseball/issues"
+          target="_blank"
+          rel="noreferrer">feedback</a> as we work towards a stable release in the coming weeks!
       </span>
-      <span>We appreciate your patience and feedback as we work towards a stable release in the coming weeks! </span>
     </div>
   </div>
 
