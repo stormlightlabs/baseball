@@ -683,7 +683,7 @@ func buildCurrentSeasonStandingRow(
 		WCGB:         optionalString(teamRecord.WildCardGamesBack),
 		Streak:       streak,
 		L10:          lastTen,
-		RunDiff:      parseSignedIntString(teamRecord.RunDifferential),
+		RunDiff:      parseSignedIntString(string(teamRecord.RunDifferential)),
 		RS:           intPointer(teamRecord.RunsScored),
 		RA:           intPointer(teamRecord.RunsAllowed),
 	}
@@ -1061,6 +1061,7 @@ func fetchCurrentSeasonStandings(ctx context.Context, httpClient *http.Client, s
 	err := fetchCurrentSeasonAPIJSON(ctx, httpClient, []string{"v1", "standings"}, map[string]string{
 		"season":         strconv.Itoa(season),
 		"standingsTypes": "regularSeason",
+		"leagueId":       "103,104",
 		"sportId":        "1",
 	}, &payload)
 	if err != nil {

@@ -1,6 +1,11 @@
 package core
 
-import "encoding/json"
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"strings"
+)
 
 // MLBOverviewResponse represents the catalog of available MLB proxy routes.
 type MLBOverviewResponse struct {
@@ -601,7 +606,7 @@ type MLBTeamRecord struct {
 	Records                   *MLBRecordDetails `json:"records,omitempty"`
 	RunsAllowed               int               `json:"runsAllowed,omitempty"`
 	RunsScored                int               `json:"runsScored,omitempty"`
-	RunDifferential           string            `json:"runDifferential,omitempty"`
+	RunDifferential           MLBStringNumber   `json:"runDifferential,omitempty"`
 	DivisionChamp             bool              `json:"divisionChamp,omitempty"`
 	DivisionLeader            bool              `json:"divisionLeader,omitempty"`
 	HasWildcard               bool              `json:"hasWildcard,omitempty"`
@@ -611,6 +616,34 @@ type MLBTeamRecord struct {
 	WildCardEliminationNumber string            `json:"wildCardEliminationNumber,omitempty"`
 	LastUpdated               string            `json:"lastUpdated,omitempty"`
 	LastTenRecords            []MLBSplitRecord  `json:"lastTenRecords,omitempty"`
+}
+
+// MLBStringNumber decodes an MLB Stats API value that can be either string or number.
+type MLBStringNumber string
+
+// UnmarshalJSON accepts string/number/null and normalizes to a trimmed string.
+func (v *MLBStringNumber) UnmarshalJSON(data []byte) error {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		*v = ""
+		return nil
+	}
+
+	var text string
+	if err := json.Unmarshal(trimmed, &text); err == nil {
+		*v = MLBStringNumber(strings.TrimSpace(text))
+		return nil
+	}
+
+	decoder := json.NewDecoder(bytes.NewReader(trimmed))
+	decoder.UseNumber()
+	var number json.Number
+	if err := decoder.Decode(&number); err == nil {
+		*v = MLBStringNumber(number.String())
+		return nil
+	}
+
+	return fmt.Errorf("mlb string-number value must be string/number/null, got %s", string(trimmed))
 }
 
 // MLBTeamRef represents a team reference in standings and related payloads.

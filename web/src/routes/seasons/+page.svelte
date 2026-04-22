@@ -1149,7 +1149,7 @@
       </div>
 
       {#if isCurrentSeason}
-        <div class="rounded-lg border border-primary/35 bg-primary/10 px-3 py-2 font-mono text-[0.72rem] text-primary">
+        <div class="rounded-lg border border-primary/35 bg-primary/10 px-3 py-2 text-xs text-primary">
           Data refreshes every 4 hours for season stats. Standings and schedule update hourly.
         </div>
       {/if}

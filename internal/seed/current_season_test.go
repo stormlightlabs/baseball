@@ -1,14 +1,24 @@
 package seed
 
 import (
+	"context"
 	"encoding/json"
+	"io"
 	"net"
+	"net/http"
+	"strings"
 	"testing"
 	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
 	"stormlightlabs.org/baseball/internal/db"
 )
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (fn roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}
 
 func TestNormalizeCurrentSeasonSyncType(t *testing.T) {
 	t.Run("defaults empty to all", func(t *testing.T) {
@@ -183,5 +193,34 @@ func TestClassifyCurrentSeasonSyncFailure_Network(t *testing.T) {
 	}
 	if !retryable {
 		t.Fatal("expected retryable network failure")
+	}
+}
+
+func TestFetchCurrentSeasonStandings_IncludesLeagueIDs(t *testing.T) {
+	var capturedQuery string
+	client := &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.RawQuery
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"records":[]}`)),
+				Header:     make(http.Header),
+			}, nil
+		}),
+	}
+
+	_, err := fetchCurrentSeasonStandings(context.Background(), client, 2026)
+	if err != nil {
+		t.Fatalf("fetchCurrentSeasonStandings returned error: %v", err)
+	}
+
+	if !strings.Contains(capturedQuery, "leagueId=103%2C104") {
+		t.Fatalf("expected standings request to include leagueId=103,104, got query=%q", capturedQuery)
+	}
+	if !strings.Contains(capturedQuery, "sportId=1") {
+		t.Fatalf("expected standings request to include sportId=1, got query=%q", capturedQuery)
+	}
+	if !strings.Contains(capturedQuery, "season=2026") {
+		t.Fatalf("expected standings request to include season=2026, got query=%q", capturedQuery)
 	}
 }
