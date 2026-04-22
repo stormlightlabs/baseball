@@ -181,7 +181,7 @@ func EtlMaintenanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "maintenance",
 		Short: "Run ETL maintenance pipeline",
-		Long:  "Run ETL maintenance (materialized view refresh + serving table sync) for a year scope.",
+		Long:  "Run ETL maintenance (canonical materialized view refresh) for a year scope.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runETLMaintenance(cmd, opts)
 		},

@@ -40,7 +40,7 @@ Cron model (target for `docs/specs/current.md` Phase 1):
 
 ## What remains before cutover
 
-- Deploy a build containing migration `014_etl_mv_batched_maintenance.sql` and the maintenance worker code path.
+- Deploy a build containing ETL maintenance migrations through `016_drop_etl_maintenance.sql` and the maintenance worker code path.
 - Apply schema migrations in the target environment.
 - Run ETL as a dedicated long-lived worker process/container (`baseball-etl worker`).
 - Verify queue limits and batching defaults are set for VM safety (`max-active-jobs=1`, bounded queue depth, year batching).
@@ -157,5 +157,5 @@ Use this flow to replicate production behavior locally without a full-history lo
   - loader/queue tests (`internal/seed`)
   - API integration expectations (`internal/api`) where dataset shape/readiness is affected.
 - Treat `baseball-etl validate` + `baseball-etl status` as required acceptance checks after each scoped run.
-- Treat `baseball-etl maintenance` as a first-class post-run phase. `run` handles extract/load/validate; maintenance handles materialized-view recompute + serving sync.
+- Treat `baseball-etl maintenance` as a first-class post-run phase. `run` handles extract/load/validate; maintenance handles canonical materialized-view refresh.
 - Keep maintenance execution in the main worker loop (`--enqueue-only`) instead of a separate one-shot drain path.

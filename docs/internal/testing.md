@@ -22,7 +22,7 @@ loaders. It also does not require Redis for test execution.
 
 The migration/test path primarily exercises fresh-database behavior. Keep this
 aligned with long-lived cutover behavior by validating migration + narrow-slice
-runs from the [ETL Cutover & Narrow-Slice Runbook](./etl-cutover.md) when ETL
+runs from the [ETL Cutover & Narrow-Slice Runbook](./etl.md) when ETL
 maintenance semantics change.
 
 ## Prerequisites

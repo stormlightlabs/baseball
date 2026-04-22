@@ -92,7 +92,7 @@ Release planning for ETL safety/performance now follows a single operational tra
 
 1. Baseball API ETL worker runtime:
    - [Database Loading Contract](./data-loading.md)
-   - [ETL Cutover & Narrow-Slice Runbook](./etl-cutover.md)
+   - [ETL Cutover & Narrow-Slice Runbook](./etl.md)
 
 Execution rule:
 
