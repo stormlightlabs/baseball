@@ -17,6 +17,7 @@
 
   type CategoryID = LeaderCategory['id'];
   type SourceMode = 'local' | 'mlb';
+  type StatsPool = 'all' | 'qualified';
 
   type LocalBattingLeader = {
     player_id?: string;
@@ -43,8 +44,11 @@
   type PlayerHref = `/players/${string}/batting` | `/players/${string}/pitching` | `/players?${string}`;
 
   const CURRENT_SEASON = new Date().getFullYear();
-  const MLB_STATS_HINT = `/v1${EP.mlbStats}?stats=season&group={hitting|pitching}&season=${CURRENT_SEASON}&playerPool=qualified&include=details`;
+  const MLB_STATS_HINT =
+    `/v1${EP.mlbStats}?stats=season&group={hitting|pitching}&season=${CURRENT_SEASON}` +
+    `&gameType=R&playerPool={all|qualified}&include=details`;
   const LOCAL_STATS_HINT = `/v1${EP.seasonLeadersBatting(CURRENT_SEASON)} + /v1${EP.seasonLeadersPitching(CURRENT_SEASON)}`;
+  const RATE_CATEGORIES = new Set<CategoryID>(['AVG', 'OPS', 'ERA', 'WHIP']);
 
   let loading = $state(true);
   let refreshing = $state(false);
@@ -83,16 +87,19 @@
     }
 
     try {
-      let localLoaded = false;
+      let mlbLoaded = false;
       try {
-        localLoaded = await refreshFromLocalLeaders();
+        mlbLoaded = await refreshFromMLBProxy();
       } catch {
-        localLoaded = false;
+        mlbLoaded = false;
       }
 
-      if (!localLoaded) {
+      if (!mlbLoaded) {
         localFallbackUsed = true;
-        await refreshFromMLBProxy();
+        const localLoaded = await refreshFromLocalLeaders();
+        if (!localLoaded) {
+          throw new Error('No leader data available.');
+        }
       } else {
         localFallbackUsed = false;
       }
@@ -150,35 +157,71 @@
     return true;
   }
 
-  async function refreshFromMLBProxy(): Promise<void> {
-    const [hittingPayload, pitchingPayload] = await Promise.all([
-      apiFetch<unknown>(EP.mlbStats, {
-        stats: 'season',
-        group: 'hitting',
-        season: CURRENT_SEASON,
-        playerPool: 'qualified',
-        include: 'details'
-      }),
-      apiFetch<unknown>(EP.mlbStats, {
-        stats: 'season',
-        group: 'pitching',
-        season: CURRENT_SEASON,
-        playerPool: 'qualified',
-        include: 'details'
-      })
-    ]);
+  async function refreshFromMLBProxy(): Promise<boolean> {
+    const [hittingAllPayload, hittingQualifiedPayload, pitchingAllPayload, pitchingQualifiedPayload] =
+      await Promise.all([
+        fetchMLBSeasonStats('hitting', 'all'),
+        fetchMLBSeasonStats('hitting', 'qualified'),
+        fetchMLBSeasonStats('pitching', 'all'),
+        fetchMLBSeasonStats('pitching', 'qualified')
+      ]);
 
     const teamAbbrByID = {
-      ...normalizeMlbTeamsAbbrByIDFromDetails(hittingPayload),
-      ...normalizeMlbTeamsAbbrByIDFromDetails(pitchingPayload)
+      ...normalizeMlbTeamsAbbrByIDFromDetails(hittingAllPayload),
+      ...normalizeMlbTeamsAbbrByIDFromDetails(hittingQualifiedPayload),
+      ...normalizeMlbTeamsAbbrByIDFromDetails(pitchingAllPayload),
+      ...normalizeMlbTeamsAbbrByIDFromDetails(pitchingQualifiedPayload)
     };
 
-    board = buildLeaderBoardByCategory(hittingPayload, pitchingPayload, teamAbbrByID, 5);
+    const boardAll = buildLeaderBoardByCategory(hittingAllPayload, pitchingAllPayload, teamAbbrByID, 5);
+    const boardQualified = buildLeaderBoardByCategory(
+      hittingQualifiedPayload,
+      pitchingQualifiedPayload,
+      teamAbbrByID,
+      5
+    );
+
+    const mlbBoard: Record<CategoryID, LeaderRow[]> = {
+      HR: [],
+      AVG: [],
+      OPS: [],
+      RBI: [],
+      SB: [],
+      ERA: [],
+      SO: [],
+      W: [],
+      SV: [],
+      WHIP: []
+    };
+    for (const category of LEADER_CATEGORIES) {
+      mlbBoard[category.id] = RATE_CATEGORIES.has(category.id) ? boardQualified[category.id] : boardAll[category.id];
+    }
+
+    const hasRows = Object.values(mlbBoard).some((entries) => entries.length > 0);
+    if (!hasRows) return false;
+
+    board = mlbBoard;
     crosswalkByMLBID = {
-      ...extractPlayerCrosswalkByMLBID(hittingPayload),
-      ...extractPlayerCrosswalkByMLBID(pitchingPayload)
+      ...extractPlayerCrosswalkByMLBID(hittingAllPayload),
+      ...extractPlayerCrosswalkByMLBID(hittingQualifiedPayload),
+      ...extractPlayerCrosswalkByMLBID(pitchingAllPayload),
+      ...extractPlayerCrosswalkByMLBID(pitchingQualifiedPayload)
     };
     sourceMode = 'mlb';
+    return true;
+  }
+
+  async function fetchMLBSeasonStats(group: 'hitting' | 'pitching', playerPool: StatsPool): Promise<unknown> {
+    return apiFetch<unknown>(EP.mlbStats, {
+      stats: 'season',
+      group,
+      season: CURRENT_SEASON,
+      gameType: 'R',
+      playerPool,
+      limit: 5000,
+      offset: 0,
+      include: 'details'
+    });
   }
 
   function mapLeaderNames(
