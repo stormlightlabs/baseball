@@ -6,20 +6,20 @@ Every proxy call adds caching, shared auth, and a consistent schema so clients d
 
 ## Summary
 
-| Endpoint                  | Dataset       | Highlights                                                                         |
-| ------------------------- | ------------- | ---------------------------------------------------------------------------------- |
-| `GET /v1/mlb`             | MLB Stats API | Catalog of proxied routes (`routes` array) plus base URL metadata.                 |
-| `GET /v1/mlb/people`      | MLB Stats API | Pass-through to `/api/v1/people`; supports `personIds`, `sportId`, and `hydrate`.  |
-| `GET /v1/mlb/people/{id}` | MLB Stats API | Single-player lookup mirroring `/api/v1/people/{personId}`.                        |
-| `GET /v1/mlb/teams`       | MLB Stats API | Team directory; accepts `sportId` (defaults to 1) and `season`.                    |
-| `GET /v1/mlb/teams/{id}`  | MLB Stats API | Individual team record, optionally filtered by `season`.                           |
-| `GET /v1/mlb/schedule`    | MLB Stats API | Schedule endpoint relayed directly from MLB Stats; any query params are forwarded. |
-| `GET /v1/mlb/seasons`     | MLB Stats API | Season metadata (start/end dates, postseason flags).                               |
-| `GET /v1/mlb/stats`       | MLB Stats API | The generic stats endpoint for situational queries (leaders, splits, etc.).        |
-| `GET /v1/mlb/standings`   | MLB Stats API | League/division standings; accepts the same query flags as Stats API.              |
-| `GET /v1/mlb/awards`      | MLB Stats API | Awards directory.                                                                  |
-| `GET /v1/mlb/awards/{id}` | MLB Stats API | Individual MLB award definition or recipient list.                                 |
-| `GET /v1/mlb/venues`      | MLB Stats API | Venue directory mirrored from `/v1/venues`.                                        |
+| Endpoint              | Dataset       | Highlights                                                                         |
+| --------------------- | ------------- | ---------------------------------------------------------------------------------- |
+| `/v1/mlb`             | MLB Stats API | Catalog of proxied routes (`routes` array) plus base URL metadata.                 |
+| `/v1/mlb/people`      | MLB Stats API | Pass-through to `/api/v1/people`; supports `personIds`, `sportId`, and `hydrate`.  |
+| `/v1/mlb/people/{id}` | MLB Stats API | Single-player lookup mirroring `/api/v1/people/{personId}`.                        |
+| `/v1/mlb/teams`       | MLB Stats API | Team directory; accepts `sportId` (defaults to 1) and `season`.                    |
+| `/v1/mlb/teams/{id}`  | MLB Stats API | Individual team record, optionally filtered by `season`.                           |
+| `/v1/mlb/schedule`    | MLB Stats API | Schedule endpoint relayed directly from MLB Stats; any query params are forwarded. |
+| `/v1/mlb/seasons`     | MLB Stats API | Season metadata (start/end dates, postseason flags).                               |
+| `/v1/mlb/stats`       | MLB Stats API | The generic stats endpoint for situational queries (leaders, splits, etc.).        |
+| `/v1/mlb/standings`   | MLB Stats API | League/division standings; accepts the same query flags as Stats API.              |
+| `/v1/mlb/awards`      | MLB Stats API | Awards directory.                                                                  |
+| `/v1/mlb/awards/{id}` | MLB Stats API | Individual MLB award definition or recipient list.                                 |
+| `/v1/mlb/venues`      | MLB Stats API | Venue directory mirrored from `/v1/venues`.                                        |
 
 ## Endpoint Notes
 

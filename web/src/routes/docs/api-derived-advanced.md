@@ -4,14 +4,14 @@ These endpoints layer derived analytics on top of Lahman + Retrosheet data.
 
 ## Summary
 
-| Endpoint                                   | Dataset | Highlights                                                                                       |
-| ------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------ |
-| `GET /v1/players/{player_id}/streaks`      | L+R     | Finds streak windows for hitting or scoreless innings with start/end dates and game context.     |
-| `GET /v1/players/{player_id}/splits`       | L+R     | Returns batting splits by `home_away`, `pitcher_handed`, or `month`.                             |
-| `GET /v1/teams/{team_id}/run-differential` | L+R     | Provides season run differential with cumulative and rolling windows.                            |
-| `GET /v1/games/{game_id}/win-probability`  | R       | Streams win-probability and leverage data per play for charting and recap narratives.            |
-| `GET /v1/win-expectancy`                   | R       | Returns historical win probability for an arbitrary game state (inning, base state, score diff). |
-| `GET /v1/win-expectancy/eras`              | R       | Lists available historical eras so callers can scope probability lookups to specific seasons.    |
+| Endpoint                               | Dataset | Highlights                                                                                       |
+| -------------------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `/v1/players/{player_id}/streaks`      | L+R     | Finds streak windows for hitting or scoreless innings with start/end dates and game context.     |
+| `/v1/players/{player_id}/splits`       | L+R     | Returns batting splits by `home_away`, `pitcher_handed`, or `month`.                             |
+| `/v1/teams/{team_id}/run-differential` | L+R     | Provides season run differential with cumulative and rolling windows.                            |
+| `/v1/games/{game_id}/win-probability`  | R       | Streams win-probability and leverage data per play for charting and recap narratives.            |
+| `/v1/win-expectancy`                   | R       | Returns historical win probability for an arbitrary game state (inning, base state, score diff). |
+| `/v1/win-expectancy/eras`              | R       | Lists available historical eras so callers can scope probability lookups to specific seasons.    |
 
 ## Endpoint Notes
 

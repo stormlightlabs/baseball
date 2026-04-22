@@ -4,16 +4,16 @@ Per-game player and team stats derived from Retrosheet plays views to power game
 
 ## Summary
 
-| Endpoint                              | Dataset | Highlights                                                                                                            |
-| ------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------- |
-| `GET /v1/players/{id}/game-logs`      | R       | Per-game batting logs derived from plays views; supports "game finder" style lookups with coverage from 1910-2025.    |
-| `GET /v1/players/{id}/stats/batting`  | R       | Same per-game aggregation surfaced from both the player and game context for symmetry in client integrations.         |
-| `GET /v1/games/{id}/batting`          |         |                                                                                                                       |
-| `GET /v1/players/{id}/stats/pitching` | R       | Adds per-game pitching views that unlock WAR-style calculations and advanced splits across the full 1910-2025 window. |
-| `GET /v1/games/{id}/pitching`         |         |                                                                                                                       |
-| `GET /v1/players/{id}/stats/fielding` | R       | Fielding aggregation keyed by position to power defensive leaderboards and situational breakdowns.                    |
-| `GET /v1/games/{id}/fielding`         |         |                                                                                                                       |
-| `GET /v1/teams/{id}/daily-stats`      | R       | Team-level daily stats feed for trend charts and rolling aggregates.                                                  |
+| Endpoint                          | Dataset | Highlights                                                                                                            |
+| --------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------- |
+| `/v1/players/{id}/game-logs`      | R       | Per-game batting logs derived from plays views; supports "game finder" style lookups with coverage from 1910-2025.    |
+| `/v1/players/{id}/stats/batting`  | R       | Same per-game aggregation surfaced from both the player and game context for symmetry in client integrations.         |
+| `/v1/games/{id}/batting`          |         |                                                                                                                       |
+| `/v1/players/{id}/stats/pitching` | R       | Adds per-game pitching views that unlock WAR-style calculations and advanced splits across the full 1910-2025 window. |
+| `/v1/games/{id}/pitching`         |         |                                                                                                                       |
+| `/v1/players/{id}/stats/fielding` | R       | Fielding aggregation keyed by position to power defensive leaderboards and situational breakdowns.                    |
+| `/v1/games/{id}/fielding`         |         |                                                                                                                       |
+| `/v1/teams/{id}/daily-stats`      | R       | Team-level daily stats feed for trend charts and rolling aggregates.                                                  |
 
 ## Details
 

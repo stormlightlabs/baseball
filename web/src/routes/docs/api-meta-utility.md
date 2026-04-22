@@ -4,15 +4,15 @@ These lightweight endpoints power monitoring and discovery functionality for the
 
 ## Summary
 
-| Endpoint                         | Dataset | Highlights                                                              |
-| -------------------------------- | ------- | ----------------------------------------------------------------------- |
-| `GET /v1/health`                 | -       | Liveness probe that confirms the API process is responding.             |
-| `GET /v1/ready`                  | Mixed   | Readiness probe for the core dataset set required by the API.           |
-| `GET /v1/meta`                   | Mixed   | Reports API build metadata plus dataset freshness and coverage.         |
-| `GET /v1/meta/datasets`          | Mixed   | Enumerates core and supplemental datasets currently loaded.             |
-| `GET /v1/meta/readiness`         | Mixed   | Returns the same readiness payload without a readiness status code.     |
-| `GET /v1/meta/crosswalk/teams`   | Mixed   | Season-scoped MLBAM team ID to local `team_id`/`franchise_id` mappings. |
-| `GET /v1/meta/crosswalk/players` | Mixed   | MLBAM person ID to local Lahman/Retrosheet ID mappings.                 |
+| Endpoint                     | Dataset | Highlights                                                              |
+| ---------------------------- | ------- | ----------------------------------------------------------------------- |
+| `/v1/health`                 | -       | Liveness probe that confirms the API process is responding.             |
+| `/v1/ready`                  | Mixed   | Readiness probe for the core dataset set required by the API.           |
+| `/v1/meta`                   | Mixed   | Reports API build metadata plus dataset freshness and coverage.         |
+| `/v1/meta/datasets`          | Mixed   | Enumerates core and supplemental datasets currently loaded.             |
+| `/v1/meta/readiness`         | Mixed   | Returns the same readiness payload without a readiness status code.     |
+| `/v1/meta/crosswalk/teams`   | Mixed   | Season-scoped MLBAM team ID to local `team_id`/`franchise_id` mappings. |
+| `/v1/meta/crosswalk/players` | Mixed   | MLBAM person ID to local Lahman/Retrosheet ID mappings.                 |
 
 ## Endpoint Details
 

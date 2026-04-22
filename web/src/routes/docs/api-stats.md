@@ -4,13 +4,13 @@ These Lahman-backed endpoints power stat tables, player cards, and leaderboard p
 
 ## Career & Season Stats
 
-| Endpoint                                     | Dataset | Highlights                                                                                |
-| -------------------------------------------- | ------- | ----------------------------------------------------------------------------------------- |
-| `GET /v1/stats/batting`                      | L       | Flexible batting query supporting filters for player/team, season range, and minimum PA.  |
-| `GET /v1/stats/pitching`                     | L       | Similar query engine for pitching; supports min innings, role filters, and sorting.       |
-| `GET /v1/stats/fielding`                     | L       | Fielding totals by player/position with innings data for qualification checks.            |
-| `GET /v1/players/{player_id}/stats/batting`  | L+R     | Player-focused batting aggregates that combine Lahman totals with optional split toggles. |
-| `GET /v1/players/{player_id}/stats/pitching` | L+R     | Player pitching summary with advanced ratios (WHIP, SO/BB) and Retrosheet overlays.       |
+| Endpoint                                 | Dataset | Highlights                                                                                |
+| ---------------------------------------- | ------- | ----------------------------------------------------------------------------------------- |
+| `/v1/stats/batting`                      | L       | Flexible batting query supporting filters for player/team, season range, and minimum PA.  |
+| `/v1/stats/pitching`                     | L       | Similar query engine for pitching; supports min innings, role filters, and sorting.       |
+| `/v1/stats/fielding`                     | L       | Fielding totals by player/position with innings data for qualification checks.            |
+| `/v1/players/{player_id}/stats/batting`  | L+R     | Player-focused batting aggregates that combine Lahman totals with optional split toggles. |
+| `/v1/players/{player_id}/stats/pitching` | L+R     | Player pitching summary with advanced ratios (WHIP, SO/BB) and Retrosheet overlays.       |
 
 ### Details
 

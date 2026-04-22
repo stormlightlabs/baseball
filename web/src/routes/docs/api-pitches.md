@@ -5,11 +5,11 @@ See [pitches](/docs/pitches) for deeper details on Retrosheet encoding and parsi
 
 ## Summary
 
-| Endpoint                                           | Dataset | Highlights                                                                                               |
-| -------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------- |
-| `GET /v1/pitches`                                  | R       | Global pitch search with batter/pitcher/team/date filters plus count- or pitch-type constrained queries. |
-| `GET /v1/games/{game_id}/pitches`                  | R       | Chronological slice of every pitch in a single game with pagination for long contests.                   |
-| `GET /v1/games/{game_id}/plays/{play_num}/pitches` | R       | Returns all pitches for one plate appearance, useful when drilling into a single event from `/v1/plays`. |
+| Endpoint                                       | Dataset | Highlights                                                                                               |
+| ---------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------- |
+| `/v1/pitches`                                  | R       | Global pitch search with batter/pitcher/team/date filters plus count- or pitch-type constrained queries. |
+| `/v1/games/{game_id}/pitches`                  | R       | Chronological slice of every pitch in a single game with pagination for long contests.                   |
+| `/v1/games/{game_id}/plays/{play_num}/pitches` | R       | Returns all pitches for one plate appearance, useful when drilling into a single event from `/v1/plays`. |
 
 ## Endpoint Details
 

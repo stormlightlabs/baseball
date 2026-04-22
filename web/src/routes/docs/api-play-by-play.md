@@ -4,14 +4,14 @@ Captures fine-grained Retrosheet feeds used for situational analytics.
 
 ## Summary
 
-| Endpoint                                        | Dataset | Highlights                                                                          |
-| ----------------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
-| `GET /v1/plays`                                 | R       | Global play search with batter/pitcher/team filters and optional leverage metrics.  |
-| `GET /v1/games/{game_id}/plays`                 | R       | Chronological feed for a single game; canonical play-by-play timeline.              |
-| `GET /v1/games/{game_id}/events`                | R       | Alias layering raw Retrosheet event fields (pitch sequence, modifiers, base state). |
-| `GET /v1/games/{game_id}/events/{event_seq}`    | R       | Lookup for a single event sequence within a game, useful for shareable links.       |
-| `GET /v1/players/{player_id}/plate-appearances` | R       | Player-focused PA listing with opponent pitcher, count, and leverage data.          |
-| `GET /v1/pitches`                               | R       | Derives per-pitch signals (pitch type heuristics, velocity buckets, outcomes).      |
+| Endpoint                                    | Dataset | Highlights                                                                          |
+| ------------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| `/v1/plays`                                 | R       | Global play search with batter/pitcher/team filters and optional leverage metrics.  |
+| `/v1/games/{game_id}/plays`                 | R       | Chronological feed for a single game; canonical play-by-play timeline.              |
+| `/v1/games/{game_id}/events`                | R       | Alias layering raw Retrosheet event fields (pitch sequence, modifiers, base state). |
+| `/v1/games/{game_id}/events/{event_seq}`    | R       | Lookup for a single event sequence within a game, useful for shareable links.       |
+| `/v1/players/{player_id}/plate-appearances` | R       | Player-focused PA listing with opponent pitcher, count, and leverage data.          |
+| `/v1/pitches`                               | R       | Derives per-pitch signals (pitch type heuristics, velocity buckets, outcomes).      |
 
 ## Endpoint Details
 

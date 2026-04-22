@@ -4,13 +4,13 @@ Documents Lahman team/franchise references plus Retrosheet schedule views.
 
 ## Reference & Season Catalog
 
-| Endpoint                         | Dataset | Highlights                                                                             |
-| -------------------------------- | ------- | -------------------------------------------------------------------------------------- |
-| `GET /v1/teams`                  | L       | Paginated list of team seasons with filters for year, league, franchise, and min wins. |
-| `GET /v1/teams/{team_id}`        | L       | Single team-season snapshot with wins/losses, scoring, and franchise metadata.         |
-| `GET /v1/franchises`             | L       | Franchise directory with start/end years, current city, and active flag.               |
-| `GET /v1/franchises/{franch_id}` | L       | Deep dive into a franchise with alias history, lineage, and counts of titles.          |
-| `GET /v1/seasons`                | L       | Lists available seasons plus min/max coverage so the UI can gate filters.              |
+| Endpoint                     | Dataset | Highlights                                                                             |
+| ---------------------------- | ------- | -------------------------------------------------------------------------------------- |
+| `/v1/teams`                  | L       | Paginated list of team seasons with filters for year, league, franchise, and min wins. |
+| `/v1/teams/{team_id}`        | L       | Single team-season snapshot with wins/losses, scoring, and franchise metadata.         |
+| `/v1/franchises`             | L       | Franchise directory with start/end years, current city, and active flag.               |
+| `/v1/franchises/{franch_id}` | L       | Deep dive into a franchise with alias history, lineage, and counts of titles.          |
+| `/v1/seasons`                | L       | Lists available seasons plus min/max coverage so the UI can gate filters.              |
 
 ### Details
 

@@ -4,12 +4,12 @@ This section describes fuzzy lookup helpers.
 
 ## Summary
 
-| Endpoint                 | Dataset | Highlights                                                                              |
-| ------------------------ | ------- | --------------------------------------------------------------------------------------- |
-| `GET /v1/search/players` | L+R     | Fuzzy match players by name, era, league, or handedness; returns lightweight cards.     |
-| `GET /v1/search/teams`   | L+R     | Search by city, nickname, franchise, or year ranges; helpful for UI autocomplete.       |
-| `GET /v1/search/parks`   | L+R     | Ballpark lookup that spans historical names and locations.                              |
-| `GET /v1/search/games`   | R       | Natural-language search like "Yankees vs Red Sox 2003 ALCS Game 7" mapped to `GAME_ID`. |
+| Endpoint             | Dataset | Highlights                                                                              |
+| -------------------- | ------- | --------------------------------------------------------------------------------------- |
+| `/v1/search/players` | L+R     | Fuzzy match players by name, era, league, or handedness; returns lightweight cards.     |
+| `/v1/search/teams`   | L+R     | Search by city, nickname, franchise, or year ranges; helpful for UI autocomplete.       |
+| `/v1/search/parks`   | L+R     | Ballpark lookup that spans historical names and locations.                              |
+| `/v1/search/games`   | R       | Natural-language search like "Yankees vs Red Sox 2003 ALCS Game 7" mapped to `GAME_ID`. |
 
 ## Endpoint Details
 

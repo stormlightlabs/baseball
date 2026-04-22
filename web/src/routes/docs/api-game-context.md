@@ -4,9 +4,9 @@ Adds enhanced game-level metadata including weather, wind, DH usage, and field c
 
 ## Summary
 
-| Endpoint             | Dataset | Highlights                                                                                                         |
-| -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
-| `GET /v1/games/{id}` | R       | Enhanced metadata payload with weather, wind, start time, DH usage, and field condition context (see Notes below). |
+| Endpoint         | Dataset | Highlights                                                                                                         |
+| ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
+| `/v1/games/{id}` | R       | Enhanced metadata payload with weather, wind, start time, DH usage, and field condition context (see Notes below). |
 
 ## Weather Payload Notes
 

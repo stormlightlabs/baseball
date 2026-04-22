@@ -6,23 +6,23 @@ UI and higher-level CLI summaries.
 
 ## Summary
 
-| Endpoint                                              | Dataset | Highlights                                                                             |
-| ----------------------------------------------------- | ------- | -------------------------------------------------------------------------------------- |
-| `GET /v1/players/{player_id}/stats/batting/advanced`  | Derived | Full advanced batting line (wOBA, wRC+, ISO, BABIP) with optional season/team filters. |
-| `GET /v1/players/{player_id}/stats/pitching/advanced` | Derived | Advanced pitching package (FIP, xFIP, ERA+, K/BB, etc.) scoped by season/team.         |
-| `GET /v1/players/{player_id}/stats/baserunning`       | Derived | Baserunning value (wSB, steals, advancement runs) per player/season.                   |
-| `GET /v1/players/{player_id}/stats/fielding`          | Derived | Fielding runs, positional adjustments, and rate stats per player/season.               |
-| `GET /v1/players/{player_id}/stats/war`               | Derived | WAR + component breakdown with optional season/team filters.                           |
-| `GET /v1/players/{player_id}/leverage/summary`        | Derived | Aggregated leverage index summary (avg LI, clutch metrics) for a season.               |
-| `GET /v1/players/{player_id}/leverage/high`           | Derived | Returns every high-leverage plate appearance above a configurable LI threshold.        |
-| `GET /v1/games/{game_id}/plate-appearances/leverage`  | Derived | Plate appearance leverage list for a single game with optional `min_li` floor.         |
-| `GET /v1/games/{game_id}/win-probability/summary`     | Derived | Biggest swings, comeback odds, and total leverage time for one game.                   |
-| `GET /v1/parks/{park_id}/factors`                     | Derived | Year-specific park factors (runs, HR, handedness splits).                              |
-| `GET /v1/parks/{park_id}/factors/series`              | Derived | Multi-year park factor series for trend charts.                                        |
-| `GET /v1/seasons/{season}/park-factors`               | Derived | Season-wide park factor table for every venue; filterable by factor type.              |
-| `GET /v1/seasons/{season}/leaders/batting/advanced`   | Derived | Advanced batting leaderboard with `stat`, `min_pa`, `team_id`, and `league` filters.   |
-| `GET /v1/seasons/{season}/leaders/pitching/advanced`  | Derived | Advanced pitching leaderboard with `stat`, `min_ip`, `team_id` filters.                |
-| `GET /v1/seasons/{season}/leaders/war`                | Derived | WAR leaderboard sharing filters with batting leader endpoint (`min_pa`, `team_id`).    |
+| Endpoint                                          | Dataset | Highlights                                                                             |
+| ------------------------------------------------- | ------- | -------------------------------------------------------------------------------------- |
+| `/v1/players/{player_id}/stats/batting/advanced`  | Derived | Full advanced batting line (wOBA, wRC+, ISO, BABIP) with optional season/team filters. |
+| `/v1/players/{player_id}/stats/pitching/advanced` | Derived | Advanced pitching package (FIP, xFIP, ERA+, K/BB, etc.) scoped by season/team.         |
+| `/v1/players/{player_id}/stats/baserunning`       | Derived | Baserunning value (wSB, steals, advancement runs) per player/season.                   |
+| `/v1/players/{player_id}/stats/fielding`          | Derived | Fielding runs, positional adjustments, and rate stats per player/season.               |
+| `/v1/players/{player_id}/stats/war`               | Derived | WAR + component breakdown with optional season/team filters.                           |
+| `/v1/players/{player_id}/leverage/summary`        | Derived | Aggregated leverage index summary (avg LI, clutch metrics) for a season.               |
+| `/v1/players/{player_id}/leverage/high`           | Derived | Returns every high-leverage plate appearance above a configurable LI threshold.        |
+| `/v1/games/{game_id}/plate-appearances/leverage`  | Derived | Plate appearance leverage list for a single game with optional `min_li` floor.         |
+| `/v1/games/{game_id}/win-probability/summary`     | Derived | Biggest swings, comeback odds, and total leverage time for one game.                   |
+| `/v1/parks/{park_id}/factors`                     | Derived | Year-specific park factors (runs, HR, handedness splits).                              |
+| `/v1/parks/{park_id}/factors/series`              | Derived | Multi-year park factor series for trend charts.                                        |
+| `/v1/seasons/{season}/park-factors`               | Derived | Season-wide park factor table for every venue; filterable by factor type.              |
+| `/v1/seasons/{season}/leaders/batting/advanced`   | Derived | Advanced batting leaderboard with `stat`, `min_pa`, `team_id`, and `league` filters.   |
+| `/v1/seasons/{season}/leaders/pitching/advanced`  | Derived | Advanced pitching leaderboard with `stat`, `min_ip`, `team_id` filters.                |
+| `/v1/seasons/{season}/leaders/war`                | Derived | WAR leaderboard sharing filters with batting leader endpoint (`min_pa`, `team_id`).    |
 
 ## Endpoint Notes
 

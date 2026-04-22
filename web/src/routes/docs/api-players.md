@@ -4,15 +4,15 @@ Covers core Lahman-backed biographical data along with Retrosheet game-level joi
 
 ## Player & Career Endpoints
 
-| Endpoint                                   | Dataset | Highlights                                                                          |
-| ------------------------------------------ | ------- | ----------------------------------------------------------------------------------- |
-| `GET /v1/players`                          | L       | Filterable roster of all players (name search, era, handedness, position).          |
-| `GET /v1/players/{player_id}`              | L       | Combines biographical info with career totals across batting/pitching/fielding.     |
-| `GET /v1/players/{player_id}/seasons`      | L       | Detailed year-by-year splits with season metadata and league context.               |
-| `GET /v1/players/{player_id}/teams`        | L       | Chronological list of teams suited up for, linked to team and franchise references. |
-| `GET /v1/players/{player_id}/awards`       | L       | Paginates Lahman `Awards*` tables with award type, year, and voting results.        |
-| `GET /v1/players/{player_id}/hall-of-fame` | L       | Hall of Fame ballot history including ballots, votes, and induction result.         |
-| `GET /v1/players/{player_id}/salaries`     | L       | Salary records with team, league, and inflation-ready numeric fields.               |
+| Endpoint                               | Dataset | Highlights                                                                          |
+| -------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| `/v1/players`                          | L       | Filterable roster of all players (name search, era, handedness, position).          |
+| `/v1/players/{player_id}`              | L       | Combines biographical info with career totals across batting/pitching/fielding.     |
+| `/v1/players/{player_id}/seasons`      | L       | Detailed year-by-year splits with season metadata and league context.               |
+| `/v1/players/{player_id}/teams`        | L       | Chronological list of teams suited up for, linked to team and franchise references. |
+| `/v1/players/{player_id}/awards`       | L       | Paginates Lahman `Awards*` tables with award type, year, and voting results.        |
+| `/v1/players/{player_id}/hall-of-fame` | L       | Hall of Fame ballot history including ballots, votes, and induction result.         |
+| `/v1/players/{player_id}/salaries`     | L       | Salary records with team, league, and inflation-ready numeric fields.               |
 
 ### Details
 

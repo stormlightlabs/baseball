@@ -4,16 +4,16 @@ Focuses on global game search, summaries, and per-season schedule utilities.
 
 ## Summary
 
-| Endpoint                                       | Dataset | Highlights                                                                     |
-| ---------------------------------------------- | ------- | ------------------------------------------------------------------------------ |
-| `GET /v1/games`                                | R       | Flexible search across seasons, clubs, parks, and date ranges with pagination. |
-| `GET /v1/games/{game_id}`                      | R       | Canonical game metadata: teams, scores, attendance, duration, and umpire crew. |
-| `GET /v1/games/{game_id}/boxscore`             | R       | Expanded boxscore including lineups, substitutions, and per-player stat lines. |
-| `GET /v1/games/{game_id}/summary`              | R       | Narrative-friendly digest (winning/losing pitchers, save, highlight events).   |
-| `GET /v1/seasons/{year}/schedule`              | R       | Whole-season schedule keyed by Retrosheet `GAME_ID`, league, and park data.    |
-| `GET /v1/seasons/{year}/dates/{date}/games`    | R       | All games on a calendar date; convenient for scoreboard views.                 |
-| `GET /v1/seasons/{year}/teams/{team_id}/games` | R       | Team-specific slice; alias of the team schedule table but kept for clarity.    |
-| `GET /v1/seasons/{year}/parks/{park_id}/games` | R       | Filter games hosted at a particular park with weather/context fields.          |
+| Endpoint                                   | Dataset | Highlights                                                                     |
+| ------------------------------------------ | ------- | ------------------------------------------------------------------------------ |
+| `/v1/games`                                | R       | Flexible search across seasons, clubs, parks, and date ranges with pagination. |
+| `/v1/games/{game_id}`                      | R       | Canonical game metadata: teams, scores, attendance, duration, and umpire crew. |
+| `/v1/games/{game_id}/boxscore`             | R       | Expanded boxscore including lineups, substitutions, and per-player stat lines. |
+| `/v1/games/{game_id}/summary`              | R       | Narrative-friendly digest (winning/losing pitchers, save, highlight events).   |
+| `/v1/seasons/{year}/schedule`              | R       | Whole-season schedule keyed by Retrosheet `GAME_ID`, league, and park data.    |
+| `/v1/seasons/{year}/dates/{date}/games`    | R       | All games on a calendar date; convenient for scoreboard views.                 |
+| `/v1/seasons/{year}/teams/{team_id}/games` | R       | Team-specific slice; alias of the team schedule table but kept for clarity.    |
+| `/v1/seasons/{year}/parks/{park_id}/games` | R       | Filter games hosted at a particular park with weather/context fields.          |
 
 ## Endpoint Details
 
