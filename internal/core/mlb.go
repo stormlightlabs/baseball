@@ -313,6 +313,27 @@ type MLBPlayerRef struct {
 	Link     string `json:"link,omitempty"`
 }
 
+// MLBRosterResponse represents the response from the team roster endpoint.
+type MLBRosterResponse struct {
+	Copyright string           `json:"copyright,omitempty"`
+	Team      *MLBTeamRef      `json:"team,omitempty"`
+	Roster    []MLBRosterEntry `json:"roster"`
+}
+
+// MLBRosterEntry is one roster row in /v1/teams/{teamId}/roster payloads.
+type MLBRosterEntry struct {
+	Person       *MLBPlayerRef    `json:"person,omitempty"`
+	JerseyNumber string           `json:"jerseyNumber,omitempty"`
+	Position     *MLBPosition     `json:"position,omitempty"`
+	Status       *MLBRosterStatus `json:"status,omitempty"`
+}
+
+// MLBRosterStatus is the roster status descriptor (for example, "A" / "Active").
+type MLBRosterStatus struct {
+	Code        string `json:"code,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
 // MLBSeasonsResponse represents the response from the seasons endpoint.
 type MLBSeasonsResponse struct {
 	Copyright string      `json:"copyright"`

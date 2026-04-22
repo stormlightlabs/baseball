@@ -117,11 +117,16 @@ func ParseETLJobType(raw string, mode PipelineMode, years []int) (db.ETLJobType,
 }
 
 func EnqueuePipelineJobs(ctx context.Context, database *db.DB, pipelineOpts PipelineOptions, workerOpts JobWorkerOptions) (QueuePipelineResult, error) {
+	workerOpts = NormalizeJobWorkerOptions(workerOpts)
+
+	if workerOpts.JobType == db.ETLJobTypeCurrentSync {
+		return enqueueCurrentSeasonSyncJobs(ctx, database, pipelineOpts, workerOpts)
+	}
+
 	pipelineOpts, err := NormalizePipelineOptions(pipelineOpts)
 	if err != nil {
 		return QueuePipelineResult{}, err
 	}
-	workerOpts = NormalizeJobWorkerOptions(workerOpts)
 
 	if workerOpts.JobType == "" {
 		workerOpts.JobType, err = ParseETLJobType("auto", pipelineOpts.Mode, pipelineOpts.Years)
@@ -177,6 +182,70 @@ func EnqueuePipelineJobs(ctx context.Context, database *db.DB, pipelineOpts Pipe
 			return result, err
 		}
 		result.JobIDs = append(result.JobIDs, jobID)
+	}
+
+	return result, nil
+}
+
+func enqueueCurrentSeasonSyncJobs(
+	ctx context.Context,
+	database *db.DB,
+	pipelineOpts PipelineOptions,
+	workerOpts JobWorkerOptions,
+) (QueuePipelineResult, error) {
+	seasons := dedupeSortedYears(pipelineOpts.Years)
+	if len(seasons) == 0 {
+		seasons = []int{time.Now().Year()}
+	}
+
+	profile := strings.TrimSpace(string(pipelineOpts.Profile))
+	if profile == "" {
+		profile = "current-season"
+	}
+	mode := strings.TrimSpace(string(pipelineOpts.Mode))
+	if mode == "" {
+		mode = string(PipelineModeIncremental)
+	}
+
+	result := QueuePipelineResult{
+		JobType:     db.ETLJobTypeCurrentSync,
+		BatchCount:  len(seasons),
+		BatchScopes: make([][]int, 0, len(seasons)),
+		JobIDs:      make([]int64, 0, len(seasons)),
+	}
+
+	for idx, season := range seasons {
+		scope := map[string]any{
+			"profile":     profile,
+			"mode":        mode,
+			"years":       []int{season},
+			"season":      season,
+			"sync_type":   currentSeasonSyncAll,
+			"batch_index": idx + 1,
+			"batch_total": len(seasons),
+		}
+		options := map[string]any{
+			"network_retry_max":        workerOpts.NetworkRetryMax,
+			"network_retry_backoff_ms": workerOpts.NetworkRetryBackoff.Milliseconds(),
+			"load_chunk_size":          workerOpts.LoadChunkSize,
+			"batch_delay_ms":           workerOpts.BatchDelay.Milliseconds(),
+		}
+
+		jobID, err := database.EnqueueETLJob(ctx, db.ETLJobSpec{
+			JobType:    db.ETLJobTypeCurrentSync,
+			Priority:   workerOpts.Priority,
+			Profile:    profile,
+			Mode:       mode,
+			Scope:      scope,
+			Options:    options,
+			MaxRetries: workerOpts.MaxJobRetries,
+		}, workerOpts.MaxQueuedJobs)
+		if err != nil {
+			return result, err
+		}
+
+		result.JobIDs = append(result.JobIDs, jobID)
+		result.BatchScopes = append(result.BatchScopes, []int{season})
 	}
 
 	return result, nil
@@ -328,11 +397,12 @@ func executeETLJob(
 		}
 		return int64(len(cleanupResult.Removed)), nil, "", false, nil
 	case db.ETLJobTypeCurrentSync:
-		// Phase 1 scaffolds scheduler/queue plumbing. Phase 2 wires full sync handlers.
-		syncType := stringFromAny(job.Scope["sync_type"])
-		season := intFromAny(job.Scope["season"])
-		echo.Infof("current-season-sync placeholder executed job=%d sync_type=%s season=%d", job.ID, syncType, season)
-		return 0, nil, "", false, nil
+		rows, err := executeCurrentSeasonSync(ctx, database, job, nil)
+		if err != nil {
+			failureClass, retryable := classifyCurrentSeasonSyncFailure(err)
+			return rows, nil, failureClass, retryable, err
+		}
+		return rows, nil, "", false, nil
 	case db.ETLJobTypeFullRun, db.ETLJobTypeYearlySync:
 		opts, err := pipelineOptionsFromJob(job)
 		if err != nil {

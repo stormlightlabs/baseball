@@ -424,7 +424,15 @@ func runETLPipeline(cmd *cobra.Command, opts *pipelineCLIOptions) error {
 
 	echo.Success("✓ Connected to database")
 
-	jobType, err := seed.ParseETLJobType(opts.jobType, seed.PipelineMode(strings.ToLower(strings.TrimSpace(opts.mode))), years)
+	jobTypeRaw := strings.ToLower(strings.TrimSpace(opts.jobType))
+	if jobTypeRaw == "" {
+		jobTypeRaw = "auto"
+	}
+	if jobTypeRaw == "auto" && strings.EqualFold(strings.TrimSpace(opts.profile), "current-season") {
+		jobTypeRaw = string(db.ETLJobTypeCurrentSync)
+	}
+
+	jobType, err := seed.ParseETLJobType(jobTypeRaw, seed.PipelineMode(strings.ToLower(strings.TrimSpace(opts.mode))), years)
 	if err != nil {
 		return err
 	}
