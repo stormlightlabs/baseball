@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"stormlightlabs.org/baseball/internal/core"
 )
@@ -133,4 +134,11 @@ type SalarySummaryResponse struct {
 
 func NewSalarySummaryResponse(data []core.SalarySummary) SalarySummaryResponse {
 	return SalarySummaryResponse{Data: data}
+}
+
+// StandingsResponse wraps season standings with freshness metadata.
+type StandingsResponse struct {
+	Season      core.SeasonYear       `json:"season" swaggertype:"integer"`
+	LastUpdated *time.Time            `json:"last_updated,omitempty"`
+	Standings   []core.SeasonStanding `json:"standings"`
 }

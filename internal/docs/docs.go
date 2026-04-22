@@ -1231,6 +1231,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Filter by game ID (Retrosheet ID or current-season game_pk)",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Filter by home team ID",
                         "name": "home_team",
                         "in": "query"
@@ -7301,6 +7307,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/standings": {
+            "get": {
+                "description": "Returns season standings. Current-season requests read from local current_season tables; historical seasons read from Lahman Teams records.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats",
+                    "teams"
+                ],
+                "summary": "Get season standings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Season year (defaults to current year)",
+                        "name": "season",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.StandingsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/stats/batting": {
             "get": {
                 "description": "Flexible batting stats query with multiple filter options",
@@ -8682,6 +8732,23 @@ const docTemplate = `{
                 }
             }
         },
+        "api.StandingsResponse": {
+            "type": "object",
+            "properties": {
+                "last_updated": {
+                    "type": "string"
+                },
+                "season": {
+                    "type": "integer"
+                },
+                "standings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.SeasonStanding"
+                    }
+                }
+            }
+        },
         "api.datasetCoverage": {
             "type": "object",
             "properties": {
@@ -9267,6 +9334,9 @@ const docTemplate = `{
                 "duration_min": {
                     "type": "integer"
                 },
+                "fetched_at": {
+                    "type": "string"
+                },
                 "field_condition": {
                     "description": "Field condition (dry, wet, damp, soaked)",
                     "type": "string"
@@ -9336,8 +9406,14 @@ const docTemplate = `{
                     "description": "Sky condition (sunny, cloudy, dome, etc.)",
                     "type": "string"
                 },
+                "source": {
+                    "type": "string"
+                },
                 "start_time": {
                     "description": "Game start time (HH:MM format)",
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 },
                 "temp_f": {
@@ -11936,6 +12012,9 @@ const docTemplate = `{
                 "doubles": {
                     "type": "integer"
                 },
+                "fetched_at": {
+                    "type": "string"
+                },
                 "g": {
                     "type": "integer"
                 },
@@ -11980,6 +12059,9 @@ const docTemplate = `{
                 },
                 "so": {
                     "type": "integer"
+                },
+                "source": {
+                    "type": "string"
                 },
                 "team_id": {
                     "type": "string"
@@ -12167,6 +12249,9 @@ const docTemplate = `{
                 "era": {
                     "type": "number"
                 },
+                "fetched_at": {
+                    "type": "string"
+                },
                 "fip": {
                     "type": "number"
                 },
@@ -12209,6 +12294,9 @@ const docTemplate = `{
                 },
                 "so": {
                     "type": "integer"
+                },
+                "source": {
+                    "type": "string"
                 },
                 "sv": {
                     "type": "integer"
@@ -12380,6 +12468,9 @@ const docTemplate = `{
             "properties": {
                 "checked_at": {
                     "type": "string"
+                },
+                "current_season_stale": {
+                    "type": "boolean"
                 },
                 "datasets": {
                     "type": "array",
@@ -12606,6 +12697,71 @@ const docTemplate = `{
                 },
                 "year": {
                     "type": "integer"
+                }
+            }
+        },
+        "core.SeasonStanding": {
+            "type": "object",
+            "properties": {
+                "division_id": {
+                    "type": "integer"
+                },
+                "division_name": {
+                    "type": "string"
+                },
+                "fetched_at": {
+                    "type": "string"
+                },
+                "franchise_id": {
+                    "type": "string"
+                },
+                "gb": {
+                    "type": "string"
+                },
+                "l": {
+                    "type": "integer"
+                },
+                "l10": {
+                    "type": "string"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "pct": {
+                    "type": "number"
+                },
+                "ra": {
+                    "type": "integer"
+                },
+                "rs": {
+                    "type": "integer"
+                },
+                "run_diff": {
+                    "type": "integer"
+                },
+                "season": {
+                    "type": "integer"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "streak": {
+                    "type": "string"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "team_mlb_id": {
+                    "type": "integer"
+                },
+                "team_name": {
+                    "type": "string"
+                },
+                "w": {
+                    "type": "integer"
+                },
+                "wc_gb": {
+                    "type": "string"
                 }
             }
         },

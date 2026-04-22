@@ -61,6 +61,7 @@ type ParkFilter struct {
 }
 
 type GameFilter struct {
+	ID           *GameID
 	Season       *SeasonYear
 	DateFrom     *time.Time
 	DateTo       *time.Time

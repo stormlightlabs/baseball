@@ -208,4 +208,57 @@ func TestGameEndpoints(t *testing.T) {
 			t.Errorf("expected status 200, got %d: %s", w.Code, w.Body.String())
 		}
 	})
+
+	t.Run("GET /v1/seasons/{year}/schedule uses current-season table", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/seasons/2026/schedule", nil)
+		req.SetPathValue("year", "2026")
+		w := httptest.NewRecorder()
+		testServer.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		var resp struct {
+			Data []struct {
+				ID     string `json:"id"`
+				Source string `json:"source"`
+			} `json:"data"`
+		}
+		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if len(resp.Data) == 0 {
+			t.Fatal("expected current-season schedule games")
+		}
+		if resp.Data[0].Source != "current_season" {
+			t.Fatalf("expected source=current_season, got %q", resp.Data[0].Source)
+		}
+		if resp.Data[0].ID == "" {
+			t.Fatal("expected game id in response")
+		}
+	})
+
+	t.Run("GET /v1/games accepts current-season game_pk in id filter", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/games?season=2026&id=777001", nil)
+		w := httptest.NewRecorder()
+		testServer.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		var resp struct {
+			Total int `json:"total"`
+			Data  []struct {
+				ID string `json:"id"`
+			} `json:"data"`
+		}
+		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if resp.Total != 1 || len(resp.Data) != 1 || resp.Data[0].ID != "777001" {
+			t.Fatalf("expected one current-season game with id=777001, got total=%d rows=%d", resp.Total, len(resp.Data))
+		}
+	})
 }

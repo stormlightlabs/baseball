@@ -62,7 +62,7 @@ func TestMain(m *testing.M) {
 		panic("failed to load fixtures: " + err.Error())
 	}
 
-	sqlFiles := []string{"woba_constants.sql", "league_constants.sql", "park_factors.sql", "salary_summary.sql"}
+	sqlFiles := []string{"woba_constants.sql", "league_constants.sql", "park_factors.sql", "salary_summary.sql", "current_season.sql"}
 	if err := container.SeedFromSQL(ctx, sqlFiles...); err != nil {
 		testCleanup()
 		panic("failed to load SQL fixtures: " + err.Error())

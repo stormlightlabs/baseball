@@ -57,3 +57,11 @@ Do we ingest the Chadwick Register more exhaustively to enrich persons data?
 Remove `core.MLBTeamCrosswalk* structs` if no longer needed anywhere.
 
 Repository-level unit tests for crosswalk query ambiguity behavior beyond API integration tests.
+
+Current Season games & stats should be their on Repositories, not added to GameRepository & StatsRepository.
+
+## Open Questions
+
+Should standings should include richer historical GB/WCGB fields?
+
+Should GET /v1/games/{id}/boxscore eventually support current-season game_pk IDs?

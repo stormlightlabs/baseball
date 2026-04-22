@@ -9,6 +9,14 @@ import (
 )
 
 func (r *StatsRepository) SeasonBattingLeaders(ctx context.Context, year core.SeasonYear, stat string, limit, offset int, league *core.LeagueID) ([]core.PlayerBattingSeason, error) {
+	useCurrentSeason, err := r.shouldUseCurrentSeasonBatting(ctx, year)
+	if err != nil {
+		return nil, err
+	}
+	if useCurrentSeason {
+		return r.currentSeasonBattingLeaders(ctx, year, stat, limit, offset, league)
+	}
+
 	orderColumn := "\"HR\""
 
 	switch stat {
@@ -86,6 +94,8 @@ func (r *StatsRepository) SeasonBattingLeaders(ctx context.Context, year core.Se
 		}
 
 		s.OPS = s.OBP + s.SLG
+		s.Source = "lahman"
+		s.DataSources = []string{"lahman"}
 
 		leaders = append(leaders, s)
 	}
@@ -200,6 +210,8 @@ func (r *StatsRepository) CareerBattingLeaders(ctx context.Context, stat string,
 		}
 
 		s.OPS = s.OBP + s.SLG
+		s.Source = "lahman"
+		s.DataSources = []string{"lahman"}
 
 		leaders = append(leaders, s)
 	}
@@ -208,6 +220,14 @@ func (r *StatsRepository) CareerBattingLeaders(ctx context.Context, stat string,
 }
 
 func (r *StatsRepository) SeasonPitchingLeaders(ctx context.Context, year core.SeasonYear, stat string, limit, offset int, league *core.LeagueID) ([]core.PlayerPitchingSeason, error) {
+	useCurrentSeason, err := r.shouldUseCurrentSeasonPitching(ctx, year)
+	if err != nil {
+		return nil, err
+	}
+	if useCurrentSeason {
+		return r.currentSeasonPitchingLeaders(ctx, year, stat, limit, offset, league)
+	}
+
 	orderColumn := "\"W\""
 
 	switch stat {
@@ -288,6 +308,8 @@ func (r *StatsRepository) SeasonPitchingLeaders(ctx context.Context, year core.S
 			s.BBPer9 = (float64(s.BB) / ip) * 9.0
 			s.HRPer9 = (float64(s.HR) / ip) * 9.0
 		}
+		s.Source = "lahman"
+		s.DataSources = []string{"lahman"}
 
 		leaders = append(leaders, s)
 	}
@@ -385,6 +407,8 @@ func (r *StatsRepository) CareerPitchingLeaders(ctx context.Context, stat string
 			s.BBPer9 = (float64(s.BB) / ip) * 9.0
 			s.HRPer9 = (float64(s.HR) / ip) * 9.0
 		}
+		s.Source = "lahman"
+		s.DataSources = []string{"lahman"}
 
 		leaders = append(leaders, s)
 	}

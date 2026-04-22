@@ -100,12 +100,18 @@ func (r *MetaRepository) Readiness(ctx context.Context) (core.ReadinessStatus, e
 		state = "degraded"
 	}
 
+	currentSeasonStale := false
+	if stale, ok := currentSeasonStaleFromStatuses(statuses, 8*time.Hour); ok {
+		currentSeasonStale = stale
+	}
+
 	return core.ReadinessStatus{
-		Status:    state,
-		Ready:     ready,
-		CheckedAt: time.Now().UTC(),
-		Datasets:  required,
-		Missing:   missing,
+		Status:             state,
+		Ready:              ready,
+		CheckedAt:          time.Now().UTC(),
+		Datasets:           required,
+		Missing:            missing,
+		CurrentSeasonStale: currentSeasonStale,
 	}, nil
 }
 
@@ -118,7 +124,7 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 	var minSalary, maxSalary sql.NullInt64
 	_ = r.db.QueryRowContext(ctx, `SELECT MIN("yearID"), MAX("yearID") FROM "Salaries"`).Scan(&minSalary, &maxSalary)
 
-	return []core.DatasetStatus{
+	statuses := []core.DatasetStatus{
 		r.datasetStatus(
 			"lahman",
 			"Lahman Baseball Database",
@@ -234,7 +240,14 @@ func (r *MetaRepository) buildDatasetStatuses(ctx context.Context, refreshes map
 			refreshes,
 			[]string{"mlbam_teams_map"},
 		),
-	}, nil
+	}
+
+	currentSeasonStatus, err := r.currentSeasonDatasetStatus(ctx)
+	if err == nil {
+		statuses = append(statuses, currentSeasonStatus)
+	}
+
+	return statuses, nil
 }
 
 func (r *MetaRepository) datasetStatus(id, name, source string, required bool, tables map[string]int64, coverageFrom, coverageTo *core.SeasonYear, refreshes map[string]refreshRecord, refreshKeys []string) core.DatasetStatus {
@@ -312,6 +325,81 @@ func sumRefreshRows(refreshes map[string]refreshRecord, keys []string) int64 {
 		}
 	}
 	return total
+}
+
+func (r *MetaRepository) currentSeasonDatasetStatus(ctx context.Context) (core.DatasetStatus, error) {
+	count := func(query string) int64 {
+		value, err := r.safeCount(ctx, query)
+		if err != nil {
+			return 0
+		}
+		return value
+	}
+
+	tables := map[string]int64{
+		"current_season.batting":   count(`SELECT COUNT(*) FROM current_season.batting`),
+		"current_season.pitching":  count(`SELECT COUNT(*) FROM current_season.pitching`),
+		"current_season.standings": count(`SELECT COUNT(*) FROM current_season.standings`),
+		"current_season.games":     count(`SELECT COUNT(*) FROM current_season.games`),
+	}
+
+	var minSeason, maxSeason sql.NullInt64
+	_ = r.db.QueryRowContext(ctx, `
+		SELECT MIN(season), MAX(season)
+		FROM (
+			SELECT season FROM current_season.batting
+			UNION ALL
+			SELECT season FROM current_season.pitching
+			UNION ALL
+			SELECT season FROM current_season.standings
+			UNION ALL
+			SELECT season FROM current_season.games
+		) seasons
+	`).Scan(&minSeason, &maxSeason)
+
+	var lastLoaded sql.NullTime
+	_ = r.db.QueryRowContext(ctx, `
+		SELECT MAX(fetched_at)
+		FROM (
+			SELECT fetched_at FROM current_season.batting
+			UNION ALL
+			SELECT fetched_at FROM current_season.pitching
+			UNION ALL
+			SELECT fetched_at FROM current_season.standings
+			UNION ALL
+			SELECT fetched_at FROM current_season.games
+		) fetched
+	`).Scan(&lastLoaded)
+
+	status := core.DatasetStatus{
+		ID:           "current_season",
+		Name:         "Current Season Snapshot",
+		Source:       "https://statsapi.mlb.com/",
+		Required:     false,
+		Healthy:      sumCounts(tables) > 0,
+		CoverageFrom: seasonPtr(toSeasonYear(minSeason)),
+		CoverageTo:   seasonPtr(toSeasonYear(maxSeason)),
+		RowCount:     sumCounts(tables),
+		Tables:       tables,
+	}
+	if lastLoaded.Valid {
+		ts := lastLoaded.Time
+		status.LastLoadedAt = &ts
+	}
+	return status, nil
+}
+
+func currentSeasonStaleFromStatuses(statuses []core.DatasetStatus, maxAge time.Duration) (bool, bool) {
+	for _, status := range statuses {
+		if status.ID != "current_season" {
+			continue
+		}
+		if status.LastLoadedAt == nil {
+			return false, true
+		}
+		return time.Since(status.LastLoadedAt.UTC()) > maxAge, true
+	}
+	return false, false
 }
 
 func (r *MetaRepository) SchemaHashes(ctx context.Context) (map[string]string, error) {

@@ -123,6 +123,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 
 	playerRepo := repository.NewPlayerRepository(db, cacheClient)
 	teamRepo := repository.NewTeamRepository(db, cacheClient)
+	standingsRepo := repository.NewStandingsRepository(db)
 	statsRepo := repository.NewStatsRepository(db, cacheClient)
 	awardRepo := repository.NewAwardRepository(db, cacheClient)
 	gameRepo := repository.NewGameRepository(db, cacheClient)
@@ -152,6 +153,7 @@ func NewServer(db *sql.DB, cacheClient *cache.Client) *Server {
 	server := newServer(
 		NewPlayerRoutes(playerRepo, awardRepo),
 		NewTeamRoutes(teamRepo, gameRepo),
+		NewStandingsRoutes(standingsRepo),
 		NewStatsRoutes(statsRepo),
 		NewAwardRoutes(awardRepo),
 		NewGameRoutes(gameRepo, playRepo),

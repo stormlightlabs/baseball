@@ -189,4 +189,41 @@ func TestStatsEndpoints(t *testing.T) {
 			t.Errorf("expected status 200, got %d: %s", w.Code, w.Body.String())
 		}
 	})
+
+	t.Run("GET /v1/seasons/{year}/leaders/batting uses current-season source", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/seasons/2026/leaders/batting?stat=hr", nil)
+		w := httptest.NewRecorder()
+		testServer.ServeHTTP(w, req)
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		var resp BattingLeadersResponse
+		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if len(resp.Leaders) == 0 {
+			t.Fatal("expected current-season batting leaders")
+		}
+		if resp.Leaders[0].Source != "current_season" {
+			t.Fatalf("expected source=current_season, got %q", resp.Leaders[0].Source)
+		}
+	})
+
+	t.Run("GET /v1/stats/batting falls through to current-season rows", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/stats/batting?season=2026", nil)
+		w := httptest.NewRecorder()
+		testServer.ServeHTTP(w, req)
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		var resp PaginatedResponse
+		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if resp.Total == 0 {
+			t.Fatal("expected current-season batting stats rows")
+		}
+	})
 }

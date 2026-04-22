@@ -269,12 +269,12 @@ func TestPlayerStatsEndpoints(t *testing.T) {
 			t.Fatalf("failed to decode response: %v", err)
 		}
 
-		if resp.Career.HR != 37 {
-			t.Errorf("expected 37 HR in 2023, got %d", resp.Career.HR)
+		if resp.Career.HR != 46 {
+			t.Errorf("expected 46 HR after current-season merge, got %d", resp.Career.HR)
 		}
 
-		if resp.Career.AB != 367 {
-			t.Errorf("expected 367 AB in 2023, got %d", resp.Career.AB)
+		if resp.Career.AB != 433 {
+			t.Errorf("expected 433 AB after current-season merge, got %d", resp.Career.AB)
 		}
 	})
 
@@ -349,12 +349,12 @@ func TestPlayerStatsEndpoints(t *testing.T) {
 			t.Fatalf("failed to decode response: %v", err)
 		}
 
-		if resp.Career.W != 15 {
-			t.Errorf("expected 15 wins in 2023, got %d", resp.Career.W)
+		if resp.Career.W != 18 {
+			t.Errorf("expected 18 wins after current-season merge, got %d", resp.Career.W)
 		}
 
-		if resp.Career.SO != 222 {
-			t.Errorf("expected 222 strikeouts in 2023, got %d", resp.Career.SO)
+		if resp.Career.SO != 256 {
+			t.Errorf("expected 256 strikeouts after current-season merge, got %d", resp.Career.SO)
 		}
 	})
 
@@ -822,6 +822,60 @@ func TestPlayerSalariesEndpoint(t *testing.T) {
 					t.Error("expected salaries to be in chronological order")
 				}
 			}
+		}
+	})
+}
+
+func TestPlayerStatsCurrentSeasonMerge(t *testing.T) {
+	t.Run("GET /v1/players/{id}/stats/batting includes current-season row", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/players/judgeaa01/stats/batting", nil)
+		w := httptest.NewRecorder()
+		testServer.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		var resp PlayerBattingStatsResponse
+		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		found := false
+		for _, season := range resp.Seasons {
+			if season.Year == 2026 && season.Source == "current_season" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatal("expected current-season batting row for 2026")
+		}
+	})
+
+	t.Run("GET /v1/players/{id}/stats/pitching includes current-season row", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/players/colege01/stats/pitching", nil)
+		w := httptest.NewRecorder()
+		testServer.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		var resp PlayerPitchingStatsResponse
+		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		found := false
+		for _, season := range resp.Seasons {
+			if season.Year == 2026 && season.Source == "current_season" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatal("expected current-season pitching row for 2026")
 		}
 	})
 }

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"math"
+	"sort"
 	"time"
 
 	"stormlightlabs.org/baseball/internal/cache"
@@ -324,10 +326,131 @@ func (r *PlayerRepository) BattingSeasons(ctx context.Context, id core.PlayerID)
 		}
 
 		s.OPS = s.OBP + s.SLG
+		s.Source = "lahman"
 		s.DataSources = []string{"lahman"}
 
 		seasons = append(seasons, s)
 	}
+
+	currentSeasonQuery := `
+		SELECT
+			cs.player_id,
+			cs.season,
+			COALESCE(cs.team_id, tm.local_team_id, '') AS team_id,
+			COALESCE(tm.local_league, ''),
+			COALESCE(cs.g, 0),
+			COALESCE(cs.pa, 0),
+			COALESCE(cs.ab, 0),
+			COALESCE(cs.r, 0),
+			COALESCE(cs.h, 0),
+			COALESCE(cs."2b", 0),
+			COALESCE(cs."3b", 0),
+			COALESCE(cs.hr, 0),
+			COALESCE(cs.rbi, 0),
+			COALESCE(cs.sb, 0),
+			COALESCE(cs.cs, 0),
+			COALESCE(cs.bb, 0),
+			COALESCE(cs.so, 0),
+			COALESCE(cs.hbp, 0),
+			COALESCE(cs.sf, 0),
+			cs.avg,
+			cs.obp,
+			cs.slg,
+			cs.ops,
+			cs.fetched_at
+		FROM current_season.batting cs
+		LEFT JOIN team_mlbam_map tm
+			ON tm.season = cs.season
+			AND tm.mlbam_team_id = cs.team_mlb_id
+		WHERE cs.player_id = $1
+			AND NOT EXISTS (
+				SELECT 1
+				FROM "Batting" b
+				WHERE b."playerID" = cs.player_id
+					AND b."yearID" = cs.season
+			)
+	`
+
+	currentRows, err := r.db.QueryContext(ctx, currentSeasonQuery, string(id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current-season batting seasons: %w", err)
+	}
+	defer currentRows.Close()
+
+	for currentRows.Next() {
+		var s core.PlayerBattingSeason
+		var avg, obp, slg, ops sql.NullFloat64
+		var fetchedAt time.Time
+		if err := currentRows.Scan(
+			&s.PlayerID,
+			&s.Year,
+			&s.TeamID,
+			&s.League,
+			&s.G,
+			&s.PA,
+			&s.AB,
+			&s.R,
+			&s.H,
+			&s.Doubles,
+			&s.Triples,
+			&s.HR,
+			&s.RBI,
+			&s.SB,
+			&s.CS,
+			&s.BB,
+			&s.SO,
+			&s.HBP,
+			&s.SF,
+			&avg,
+			&obp,
+			&slg,
+			&ops,
+			&fetchedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan current-season batting season: %w", err)
+		}
+
+		if avg.Valid {
+			s.AVG = avg.Float64
+		} else if s.AB > 0 {
+			s.AVG = float64(s.H) / float64(s.AB)
+		}
+		if obp.Valid {
+			s.OBP = obp.Float64
+		} else if s.PA > 0 {
+			s.OBP = float64(s.H+s.BB+s.HBP) / float64(s.PA)
+		}
+		if slg.Valid {
+			s.SLG = slg.Float64
+		} else if s.AB > 0 {
+			singles := s.H - s.Doubles - s.Triples - s.HR
+			totalBases := singles + (s.Doubles * 2) + (s.Triples * 3) + (s.HR * 4)
+			s.SLG = float64(totalBases) / float64(s.AB)
+		}
+		if ops.Valid {
+			s.OPS = ops.Float64
+		} else {
+			s.OPS = s.OBP + s.SLG
+		}
+
+		s.Source = "current_season"
+		s.DataSources = []string{"current_season"}
+		s.FetchedAt = &fetchedAt
+		seasons = append(seasons, s)
+	}
+	if err := currentRows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating current-season batting rows: %w", err)
+	}
+
+	sort.SliceStable(seasons, func(i, j int) bool {
+		if seasons[i].Year == seasons[j].Year {
+			if seasons[i].TeamID == seasons[j].TeamID {
+				return seasons[i].Source < seasons[j].Source
+			}
+			return seasons[i].TeamID < seasons[j].TeamID
+		}
+		return seasons[i].Year < seasons[j].Year
+	})
 
 	return seasons, nil
 }
@@ -383,10 +506,119 @@ func (r *PlayerRepository) PitchingSeasons(ctx context.Context, id core.PlayerID
 			s.HRPer9 = (float64(s.HR) / ip) * 9.0
 		}
 
+		s.Source = "lahman"
 		s.DataSources = []string{"lahman"}
 
 		seasons = append(seasons, s)
 	}
+
+	currentSeasonQuery := `
+		SELECT
+			cs.player_id,
+			cs.season,
+			COALESCE(cs.team_id, tm.local_team_id, '') AS team_id,
+			COALESCE(tm.local_league, ''),
+			COALESCE(cs.w, 0),
+			COALESCE(cs.l, 0),
+			COALESCE(cs.g, 0),
+			COALESCE(cs.gs, 0),
+			COALESCE(cs.sv, 0),
+			COALESCE(cs.ip, 0),
+			COALESCE(cs.h, 0),
+			COALESCE(cs.er, 0),
+			COALESCE(cs.hr, 0),
+			COALESCE(cs.bb, 0),
+			COALESCE(cs.so, 0),
+			COALESCE(cs.hbp, 0),
+			cs.era,
+			cs.whip,
+			cs.fetched_at
+		FROM current_season.pitching cs
+		LEFT JOIN team_mlbam_map tm
+			ON tm.season = cs.season
+			AND tm.mlbam_team_id = cs.team_mlb_id
+		WHERE cs.player_id = $1
+			AND NOT EXISTS (
+				SELECT 1
+				FROM "Pitching" p
+				WHERE p."playerID" = cs.player_id
+					AND p."yearID" = cs.season
+			)
+	`
+
+	currentRows, err := r.db.QueryContext(ctx, currentSeasonQuery, string(id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current-season pitching seasons: %w", err)
+	}
+	defer currentRows.Close()
+
+	for currentRows.Next() {
+		var s core.PlayerPitchingSeason
+		var ip float64
+		var era, whip sql.NullFloat64
+		var fetchedAt time.Time
+		if err := currentRows.Scan(
+			&s.PlayerID,
+			&s.Year,
+			&s.TeamID,
+			&s.League,
+			&s.W,
+			&s.L,
+			&s.G,
+			&s.GS,
+			&s.SV,
+			&ip,
+			&s.H,
+			&s.ER,
+			&s.HR,
+			&s.BB,
+			&s.SO,
+			&s.HBP,
+			&era,
+			&whip,
+			&fetchedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan current-season pitching season: %w", err)
+		}
+		s.IPOuts = int(math.Round(ip * 3))
+		if era.Valid {
+			s.ERA = era.Float64
+		}
+		if whip.Valid {
+			s.WHIP = whip.Float64
+		}
+
+		innings := float64(s.IPOuts) / 3.0
+		if innings > 0 {
+			if !era.Valid {
+				s.ERA = (float64(s.ER) * 9.0) / innings
+			}
+			if !whip.Valid {
+				s.WHIP = float64(s.H+s.BB) / innings
+			}
+			s.KPer9 = (float64(s.SO) / innings) * 9.0
+			s.BBPer9 = (float64(s.BB) / innings) * 9.0
+			s.HRPer9 = (float64(s.HR) / innings) * 9.0
+		}
+
+		s.Source = "current_season"
+		s.DataSources = []string{"current_season"}
+		s.FetchedAt = &fetchedAt
+		seasons = append(seasons, s)
+	}
+	if err := currentRows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating current-season pitching rows: %w", err)
+	}
+
+	sort.SliceStable(seasons, func(i, j int) bool {
+		if seasons[i].Year == seasons[j].Year {
+			if seasons[i].TeamID == seasons[j].TeamID {
+				return seasons[i].Source < seasons[j].Source
+			}
+			return seasons[i].TeamID < seasons[j].TeamID
+		}
+		return seasons[i].Year < seasons[j].Year
+	})
 
 	return seasons, nil
 }

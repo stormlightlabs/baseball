@@ -227,6 +227,11 @@ type CrosswalkRepository interface {
 	ListPlayerCrosswalk(ctx context.Context, filter PlayerCrosswalkFilter) ([]PlayerCrosswalkRow, error)
 }
 
+// StandingsRepository returns season standings across historical and current-season sources.
+type StandingsRepository interface {
+	SeasonStandings(ctx context.Context, season SeasonYear) ([]SeasonStanding, *time.Time, error)
+}
+
 // UserRepository handles user authentication and management.
 type UserRepository interface {
 	// GetByID retrieves a user by ID

@@ -85,6 +85,7 @@ func (gr *GameRoutes) handleGetBoxscore(w http.ResponseWriter, r *http.Request) 
 //	@Accept			json
 //	@Produce		json
 //	@Param			season		query		integer	false	"Filter by season year"
+//	@Param			id			query		string	false	"Filter by game ID (Retrosheet ID or current-season game_pk)"
 //	@Param			home_team	query		string	false	"Filter by home team ID"
 //	@Param			away_team	query		string	false	"Filter by away team ID"
 //	@Param			park_id		query		string	false	"Filter by park ID"
@@ -108,6 +109,11 @@ func (gr *GameRoutes) handleListGames(w http.ResponseWriter, r *http.Request) {
 	if season := r.URL.Query().Get("season"); season != "" {
 		y := core.SeasonYear(getIntQuery(r, "season", 0))
 		filter.Season = &y
+	}
+
+	if gameID := r.URL.Query().Get("id"); gameID != "" {
+		id := core.GameID(gameID)
+		filter.ID = &id
 	}
 
 	if homeTeam := r.URL.Query().Get("home_team"); homeTeam != "" {

@@ -130,7 +130,9 @@ type PlayerBattingSeason struct {
 	SLG float64 `json:"slg"`
 	OPS float64 `json:"ops"`
 
-	DataSources []string `json:"data_sources,omitempty"` // e.g. ["lahman"] or ["retrosheet"]
+	Source      string     `json:"source,omitempty"`
+	FetchedAt   *time.Time `json:"fetched_at,omitempty"`
+	DataSources []string   `json:"data_sources,omitempty"` // e.g. ["lahman"] or ["retrosheet"]
 }
 
 // PlayerGameBattingLog represents a player's batting performance in a single game.
@@ -246,7 +248,9 @@ type PlayerPitchingSeason struct {
 	HRPer9 float64  `json:"hr_per_9"`
 	FIP    *float64 `json:"fip,omitempty"`
 
-	DataSources []string `json:"data_sources,omitempty"` // e.g. ["lahman"] or ["retrosheet"]
+	Source      string     `json:"source,omitempty"`
+	FetchedAt   *time.Time `json:"fetched_at,omitempty"`
+	DataSources []string   `json:"data_sources,omitempty"` // e.g. ["lahman"] or ["retrosheet"]
 }
 
 // PlayerFieldingSeason from Lahman Fielding.
@@ -307,6 +311,9 @@ type Game struct {
 	Season    SeasonYear `json:"season"`
 	Date      time.Time  `json:"date"`
 	DayOfWeek string     `json:"day_of_week"`
+	Status    *string    `json:"status,omitempty"`
+	Source    string     `json:"source,omitempty"`
+	FetchedAt *time.Time `json:"fetched_at,omitempty"`
 
 	HomeTeam   TeamID   `json:"home_team"`
 	AwayTeam   TeamID   `json:"away_team"`
@@ -669,14 +676,38 @@ type DatasetStatus struct {
 	Tables       map[string]int64 `json:"tables,omitempty"`
 }
 
-// ReadinessStatus summarizes whether the required datasets are loaded for the
-// core API surface.
+// ReadinessStatus summarizes whether the required datasets are loaded for the core API surface.
 type ReadinessStatus struct {
-	Status    string          `json:"status"`
-	Ready     bool            `json:"ready"`
-	CheckedAt time.Time       `json:"checked_at"`
-	Datasets  []DatasetStatus `json:"datasets"`
-	Missing   []string        `json:"missing,omitempty"`
+	Status             string          `json:"status"`
+	Ready              bool            `json:"ready"`
+	CheckedAt          time.Time       `json:"checked_at"`
+	Datasets           []DatasetStatus `json:"datasets"`
+	Missing            []string        `json:"missing,omitempty"`
+	CurrentSeasonStale bool            `json:"current_season_stale,omitempty"`
+}
+
+// SeasonStanding represents a standings row from either Lahman or current-season tables.
+type SeasonStanding struct {
+	Season       SeasonYear   `json:"season" swaggertype:"integer"`
+	DivisionID   int          `json:"division_id"`
+	DivisionName string       `json:"division_name"`
+	League       *LeagueID    `json:"league,omitempty" swaggertype:"string"`
+	TeamID       *TeamID      `json:"team_id,omitempty" swaggertype:"string"`
+	FranchiseID  *FranchiseID `json:"franchise_id,omitempty" swaggertype:"string"`
+	TeamName     *string      `json:"team_name,omitempty"`
+	TeamMLBID    *int         `json:"team_mlb_id,omitempty"`
+	W            int          `json:"w"`
+	L            int          `json:"l"`
+	PCT          *float64     `json:"pct,omitempty"`
+	GB           *string      `json:"gb,omitempty"`
+	WCGB         *string      `json:"wc_gb,omitempty"`
+	Streak       *string      `json:"streak,omitempty"`
+	L10          *string      `json:"l10,omitempty"`
+	RunDiff      *int         `json:"run_diff,omitempty"`
+	RS           *int         `json:"rs,omitempty"`
+	RA           *int         `json:"ra,omitempty"`
+	Source       string       `json:"source"`
+	FetchedAt    *time.Time   `json:"fetched_at,omitempty"`
 }
 
 // Season represents summary information about a season

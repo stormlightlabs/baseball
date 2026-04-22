@@ -169,6 +169,17 @@ definitions:
           $ref: '#/definitions/core.SalarySummary'
         type: array
     type: object
+  api.StandingsResponse:
+    properties:
+      last_updated:
+        type: string
+      season:
+        type: integer
+      standings:
+        items:
+          $ref: '#/definitions/core.SeasonStanding'
+        type: array
+    type: object
   api.datasetCoverage:
     properties:
       from:
@@ -566,6 +577,8 @@ definitions:
         type: string
       duration_min:
         type: integer
+      fetched_at:
+        type: string
       field_condition:
         description: Field condition (dry, wet, damp, soaked)
         type: string
@@ -613,8 +626,12 @@ definitions:
       sky:
         description: Sky condition (sunny, cloudy, dome, etc.)
         type: string
+      source:
+        type: string
       start_time:
         description: Game start time (HH:MM format)
+        type: string
+      status:
         type: string
       temp_f:
         description: Temperature in Fahrenheit
@@ -2346,6 +2363,8 @@ definitions:
         type: array
       doubles:
         type: integer
+      fetched_at:
+        type: string
       g:
         type: integer
       h:
@@ -2376,6 +2395,8 @@ definitions:
         type: number
       so:
         type: integer
+      source:
+        type: string
       team_id:
         type: string
       triples:
@@ -2501,6 +2522,8 @@ definitions:
         type: integer
       era:
         type: number
+      fetched_at:
+        type: string
       fip:
         type: number
       g:
@@ -2530,6 +2553,8 @@ definitions:
         type: integer
       so:
         type: integer
+      source:
+        type: string
       sv:
         type: integer
       team_id:
@@ -2643,6 +2668,8 @@ definitions:
     properties:
       checked_at:
         type: string
+      current_season_stale:
+        type: boolean
       datasets:
         items:
           $ref: '#/definitions/core.DatasetStatus'
@@ -2796,6 +2823,49 @@ definitions:
         type: integer
       year:
         type: integer
+    type: object
+  core.SeasonStanding:
+    properties:
+      division_id:
+        type: integer
+      division_name:
+        type: string
+      fetched_at:
+        type: string
+      franchise_id:
+        type: string
+      gb:
+        type: string
+      l:
+        type: integer
+      l10:
+        type: string
+      league:
+        type: string
+      pct:
+        type: number
+      ra:
+        type: integer
+      rs:
+        type: integer
+      run_diff:
+        type: integer
+      season:
+        type: integer
+      source:
+        type: string
+      streak:
+        type: string
+      team_id:
+        type: string
+      team_mlb_id:
+        type: integer
+      team_name:
+        type: string
+      w:
+        type: integer
+      wc_gb:
+        type: string
     type: object
   core.SplitDimension:
     enum:
@@ -4276,6 +4346,10 @@ paths:
         in: query
         name: season
         type: integer
+      - description: Filter by game ID (Retrosheet ID or current-season game_pk)
+        in: query
+        name: id
+        type: string
       - description: Filter by home team ID
         in: query
         name: home_team
@@ -8396,6 +8470,36 @@ paths:
       tags:
       - teams
       - games
+  /standings:
+    get:
+      consumes:
+      - application/json
+      description: Returns season standings. Current-season requests read from local
+        current_season tables; historical seasons read from Lahman Teams records.
+      parameters:
+      - description: Season year (defaults to current year)
+        in: query
+        name: season
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.StandingsResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get season standings
+      tags:
+      - stats
+      - teams
   /stats/batting:
     get:
       consumes:

@@ -171,6 +171,20 @@ func TestMetaEndpoints(t *testing.T) {
 		if len(datasets) < 3 {
 			t.Errorf("expected supplemental dataset statuses, got %d", len(datasets))
 		}
+
+		foundCurrentSeason := false
+		for _, dataset := range datasets {
+			if dataset.ID == "current_season" {
+				foundCurrentSeason = true
+				if dataset.RowCount == 0 {
+					t.Error("expected current_season dataset row_count > 0")
+				}
+				break
+			}
+		}
+		if !foundCurrentSeason {
+			t.Error("expected current_season dataset status")
+		}
 	})
 
 	t.Run("GET /v1/meta/datasets?strict=true", func(t *testing.T) {
@@ -212,6 +226,10 @@ func TestMetaEndpoints(t *testing.T) {
 
 		if len(resp.Datasets) == 0 {
 			t.Error("expected required datasets in readiness response")
+		}
+
+		if resp.CurrentSeasonStale {
+			t.Error("expected current_season_stale=false for fresh fixture data")
 		}
 	})
 

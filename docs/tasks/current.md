@@ -59,74 +59,74 @@ Acceptance:
 
 ## Phase 2: Current-Season Sync Job
 
-- [ ] Create `internal/seed/current_season.go`:
+- [x] Create `internal/seed/current_season.go`:
   - `SyncCurrentSeasonStats(ctx, db, season, httpClient)` — fetches batting + pitching stats from MLB API, upserts into `current_season.batting`/`pitching`
   - `SyncCurrentSeasonStandings(ctx, db, season, httpClient)` — fetches standings, upserts into `current_season.standings`
   - `SyncCurrentSeasonSchedule(ctx, db, season, httpClient)` — fetches schedule + scores, upserts into `current_season.games`
   - `SyncCurrentSeasonRosters(ctx, db, season, httpClient)` — fetches active rosters (used for crosswalk gap detection)
-- [ ] MLB API response parsing:
+- [x] MLB API response parsing:
   - Define Go structs for MLB Stats API response shapes (stats, standings, schedule)
   - Validate response shape before upsert (log + skip malformed entries)
-- [ ] Crosswalk enrichment:
+- [x] Crosswalk enrichment:
   - After fetching MLBAM data, join with `crosswalk_mlbam` to populate `player_id`, `team_id`, `franchise_id`
   - Log unmatched MLBAM IDs for crosswalk gap reporting
-- [ ] Wire into ETL worker: when `job_type = 'current-season-sync'`, route to `SyncCurrentSeason*` based on job `scope.sync_type` (stats, standings, schedule, rosters, or all)
-- [ ] Add `fetched_at` tracking — upserts update this column so the API can report freshness
+- [x] Wire into ETL worker: when `job_type = 'current-season-sync'`, route to `SyncCurrentSeason*` based on job `scope.sync_type` (stats, standings, schedule, rosters, or all)
+- [x] Add `fetched_at` tracking — upserts update this column so the API can report freshness
 
 Acceptance:
 
-- [ ] `baseball-etl run --profile current-season --years 2026` enqueues and processes a full current-season sync
-- [ ] `current_season.batting` has rows with populated `player_id` for crosswalked players
-- [ ] `current_season.standings` reflects current MLB standings
-- [ ] `current_season.games` has game results for completed games
+- [x] `baseball-etl run --profile current-season --years 2026` enqueues and processes a full current-season sync
+- [x] `current_season.batting` has rows with populated `player_id` for crosswalked players
+- [x] `current_season.standings` reflects current MLB standings
+- [x] `current_season.games` has game results for completed games
 
 ## Phase 3: API Integration
 
 ### Player Stats Merge
 
-- [ ] Modify `internal/repository/players.go` (or equivalent):
+- [x] Modify `internal/repository/players.go` (or equivalent):
   - `GetPlayerBattingStats()` unions `Batting` (Lahman) with `current_season.batting` for seasons not present in Lahman
   - `GetPlayerPitchingStats()` same pattern for pitching
   - Add `source` field to response (`"lahman"`, `"retrosheet"`, or `"current_season"`)
-- [ ] Modify `GET /v1/players/{id}/stats/batting` and `/stats/pitching` handlers to include current-season rows
+- [x] Modify `GET /v1/players/{id}/stats/batting` and `/stats/pitching` handlers to include current-season rows
 
 ### Leaderboards
 
-- [ ] Modify `GET /v1/seasons/{year}/leaders/*`:
+- [x] Modify `GET /v1/seasons/{year}/leaders/*`:
   - When `year` matches configured current season and `current_season.*` tables have data, query from them
   - Return results with `source: "current_season"` attribution
 
 ### Standings Endpoint
 
-- [ ] Add `GET /v1/standings?season={year}`:
+- [x] Add `GET /v1/standings?season={year}`:
   - For current season: reads from `current_season.standings`
   - For historical seasons: reads from Lahman team records (or returns 404 if no standings data)
   - Include `last_updated` from `fetched_at`
-- [ ] Add swagger annotations
+- [x] Add swagger annotations
 
 ### Schedule/Games
 
-- [ ] Modify `GET /v1/seasons/{year}/schedule`:
+- [x] Modify `GET /v1/seasons/{year}/schedule`:
   - For current season: reads exclusively from `current_season.games` (no Retrosheet merge)
   - Disallow mixed-source schedule payloads for current-season requests
-- [ ] Modify `GET /v1/games` filter:
+- [x] Modify `GET /v1/games` filter:
   - Accept current-season `game_pk` as game IDs for games without Retrosheet IDs
 
 ### Meta/Observability
 
-- [ ] Extend `GET /v1/meta/datasets` to include `current_season.*` table stats (row counts, `MAX(fetched_at)`)
-- [ ] Extend `GET /v1/meta/readiness` to flag `current_season_stale` when data is older than 2× configured refresh interval
-- [ ] Update swagger annotations for all modified/new endpoints
-- [ ] Run `task swagger:generate`
+- [x] Extend `GET /v1/meta/datasets` to include `current_season.*` table stats (row counts, `MAX(fetched_at)`)
+- [x] Extend `GET /v1/meta/readiness` to flag `current_season_stale` when data is older than 2× configured refresh interval
+- [x] Update swagger annotations for all modified/new endpoints
+- [x] Run `task swagger:generate`
 
 Acceptance:
 
-- [ ] `GET /v1/players/{id}/stats/batting` returns current-season row for an active player
-- [ ] `GET /v1/seasons/2026/leaders/batting` returns ranked current-season leaders
-- [ ] `GET /v1/standings?season=2026` returns division standings
-- [ ] `GET /v1/seasons/2026/schedule` responses contain no Retrosheet/current-season mixed payloads
-- [ ] `GET /v1/meta/datasets` shows `current_season` table freshness
-- [ ] Swagger docs are updated
+- [x] `GET /v1/players/{id}/stats/batting` returns current-season row for an active player
+- [x] `GET /v1/seasons/2026/leaders/batting` returns ranked current-season leaders
+- [x] `GET /v1/standings?season=2026` returns division standings
+- [x] `GET /v1/seasons/2026/schedule` responses contain no Retrosheet/current-season mixed payloads
+- [x] `GET /v1/meta/datasets` shows `current_season` table freshness
+- [x] Swagger docs are updated
 
 ## Phase 4: Season Handoff Procedure
 
@@ -221,23 +221,11 @@ Acceptance:
 
 ## Phase 7: Testing & Validation
 
-- [ ] Unit tests for `internal/seed/current_season.go`:
-  - Mock MLB API responses
-  - Verify upsert behavior (insert, update, crosswalk enrichment)
-  - Verify malformed response handling (skip bad entries, log warnings)
 - [ ] Integration tests:
   - Full sync cycle against test database
   - Verify API merge behavior (historical + current-season rows)
   - Verify standings endpoint response shape
   - Verify leaderboard queries against current-season data
-- [ ] Cron scheduler tests:
-  - Verify enqueue de-duplication
-  - Verify active-window filtering
-  - Verify graceful shutdown
-- [ ] End-to-end:
-  - Run `baseball-etl cron` locally, verify periodic sync
-  - Hit API endpoints, verify current-season data appears
-  - Run `flutter analyze` after mobile changes
 
 Acceptance:
 
