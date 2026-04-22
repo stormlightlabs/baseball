@@ -18,8 +18,9 @@ export type ScoreboardGame = {
   retrosheetGameId?: string;
   venue?: string;
   statusText: string;
-  statusShort: 'LIVE' | 'FINAL' | 'SCHEDULED';
+  statusShort: 'WARMUP' | 'LIVE' | 'FINAL' | 'SCHEDULED';
   scheduledLabel?: string;
+  isWarmingUp: boolean;
   isInProgress: boolean;
   isFinal: boolean;
   away: ScoreboardTeam;
@@ -32,6 +33,13 @@ export type ScoreboardSnapshot = {
   gamesInProgress: number;
   games: ScoreboardGame[];
 };
+
+export function scoreboardScoreLabel(game: ScoreboardGame, side: 'away' | 'home'): string {
+  const team = side === 'away' ? game.away : game.home;
+  if (team.score != null) return String(team.score);
+  if (game.statusShort === 'LIVE' || game.statusShort === 'FINAL') return '0';
+  return '-';
+}
 
 function normalizeColor(value: unknown): string | undefined {
   const raw = toString(value);
@@ -58,6 +66,17 @@ function toLocalDateISO(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function firstDefinedString(values: unknown[]): string | undefined {
+  let first: string | undefined;
+  values.some((value) => {
+    const normalized = toString(value);
+    if (normalized == null) return false;
+    first = normalized;
+    return true;
+  });
+  return first;
 }
 
 function maybeRetrosheetGameID(value: unknown): string | undefined {
@@ -114,7 +133,7 @@ function extractTeamSide(game: Record<string, unknown>, side: 'away' | 'home'): 
 
 function statusFromGame(
   game: Record<string, unknown>
-): Pick<ScoreboardGame, 'statusText' | 'statusShort' | 'isInProgress' | 'isFinal' | 'scheduledLabel'> {
+): Pick<ScoreboardGame, 'statusText' | 'statusShort' | 'isWarmingUp' | 'isInProgress' | 'isFinal' | 'scheduledLabel'> {
   const status = toObject(game.status);
   const linescore = toObject(game.linescore);
 
@@ -127,6 +146,9 @@ function statusFromGame(
     toString(game.status);
 
   const coded = toString(status.codedGameState) ?? '';
+  const statusCode = toString(status.statusCode) ?? '';
+  const codedUpper = coded.toUpperCase();
+  const statusCodeUpper = statusCode.toUpperCase();
   const abstractLower = (abstract ?? '').toLowerCase();
   const detailedLower = (detailed ?? '').toLowerCase();
 
@@ -137,20 +159,35 @@ function statusFromGame(
     toBoolean(status.is_live) ??
     toBoolean(status.isLive);
 
+  const warmupFlag = toBoolean(game.is_warming_up) ?? toBoolean(game.warming_up) ?? toBoolean(status.isWarmingUp);
+
   const finalFlag = toBoolean(game.is_final) ?? toBoolean(status.isFinal);
 
-  const isInProgress =
-    liveFlag === true ||
-    abstractLower.includes('live') ||
-    abstractLower.includes('in progress') ||
-    detailedLower.includes('in progress');
+  const isWarmingUp =
+    warmupFlag === true ||
+    detailedLower.includes('warmup') ||
+    detailedLower.includes('warm-up') ||
+    detailedLower.includes('pre-game') ||
+    detailedLower === 'pregame' ||
+    statusCodeUpper === 'PW' ||
+    codedUpper === 'PW';
 
   const isFinal =
     finalFlag === true ||
     abstractLower.includes('final') ||
     detailedLower.includes('final') ||
     detailedLower.includes('game over') ||
-    coded.toUpperCase() === 'F';
+    statusCodeUpper === 'F' ||
+    codedUpper === 'F';
+
+  const isInProgress =
+    !isWarmingUp &&
+    (liveFlag === true ||
+      abstractLower.includes('live') ||
+      abstractLower.includes('in progress') ||
+      detailedLower.includes('in progress') ||
+      statusCodeUpper === 'I' ||
+      codedUpper === 'I');
 
   if (isInProgress && !isFinal) {
     const inningHalf = toString(linescore.inningHalf ?? game.inning_half ?? game.inningHalf);
@@ -171,7 +208,19 @@ function statusFromGame(
     return {
       statusText: parts.join(' · ') || detailed || 'Live',
       statusShort: 'LIVE',
+      isWarmingUp: false,
       isInProgress: true,
+      isFinal: false,
+      scheduledLabel: undefined
+    };
+  }
+
+  if (isWarmingUp && !isFinal) {
+    return {
+      statusText: detailed ?? 'Warmup',
+      statusShort: 'WARMUP',
+      isWarmingUp: true,
+      isInProgress: false,
       isFinal: false,
       scheduledLabel: undefined
     };
@@ -181,23 +230,26 @@ function statusFromGame(
     return {
       statusText: detailed ?? 'Final',
       statusShort: 'FINAL',
+      isWarmingUp: false,
       isInProgress: false,
       isFinal: true,
       scheduledLabel: undefined
     };
   }
 
-  const scheduledLabel =
-    toString(game.start_time) ??
-    toString(game.game_time) ??
-    toString(game.gameTime) ??
-    toString(status.startTime) ??
-    toString(game.gameDate) ??
-    toString(game.game_date);
+  const scheduledLabel = firstDefinedString([
+    game.start_time,
+    game.game_time,
+    game.gameTime,
+    status.startTime,
+    game.gameDate,
+    game.game_date
+  ]);
 
   return {
     statusText: scheduledLabel ?? detailed ?? 'Scheduled',
     statusShort: 'SCHEDULED',
+    isWarmingUp: false,
     isInProgress: false,
     isFinal: false,
     scheduledLabel
@@ -237,6 +289,7 @@ function normalizeGame(raw: unknown, index: number): ScoreboardGame {
     statusText: status.statusText,
     statusShort: status.statusShort,
     scheduledLabel: status.scheduledLabel,
+    isWarmingUp: status.isWarmingUp,
     isInProgress: status.isInProgress,
     isFinal: status.isFinal,
     away,

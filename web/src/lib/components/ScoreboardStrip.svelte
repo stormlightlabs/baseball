@@ -5,7 +5,7 @@
   import LiveHomeCard from '$lib/components/LiveHomeCard.svelte';
   import { EP } from '$lib/endpoints';
   import type { ScoreboardGame, ScoreboardSnapshot } from '$lib/home/scoreboard';
-  import { normalizeScoreboardResponse, todayLocalISODate } from '$lib/home/scoreboard';
+  import { normalizeScoreboardResponse, scoreboardScoreLabel, todayLocalISODate } from '$lib/home/scoreboard';
   import { onMount } from 'svelte';
 
   const SCOREBOARD_ENDPOINT = EP.mlbSchedule;
@@ -24,10 +24,9 @@
   let openPopoverGameID = $state<string | null>(null);
   let lastUpdatedAt = $state<number | null>(null);
 
-  let liveCount = $derived(
-    snapshot.gamesInProgress > 0 ? snapshot.gamesInProgress : snapshot.games.filter((game) => game.isInProgress).length
-  );
-  let hasInProgressGames = $derived(liveCount > 0);
+  let liveCount = $derived(snapshot.games.filter((game) => game.statusShort === 'LIVE').length);
+  let warmupCount = $derived(snapshot.games.filter((game) => game.statusShort === 'WARMUP').length);
+  let hasInProgressGames = $derived(liveCount > 0 || warmupCount > 0);
   let shouldAutoRefresh = $derived(
     hasInProgressGames && !autoRefreshPaused && documentVisible && windowFocused && !loading
   );
@@ -141,20 +140,21 @@
   }
 
   function gameCardBorderClass(game: ScoreboardGame): string {
-    if (game.isInProgress) return 'border-rose-400/35';
+    if (game.statusShort === 'LIVE') return 'border-rose-400/35';
+    if (game.statusShort === 'WARMUP') return 'border-amber-400/35';
     return 'border-outline';
   }
 
   function gameStatusToneClass(game: ScoreboardGame): string {
-    if (game.isInProgress) return 'text-rose-300';
+    if (game.statusShort === 'LIVE') return 'text-rose-300';
+    if (game.statusShort === 'WARMUP') return 'text-amber-300';
     if (game.isFinal) return 'text-secondary';
     return 'text-muted';
   }
 
   function gameStatusLabel(game: ScoreboardGame): string {
-    if (game.isInProgress) return game.statusText;
-    if (game.isFinal) return game.statusText;
-    return displayClock(game.scheduledLabel);
+    if (game.statusShort === 'SCHEDULED') return displayClock(game.scheduledLabel);
+    return game.statusText;
   }
 
   let lastUpdatedLabel = $derived.by(() => {
@@ -180,6 +180,12 @@
           <span
             class="inline-flex items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/10 px-2 py-0.5 font-mono text-[0.62rem] text-rose-400">
             <span class="live-dot"></span>LIVE {liveCount}
+          </span>
+        {/if}
+        {#if warmupCount > 0}
+          <span
+            class="inline-flex items-center gap-1 rounded-full border border-amber-400/35 bg-amber-500/10 px-2 py-0.5 font-mono text-[0.62rem] text-amber-300">
+            WARMUP {warmupCount}
           </span>
         {/if}
       </div>
@@ -266,10 +272,15 @@
                 <div class="truncate font-mono text-xxs uppercase {gameStatusToneClass(game)}">
                   {gameStatusLabel(game)}
                 </div>
-                {#if game.isInProgress}
+                {#if game.statusShort === 'LIVE'}
                   <span
                     class="inline-flex items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/10 px-1.5 py-0.5 font-mono text-[0.57rem] text-rose-400">
                     <span class="live-dot"></span>LIVE
+                  </span>
+                {:else if game.statusShort === 'WARMUP'}
+                  <span
+                    class="inline-flex items-center rounded-full border border-amber-400/35 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[0.57rem] text-amber-300">
+                    WARMUP
                   </span>
                 {/if}
               </div>
@@ -280,14 +291,14 @@
                     <span class="h-4 w-1 rounded-xs" style={`background-color:${teamColor(game, 'away')}`}></span>
                     <span class="font-mono text-[0.76rem] text-foreground">{game.away.abbreviation}</span>
                   </div>
-                  <span class="font-mono text-sm text-foreground">{game.away.score ?? '-'}</span>
+                  <span class="font-mono text-sm text-foreground">{scoreboardScoreLabel(game, 'away')}</span>
                 </div>
                 <div class="flex items-center justify-between gap-2">
                   <div class="flex min-w-0 items-center gap-2">
                     <span class="h-4 w-1 rounded-xs" style={`background-color:${teamColor(game, 'home')}`}></span>
                     <span class="font-mono text-[0.76rem] text-foreground">{game.home.abbreviation}</span>
                   </div>
-                  <span class="font-mono text-sm text-foreground">{game.home.score ?? '-'}</span>
+                  <span class="font-mono text-sm text-foreground">{scoreboardScoreLabel(game, 'home')}</span>
                 </div>
               </div>
 
