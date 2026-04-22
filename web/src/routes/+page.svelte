@@ -3,6 +3,7 @@
   import { resolve } from '$app/paths';
   import ApiMirrorStrip from '$lib/components/ApiMirrorStrip.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
+  import HomeEndpointCard from '$lib/components/HomeEndpointCard.svelte';
   import LeaderCards from '$lib/components/LeaderCards.svelte';
   import Pill from '$lib/components/Pill.svelte';
   import ScoreboardStrip from '$lib/components/ScoreboardStrip.svelte';
@@ -183,16 +184,17 @@
         <ul class="space-y-1">
           {#each visibleQueries as q (q.endpoint)}
             <li>
-              <a
-                href={resolve(API_DOCS_ROUTE)}
-                target="_blank"
-                rel="noreferrer"
-                class="group block rounded-md px-2 py-2 no-underline transition-colors hover:bg-surface">
-                <div class="mb-0.5 text-[0.82rem] text-foreground transition-colors group-hover:text-primary">
-                  {q.title}
-                </div>
-                <div class="truncate font-mono text-xxs text-muted">{q.endpoint}</div>
-              </a>
+              <HomeEndpointCard endpoint={q.endpoint}>
+                <a
+                  href={resolve(API_DOCS_ROUTE)}
+                  target="_blank"
+                  rel="noreferrer"
+                  class="group block rounded-md px-2 py-2 no-underline transition-colors hover:bg-surface">
+                  <div class="mb-0.5 text-[0.82rem] text-foreground transition-colors group-hover:text-primary">
+                    {q.title}
+                  </div>
+                </a>
+              </HomeEndpointCard>
             </li>
           {/each}
         </ul>

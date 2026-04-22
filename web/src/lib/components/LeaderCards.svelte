@@ -2,6 +2,7 @@
   import { resolve } from '$app/paths';
   import { apiFetch } from '$lib/api';
   import { toObject, toString } from '$lib/common/converters';
+  import LiveHomeCard from '$lib/components/LiveHomeCard.svelte';
   import { EP } from '$lib/endpoints';
   import {
     buildLeaderBoardByCategory,
@@ -15,7 +16,6 @@
   type CategoryID = LeaderCategory['id'];
 
   const CURRENT_SEASON = new Date().getFullYear();
-  const STATS_HINT = `/v1${EP.mlbStats}?stats=season&group={hitting|pitching}&season=${CURRENT_SEASON}&playerPool=qualified&include=details`;
 
   let loading = $state(true);
   let refreshing = $state(false);
@@ -40,6 +40,9 @@
     () => LEADER_CATEGORIES.find((entry) => entry.id === activeCategory) ?? LEADER_CATEGORIES[0]
   );
   const rows = $derived(board[activeCategory] ?? []);
+  const activeStatsEndpoint = $derived(
+    `/v1${EP.mlbStats}?stats=season&group=${category.group}&season=${CURRENT_SEASON}&playerPool=qualified&include=details`
+  );
 
   onMount(() => {
     void refreshLeaders('initial');
@@ -125,73 +128,70 @@
   }
 </script>
 
-<section class="mx-auto max-w-6xl px-4 pb-6 sm:px-6 lg:px-8">
-  <div class="rounded-lg border border-outline bg-crust p-4">
-    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-      <div>
-        <h2 class="font-mono text-xs tracking-[0.08em] text-muted uppercase">Today’s leaders</h2>
-        <p class="text-xs text-muted">Season {CURRENT_SEASON}</p>
-        <p class="font-mono text-[0.63rem] text-muted">{STATS_HINT}</p>
-      </div>
+<LiveHomeCard endpoint={activeStatsEndpoint}>
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <div>
+      <h2 class="font-mono text-xs tracking-[0.08em] text-muted uppercase">Today’s leaders</h2>
+      <p class="text-xs text-muted">Season {CURRENT_SEASON}</p>
+    </div>
+    <button
+      type="button"
+      class="rounded border border-outline px-2.5 py-1 font-sans text-xxs text-foreground transition-colors hover:bg-surface"
+      onclick={() => void refreshLeaders('manual')}
+      disabled={loading || refreshing}>
+      {#if refreshing}
+        <span class="inline-flex items-center gap-1">
+          <i class="i-tabler-loader-2 animate-spin"></i> Refreshing…
+        </span>
+      {:else}
+        <span class="inline-flex items-center gap-1">
+          <i class="i-tabler-refresh"></i>
+          Refresh
+        </span>
+      {/if}
+    </button>
+  </div>
+
+  <div class="mb-3 flex flex-wrap gap-1">
+    {#each LEADER_CATEGORIES as item (item.id)}
       <button
         type="button"
-        class="rounded border border-outline px-2.5 py-1 font-sans text-xxs text-foreground transition-colors hover:bg-surface"
-        onclick={() => void refreshLeaders('manual')}
-        disabled={loading || refreshing}>
-        {#if refreshing}
-          <span class="inline-flex items-center gap-1">
-            <i class="i-tabler-loader-2 animate-spin"></i> Refreshing…
-          </span>
-        {:else}
-          <span class="inline-flex items-center gap-1">
-            <i class="i-tabler-refresh"></i>
-            Refresh
-          </span>
-        {/if}
+        class="rounded px-2 py-0.5 font-mono text-[0.63rem] transition-colors {categoryButtonClass(item.id)}"
+        onclick={() => (activeCategory = item.id)}>
+        {item.label}
       </button>
-    </div>
+    {/each}
+  </div>
 
-    <div class="mb-3 flex flex-wrap gap-1">
-      {#each LEADER_CATEGORIES as item (item.id)}
-        <button
-          type="button"
-          class="rounded px-2 py-0.5 font-mono text-[0.63rem] transition-colors {categoryButtonClass(item.id)}"
-          onclick={() => (activeCategory = item.id)}>
-          {item.label}
-        </button>
+  {#if loading}
+    <div class="space-y-2">
+      {#each Array.from({ length: 5 }) as _, index (index)}
+        <div class="h-9 rounded-md border border-outline bg-surface/30"></div>
       {/each}
     </div>
-
-    {#if loading}
-      <div class="space-y-2">
-        {#each Array.from({ length: 5 }) as _, index (index)}
-          <div class="h-9 rounded-md border border-outline bg-surface/30"></div>
-        {/each}
-      </div>
-    {:else if errorMessage}
-      <div class="rounded-md border border-warning/35 bg-warning/10 px-3 py-2 font-mono text-xs text-warning">
-        {errorMessage}
-      </div>
-    {:else}
-      <ul class="space-y-1">
-        {#each rows as row (`${activeCategory}:${row.rank}:${row.playerName}`)}
-          <li class="rounded-md border border-outline bg-surface/25 px-3 py-2">
-            <div class="flex items-center gap-3">
-              <span class="w-4 text-center font-mono text-xs text-muted">{row.rank}</span>
-              <a
-                href={resolve(playerHref(row))}
-                class="min-w-0 flex-1 truncate text-sm text-primary no-underline hover:underline">
-                {row.playerName}
-              </a>
-              <span class="font-mono text-xs text-muted">{row.teamAbbr}</span>
-              <span class="font-mono text-sm text-foreground">{row.displayValue}</span>
-            </div>
-          </li>
-        {/each}
-      </ul>
-      <p class="mt-2 text-xs text-muted">
-        Showing top 5 by {category?.label}. Player links resolve from MLBAM IDs via `/v1/meta/crosswalk/players`.
-      </p>
-    {/if}
-  </div>
-</section>
+  {:else if errorMessage}
+    <div class="rounded-md border border-warning/35 bg-warning/10 px-3 py-2 font-mono text-xs text-warning">
+      {errorMessage}
+    </div>
+  {:else}
+    <ul class="space-y-1">
+      {#each rows as row (`${activeCategory}:${row.rank}:${row.playerName}`)}
+        <li class="rounded-md border border-outline bg-surface/25 px-3 py-2">
+          <div class="flex items-center gap-3">
+            <span class="w-4 text-center font-mono text-xs text-muted">{row.rank}</span>
+            <a
+              href={resolve(playerHref(row))}
+              class="min-w-0 flex-1 truncate text-sm text-primary no-underline hover:underline">
+              {row.playerName}
+            </a>
+            <span class="font-mono text-xs text-muted">{row.teamAbbr}</span>
+            <span class="font-mono text-sm text-foreground">{row.displayValue}</span>
+          </div>
+        </li>
+      {/each}
+    </ul>
+    <p class="mt-2 text-xs text-muted">
+      Showing top 5 by {category?.label}. Player links resolve from MLBAM IDs via `/v1/meta/crosswalk/players`.
+    </p>
+  {/if}
+</LiveHomeCard>

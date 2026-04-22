@@ -1,9 +1,11 @@
-# Package Managers
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
 bun.lock
 bun.lockb
 
-# Miscellaneous
 /static/
+
+# Comment this to format tables, but otherwise
+# use markdownlint for linting markdown files
+**/*.md

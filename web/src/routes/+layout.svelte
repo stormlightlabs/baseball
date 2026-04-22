@@ -17,7 +17,7 @@
 
   const MAIN_LINKS = [
     { href: '/', label: 'Home' },
-    { href: '/docs', label: 'About' }
+    { href: '/docs', label: 'Docs' }
   ] as const;
 
   const DATA_LINKS = [
@@ -41,22 +41,22 @@
   const API_DOCS_ROUTE = '/explorer' as const;
   type AppPath = (typeof MAIN_LINKS)[number]['href'] | (typeof DATA_LINKS)[number]['href'];
 
-  const BADGES: Record<AppPath, string> = {
-    '/': 'home',
-    '/players': 'players',
-    '/teams': 'teams',
-    '/games': 'games',
-    '/seasons': 'seasons',
-    '/leaders': 'leaders',
-    '/data': 'sources',
-    '/docs': 'about'
+  const BADGES: Record<AppPath, Uppercase<string>> = {
+    '/': 'HOME',
+    '/players': 'PLAYERS',
+    '/teams': 'TEAMS',
+    '/games': 'GAMES',
+    '/seasons': 'SEASONS',
+    '/leaders': 'LEADERS',
+    '/data': 'SOURCES',
+    '/docs': 'DOCS'
   };
 
   let pathname = $derived(page.url.pathname);
-  let badge = $derived.by(() => {
+  let badge = $derived.by<Uppercase<string>>(() => {
     const match =
       MAIN_LINKS.find((link) => isActivePath(link.href)) ?? DATA_LINKS.find((link) => isActivePath(link.href));
-    if (!match) return 'dashboard';
+    if (!match) return 'DASHBOARD';
     return BADGES[match.href];
   });
 
