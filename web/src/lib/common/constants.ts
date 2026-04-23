@@ -55,6 +55,23 @@ export function isSeasonTabId(value: string): value is SeasonTabId {
   return ALL_SEASON_TABS.some((tab) => tab.id === value);
 }
 
+export const MAIN_LEADER_TABS = [
+  { id: 'quick', label: 'Quick' },
+  { id: 'lab', label: 'Query Lab' },
+  { id: 'career', label: 'Career' },
+  { id: 'advanced', label: 'Advanced' }
+] as const;
+
+export const ALL_LEADER_TABS = [...MAIN_LEADER_TABS] as const;
+
+export type LeaderTabId = (typeof ALL_LEADER_TABS)[number]['id'];
+
+export const DEFAULT_LEADER_TAB: LeaderTabId = 'quick';
+
+export function isLeaderTabId(value: string): value is LeaderTabId {
+  return ALL_LEADER_TABS.some((tab) => tab.id === value);
+}
+
 export const BATTING_STATS = [
   { value: 'hr', label: 'Home Runs (HR)' },
   { value: 'avg', label: 'Batting Avg (AVG)' },

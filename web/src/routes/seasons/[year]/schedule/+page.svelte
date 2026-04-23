@@ -3,14 +3,14 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { apiFetch, fetchPaginated, type PaginatedResponse } from '$lib/api';
+  import { parseLeague, type LeagueFilter } from '$lib/common/types';
   import SortableTable from '$lib/components/SortableTable.svelte';
   import { EP } from '$lib/endpoints';
+  import { emptyPage, fmtInt, pad2, toErrorMessage } from '$lib/leaders/utils';
   import { QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
   import { normalizeDateGames, normalizeGamesPage } from '$lib/seasons/normalizers';
   import type { SeasonGame } from '$lib/seasons/types';
   import { onMount } from 'svelte';
-
-  type LeagueFilter = 'both' | 'al' | 'nl';
 
   type ScheduleLoadResult = {
     page: PaginatedResponse<SeasonGame>;
@@ -228,32 +228,6 @@
     if (!DATE_PATTERN.test(date)) return;
     const href = withMergedQuery(page.url.pathname, page.url.searchParams, { date }, page.url.hash);
     void goto(resolve(href as `/seasons/${string}`), QUERY_NAV_OPTS);
-  }
-
-  function parseLeague(value: string | null): LeagueFilter {
-    if (!value) return 'both';
-    const normalized = value.toLowerCase();
-    if (normalized === 'al') return 'al';
-    if (normalized === 'nl') return 'nl';
-    return 'both';
-  }
-
-  function emptyPage<T>(): PaginatedResponse<T> {
-    return { data: [], page: 1, per_page: 1, total: 0 };
-  }
-
-  function toErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error && error.message.trim().length > 0) return error.message;
-    return fallback;
-  }
-
-  function fmtInt(value: number | undefined): string {
-    if (value == null) return '—';
-    return Math.round(value).toLocaleString();
-  }
-
-  function pad2(value: number): string {
-    return String(value).padStart(2, '0');
   }
 
   function buildMonthCells(monthKey: string, counts: Record<string, number>, selectedDate: string): CalendarCell[] {

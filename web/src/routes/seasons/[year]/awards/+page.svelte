@@ -2,13 +2,13 @@
   import { afterNavigate } from '$app/navigation';
   import { page } from '$app/state';
   import { fetchPaginated, type PaginatedResponse } from '$lib/api';
+  import { parseLeague } from '$lib/common/types';
   import SortableTable from '$lib/components/SortableTable.svelte';
   import { EP } from '$lib/endpoints';
+  import { emptyPage, fmtInt, toErrorMessage } from '$lib/leaders/utils';
   import { normalizeAwardsPage } from '$lib/seasons/normalizers';
   import type { SeasonAwardResult } from '$lib/seasons/types';
   import { onMount } from 'svelte';
-
-  type LeagueFilter = 'both' | 'al' | 'nl';
 
   let routeYear = $derived(Number(page.params.year ?? ''));
   let selectedYear = $derived(Number.isFinite(routeYear) && routeYear > 0 ? routeYear : new Date().getFullYear());
@@ -79,28 +79,6 @@
     } finally {
       if (requestVersion === awardsRequestVersion) awardsLoading = false;
     }
-  }
-
-  function parseLeague(value: string | null): LeagueFilter {
-    if (!value) return 'both';
-    const normalized = value.toLowerCase();
-    if (normalized === 'al') return 'al';
-    if (normalized === 'nl') return 'nl';
-    return 'both';
-  }
-
-  function fmtInt(value: number | undefined): string {
-    if (value == null) return '—';
-    return Math.round(value).toLocaleString();
-  }
-
-  function emptyPage<T>(): PaginatedResponse<T> {
-    return { data: [], page: 1, per_page: 1, total: 0 };
-  }
-
-  function toErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error && error.message.trim().length > 0) return error.message;
-    return fallback;
   }
 </script>
 

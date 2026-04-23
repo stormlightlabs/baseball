@@ -1,6 +1,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { apiFetch } from '$lib/api';
+  import type { LeagueFilter } from '$lib/common/types';
   import SegmentControl from '$lib/components/SegmentControl.svelte';
   import { EP } from '$lib/endpoints';
   import {
@@ -13,7 +14,6 @@
   import { teamPrimaryHexFor } from '$lib/mlb/team-branding';
   import { SvelteURLSearchParams } from 'svelte/reactivity';
 
-  type LeagueFilter = 'both' | 'AL' | 'NL';
   type TeamHref = `/teams/${string}/overview?${string}` | `/teams?${string}`;
 
   let {

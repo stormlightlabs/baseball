@@ -5,6 +5,7 @@
   import { apiFetch } from '$lib/api';
   import SortableTable from '$lib/components/SortableTable.svelte';
   import { EP } from '$lib/endpoints';
+  import { fmtFloat, fmtInt, toErrorMessage } from '$lib/leaders/utils';
   import { normalizeParkFactors } from '$lib/seasons/normalizers';
   import type { SeasonParkFactor } from '$lib/seasons/types';
   import { onMount } from 'svelte';
@@ -87,21 +88,6 @@
     } finally {
       if (requestVersion === parkFactorsRequestVersion) parkFactorsLoading = false;
     }
-  }
-
-  function toErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error && error.message.trim().length > 0) return error.message;
-    return fallback;
-  }
-
-  function fmtFloat(value: number | undefined, digits = 2): string {
-    if (value == null) return '—';
-    return value.toFixed(digits);
-  }
-
-  function fmtInt(value: number | undefined): string {
-    if (value == null) return '—';
-    return Math.round(value).toLocaleString();
   }
 </script>
 

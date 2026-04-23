@@ -3,6 +3,7 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { apiFetch, apiUrl } from '$lib/api';
+  import { parseLeague, type LeagueFilter } from '$lib/common/types';
   import ApiPanel from '$lib/components/ApiPanel.svelte';
   import DatePicker from '$lib/components/DatePicker.svelte';
   import EraBadge from '$lib/components/EraBadge.svelte';
@@ -11,16 +12,13 @@
   import { EP } from '$lib/endpoints';
   import { eraForYear, STATIC_ERAS, type Era } from '$lib/eras';
   import ThreeColLayout from '$lib/layouts/ThreeColLayout.svelte';
+  import { toErrorMessage } from '$lib/leaders/utils';
   import { QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
   import { normalizeSeasons } from '$lib/seasons/normalizers';
-  import type { SeasonSummary } from '$lib/seasons/types';
+  import type { BattingStat, PitchingStat, SeasonSummary } from '$lib/seasons/types';
   import { onMount, type Snippet } from 'svelte';
 
   let { children }: { children: Snippet } = $props();
-
-  type LeagueFilter = 'both' | 'al' | 'nl';
-  type BattingStat = 'hr' | 'avg' | 'rbi' | 'sb' | 'h' | 'r';
-  type PitchingStat = 'era' | 'so' | 'w' | 'sv' | 'ip';
 
   const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
   const CURRENT_YEAR = new Date().getFullYear();
@@ -100,14 +98,6 @@
     }
   }
 
-  function parseLeague(value: string | null): LeagueFilter {
-    if (!value) return 'both';
-    const normalized = value.toLowerCase();
-    if (normalized === 'al') return 'al';
-    if (normalized === 'nl') return 'nl';
-    return 'both';
-  }
-
   function parseBattingStat(value: string | null): BattingStat {
     const normalized = value?.toLowerCase();
     if (normalized === 'hr' || normalized === 'avg' || normalized === 'rbi' || normalized === 'sb') return normalized;
@@ -149,11 +139,6 @@
       return;
     }
     updateQuery({ league });
-  }
-
-  function toErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error && error.message.trim().length > 0) return error.message;
-    return fallback;
   }
 </script>
 
@@ -231,17 +216,17 @@
           Both
         </button>
         <button
-          class="rounded px-2 py-1 font-display text-[0.78rem] transition-colors {leagueFilter === 'al'
+          class="rounded px-2 py-1 font-display text-[0.78rem] transition-colors {leagueFilter === 'AL'
             ? 'bg-crust text-foreground'
             : 'text-muted hover:text-foreground'}"
-          onclick={() => onLeagueSelect('al')}>
+          onclick={() => onLeagueSelect('AL')}>
           AL
         </button>
         <button
-          class="rounded px-2 py-1 font-display text-[0.78rem] transition-colors {leagueFilter === 'nl'
+          class="rounded px-2 py-1 font-display text-[0.78rem] transition-colors {leagueFilter === 'NL'
             ? 'bg-crust text-foreground'
             : 'text-muted hover:text-foreground'}"
-          onclick={() => onLeagueSelect('nl')}>
+          onclick={() => onLeagueSelect('NL')}>
           NL
         </button>
       </div>

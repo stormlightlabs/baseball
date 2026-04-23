@@ -4,6 +4,7 @@
   import { apiFetch, fetchPaginated, type PaginatedResponse } from '$lib/api';
   import SortableTable from '$lib/components/SortableTable.svelte';
   import { EP } from '$lib/endpoints';
+  import { emptyPage, toErrorMessage } from '$lib/leaders/utils';
   import { normalizeGamesPage, normalizePostseasonSeries } from '$lib/seasons/normalizers';
   import type { SeasonGame, SeasonPostseasonSeries } from '$lib/seasons/types';
   import { onMount } from 'svelte';
@@ -77,15 +78,6 @@
     }
 
     postseasonLoading = false;
-  }
-
-  function emptyPage<T>(): PaginatedResponse<T> {
-    return { data: [], page: 1, per_page: 1, total: 0 };
-  }
-
-  function toErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error && error.message.trim().length > 0) return error.message;
-    return fallback;
   }
 </script>
 

@@ -1,10 +1,7 @@
 import type { PaginatedResponse } from '$lib/api';
+import { toErrorMessage } from '$lib/leaders/utils';
 
 type ResourceOptions = { clearError?: boolean; resetOnLoad?: boolean };
-
-function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'Request failed';
-}
 
 export class AsyncValueResource<T> {
   value = $state<T | null>(null);
@@ -35,7 +32,7 @@ export class AsyncValueResource<T> {
       this.value = next;
     } catch (error) {
       if (requestVersion !== this.#requestVersion) return;
-      this.error = toErrorMessage(error);
+      this.error = toErrorMessage(error, 'Request failed');
     } finally {
       if (requestVersion === this.#requestVersion) {
         this.loading = false;
@@ -76,7 +73,7 @@ export class AsyncListResource<T> {
       this.items = nextItems;
     } catch (error) {
       if (requestVersion !== this.#requestVersion) return;
-      this.error = toErrorMessage(error);
+      this.error = toErrorMessage(error, 'Request failed');
     } finally {
       if (requestVersion === this.#requestVersion) {
         this.loading = false;
@@ -121,7 +118,7 @@ export class AsyncPaginatedListResource<T> {
       this.total = next.total;
     } catch (error) {
       if (requestVersion !== this.#requestVersion) return;
-      this.error = toErrorMessage(error);
+      this.error = toErrorMessage(error, 'Request failed');
     } finally {
       if (requestVersion === this.#requestVersion) {
         this.loading = false;

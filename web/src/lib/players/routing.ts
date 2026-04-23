@@ -19,10 +19,10 @@ function mergeQuery(base: URLSearchParams, overrides: QueryOverrides): URLSearch
 export function withMergedQuery(
   baseHref: string,
   base: URLSearchParams,
-  overrides: QueryOverrides = {},
+  overrides?: QueryOverrides,
   hash = ''
 ): string {
-  const qs = mergeQuery(base, overrides).toString();
+  const qs = mergeQuery(base, overrides ?? {}).toString();
   let href = baseHref;
   if (qs) href += `?${qs}`;
   if (hash) href += hash;

@@ -1,7 +1,7 @@
 # Dashboard Implementation Tasks
 
 - Stack: SvelteKit 2 (SPA via `adapter-static`), Tailwind CSS v4, Chart.js 4, TypeScript
-- Deploys as static SPA; backend API namespace is `/api/v1/*`
+- Deploys as static SPA; backend API namespaces are `/api/v1/*` & `/api/internal`
 - OpenAPI spec source: `internal/docs/swagger.yaml`
 
 ## Scaffold and Tooling ✓
@@ -22,26 +22,26 @@
 
 ## Season Hub (`/seasons`) ✓
 
-## Stat Leaders (`/leaders`)
+## Stat Leaders (`/leaders`) ✓
 
 Ref: `docs/designs/leaders.html`
 
-- [ ] Quick leaders mode using season leader endpoints.
-- [ ] Query lab using:
+- [x] Quick leaders mode using season leader endpoints.
+- [x] Query lab using:
   - `GET /api/v1/stats/batting`
   - `GET /api/v1/stats/pitching`
   - `GET /api/v1/stats/fielding`
   - `GET /api/v1/stats/teams/batting`
   - `GET /api/v1/stats/teams/pitching`
   - `GET /api/v1/stats/teams/fielding`
-- [ ] Career mode using:
+- [x] Career mode using:
   - `GET /api/v1/leaders/batting/career`
   - `GET /api/v1/leaders/pitching/career`
-- [ ] Advanced mode using:
+- [x] Advanced mode using:
   - `GET /api/v1/seasons/{season}/leaders/batting/advanced`
   - `GET /api/v1/seasons/{season}/leaders/pitching/advanced`
   - `GET /api/v1/seasons/{season}/leaders/war`
-- [ ] Era-bucket trend charts.
+- [x] Era-bucket trend charts.
 
 ## Compare Mode (`/compare`)
 

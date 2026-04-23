@@ -99,3 +99,7 @@ export type SeasonParkFactor = {
   games_sampled?: number;
   multi_year?: boolean;
 };
+
+export type BattingStat = 'hr' | 'avg' | 'rbi' | 'sb' | 'h' | 'r';
+
+export type PitchingStat = 'era' | 'so' | 'w' | 'sv' | 'ip';

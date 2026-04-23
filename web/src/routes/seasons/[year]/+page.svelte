@@ -2,16 +2,16 @@
   import { afterNavigate } from '$app/navigation';
   import { page } from '$app/state';
   import { apiFetch, fetchPaginated, type PaginatedResponse } from '$lib/api';
+  import { parseLeague } from '$lib/common/types';
   import EraBadge from '$lib/components/EraBadge.svelte';
   import SortableTable from '$lib/components/SortableTable.svelte';
   import StandingsPanel from '$lib/components/StandingsPanel.svelte';
   import { EP } from '$lib/endpoints';
   import { eraForYear } from '$lib/eras';
+  import { emptyPage, fmtInt, fmtSigned, toErrorMessage } from '$lib/leaders/utils';
   import { normalizeSeasons, normalizeSeasonTeamsPage } from '$lib/seasons/normalizers';
   import type { SeasonSummary, SeasonTeam } from '$lib/seasons/types';
   import { onMount } from 'svelte';
-
-  type LeagueFilter = 'both' | 'al' | 'nl';
 
   const CURRENT_YEAR = new Date().getFullYear();
 
@@ -169,23 +169,6 @@
     }
   }
 
-  function parseLeague(value: string | null): LeagueFilter {
-    if (!value) return 'both';
-    const normalized = value.toLowerCase();
-    if (normalized === 'al') return 'al';
-    if (normalized === 'nl') return 'nl';
-    return 'both';
-  }
-
-  function emptyPage<T>(): PaginatedResponse<T> {
-    return { data: [], page: 1, per_page: 1, total: 0 };
-  }
-
-  function toErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error && error.message.trim().length > 0) return error.message;
-    return fallback;
-  }
-
   function winningPct(wins: number | undefined, losses: number | undefined): number | undefined {
     if (wins == null || losses == null) return undefined;
     const decisions = wins + losses;
@@ -193,20 +176,9 @@
     return wins / decisions;
   }
 
-  function fmtInt(value: number | undefined): string {
-    if (value == null) return '—';
-    return Math.round(value).toLocaleString();
-  }
-
   function fmtRate(value: number | undefined): string {
     if (value == null) return '—';
     return value.toFixed(3);
-  }
-
-  function fmtSigned(value: number | undefined): string {
-    if (value == null) return '—';
-    if (value > 0) return `+${Math.round(value)}`;
-    return String(Math.round(value));
   }
 </script>
 

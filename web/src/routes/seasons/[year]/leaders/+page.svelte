@@ -3,16 +3,14 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { apiFetch, type PaginatedResponse } from '$lib/api';
+  import { parseLeague } from '$lib/common/types';
   import SortableTable from '$lib/components/SortableTable.svelte';
   import { EP } from '$lib/endpoints';
+  import { emptyPage, toErrorMessage } from '$lib/leaders/utils';
   import { QUERY_NAV_OPTS, withMergedQuery } from '$lib/players/routing';
   import { normalizeBattingLeadersPage, normalizePitchingLeadersPage } from '$lib/seasons/normalizers';
-  import type { SeasonBattingLeader, SeasonPitchingLeader } from '$lib/seasons/types';
+  import type { BattingStat, PitchingStat, SeasonBattingLeader, SeasonPitchingLeader } from '$lib/seasons/types';
   import { onMount } from 'svelte';
-
-  type LeagueFilter = 'both' | 'al' | 'nl';
-  type BattingStat = 'hr' | 'avg' | 'rbi' | 'sb' | 'h' | 'r';
-  type PitchingStat = 'era' | 'so' | 'w' | 'sv' | 'ip';
 
   const BATTING_STAT_OPTIONS = [
     { value: 'hr', label: 'Home Runs' },
@@ -167,14 +165,6 @@
     pitchingLoading = false;
   }
 
-  function parseLeague(value: string | null): LeagueFilter {
-    if (!value) return 'both';
-    const normalized = value.toLowerCase();
-    if (normalized === 'al') return 'al';
-    if (normalized === 'nl') return 'nl';
-    return 'both';
-  }
-
   function parseBattingStat(value: string | null): BattingStat {
     const normalized = value?.toLowerCase();
     if (normalized === 'hr' || normalized === 'avg' || normalized === 'rbi' || normalized === 'sb') return normalized;
@@ -236,15 +226,6 @@
     const match = options.find((option) => option.value === value);
     if (match) return match.label;
     return value;
-  }
-
-  function emptyPage<T>(): PaginatedResponse<T> {
-    return { data: [], page: 1, per_page: 1, total: 0 };
-  }
-
-  function toErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error && error.message.trim().length > 0) return error.message;
-    return fallback;
   }
 </script>
 
