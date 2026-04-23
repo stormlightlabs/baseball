@@ -35,16 +35,14 @@ The doc file badge (ex. `docs/introduction.md`) should link to the Github source
 
 Featured Queries should link to dashboard pages, not the swagger docs/explorer-redirect
 
-### Live/Home Cards
+### Bugs
 
-These have endpoints as a subtitle. We should turn these into a special component with a footer
-that displays the endpoint with Copy URL & Copy cURL buttons.
+1. Current season snapshot shouldn't show a range of years.
 
-### Players
+### Refactors
 
-Season Log Team column should link to team page, with a tooltip showing the full team name.
-
-Table should be sortable
+1. In the home page/main search, when typing in search, the scope pill should be in the
+active state. Those pills shouldn't link to the pages, but instead should be a visual indicator of the scope of the search results.
 
 ## Backend
 

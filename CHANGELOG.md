@@ -10,6 +10,11 @@ as numerous stability fixes (as of 2026-04-21) are being rolled out.
 
 ### Released
 
+#### 2026-04-22
+
+- Live/current season blocks have cURL and endpoint copy buttons.
+- Include the current season in season domain via the MLB Stats API
+
 #### 2026-04-19
 
 - Migrated docs into kit app with searchable titles, and anchored ToC
@@ -28,6 +33,11 @@ as numerous stability fixes (as of 2026-04-21) are being rolled out.
 ### Unreleased
 
 ## API
+
+### 2026-04-22
+
+- Implement a mechanism to periodically sync the current season's games and stats with
+  a cron process/goroutine.
 
 ### 2026-04-21
 
