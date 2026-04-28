@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PromoBanner from '$lib/components/PromoBanner.svelte';
   import ThreeColLayout from '$lib/layouts/ThreeColLayout.svelte';
 </script>
 
@@ -11,5 +12,8 @@
   {/snippet}
   {#snippet panel()}
     <div class="panel-label">API</div>
+    <div class="mt-3">
+      <PromoBanner variant="vertical" />
+    </div>
   {/snippet}
 </ThreeColLayout>

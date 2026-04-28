@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { ALL_LEADER_TABS, DEFAULT_LEADER_TAB, type LeaderTabId } from '$lib/common/constants';
+  import PromoBanner from '$lib/components/PromoBanner.svelte';
   import TabRow from '$lib/components/TabRow.svelte';
   import { onMount, type Snippet } from 'svelte';
   import { cubicOut } from 'svelte/easing';
@@ -58,4 +59,8 @@
       {@render children()}
     </div>
   {/key}
+</div>
+
+<div class="px-4 pt-3 pb-4 sm:px-6">
+  <PromoBanner variant="horizontal" />
 </div>

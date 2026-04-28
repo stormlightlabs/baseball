@@ -5,6 +5,7 @@
   import EraLegend from '$lib/components/EraLegend.svelte';
   import { EP } from '$lib/endpoints';
   import { STATIC_ERAS } from '$lib/eras';
+  import PromoBanner from '$lib/components/PromoBanner.svelte';
   import SingleColLayout from '$lib/layouts/SingleColLayout.svelte';
   import { meta } from '$lib/meta.svelte.js';
   import { onMount } from 'svelte';
@@ -154,6 +155,10 @@
       </div>
     </div>
   </section>
+
+  <div class="mb-10">
+    <PromoBanner variant="horizontal" />
+  </div>
 
   <section class="mb-10">
     <div class="panel-label">Dataset Status</div>

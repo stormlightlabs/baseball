@@ -175,7 +175,10 @@
   <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
     <div class="min-w-0">
       <div class="mb-0.5 flex items-center gap-2">
-        <h2 class="font-mono text-[0.74rem] tracking-[0.08em] text-muted uppercase">Live scoreboard</h2>
+        <h2 class="inline-flex items-center gap-1 font-mono text-xs tracking-[0.08em] text-muted uppercase">
+          <i class="i-mdi-baseball-diamond"></i>
+          <span>Live Scoreboard</span>
+        </h2>
         {#if liveCount > 0}
           <span
             class="inline-flex items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/10 px-2 py-0.5 font-mono text-[0.62rem] text-rose-400">

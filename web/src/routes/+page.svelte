@@ -6,8 +6,10 @@
   import HomeEndpointCard from '$lib/components/HomeEndpointCard.svelte';
   import LeaderCards from '$lib/components/LeaderCards.svelte';
   import Pill from '$lib/components/Pill.svelte';
+  import PromoBanner from '$lib/components/PromoBanner.svelte';
   import ScoreboardStrip from '$lib/components/ScoreboardStrip.svelte';
   import SearchInput from '$lib/components/SearchInput.svelte';
+  import Wordmark from '$lib/components/Wordmark.svelte';
   import { STATIC_ERAS } from '$lib/eras';
   import {
     ALL_ENDPOINTS,
@@ -109,8 +111,7 @@
 <main class="min-h-full bg-mantle pb-0">
   <section class="mx-auto max-w-3xl px-4 pt-10 pb-7 text-center sm:px-6 sm:pt-12 sm:pb-8 lg:px-8 lg:pt-14">
     <h1 class="mb-3 font-display text-3xl font-bold text-foreground">
-      Big
-      <span class="text-primary">Fly</span>
+      <Wordmark size="lg" />
     </h1>
     <div class="mb-8 flex flex-col gap-1 text-base text-muted">
       <p>Baseball data from 1871 to now.</p>
@@ -131,7 +132,7 @@
     {/if}
   </section>
 
-  <section class="mx-auto max-w-3xl px-4 pb-8 sm:px-6 lg:px-8">
+  <section class="mx-auto max-w-3xl px-4 pb-4 sm:px-6 lg:px-8">
     <div class="mb-2 text-center font-mono text-xxs tracking-wider text-muted uppercase">Jump to era</div>
     <div class="flex flex-wrap justify-center gap-2">
       {#each STATIC_ERAS as era (era.code)}
@@ -141,13 +142,19 @@
   </section>
 
   <ScoreboardStrip />
+
+  <div class="mx-auto max-w-6xl pb-4 sm:px-6 lg:px-8">
+    <PromoBanner variant="horizontal" />
+  </div>
+
   <LeaderCards />
 
   <div class="mx-auto max-w-6xl px-4 pb-6 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-1 gap-px overflow-hidden rounded-lg bg-outline md:grid-cols-2 xl:grid-cols-3">
+    <div
+      class="grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-outline bg-outline md:grid-cols-2 xl:grid-cols-3">
       <div class="bg-crust p-5">
-        <div class="panel-label">Quick links</div>
-        <ul class="space-y-1">
+        <div class="panel-label">Quick Links</div>
+        <ul class="space-y-1 divide-y divide-outline">
           {#each QUICK_LINKS as link (link.label)}
             <li>
               <a
@@ -261,55 +268,57 @@
         {/if}
       </div>
 
-      <div class="col-span-3 flex gap-0.5">
-        <div class="flex flex-1 flex-col bg-crust p-5">
-          <div class="panel-label">Dataset coverage</div>
-          <div class="grid flex-1 grid-cols-2 gap-1">
-            {#each coverageData as item (item.id)}
-              <div class="flex flex-1 flex-col items-center gap-3 rounded border border-outline p-2 hover:bg-surface">
-                <div class="flex w-full items-center justify-baseline gap-2">
-                  {#if item.href}
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="external"
-                      class="inline-flex min-w-0 flex-1 items-center gap-1 truncate font-sans text-sm no-underline hover:underline"
-                      title={item.tooltip ?? item.label}>
-                      <span>
-                        {item.label}
-                      </span>
-                      <i class="i-tabler-external-link"></i>
-                    </a>
-                  {:else}
-                    <span
-                      class="min-w-0 flex-1 truncate font-sans text-sm text-foreground"
-                      title={item.tooltip ?? item.label}>
+      <div class="flex flex-col bg-crust p-5">
+        <div class="panel-label">Dataset coverage</div>
+        <div class="grid max-h-64 flex-1 gap-1 divide-y divide-outline overflow-auto rounded border border-outline p-2">
+          {#each coverageData as item (item.id)}
+            <div class="flex flex-1 flex-col items-center gap-3 p-2 hover:bg-surface">
+              <div class="flex w-full items-center justify-baseline gap-2">
+                {#if item.href}
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="external"
+                    class="inline-flex min-w-0 flex-1 items-center gap-1 truncate font-sans text-sm no-underline hover:underline"
+                    title={item.tooltip ?? item.label}>
+                    <span>
                       {item.label}
                     </span>
-                  {/if}
-                </div>
-                <span class="w-full font-mono text-sm text-muted">{item.range}</span>
+                    <i class="i-tabler-external-link"></i>
+                  </a>
+                {:else}
+                  <span
+                    class="min-w-0 flex-1 truncate font-sans text-sm text-foreground"
+                    title={item.tooltip ?? item.label}>
+                    {item.label}
+                  </span>
+                {/if}
               </div>
-            {/each}
-          </div>
+              <span class="w-full font-mono text-sm text-muted">{item.range}</span>
+            </div>
+          {/each}
         </div>
+      </div>
 
-        <div class="flex-1 bg-crust p-5">
-          <div class="panel-label">Endpoints</div>
-          <ul class="space-y-1.5">
-            {#each ALL_ENDPOINTS as ep (ep)}
-              <li>
-                <a
-                  href={resolve(API_DOCS_ROUTE)}
-                  target="_blank"
-                  rel="noreferrer"
-                  class="block font-mono text-[0.72rem] text-primary no-underline opacity-80 transition-opacity hover:opacity-100">
-                  {ep}
-                </a>
-              </li>
-            {/each}
-          </ul>
-        </div>
+      <div class="bg-crust p-5">
+        <div class="panel-label">Endpoints</div>
+        <ul class="flex max-h-64 flex-col gap-1 overflow-auto rounded border border-outline p-2">
+          {#each ALL_ENDPOINTS as ep (ep)}
+            <li>
+              <a
+                href={resolve(API_DOCS_ROUTE)}
+                target="_blank"
+                rel="noreferrer"
+                class="block font-mono text-[0.72rem] text-primary no-underline opacity-80 transition-opacity hover:opacity-100">
+                {ep}
+              </a>
+            </li>
+          {/each}
+        </ul>
+      </div>
+
+      <div class="bg-crust p-5">
+        <PromoBanner variant="horizontal" />
       </div>
     </div>
   </div>

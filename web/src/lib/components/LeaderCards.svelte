@@ -328,6 +328,18 @@
   }
 </script>
 
+{#snippet iconForCategory(identifier: CategoryID)}
+  <span class="flex h-4 w-4 items-center">
+    {#if ['HR', 'RBI', 'OPS', 'AVG'].includes(identifier)}
+      <i class="i-mdi-baseball-bat"></i>
+    {:else if identifier === 'SB'}
+      <i class="i-tabler-run"></i>
+    {:else}
+      <i class="i-tabler-ball-baseball"></i>
+    {/if}
+  </span>
+{/snippet}
+
 <LiveHomeCard endpoint={activeStatsEndpoint}>
   <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
     <div>
@@ -356,8 +368,11 @@
     {#each LEADER_CATEGORIES as item (item.id)}
       <button
         type="button"
-        class="rounded px-2 py-0.5 font-mono text-[0.63rem] transition-colors {categoryButtonClass(item.id)}"
+        class="inline-flex items-center gap-1 rounded px-2 py-0.5 font-mono text-[0.63rem] transition-colors {categoryButtonClass(
+          item.id
+        )}"
         onclick={() => (activeCategory = item.id)}>
+        {@render iconForCategory(item.id)}
         {item.label}
       </button>
     {/each}

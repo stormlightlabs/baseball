@@ -1,3 +1,7 @@
+export const PATREON_URL = 'https://patreon.com/stormlightlabs';
+
+export const KOFI_URL = 'https://ko-fi.com/desertthunder';
+
 export const MAIN_TEAM_TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'roster', label: 'Roster' },

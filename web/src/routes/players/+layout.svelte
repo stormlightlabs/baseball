@@ -7,6 +7,7 @@
   import { endpointForPlayerTab, parseGameLogType } from '$lib/common/tabs';
   import ApiPanel from '$lib/components/ApiPanel.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
+  import PromoBanner from '$lib/components/PromoBanner.svelte';
   import SearchInput from '$lib/components/SearchInput.svelte';
   import { EP } from '$lib/endpoints';
   import { erasInRange } from '$lib/eras';
@@ -223,5 +224,8 @@
 
   {#snippet panel()}
     <ApiPanel endpoint={`/v1${activeEndpoint}`} url={activeUrl} />
+    <div class="mt-4">
+      <PromoBanner variant="vertical" />
+    </div>
   {/snippet}
 </ThreeColLayout>

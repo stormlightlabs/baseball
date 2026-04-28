@@ -4,6 +4,7 @@
   import favicon from '$lib/assets/favicon.svg';
   import AppFooter from '$lib/components/AppFooter.svelte';
   import DataNavigationMenu from '$lib/components/DataNavigationMenu.svelte';
+  import Wordmark from '$lib/components/Wordmark.svelte';
   import { meta } from '$lib/meta.svelte.js';
   import '@fontsource-variable/google-sans';
   import '@fontsource-variable/google-sans-code';
@@ -40,7 +41,8 @@
     { href: '/data', label: 'Sources', description: 'Dataset provenance, ingestion notes, and source metadata.' }
   ];
 
-  const API_DOCS_ROUTE = '/explorer' as const;
+  const SWAGGER_DOCS_ROUTE = '/explorer' as const;
+
   type AppPath = (typeof MAIN_LINKS)[number]['href'] | (typeof DATA_LINKS)[number]['href'];
 
   const BADGES: Record<AppPath, Uppercase<string>> = {
@@ -83,8 +85,7 @@
     class="sticky top-0 z-50 flex flex-wrap items-center gap-3 border-b border-outline bg-crust px-3 py-2 sm:px-6 lg:px-8">
     <div class="flex min-w-0 items-center gap-2.5">
       <a href={resolve('/')} class="font-display text-[1.1rem] font-bold text-foreground no-underline">
-        Big
-        <span class="text-primary">Fly</span>
+        <Wordmark size="sm" />
       </a>
       <span class="hidden rounded bg-outline px-2 py-0.5 font-mono text-[0.7rem] text-muted sm:inline-flex">
         {badge}
@@ -110,7 +111,7 @@
 
       <div class="flex items-center gap-1 border-l border-outline pl-2">
         <a
-          href={resolve(API_DOCS_ROUTE)}
+          href={resolve(SWAGGER_DOCS_ROUTE)}
           target="_blank"
           rel="noreferrer"
           class="rounded px-2 py-1 text-xs whitespace-nowrap text-muted no-underline transition-colors duration-150 hover:bg-outline hover:text-foreground sm:px-2.5 sm:text-[0.8rem]">

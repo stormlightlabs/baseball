@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PromoBanner from '$lib/components/PromoBanner.svelte';
   import StandingsPanel from '$lib/components/StandingsPanel.svelte';
 
   const CURRENT_SEASON = new Date().getFullYear();
@@ -10,6 +11,10 @@
     <p class="mt-1 font-sans text-[0.72rem] text-muted">
       Division standings for season {CURRENT_SEASON}, sourced from local `current_season` data when available.
     </p>
+  </div>
+
+  <div class="mb-4">
+    <PromoBanner variant="horizontal" />
   </div>
 
   <StandingsPanel season={CURRENT_SEASON} title="Current standings" />

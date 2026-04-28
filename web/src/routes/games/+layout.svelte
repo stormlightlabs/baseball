@@ -7,6 +7,7 @@
   import { endpointForGameTab } from '$lib/common/tabs';
   import ApiPanel from '$lib/components/ApiPanel.svelte';
   import EraBadge from '$lib/components/EraBadge.svelte';
+  import PromoBanner from '$lib/components/PromoBanner.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import DatePicker from '$lib/components/DatePicker.svelte';
   import SearchInput from '$lib/components/SearchInput.svelte';
@@ -503,5 +504,8 @@
 
   {#snippet panel()}
     <ApiPanel endpoint={`/v1${activeEndpoint}`} url={activeUrl} />
+    <div class="mt-4">
+      <PromoBanner variant="vertical" />
+    </div>
   {/snippet}
 </ThreeColLayout>

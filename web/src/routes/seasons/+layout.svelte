@@ -9,6 +9,7 @@
   import EraBadge from '$lib/components/EraBadge.svelte';
   import EraDisclaimer from '$lib/components/EraDisclaimer.svelte';
   import EraRangeChip from '$lib/components/EraRangeChip.svelte';
+  import PromoBanner from '$lib/components/PromoBanner.svelte';
   import { EP } from '$lib/endpoints';
   import { eraForYear, STATIC_ERAS, type Era } from '$lib/eras';
   import ThreeColLayout from '$lib/layouts/ThreeColLayout.svelte';
@@ -293,6 +294,8 @@
   {/snippet}
 
   {#snippet panel()}
+    <PromoBanner variant="vertical" />
+
     <ApiPanel endpoint={dateEndpointPath} url={dateEndpointUrl} />
 
     <div class="mt-4 rounded-lg border border-outline bg-crust p-4">
