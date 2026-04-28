@@ -85,6 +85,35 @@
     .chart-panel { margin:0 16px 8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px; }
     .chart-label { font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border); }
 
+    /* Live games strip */
+    .live-strip { margin:12px 16px 4px; }
+    .live-strip-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:7px; }
+    .live-strip-title { font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;display:flex;align-items:center;gap:6px; }
+    .live-dot { width:5px;height:5px;border-radius:50%;background:#ef4444;animation:pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+    .live-pill { font-family:'Google Sans Code',monospace;font-size:0.58rem;color:#ef4444;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);padding:2px 8px;border-radius:99px;display:flex;align-items:center;gap:4px; }
+    .live-strip-link { font-family:'Google Sans Code',monospace;font-size:0.6rem;color:var(--accent);cursor:pointer; }
+    .live-cards { display:flex;gap:8px;overflow-x:auto;scrollbar-width:none; }
+    .live-cards::-webkit-scrollbar { display:none; }
+    .live-card { flex-shrink:0;width:168px;background:var(--surface);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px 12px;cursor:pointer;text-decoration:none; }
+    .lc-status { font-family:'Google Sans Code',monospace;font-size:0.58rem;color:#ef4444;margin-bottom:7px;display:flex;align-items:center;gap:4px; }
+    .lc-team { display:flex;align-items:center;gap:6px;margin-bottom:3px; }
+    .lc-bar { width:3px;height:18px;border-radius:2px;flex-shrink:0; }
+    .lc-abbr { font-family:'Google Sans',sans-serif;font-size:0.8rem;font-weight:700;color:#f1f5f9;flex:1; }
+    .lc-score { font-family:'Google Sans',sans-serif;font-size:1rem;font-weight:700;color:#f1f5f9; }
+    .lc-wp { font-family:'Google Sans Code',monospace;font-size:0.56rem;color:var(--muted);margin-top:5px; }
+
+    /* Game detail action buttons */
+    .gc-actions { display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border); }
+    .gc-action { flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 6px;cursor:pointer;text-decoration:none; }
+    .gc-action:hover { border-color:var(--accent); }
+    .gc-action-label { font-family:'Google Sans',sans-serif;font-size:0.72rem;font-weight:600;color:#f1f5f9; }
+    .gc-action-sub { font-family:'Google Sans Code',monospace;font-size:0.52rem;color:var(--muted); }
+    .gc-action-icon { font-size:0.9rem; }
+    .play-item { cursor:pointer; }
+    .play-item:hover .play-desc { color:var(--accent); }
+    .play-item-arrow { font-size:0.6rem;color:var(--border);margin-left:auto;flex-shrink:0; }
+
     .tab-bar { height:64px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;flex-shrink:0; }
     .tab-item { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer; }
     .tab-icon { font-size:1.05rem;color:var(--muted); }
@@ -109,6 +138,38 @@
   </div>
 
   <div class="content">
+
+    <!-- Live games strip -->
+    <div class="live-strip">
+      <div class="live-strip-header">
+        <div class="live-strip-title">
+          <div class="live-dot"></div>
+          Live now
+          <div class="live-pill"><div class="live-dot"></div>3 games</div>
+        </div>
+        <a href="live-game.html" class="live-strip-link">Full tracker →</a>
+      </div>
+      <div class="live-cards">
+        <a href="live-game.html" class="live-card">
+          <div class="lc-status"><div class="live-dot"></div>Bot 4th · 1 out</div>
+          <div class="lc-team"><div class="lc-bar" style="background:#005A9C"></div><div class="lc-abbr">LAD</div><div class="lc-score">3</div></div>
+          <div class="lc-team"><div class="lc-bar" style="background:#002D72"></div><div class="lc-abbr">NYM</div><div class="lc-score">2</div></div>
+          <div class="lc-wp">LAD win prob: 61%</div>
+        </a>
+        <a href="live-game.html" class="live-card">
+          <div class="lc-status"><div class="live-dot"></div>Top 7th · 2 outs</div>
+          <div class="lc-team"><div class="lc-bar" style="background:#132448"></div><div class="lc-abbr">NYY</div><div class="lc-score">4</div></div>
+          <div class="lc-team"><div class="lc-bar" style="background:#BD3039"></div><div class="lc-abbr">BOS</div><div class="lc-score">6</div></div>
+          <div class="lc-wp">BOS win prob: 78%</div>
+        </a>
+        <a href="live-game.html" class="live-card">
+          <div class="lc-status"><div class="live-dot"></div>Top 2nd · 0 outs</div>
+          <div class="lc-team"><div class="lc-bar" style="background:#FD5A1E"></div><div class="lc-abbr">SF</div><div class="lc-score">0</div></div>
+          <div class="lc-team"><div class="lc-bar" style="background:#AB0003"></div><div class="lc-abbr">WSH</div><div class="lc-score">1</div></div>
+          <div class="lc-wp">WSH win prob: 54%</div>
+        </a>
+      </div>
+    </div>
 
     <!-- Filter strip -->
     <div class="filter-strip">
@@ -194,17 +255,36 @@
             <div class="play-inn">B3</div>
             <div class="play-desc">Sosa HR (66) — solo, 432 ft — solo HR. Sosa ties McGwire!</div>
             <div class="play-score">1–1</div>
+            <div class="play-item-arrow">›</div>
           </div>
           <div class="play-item">
             <div class="play-inn">B5</div>
             <div class="play-desc">McGwire HR (70) — solo, 399 ft — breaks own record, 70th HR</div>
             <div class="play-score">2–2</div>
+            <div class="play-item-arrow">›</div>
           </div>
           <div class="play-item">
             <div class="play-inn">B7</div>
             <div class="play-desc">McGwire HR (70 final) — 2-run, Cardinals extend lead</div>
             <div class="play-score">3–5</div>
+            <div class="play-item-arrow">›</div>
           </div>
+        </div>
+        <div class="gc-actions">
+          <a href="at-bat.html" class="gc-action">
+            <div class="gc-action-icon">⬡</div>
+            <div>
+              <div class="gc-action-label">At-Bat Sequencer</div>
+              <div class="gc-action-sub">pitch-by-pitch replay</div>
+            </div>
+          </a>
+          <a href="live-game.html" class="gc-action" style="opacity:0.4;pointer-events:none;">
+            <div class="gc-action-icon">◷</div>
+            <div>
+              <div class="gc-action-label">Live Tracker</div>
+              <div class="gc-action-sub">historical game</div>
+            </div>
+          </a>
         </div>
       </div>
     </div>

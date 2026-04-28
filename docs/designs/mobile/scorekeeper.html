@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390px, initial-scale=1.0" />
+  <title>Scorekeeper — Big Fly Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f13; --surface: #13161c; --surface2: #1a1e27;
+      --border: #252934; --text: #e2e8f0; --muted: #6b7280;
+      --accent: #3b82f6; --accent2: #10b981;
+      --out-clr: #ef4444; --hit-clr: #10b981; --walk-clr: #3b82f6;
+      --base-on: #f59e0b; --run-clr: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    h1,h2,h3 { font-family: 'Google Sans', sans-serif; }
+
+    /* ─── Shell ─────────────────────────────────────────────── */
+    .status-bar { height: 44px; background: var(--bg); display: flex; align-items: flex-end; justify-content: space-between; padding: 0 20px 8px; flex-shrink: 0; }
+    .sb-time { font-family: 'Google Sans', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .sb-icons { display: flex; gap: 5px; align-items: center; font-size: 0.7rem; color: var(--text); font-family: 'Google Sans Code', monospace; }
+    .app { display: flex; flex-direction: column; height: 100%; min-height: 844px; }
+    .app-header { padding: 0 16px; height: 52px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .app-title { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
+    .back-btn { color: var(--accent); font-size: 0.85rem; cursor: pointer; }
+    .header-action { font-family: 'Google Sans Code', monospace; font-size: 0.7rem; color: var(--accent); cursor: pointer; }
+    .content { flex: 1; overflow-y: auto; }
+
+    /* ─── Section dividers ───────────────────────────────────── */
+    .section-sep { margin: 20px 16px 8px; display: flex; align-items: center; gap: 8px; }
+    .sep-label { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+    .sep-line { flex: 1; height: 1px; background: var(--border); }
+
+    /* ─── Score header ───────────────────────────────────────── */
+    .score-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 16px 10px; }
+    .game-meta { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--muted); text-align: center; margin-bottom: 10px; letter-spacing: 0.04em; }
+    .score-row { display: flex; align-items: center; }
+    .score-team { flex: 1; }
+    .score-team.away { text-align: left; }
+    .score-team.home { text-align: right; }
+    .score-abbr { font-family: 'Google Sans', sans-serif; font-size: 1.05rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 6px; }
+    .score-abbr.home { justify-content: flex-end; }
+    .score-color-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .score-rhe { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
+    .score-mid { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 16px; gap: 1px; }
+    .score-nums { display: flex; align-items: center; gap: 10px; }
+    .score-num { font-family: 'Google Sans', sans-serif; font-size: 2rem; font-weight: 700; }
+    .score-dash { font-family: 'Google Sans', sans-serif; font-size: 1.2rem; color: var(--muted); font-weight: 400; }
+    .inning-badge { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); padding: 2px 8px; border-radius: 99px; margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+    .live-dot { width: 5px; height: 5px; border-radius: 50%; background: #ef4444; animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+    /* ─── Linescore ──────────────────────────────────────────── */
+    .linescore-wrap { padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+    .linescore-wrap::-webkit-scrollbar { display: none; }
+    .linescore { display: table; width: 100%; border-collapse: separate; border-spacing: 2px 1px; }
+    .ls-row { display: table-row; }
+    .ls-cell { display: table-cell; font-family: 'Google Sans Code', monospace; font-size: 0.62rem; text-align: center; vertical-align: middle; min-width: 20px; padding: 2px 3px; border-radius: 3px; color: var(--muted); }
+    .ls-cell.label { color: var(--muted); font-size: 0.56rem; text-align: left; padding-right: 6px; white-space: nowrap; }
+    .ls-cell.active { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .ls-cell.scored { color: var(--text); }
+    .ls-cell.total { background: var(--surface2); color: #f1f5f9; font-weight: 700; border-left: 1px solid var(--border); }
+    .ls-head { display: table-row; }
+    .ls-head-cell { display: table-cell; font-family: 'Google Sans Code', monospace; font-size: 0.52rem; color: var(--border); text-align: center; padding-bottom: 2px; min-width: 20px; }
+    .ls-head-cell.th-label { text-align: left; }
+    .ls-head-cell.th-total { border-left: 1px solid var(--border); }
+
+    /* ─── Current batter strip ───────────────────────────────── */
+    .batter-strip { margin: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+    .batter-num { font-family: 'Google Sans Code', monospace; font-size: 0.68rem; color: var(--muted); width: 18px; text-align: center; }
+    .batter-info { flex: 1; }
+    .batter-name { font-family: 'Google Sans', sans-serif; font-size: 0.9rem; font-weight: 700; color: #f1f5f9; }
+    .batter-meta { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); margin-top: 1px; }
+    .batter-avg { font-family: 'Google Sans', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--accent2); }
+    .batter-avg-lbl { font-family: 'Google Sans Code', monospace; font-size: 0.52rem; color: var(--muted); }
+    .ab-result-badge { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; padding: 3px 8px; border-radius: 4px; }
+
+    /* ─── Diamond + count ────────────────────────────────────── */
+    .game-state { display: flex; align-items: flex-start; gap: 12px; margin: 0 16px 10px; }
+    .diamond-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; flex: 0 0 auto; }
+    .diamond-field { width: 96px; height: 96px; position: relative; }
+    .d-base { position: absolute; width: 13px; height: 13px; border-radius: 2px; transform: rotate(45deg); border: 1.5px solid var(--border); }
+    .d-base.on { background: var(--base-on); border-color: var(--base-on); }
+    .d-base.home { width: 10px; height: 10px; bottom: 4px; left: 43px; background: #d4d4d8; border-color: #d4d4d8; }
+    .d-base.first  { right: 8px; top: 41px; }
+    .d-base.second { top: 8px; left: 41px; }
+    .d-base.third  { left: 8px; top: 41px; }
+    /* base path lines */
+    .d-line { position: absolute; background: var(--border); }
+    .d-line.bf { width: 1px; height: 42px; left: 47px; bottom: 10px; transform: rotate(-25deg); transform-origin: bottom center; }
+    .d-line.bt { width: 1px; height: 42px; left: 47px; bottom: 10px; transform: rotate(25deg); transform-origin: bottom center; }
+    .d-path { position: absolute; background: var(--base-on); opacity: 0.5; }
+    .d-mound { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--border); top: 43px; left: 43px; }
+
+    .count-panel { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+    .count-row { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
+    .count-row:last-child { margin-bottom: 0; }
+    .count-row-label { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); width: 40px; }
+    .c-dot { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; }
+    .c-dot.ball { background: var(--accent); border-color: var(--accent); }
+    .c-dot.strike { background: var(--out-clr); border-color: var(--out-clr); }
+    .c-dot.out-dot { background: #e2e8f0; border-color: #e2e8f0; }
+    .pitch-count-val { font-family: 'Google Sans Code', monospace; font-size: 0.65rem; color: var(--muted); margin-left: auto; }
+
+    /* ─── Outcome buttons ────────────────────────────────────── */
+    .outcome-section { margin: 0 16px 10px; }
+    .outcome-group-label { font-family: 'Google Sans Code', monospace; font-size: 0.56rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+    .outcome-grid { display: grid; gap: 5px; margin-bottom: 8px; }
+    .og-3 { grid-template-columns: repeat(3, 1fr); }
+    .og-4 { grid-template-columns: repeat(4, 1fr); }
+    .og-5 { grid-template-columns: repeat(5, 1fr); }
+    .og-6 { grid-template-columns: repeat(6, 1fr); }
+    .ob { /* outcome button */
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 4px 7px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--surface);
+      transition: all 0.1s;
+      min-height: 48px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    }
+    .ob:active, .ob.pressed { border-color: var(--accent); background: rgba(59,130,246,0.08); }
+    .ob-code { font-family: 'Google Sans', sans-serif; font-size: 0.88rem; font-weight: 700; color: #f1f5f9; line-height: 1; }
+    .ob-sub  { font-family: 'Google Sans Code', monospace; font-size: 0.48rem; color: var(--muted); }
+    .ob.hit  { border-color: rgba(16,185,129,0.3); }
+    .ob.hit .ob-code  { color: var(--hit-clr); }
+    .ob.walk { border-color: rgba(59,130,246,0.3); }
+    .ob.walk .ob-code { color: var(--walk-clr); }
+    .ob.out  { border-color: rgba(239,68,68,0.2); }
+    .ob.out .ob-code  { color: var(--out-clr); }
+    .ob.neut .ob-code { color: var(--muted); }
+
+    /* positional out selector */
+    .pos-selector { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+    .pos-header { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--muted); margin-bottom: 8px; }
+    .pos-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; }
+    .pos-btn { border: 1px solid var(--border); border-radius: 5px; padding: 5px 2px; text-align: center; cursor: pointer; background: var(--surface2); }
+    .pos-btn.active { border-color: var(--out-clr); background: rgba(239,68,68,0.08); }
+    .pos-num { font-family: 'Google Sans Code', monospace; font-size: 0.75rem; font-weight: 700; color: #f1f5f9; }
+    .pos-abbr { font-family: 'Google Sans Code', monospace; font-size: 0.42rem; color: var(--muted); }
+    .pos-confirm { display: flex; gap: 6px; margin-top: 6px; }
+    .pos-confirm-out { flex: 1; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 7px; text-align: center; font-family: 'Google Sans', sans-serif; font-size: 0.75rem; font-weight: 700; color: #ef4444; cursor: pointer; }
+    .pos-confirm-dp  { flex: 1; background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); border-radius: 6px; padding: 7px; text-align: center; font-family: 'Google Sans', sans-serif; font-size: 0.75rem; font-weight: 700; color: #ef4444; cursor: pointer; opacity: 0.7; }
+
+    /* pitch log inline */
+    .pitch-log { margin: 0 16px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .pl-header { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .pl-title { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    .pl-clear { font-family: 'Google Sans Code', monospace; font-size: 0.56rem; color: var(--muted); cursor: pointer; }
+    .pl-track { display: flex; align-items: center; gap: 4px; padding: 8px 12px; flex-wrap: wrap; }
+    .pl-dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Google Sans Code', monospace; font-size: 0.55rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .pl-dot.B { background: var(--accent); }
+    .pl-dot.C { background: var(--out-clr); }
+    .pl-dot.S { background: #a78bfa; }
+    .pl-dot.F { background: #f59e0b; }
+    .pl-dot.X { background: var(--hit-clr); }
+    .pl-count { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--muted); margin-left: 4px; }
+
+    /* ─── Quick scoring note ─────────────────────────────────── */
+    .notation-help { margin: 0 16px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    .nh-label { font-family: 'Google Sans Code', monospace; font-size: 0.56rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .nh-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px 8px; }
+    .nh-item { display: flex; gap: 4px; align-items: baseline; }
+    .nh-code { font-family: 'Google Sans Code', monospace; font-size: 0.65rem; color: #f1f5f9; font-weight: 700; min-width: 24px; }
+    .nh-desc { font-family: 'Google Sans Code', monospace; font-size: 0.55rem; color: var(--muted); }
+
+    /* ─── Recent plays log ───────────────────────────────────── */
+    .plays-log { margin: 0 16px 10px; }
+    .pl-row { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; }
+    .plr-inn { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--muted); width: 32px; }
+    .plr-batter { font-family: 'Google Sans', sans-serif; font-size: 0.78rem; color: #f1f5f9; flex: 1; }
+    .plr-result { font-family: 'Google Sans Code', monospace; font-size: 0.68rem; font-weight: 700; }
+    .plr-result.hit { color: var(--hit-clr); }
+    .plr-result.out { color: var(--out-clr); }
+    .plr-result.walk { color: var(--walk-clr); }
+    .plr-notation { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); }
+
+    /* ─── Lineup card / scorecard grid ──────────────────────── */
+    .scorecard { margin: 0 16px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .sc-header { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .sc-title { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    .sc-team-toggle { display: flex; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+    .sc-toggle-btn { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; padding: 3px 10px; cursor: pointer; color: var(--muted); }
+    .sc-toggle-btn.active { background: var(--accent); color: #fff; }
+
+    .scorecard-scroll { overflow-x: auto; scrollbar-width: none; }
+    .scorecard-scroll::-webkit-scrollbar { display: none; }
+    .scorecard-table { border-collapse: collapse; width: 100%; min-width: 480px; }
+    .scorecard-table th { font-family: 'Google Sans Code', monospace; font-size: 0.5rem; color: var(--muted); text-align: center; padding: 4px 2px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+    .scorecard-table th.player-col { text-align: left; padding-left: 10px; min-width: 100px; }
+    .scorecard-table th.totals-col { border-left: 2px solid var(--border); background: var(--surface2); }
+    .scorecard-table td { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; vertical-align: middle; padding: 0; }
+    .scorecard-table td.player-cell { text-align: left; padding: 4px 8px; }
+    .scorecard-table tr:last-child td { border-bottom: none; }
+    .player-name { font-family: 'Google Sans', sans-serif; font-size: 0.7rem; color: #f1f5f9; }
+    .player-pos  { font-family: 'Google Sans Code', monospace; font-size: 0.52rem; color: var(--muted); }
+    .player-num  { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--muted); margin-right: 4px; }
+    .scorecard-table td.totals-cell { border-left: 2px solid var(--border); background: var(--surface2); }
+    .total-val { font-family: 'Google Sans Code', monospace; font-size: 0.68rem; font-weight: 700; color: #f1f5f9; }
+
+    /* AB cell (mini scorecard box with diamond) */
+    .ab-cell { width: 42px; height: 48px; position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .ab-cell:hover { background: rgba(59,130,246,0.05); }
+    .ab-cell.current-ab { background: rgba(59,130,246,0.08); }
+    .ab-diamond { position: absolute; top: 6px; left: 9px; width: 22px; height: 22px; }
+    .ab-diamond svg { width: 100%; height: 100%; }
+    .ab-code { position: absolute; bottom: 5px; left: 0; right: 0; text-align: center; font-family: 'Google Sans Code', monospace; font-size: 0.5rem; color: var(--muted); }
+    .ab-code.hit  { color: var(--hit-clr); font-weight: 700; }
+    .ab-code.out  { color: var(--out-clr); }
+    .ab-code.walk { color: var(--walk-clr); }
+    .ab-run-dot { position: absolute; top: 3px; right: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--run-clr); }
+
+    /* ─── Export sheet ───────────────────────────────────────── */
+    .export-sheet { margin: 0 16px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .export-header { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    .export-title { font-family: 'Google Sans', sans-serif; font-size: 0.9rem; font-weight: 700; color: #f1f5f9; }
+    .export-sub { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+    .export-opts { display: flex; flex-direction: column; gap: 0; }
+    .export-opt { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+    .export-opt:last-child { border-bottom: none; }
+    .export-opt:hover { background: var(--surface2); }
+    .export-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .export-icon.pdf { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); }
+    .export-icon.json { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); }
+    .export-icon.md { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); }
+    .export-info { flex: 1; }
+    .export-name { font-family: 'Google Sans', sans-serif; font-size: 0.82rem; font-weight: 600; color: #f1f5f9; }
+    .export-desc { font-size: 0.62rem; color: var(--muted); margin-top: 1px; }
+    .export-arrow { color: var(--muted); font-size: 0.8rem; }
+
+    /* ─── Hub (saved games list) ─────────────────────────────── */
+    .hub-section { padding: 0 16px; }
+    .hub-new-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); border-radius: 10px; padding: 13px; cursor: pointer; margin-bottom: 12px; }
+    .hub-new-btn span { font-family: 'Google Sans', sans-serif; font-size: 0.88rem; font-weight: 700; color: #fff; }
+    .hub-filter { display: flex; gap: 5px; margin-bottom: 10px; }
+    .hub-pill { font-family: 'Google Sans Code', monospace; font-size: 0.62rem; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; }
+    .hub-pill.active { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.08); }
+    .saved-game { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+    .saved-game:hover { border-color: var(--accent); }
+    .sg-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .sg-teams { font-family: 'Google Sans', sans-serif; font-size: 0.88rem; font-weight: 700; color: #f1f5f9; }
+    .sg-badge { font-family: 'Google Sans Code', monospace; font-size: 0.56rem; padding: 2px 7px; border-radius: 4px; }
+    .sg-badge.in-progress { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+    .sg-badge.final { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+    .sg-bottom { display: flex; align-items: center; justify-content: space-between; }
+    .sg-meta { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); }
+    .sg-score { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; color: var(--accent2); }
+    .sg-actions { display: flex; gap: 6px; }
+    .sg-action-btn { font-family: 'Google Sans Code', monospace; font-size: 0.58rem; color: var(--muted); padding: 3px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+
+    /* ─── Game setup form ────────────────────────────────────── */
+    .setup-form { padding: 0 16px; }
+    .field-group { margin-bottom: 12px; }
+    .field-label { font-family: 'Google Sans Code', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+    .field-row { display: flex; gap: 8px; }
+    .field-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.82rem; outline: none; }
+    .field-input:focus { border-color: var(--accent); }
+    .field-input::placeholder { color: var(--muted); }
+    .field-select { flex: 0 0 80px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 8px; color: var(--muted); font-family: 'Google Sans Code', monospace; font-size: 0.75rem; text-align: center; }
+    .lineup-table { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+    .lineup-row { display: flex; align-items: center; gap: 0; border-bottom: 1px solid var(--border); }
+    .lineup-row:last-child { border-bottom: none; }
+    .lineup-order { width: 32px; text-align: center; font-family: 'Google Sans Code', monospace; font-size: 0.65rem; color: var(--muted); flex-shrink: 0; }
+    .lineup-name-input { flex: 1; background: transparent; border: none; border-right: 1px solid var(--border); padding: 9px 10px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.78rem; outline: none; }
+    .lineup-name-input::placeholder { color: var(--muted); }
+    .lineup-pos-input { width: 42px; background: transparent; border: none; padding: 9px 6px; color: var(--muted); font-family: 'Google Sans Code', monospace; font-size: 0.68rem; text-align: center; outline: none; }
+    .start-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); border-radius: 10px; padding: 14px; cursor: pointer; margin-bottom: 16px; }
+    .start-btn span { font-family: 'Google Sans', sans-serif; font-size: 0.88rem; font-weight: 700; color: #fff; }
+
+    /* ─── Bottom tab bar ─────────────────────────────────────── */
+    .tab-bar { height: 64px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: stretch; flex-shrink: 0; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+    .tab-icon { font-size: 1.05rem; color: var(--muted); }
+    .tab-label { font-size: 0.6rem; color: var(--muted); font-family: 'Google Sans', sans-serif; }
+    .tab-item.active .tab-icon, .tab-item.active .tab-label { color: var(--accent); }
+
+    /* ─── Section annotation ─────────────────────────────────── */
+    .annotation { background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; margin: 0 16px 12px; padding: 8px 12px; }
+    .ann-label { font-family: 'Google Sans Code', monospace; font-size: 0.56rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; }
+    .ann-text { font-size: 0.68rem; color: var(--muted); line-height: 1.5; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="status-bar">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons">
+      <span>▲▲▲</span>
+      <span>WiFi</span>
+      <span>■■■</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SCREEN A — Scorekeeper Hub (More → Scorekeeper)
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="app-header">
+    <div class="app-title">📋 Scorekeeper</div>
+    <div class="header-action">Import ↑</div>
+  </div>
+
+  <div class="content" style="overflow-y:visible;">
+
+    <div class="annotation" style="margin-top:12px;">
+      <div class="ann-label">Screen A — Hub</div>
+      <div class="ann-text">Entry point from the More tab. Lists saved scorecards. Tap a game to resume or review. New Game starts the setup flow.</div>
+    </div>
+
+    <div class="hub-section" style="margin-top:4px;">
+      <div class="hub-new-btn">
+        <span>+ New Game</span>
+      </div>
+
+      <div class="hub-filter">
+        <span class="hub-pill active">All</span>
+        <span class="hub-pill">In Progress</span>
+        <span class="hub-pill">Final</span>
+      </div>
+
+      <!-- In-progress game -->
+      <div class="saved-game">
+        <div class="sg-top">
+          <div class="sg-teams">Cubs @ Cardinals</div>
+          <div class="sg-badge in-progress">● Bot 5th</div>
+        </div>
+        <div class="sg-bottom">
+          <div class="sg-meta">Apr 27, 2026 · Busch Stadium · 63 pitches</div>
+          <div class="sg-score">3–2</div>
+        </div>
+        <div style="margin-top:6px; display:flex; gap:5px;">
+          <div class="sg-action-btn">Resume</div>
+          <div class="sg-action-btn">Box Score</div>
+          <div class="sg-action-btn">Export</div>
+        </div>
+      </div>
+
+      <!-- Final game -->
+      <div class="saved-game">
+        <div class="sg-top">
+          <div class="sg-teams">Dodgers @ Mets</div>
+          <div class="sg-badge final">Final</div>
+        </div>
+        <div class="sg-bottom">
+          <div class="sg-meta">Apr 25, 2026 · Citi Field · 9 inn · 147 pitches</div>
+          <div class="sg-score">4–3</div>
+        </div>
+        <div style="margin-top:6px; display:flex; gap:5px;">
+          <div class="sg-action-btn">Box Score</div>
+          <div class="sg-action-btn">Export</div>
+          <div class="sg-action-btn">Delete</div>
+        </div>
+      </div>
+
+      <div class="saved-game">
+        <div class="sg-top">
+          <div class="sg-teams">Yankees @ Red Sox</div>
+          <div class="sg-badge final">Final</div>
+        </div>
+        <div class="sg-bottom">
+          <div class="sg-meta">Apr 19, 2026 · Fenway Park · 9 inn · 162 pitches</div>
+          <div class="sg-score">6–4</div>
+        </div>
+        <div style="margin-top:6px; display:flex; gap:5px;">
+          <div class="sg-action-btn">Box Score</div>
+          <div class="sg-action-btn">Export</div>
+          <div class="sg-action-btn">Delete</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SCREEN B — Game Setup
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="section-sep" style="margin-top:24px;">
+      <div class="sep-label">Screen B — Game Setup</div>
+      <div class="sep-line"></div>
+    </div>
+
+    <div class="annotation">
+      <div class="ann-label">Game Setup</div>
+      <div class="ann-text">Enter team names and optional venue. Lineup is optional — players can be named later. Tap a batter order slot to fill name + position.</div>
+    </div>
+
+    <div class="setup-form">
+      <div class="field-group">
+        <div class="field-label">Away Team</div>
+        <div class="field-row">
+          <input class="field-input" placeholder="e.g. Cubs" value="Cubs" readonly />
+          <div class="field-select">CHC</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Home Team</div>
+        <div class="field-row">
+          <input class="field-input" placeholder="e.g. Cardinals" value="Cardinals" readonly />
+          <div class="field-select">STL</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Date &amp; Venue</div>
+        <div class="field-row">
+          <input class="field-input" placeholder="Venue (optional)" value="Busch Stadium" style="flex:2" readonly />
+          <input class="field-input" placeholder="Date" value="Apr 27" readonly />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="display:flex;justify-content:space-between;">
+          <span>Away Lineup (CHC) — optional</span>
+          <span style="color:var(--accent);cursor:pointer;font-size:0.56rem;">Import from API →</span>
+        </div>
+        <div class="lineup-table">
+          <div class="lineup-row">
+            <div class="lineup-order">1</div>
+            <input class="lineup-name-input" placeholder="Batter name" value="Madrigal, Nick" readonly />
+            <input class="lineup-pos-input" placeholder="Pos" value="2B" readonly />
+          </div>
+          <div class="lineup-row">
+            <div class="lineup-order">2</div>
+            <input class="lineup-name-input" placeholder="Batter name" value="Swanson, Dansby" readonly />
+            <input class="lineup-pos-input" placeholder="Pos" value="SS" readonly />
+          </div>
+          <div class="lineup-row">
+            <div class="lineup-order">3</div>
+            <input class="lineup-name-input" placeholder="Batter name" value="Bellinger, Cody" readonly />
+            <input class="lineup-pos-input" placeholder="Pos" value="CF" readonly />
+          </div>
+          <div class="lineup-row" style="opacity:0.5;">
+            <div class="lineup-order">4</div>
+            <input class="lineup-name-input" placeholder="Batter name" readonly />
+            <input class="lineup-pos-input" placeholder="Pos" readonly />
+          </div>
+          <div class="lineup-row" style="opacity:0.3;">
+            <div class="lineup-order">5–9</div>
+            <input class="lineup-name-input" placeholder="Continue lineup…" style="color:var(--muted)" readonly />
+            <input class="lineup-pos-input" placeholder="" readonly />
+          </div>
+        </div>
+      </div>
+
+      <div class="start-btn">
+        <span>▶ Start Scoring</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SCREEN C — Active Scoring (main game view)
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="section-sep" style="margin-top:4px;">
+      <div class="sep-label">Screen C — Active Scoring</div>
+      <div class="sep-line"></div>
+    </div>
+
+    <div class="annotation">
+      <div class="ann-label">Active Scoring — Bot 5th Inning</div>
+      <div class="ann-text">Score header, mini linescore, current batter info, base state, count, pitch-by-pitch log, and outcome buttons. Tap outcome to record and advance to next batter. Pitch log is optional — toggle on for granular tracking.</div>
+    </div>
+
+    <!-- Score header -->
+    <div class="score-header">
+      <div class="game-meta">CHC @ STL · Apr 27, 2026 · Busch Stadium</div>
+      <div class="score-row">
+        <div class="score-team away">
+          <div class="score-abbr"><span class="score-color-dot" style="background:#0E3386"></span>CHC</div>
+          <div class="score-rhe">R 2 · H 4 · E 0</div>
+        </div>
+        <div class="score-mid">
+          <div class="score-nums">
+            <span class="score-num" style="color:var(--muted)">2</span>
+            <span class="score-dash">–</span>
+            <span class="score-num" style="color:#f1f5f9">3</span>
+          </div>
+          <div class="inning-badge"><div class="live-dot"></div>Bot 5th</div>
+        </div>
+        <div class="score-team home">
+          <div class="score-abbr home"><span class="score-color-dot" style="background:#C41E3A"></span>STL</div>
+          <div class="score-rhe" style="text-align:right">R 3 · H 5 · E 1</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Linescore -->
+    <div class="linescore-wrap">
+      <table class="scorecard-table" style="min-width:unset;border-collapse:separate;border-spacing:2px 1px;width:100%;">
+        <thead>
+          <tr>
+            <th class="player-col" style="font-size:0.48rem;padding:2px 4px;">Team</th>
+            <th style="font-size:0.5rem;padding:2px 3px;">1</th>
+            <th style="font-size:0.5rem;padding:2px 3px;">2</th>
+            <th style="font-size:0.5rem;padding:2px 3px;">3</th>
+            <th style="font-size:0.5rem;padding:2px 3px;">4</th>
+            <th style="font-size:0.5rem;padding:2px 3px;color:var(--accent)">5</th>
+            <th style="font-size:0.5rem;padding:2px 3px;">6</th>
+            <th style="font-size:0.5rem;padding:2px 3px;">7</th>
+            <th style="font-size:0.5rem;padding:2px 3px;">8</th>
+            <th style="font-size:0.5rem;padding:2px 3px;">9</th>
+            <th class="totals-col" style="font-size:0.5rem;padding:2px 4px;">R</th>
+            <th style="font-size:0.5rem;padding:2px 3px;">H</th>
+            <th style="font-size:0.5rem;padding:2px 3px;">E</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="player-cell" style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:#f1f5f9;padding:3px 8px;">CHC</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;">0</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;">1</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;">0</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;">1</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--accent);background:rgba(59,130,246,0.08);padding:3px 2px;">·</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--border);padding:3px 2px;">–</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--border);padding:3px 2px;">–</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--border);padding:3px 2px;">–</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--border);padding:3px 2px;">–</td>
+            <td class="totals-cell" style="font-family:'Google Sans Code',monospace;font-size:0.65rem;font-weight:700;color:var(--muted);padding:3px 4px;">2</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;background:var(--surface2);">4</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;background:var(--surface2);">0</td>
+          </tr>
+          <tr>
+            <td class="player-cell" style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:#f1f5f9;padding:3px 8px;">STL</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;">2</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;">0</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;">0</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;">1</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--accent);background:rgba(59,130,246,0.08);padding:3px 2px;">·</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--border);padding:3px 2px;">–</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--border);padding:3px 2px;">–</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--border);padding:3px 2px;">–</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--border);padding:3px 2px;">–</td>
+            <td class="totals-cell" style="font-family:'Google Sans Code',monospace;font-size:0.65rem;font-weight:700;color:#f1f5f9;padding:3px 4px;">3</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;background:var(--surface2);">5</td>
+            <td style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);padding:3px 2px;background:var(--surface2);">1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Current batter -->
+    <div class="batter-strip">
+      <div class="batter-num">#7</div>
+      <div class="batter-info">
+        <div class="batter-name">Contreras, Willson</div>
+        <div class="batter-meta">C · STL · Bats R · AB 3 · 0-for-2 this game</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="batter-avg">.278</div>
+        <div class="batter-avg-lbl">AVG</div>
+      </div>
+    </div>
+
+    <!-- Game state: diamond + count -->
+    <div class="game-state">
+      <div class="diamond-panel">
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.52rem;color:var(--muted);text-align:center;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;">Bases</div>
+        <div class="diamond-field">
+          <!-- Foul lines (visual only) -->
+          <div class="d-line bf" style="background:rgba(255,255,255,0.06)"></div>
+          <div class="d-line bt" style="background:rgba(255,255,255,0.06)"></div>
+          <!-- Base diamond outline -->
+          <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 96 96" fill="none">
+            <polygon points="48,8 82,48 48,82 14,48" stroke="#252934" stroke-width="1.5" fill="none"/>
+            <!-- 1B→2B path (on) -->
+            <line x1="82" y1="48" x2="48" y2="8" stroke="#f59e0b" stroke-width="2.5" opacity="0.7"/>
+          </svg>
+          <div class="d-mound"></div>
+          <div class="d-base home"></div>
+          <div class="d-base first on"></div>  <!-- runner on 1st -->
+          <div class="d-base second on"></div> <!-- runner on 2nd -->
+          <div class="d-base third"></div>
+        </div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.5rem;color:var(--base-on);text-align:center;margin-top:4px;">1st &amp; 2nd</div>
+      </div>
+
+      <div class="count-panel">
+        <div class="count-row">
+          <div class="count-row-label">Balls</div>
+          <div class="c-dot ball"></div>
+          <div class="c-dot ball"></div>
+          <div class="c-dot"></div>
+          <div class="c-dot"></div>
+          <div class="pitch-count-val">2</div>
+        </div>
+        <div class="count-row">
+          <div class="count-row-label">Strikes</div>
+          <div class="c-dot strike"></div>
+          <div class="c-dot"></div>
+          <div class="c-dot"></div>
+          <div class="pitch-count-val">1</div>
+        </div>
+        <div class="count-row">
+          <div class="count-row-label">Outs</div>
+          <div class="c-dot out-dot"></div>
+          <div class="c-dot"></div>
+          <div class="c-dot"></div>
+          <div class="pitch-count-val">1</div>
+        </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
+          <span style="font-family:'Google Sans Code',monospace;font-size:0.56rem;color:var(--muted)">Count</span>
+          <span style="font-family:'Google Sans',sans-serif;font-size:0.8rem;font-weight:700;color:#f1f5f9;">2–1</span>
+        </div>
+        <div style="margin-top:4px;display:flex;justify-content:space-between;">
+          <span style="font-family:'Google Sans Code',monospace;font-size:0.56rem;color:var(--muted)">Pitch #</span>
+          <span style="font-family:'Google Sans Code',monospace;font-size:0.65rem;color:var(--muted);">63</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pitch-by-pitch log (optional toggle) -->
+    <div class="pitch-log">
+      <div class="pl-header">
+        <div class="pl-title">Pitch log — current AB</div>
+        <div class="pl-clear">Clear</div>
+      </div>
+      <div class="pl-track">
+        <div class="pl-dot B">B</div>
+        <div class="pl-dot C">C</div>
+        <div class="pl-dot B">B</div>
+        <div class="pl-count">2–1 count · 3 pitches</div>
+      </div>
+    </div>
+
+    <!-- Outcome buttons -->
+    <div class="outcome-section">
+      <div class="outcome-group-label">Plate appearance result</div>
+
+      <!-- Hits -->
+      <div class="outcome-grid og-4" style="margin-bottom:5px;">
+        <div class="ob hit"><div class="ob-code">1B</div><div class="ob-sub">single</div></div>
+        <div class="ob hit"><div class="ob-code">2B</div><div class="ob-sub">double</div></div>
+        <div class="ob hit"><div class="ob-code">3B</div><div class="ob-sub">triple</div></div>
+        <div class="ob hit"><div class="ob-code">HR</div><div class="ob-sub">home run</div></div>
+      </div>
+
+      <!-- Walks / reach -->
+      <div class="outcome-grid og-4" style="margin-bottom:5px;">
+        <div class="ob walk"><div class="ob-code">BB</div><div class="ob-sub">walk</div></div>
+        <div class="ob walk"><div class="ob-code">HBP</div><div class="ob-sub">hit by pitch</div></div>
+        <div class="ob neut"><div class="ob-code">FC</div><div class="ob-sub">fielder's choice</div></div>
+        <div class="ob neut"><div class="ob-code">E</div><div class="ob-sub">error</div></div>
+      </div>
+
+      <!-- Strikeouts -->
+      <div class="outcome-grid og-3" style="margin-bottom:5px;">
+        <div class="ob out"><div class="ob-code">K</div><div class="ob-sub">swinging K</div></div>
+        <div class="ob out"><div class="ob-code" style="transform:scaleX(-1);display:inline-block;">K</div><div class="ob-sub">called K</div></div>
+        <div class="ob neut"><div class="ob-code">SAC</div><div class="ob-sub">sac bunt</div></div>
+      </div>
+
+      <!-- SF + Other -->
+      <div class="outcome-grid og-3" style="margin-bottom:8px;">
+        <div class="ob neut"><div class="ob-code">SF</div><div class="ob-sub">sac fly</div></div>
+        <div class="ob neut"><div class="ob-code">CI</div><div class="ob-sub">catcher int.</div></div>
+        <div class="ob neut"><div class="ob-code">DP</div><div class="ob-sub">double play</div></div>
+      </div>
+
+      <!-- Ground/fly out by position -->
+      <div class="outcome-group-label">Ground/fly out — pick fielder(s)</div>
+      <div class="pos-selector">
+        <div class="pos-header">Select putout sequence (tap position numbers):</div>
+        <div class="pos-grid">
+          <div class="pos-btn"><div class="pos-num">1</div><div class="pos-abbr">P</div></div>
+          <div class="pos-btn"><div class="pos-num">2</div><div class="pos-abbr">C</div></div>
+          <div class="pos-btn"><div class="pos-num">3</div><div class="pos-abbr">1B</div></div>
+          <div class="pos-btn active"><div class="pos-num">4</div><div class="pos-abbr">2B</div></div>
+          <div class="pos-btn"><div class="pos-num">5</div><div class="pos-abbr">3B</div></div>
+          <div class="pos-btn active"><div class="pos-num">6</div><div class="pos-abbr">SS</div></div>
+          <div class="pos-btn"><div class="pos-num">7</div><div class="pos-abbr">LF</div></div>
+          <div class="pos-btn"><div class="pos-num">8</div><div class="pos-abbr">CF</div></div>
+          <div class="pos-btn active"><div class="pos-num">3</div><div class="pos-abbr">1B</div></div>
+        </div>
+        <div style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--accent);margin:6px 0 4px;text-align:center;">Sequence: 4–6–3</div>
+        <div class="pos-confirm">
+          <div class="pos-confirm-out">Record Out (4–6–3)</div>
+          <div class="pos-confirm-dp">+ DP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notation reference -->
+    <div class="notation-help">
+      <div class="nh-label">Notation Key</div>
+      <div class="nh-grid">
+        <div class="nh-item"><span class="nh-code">1–9</span><span class="nh-desc">positions</span></div>
+        <div class="nh-item"><span class="nh-code">K</span><span class="nh-desc">swinging K</span></div>
+        <div class="nh-item"><span class="nh-code" style="transform:scaleX(-1);display:inline-block;">K</span><span class="nh-desc">called K</span></div>
+        <div class="nh-item"><span class="nh-code">BB</span><span class="nh-desc">walk</span></div>
+        <div class="nh-item"><span class="nh-code">E#</span><span class="nh-desc">error by pos</span></div>
+        <div class="nh-item"><span class="nh-code">FC</span><span class="nh-desc">fielder's ch.</span></div>
+        <div class="nh-item"><span class="nh-code">B</span><span class="nh-desc">ball (pitch)</span></div>
+        <div class="nh-item"><span class="nh-code">C</span><span class="nh-desc">called strike</span></div>
+        <div class="nh-item"><span class="nh-code">S</span><span class="nh-desc">swinging str.</span></div>
+        <div class="nh-item"><span class="nh-code">F</span><span class="nh-desc">foul ball</span></div>
+        <div class="nh-item"><span class="nh-code">X</span><span class="nh-desc">ball in play</span></div>
+        <div class="nh-item"><span class="nh-code">SAC</span><span class="nh-desc">sac bunt</span></div>
+      </div>
+    </div>
+
+    <!-- Recent plays -->
+    <div class="section-sep">
+      <div class="sep-label">Recent plays — this game</div>
+      <div class="sep-line"></div>
+    </div>
+    <div class="plays-log">
+      <div class="pl-row">
+        <div class="plr-inn">B5th</div>
+        <div class="plr-batter">Goldschmidt, Paul</div>
+        <div class="plr-result walk">BB</div>
+        <div class="plr-notation">walk (4 pitches)</div>
+      </div>
+      <div class="pl-row">
+        <div class="plr-inn">B5th</div>
+        <div class="plr-batter">Arenado, Nolan</div>
+        <div class="plr-result hit">1B</div>
+        <div class="plr-notation">single to CF · advances Goldschmidt 3rd→stay</div>
+      </div>
+      <div class="pl-row">
+        <div class="plr-inn">T5th</div>
+        <div class="plr-batter">Bellinger, Cody</div>
+        <div class="plr-result out">K</div>
+        <div class="plr-notation">swinging K · 7 pitches</div>
+      </div>
+      <div class="pl-row">
+        <div class="plr-inn">T5th</div>
+        <div class="plr-batter">Happ, Ian</div>
+        <div class="plr-result out">6–3</div>
+        <div class="plr-notation">groundout SS to 1B</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SCREEN D — Scorecard Grid (full lineup × inning view)
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="section-sep" style="margin-top:8px;">
+      <div class="sep-label">Screen D — Scorecard Grid</div>
+      <div class="sep-line"></div>
+    </div>
+
+    <div class="annotation">
+      <div class="ann-label">Scorecard Grid</div>
+      <div class="ann-text">Traditional scorecard layout — rows are batters, columns are innings. Each cell holds a mini diamond showing base advancement, colored by result. Tap a cell to review or edit the play. Scroll horizontally for more innings.</div>
+    </div>
+
+    <div class="scorecard">
+      <div class="sc-header">
+        <div class="sc-title">Scorecard</div>
+        <div class="sc-team-toggle">
+          <div class="sc-toggle-btn active">CHC</div>
+          <div class="sc-toggle-btn">STL</div>
+        </div>
+      </div>
+      <div class="scorecard-scroll">
+        <table class="scorecard-table" style="min-width:420px;">
+          <thead>
+            <tr>
+              <th class="player-col">#  Player</th>
+              <th>1st</th>
+              <th>2nd</th>
+              <th>3rd</th>
+              <th>4th</th>
+              <th style="color:var(--accent)">5th</th>
+              <th>6th</th>
+              <th>7th</th>
+              <th class="totals-col">AB</th>
+              <th>R</th>
+              <th>H</th>
+              <th>RBI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Batter 1 -->
+            <tr>
+              <td class="player-cell">
+                <span class="player-num">1</span>
+                <span class="player-name">Madrigal</span><br>
+                <span class="player-pos">2B</span>
+              </td>
+              <!-- Inn 1: reached on E, scored -->
+              <td><div class="ab-cell">
+                <div class="ab-diamond">
+                  <svg viewBox="0 0 22 22" fill="none">
+                    <polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/>
+                    <!-- Scored: full diamond highlighted -->
+                    <polygon points="11,2 20,11 11,20 2,11" stroke="#10b981" stroke-width="1" fill="rgba(16,185,129,0.15)"/>
+                  </svg>
+                </div>
+                <div class="ab-run-dot"></div>
+                <div class="ab-code walk">E6</div>
+              </div></td>
+              <!-- Inn 2: K -->
+              <td><div class="ab-cell">
+                <div class="ab-diamond">
+                  <svg viewBox="0 0 22 22" fill="none">
+                    <polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/>
+                  </svg>
+                </div>
+                <div class="ab-code out">K</div>
+              </div></td>
+              <!-- Inn 3: 1B -->
+              <td><div class="ab-cell">
+                <div class="ab-diamond">
+                  <svg viewBox="0 0 22 22" fill="none">
+                    <polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/>
+                    <line x1="11" y1="20" x2="20" y2="11" stroke="#10b981" stroke-width="1.5"/>
+                  </svg>
+                </div>
+                <div class="ab-code hit">1B</div>
+              </div></td>
+              <!-- Inn 4: 6-3 -->
+              <td><div class="ab-cell">
+                <div class="ab-diamond">
+                  <svg viewBox="0 0 22 22" fill="none">
+                    <polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/>
+                  </svg>
+                </div>
+                <div class="ab-code out">6–3</div>
+              </div></td>
+              <!-- Inn 5: current — empty -->
+              <td><div class="ab-cell current-ab">
+                <div class="ab-diamond">
+                  <svg viewBox="0 0 22 22" fill="none">
+                    <polygon points="11,2 20,11 11,20 2,11" stroke="#3b82f6" stroke-width="1" fill="none" stroke-dasharray="2 2"/>
+                  </svg>
+                </div>
+                <div class="ab-code" style="color:var(--accent)">—</div>
+              </div></td>
+              <!-- Inn 6–7: future -->
+              <td><div class="ab-cell" style="opacity:0.2;"><div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/></svg></div></div></td>
+              <td><div class="ab-cell" style="opacity:0.2;"><div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/></svg></div></div></td>
+              <td class="totals-cell"><div class="total-val">4</div></td>
+              <td style="background:var(--surface2);"><div class="total-val" style="color:var(--hit-clr);">1</div></td>
+              <td style="background:var(--surface2);"><div class="total-val">1</div></td>
+              <td style="background:var(--surface2);"><div class="total-val" style="color:var(--muted);">0</div></td>
+            </tr>
+
+            <!-- Batter 2 -->
+            <tr>
+              <td class="player-cell">
+                <span class="player-num">2</span>
+                <span class="player-name">Swanson</span><br>
+                <span class="player-pos">SS</span>
+              </td>
+              <td><div class="ab-cell">
+                <div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/></svg></div>
+                <div class="ab-code out">4–3</div>
+              </div></td>
+              <td><div class="ab-cell">
+                <div class="ab-diamond">
+                  <svg viewBox="0 0 22 22" fill="none">
+                    <polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/>
+                    <line x1="11" y1="20" x2="20" y2="11" stroke="#10b981" stroke-width="1.5"/>
+                    <line x1="20" y1="11" x2="11" y2="2" stroke="#10b981" stroke-width="1.5"/>
+                    <line x1="11" y1="2" x2="2" y2="11" stroke="#10b981" stroke-width="1.5"/>
+                    <line x1="2" y1="11" x2="11" y2="20" stroke="#10b981" stroke-width="1.5"/>
+                  </svg>
+                </div>
+                <div class="ab-run-dot"></div>
+                <div class="ab-code hit">HR</div>
+              </div></td>
+              <td><div class="ab-cell">
+                <div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/></svg></div>
+                <div class="ab-code walk">BB</div>
+              </div></td>
+              <td><div class="ab-cell">
+                <div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/></svg></div>
+                <div class="ab-code out">K</div>
+              </div></td>
+              <td><div class="ab-cell" style="opacity:0.2;"><div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/></svg></div></div></td>
+              <td><div class="ab-cell" style="opacity:0.2;"><div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/></svg></div></div></td>
+              <td><div class="ab-cell" style="opacity:0.2;"><div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/></svg></div></div></td>
+              <td class="totals-cell"><div class="total-val">4</div></td>
+              <td style="background:var(--surface2);"><div class="total-val" style="color:var(--hit-clr);">1</div></td>
+              <td style="background:var(--surface2);"><div class="total-val">2</div></td>
+              <td style="background:var(--surface2);"><div class="total-val" style="color:var(--accent);">1</div></td>
+            </tr>
+
+            <!-- Batter 3 (abbreviated) -->
+            <tr>
+              <td class="player-cell">
+                <span class="player-num">3</span>
+                <span class="player-name">Bellinger</span><br>
+                <span class="player-pos">CF</span>
+              </td>
+              <td><div class="ab-cell"><div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/></svg></div><div class="ab-code out">8</div></div></td>
+              <td><div class="ab-cell"><div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/><line x1="11" y1="20" x2="20" y2="11" stroke="#10b981" stroke-width="1.5"/></svg></div><div class="ab-code hit">1B</div></div></td>
+              <td><div class="ab-cell"><div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/></svg></div><div class="ab-code out">K</div></div></td>
+              <td><div class="ab-cell"><div class="ab-diamond"><svg viewBox="0 0 22 22" fill="none"><polygon points="11,2 20,11 11,20 2,11" stroke="#252934" stroke-width="1" fill="none"/></svg></div><div class="ab-code out">5–3</div></div></td>
+              <td colspan="3" style="background:var(--surface2);opacity:0.3;font-family:'Google Sans Code',monospace;font-size:0.52rem;color:var(--muted);text-align:center;">···</td>
+              <td class="totals-cell"><div class="total-val">4</div></td>
+              <td style="background:var(--surface2);"><div class="total-val" style="color:var(--muted);">0</div></td>
+              <td style="background:var(--surface2);"><div class="total-val">1</div></td>
+              <td style="background:var(--surface2);"><div class="total-val" style="color:var(--muted);">0</div></td>
+            </tr>
+
+            <!-- Innings totals row -->
+            <tr style="background:var(--surface2);">
+              <td class="player-cell" style="font-family:'Google Sans Code',monospace;font-size:0.58rem;color:var(--muted);padding:4px 8px;">INN RUNS</td>
+              <td style="font-family:'Google Sans Code',monospace;font-size:0.68rem;font-weight:700;color:#f1f5f9;text-align:center;padding:4px 2px;">0</td>
+              <td style="font-family:'Google Sans Code',monospace;font-size:0.68rem;font-weight:700;color:#f1f5f9;text-align:center;padding:4px 2px;">1</td>
+              <td style="font-family:'Google Sans Code',monospace;font-size:0.68rem;font-weight:700;color:#f1f5f9;text-align:center;padding:4px 2px;">0</td>
+              <td style="font-family:'Google Sans Code',monospace;font-size:0.68rem;font-weight:700;color:#f1f5f9;text-align:center;padding:4px 2px;">1</td>
+              <td style="font-family:'Google Sans Code',monospace;font-size:0.68rem;color:var(--accent);text-align:center;padding:4px 2px;">·</td>
+              <td colspan="2" style="text-align:center;color:var(--border);font-size:0.52rem;">—</td>
+              <td class="totals-cell" colspan="4" style="font-family:'Google Sans Code',monospace;font-size:0.62rem;color:var(--muted);padding:4px 6px;">R: 2 · H: 4 · E: 0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SCREEN E — Export Sheet
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="section-sep" style="margin-top:8px;">
+      <div class="sep-label">Screen E — Export</div>
+      <div class="sep-line"></div>
+    </div>
+
+    <div class="annotation">
+      <div class="ann-label">Export Sheet</div>
+      <div class="ann-text">Bottom sheet (modal) shown after tapping Export. Three formats: PDF (print-ready scorecard), JSON (structured play-by-play data), Markdown (table for notes apps). Share via platform share sheet.</div>
+    </div>
+
+    <div class="export-sheet">
+      <div class="export-header">
+        <div class="export-title">Export Scorecard</div>
+        <div class="export-sub">Cubs @ Cardinals · Apr 27, 2026 · 5 innings scored</div>
+      </div>
+      <div class="export-opts">
+        <div class="export-opt">
+          <div class="export-icon pdf">📄</div>
+          <div class="export-info">
+            <div class="export-name">PDF Scorecard</div>
+            <div class="export-desc">Print-ready traditional scorecard layout. Includes lineup, inning-by-inning cells with notation, linescore, and game metadata. Letter or A4 size.</div>
+          </div>
+          <div class="export-arrow">›</div>
+        </div>
+        <div class="export-opt">
+          <div class="export-icon json">{ }</div>
+          <div class="export-info">
+            <div class="export-name">JSON</div>
+            <div class="export-desc">Structured play-by-play: lineup, each plate appearance with outcome, pitch log, base state, and count. Compatible with the Big Fly API game schema.</div>
+          </div>
+          <div class="export-arrow">›</div>
+        </div>
+        <div class="export-opt">
+          <div class="export-icon md">Md</div>
+          <div class="export-info">
+            <div class="export-name">Markdown</div>
+            <div class="export-desc">Linescore and per-batter stats as Markdown tables. Paste into Obsidian, Notion, or any notes app. Includes game summary header.</div>
+          </div>
+          <div class="export-arrow">›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Markdown preview snippet -->
+    <div class="notation-help" style="margin:0 16px 16px;">
+      <div class="nh-label">Markdown preview</div>
+      <pre style="font-family:'Google Sans Code',monospace;font-size:0.6rem;color:var(--muted);overflow-x:auto;line-height:1.6;margin-top:4px;"># Cubs @ Cardinals — Apr 27, 2026
+
+**Venue:** Busch Stadium &nbsp; **Status:** In Progress
+
+| Team | 1 | 2 | 3 | 4 | 5 | R | H | E |
+|------|---|---|---|---|---|---|---|---|
+| CHC  | 0 | 1 | 0 | 1 | · | 2 | 4 | 0 |
+| STL  | 2 | 0 | 0 | 1 | · | 3 | 5 | 1 |
+
+| # | Batter    | Pos | 1  | 2  | 3  | 4  | AB | R | H | RBI |
+|---|-----------|-----|----|----|----|----|----|---|---|-----|
+| 1 | Madrigal  | 2B  | E6 | K  | 1B | 6-3| 4  | 1 | 1 | 0   |
+| 2 | Swanson   | SS  | 4-3| HR | BB | K  | 4  | 1 | 2 | 1   |
+| 3 | Bellinger | CF  | 8  | 1B | K  | 5-3| 4  | 0 | 1 | 0   |</pre>
+    </div>
+
+    <!-- Bottom spacer -->
+    <div style="height: 16px;"></div>
+  </div><!-- /content -->
+
+  <!-- Bottom tab bar -->
+  <div class="tab-bar">
+    <div class="tab-item">
+      <div class="tab-icon">⌂</div>
+      <div class="tab-label">Home</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◎</div>
+      <div class="tab-label">Players</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◈</div>
+      <div class="tab-label">Teams</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">◷</div>
+      <div class="tab-label">Games</div>
+    </div>
+    <div class="tab-item active">
+      <div class="tab-icon">≡</div>
+      <div class="tab-label">More</div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+</body>
+</html>

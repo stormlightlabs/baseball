@@ -64,6 +64,44 @@ Acceptance:
 - [x] Team color theming applies on player and team detail screens.
 - [ ] Theme transitions animate smoothly (300ms ease-out via `AnimatedTheme`).
 
+## Phase 1.5: Animations (`flutter_animate`)
+
+- Ref spec: `docs/specs/mobile.md` § Animations
+
+### Setup
+
+- [ ] Add `flutter_animate` package to `pubspec.yaml`.
+- [ ] Create a shared `AnimationPresets` utility with reusable effect chains (list stagger, card expand, tab switch, stat count-up).
+- [ ] Add a global `reduceMotion` flag derived from `MediaQuery.disableAnimations`; wire into preset chains via `.toggle(animate: !reduceMotion)`.
+
+### Core Screen Polish
+
+- [ ] **Lists & grids**: apply staggered `fadeIn` + `slideY` to player lists, game lists, roster lists, and leader rankings.
+- [ ] **Card expand/collapse**: animate game card detail panel and collapsible standings sections with `fadeIn` + `scaleXY`.
+- [ ] **Tab/segment switches**: directional `fadeIn` + `slideX` on content when switching Player Detail tabs, Standings segments, and Team Detail segments.
+- [ ] **Stat values**: count-up animation on key numeric stats (batting average, ERA, HR totals) when they first appear.
+- [ ] **Chip/filter selection**: subtle scale + fade on newly filtered content in game filters and spray chart filters.
+- [ ] **Empty/error states**: `fadeIn` + `slideY` + `scale` entrance on empty state illustrations and error messages.
+
+### Live Feature Animations
+
+- [ ] **Scoreboard cards**: staggered `fadeIn` + `slideX` entrance on scoreboard `PageView` cards.
+- [ ] **Live badge pulse**: looping `shimmer` effect with team accent color on "LIVE" badges.
+- [ ] **Score change flash**: `tint` + `scale` burst when a score updates between refreshes.
+- [ ] **Win probability line draw**: animated path-length reveal on the `LineChart` sparkline in Live Game Tracker.
+
+### Visualization Animations
+
+- [ ] **Spray chart dots**: staggered radial `fadeIn` + `scaleXY` entrance when spray chart data loads.
+- [ ] **Pitch sequence steps**: per-pitch `fadeIn` + `slideY` in the At-Bat Sequencer.
+
+Acceptance:
+
+- [ ] All animated transitions complete within spec timing budgets (150–300ms typical, 600ms max for decorative).
+- [ ] Reduced-motion setting disables or shortens all `flutter_animate` chains.
+- [ ] No animation triggers on already-visible items during scroll.
+- [ ] Animations pair with corresponding haptic feedback where specified in the spec.
+
 ## Phase 2: Spray Chart
 
 ### Backend
@@ -393,43 +431,88 @@ Acceptance:
 - [ ] Player tap navigates to local player detail when crosswalk exists.
 - [ ] Graceful fallback when crosswalk ID is unavailable (show stats only, no deep link).
 
-## Phase 12: Design Updates
+## Phase 13: Scorekeeper
 
-- [ ] Add spray chart screen to `docs/designs/mobile/`:
-  - Full-field view with park overlay and hit dots.
-  - Filter controls and detail bottom sheet.
-- [ ] Add pitch pattern screen:
-  - Sequence lanes with divergence markers and pattern legend.
-  - Lens switching controls and sequence-depth scrubber.
-- [ ] Add at-bat sequencer screen:
-  - Strike zone with plotted pitches and timeline.
-  - Auto-play and manual controls.
-- [ ] Add stat card screen:
-  - Card template with pixel-art avatar.
-  - Share action.
-- [ ] Add learning mode screens:
-  - Hub with module tiles.
-  - Pitch identification trainer.
-  - Situation quiz with diamond visualization.
-- [ ] Add live scoreboard screen:
-  - Horizontal game card carousel with team colors and linescore.
-  - LIVE badge, score display, inning indicator.
-- [ ] Add standings screen:
-  - Division-grouped table with sortable columns.
-  - AL/NL segment control.
-- [ ] Add live game tracker screen:
-  - Linescore grid, diamond with runners, count dots.
-  - Win probability sparkline.
-  - Recent plays list.
-- [ ] Add today's leaders widget:
-  - Stat category cards with ranked player lists.
-- [ ] Update `docs/designs/mobile/index.html` to include new screens in the gallery.
-- [ ] Update `docs/designs/mobile/players.html` to show spray chart and pitch patterns tabs.
-- [ ] Update `docs/designs/mobile/games.html` to show at-bat sequencer and live game tracker entry points.
-- [ ] Update `docs/designs/mobile/home.html` to show scoreboard and leaders widgets.
+- Ref spec: `docs/specs/mobile.md` § 10 — Scorekeeper
+
+### Storage & Data Model
+
+- [ ] Define Hive schema for scorecard:
+  - `ScorecardGame`: uuid, away/home team names, venue, date, status (in_progress | final), innings list.
+  - `ScorecardInning`: half (top/bottom), plays list.
+  - `ScorecardPlay`: batter name/pos, outcome code, putout sequence, pitch log (`List<String>` Retrosheet codes), base_state_before, base_state_after, rbi, scored flag.
+- [ ] Register Hive type adapters and box for `scorecards`.
+
+### Navigation
+
+- [ ] Add Scorekeeper entry to More tab hub list.
+- [ ] Route `more/scorekeeper` → `ScorecardHubScreen`.
+- [ ] Route `more/scorekeeper/new` → `GameSetupScreen`.
+- [ ] Route `more/scorekeeper/{uuid}` → `ActiveScoringScreen`.
+- [ ] Route `more/scorekeeper/{uuid}/grid` → `ScorecardGridScreen` (swipe from active scoring).
+- [ ] Route `more/scorekeeper/{uuid}/export` → `ExportSheet` (bottom sheet).
+
+### Hub Screen
+
+- [ ] `ScorecardHubScreen`:
+  - Load all saved `ScorecardGame` records from Hive, sorted by last-modified descending.
+  - Filter chips: All / In Progress / Final.
+  - Each row: team names, status badge, score, venue/date, pitch count, action buttons (Resume · Box Score · Export).
+  - Empty state with illustration and "Start your first scorecard" prompt.
+  - New Game FAB (primary blue button).
+  - Import button in header (future: paste JSON or scan QR).
+
+### Game Setup Screen
+
+- [ ] `GameSetupScreen`:
+  - Away/home team name text fields + 3-letter abbreviation auto-generated.
+  - Venue and date fields (date picker).
+  - Optional lineup table: 9 rows, each with batting order number, name input, position input.
+  - "Import from API" chip: fetch current roster from `/v1/mlb/teams/{mlb_id}` and populate names.
+  - Start Scoring button → create Hive record, navigate to `ActiveScoringScreen`.
+
+### Active Scoring Screen
+
+- [ ] `ActiveScoringScreen`:
+  - Persistent score header: away/home scores, inning/half badge with live dot.
+  - Compact linescore (horizontal scroll; innings 1–9 + R/H/E totals).
+  - Current batter strip: batting order #, name, position, season AVG (fetched from crosswalk if available, else blank).
+  - `BaseDiamondPainter` (`CustomPainter`): 96×96 dp diamond; occupied bases highlighted amber; SVG path lines trace runner paths.
+  - Count panel: ball dots (blue), strike dots (red), out dots (white); pitch counter.
+  - Pitch log toggle: optional per-pitch Retrosheet code entry (B/C/S/F/X) with tap-to-add dots row.
+  - Outcome button grid (see spec § 10 for groupings); all buttons min 48dp height.
+  - Positional out selector: 9-button grid (1–9 with position abbreviations); tap to build sequence; confirm button records the play.
+  - After recording: advance batter, update linescore, update base state, trigger haptics.
+  - Undo FAB: revert last recorded play and restore previous state.
+  - Swipe-right gesture → `ScorecardGridScreen`.
+- [ ] `ScoringBloc`: manages game state (current inning, half, batter index, base state, count, outs); pure in-memory during play; persists to Hive on each play recorded.
+
+### Scorecard Grid Screen
+
+- [ ] `ScorecardGridScreen`:
+  - Team toggle (away / home).
+  - Horizontally scrollable table: rows = batting order, columns = innings.
+  - Each cell: `AbCellPainter` — 42×48 dp; mini diamond (22×22 SVG) with traced path lines (green = scored, red = out, blue = reach); outcome code below; run dot top-right if scored.
+  - Totals columns: AB, R, H, RBI per batter.
+  - Innings totals row at bottom.
+  - Long-press cell → bottom sheet to review or edit the play.
+- [ ] `AbCellWidget` using `CustomPainter` for the mini diamond; paths derived from `base_state_before → base_state_after`.
+
+### Export
+
+- [ ] `ExportSheet` (modal bottom sheet):
+  - Three rows: PDF, JSON, Markdown.
+  - **PDF**: use `pdf` package to render a two-page (one per team) traditional scorecard. Layout: game header, lineup × innings grid with notation, linescore, box score totals. Share via `share_plus`.
+  - **JSON**: serialize `ScorecardGame` to the canonical schema (spec § 10). Share as `.json` file.
+  - **Markdown**: render linescore as GFM table; per-batter stats as GFM table; prepend game metadata header. Share as `.md` file or copy to clipboard.
+- [ ] Haptic on run scored (`HapticFeedback.mediumImpact`); haptic on each recorded PA (`HapticFeedback.lightImpact`).
 
 Acceptance:
 
-- [ ] All new feature screens match existing design system (colors, typography, spacing, dark mode).
-- [ ] Index gallery shows all screens including new additions.
-- [ ] Spec, tasks, and wireframes use consistent route names and historical payload semantics.
+- [ ] Full game (9 innings, 2 teams, 27+ plate appearances per team) can be scored without crashes.
+- [ ] Scorecard grid cells match the notation entered in active scoring.
+- [ ] PDF export renders correctly on Letter and A4 paper sizes.
+- [ ] JSON export validates against the canonical schema structure.
+- [ ] Markdown export tables render correctly in GitHub Flavored Markdown.
+- [ ] Undo correctly reverts the last play and restores base/count state.
+- [ ] All data survives app kill and relaunch (Hive persistence).

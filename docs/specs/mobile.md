@@ -16,7 +16,7 @@ The app is not a port of the web dashboard. It is a native companion that focuse
 - **Interactive canvases**: `CustomPainter` + `InteractiveViewer` for spray and pattern visualizations[^2]
 - **Theming**: Material 3 with `ColorScheme.fromSeed()` for per-team dynamic color[^4]
 - **Haptics**: `HapticFeedback` class + `haptic_feedback` package for tactile responses[^5]
-- **Animations**: Hero transitions, `AnimatedSwitcher`, Rive/Lottie for micro-interactions
+- **Animations**: `flutter_animate` for declarative staggered/sequenced animations[^13]; Hero transitions; `AnimatedSwitcher` for in-place swaps; Rive/Lottie for micro-interactions
 - **Networking**: `dio` for HTTP, `retrofit` for typed API client generation
 - **Caching**: `hive` or `isar` for offline-first local storage
 - **State**: `BLoC` for reactive state management
@@ -572,6 +572,120 @@ Live endpoints bridge MLB Stats API IDs (MLBAM `personId`, `teamId`) to local Re
 | Spray/patterns/ab | 1hr       | Historical data; changes only on data loads      |
 | Quiz              | No cache  | Should return varied results                     |
 
+## 10. Scorekeeper
+
+An offline-first manual scorecard tool for fans scoring games in real time. Uses traditional baseball notation (positional numbers 1–9, Retrosheet pitch codes) and exports in three formats.
+
+### Navigation
+
+Accessible from the More tab as a standalone entry. A persistent scorecard list (hub) is the landing screen; in-game scoring is a full-screen modal that replaces the bottom nav during active play.
+
+### Screens
+
+| Screen         | Purpose                                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Hub            | Saved scorecard list with resume, box score, and export shortcuts; New Game button                                 |
+| Game Setup     | Team names, venue/date, optional batting lineup (9 rows); Import from API populates names from current roster data |
+| Active Scoring | Score header + linescore, base-state diamond, count/outs, optional pitch-by-pitch log, outcome buttons             |
+| Scorecard Grid | Traditional batter × inning grid with mini-diamond cells showing notation and base advancement                     |
+| Export Sheet   | Format selector: PDF, JSON, Markdown                                                                               |
+
+### Notation Model
+
+The app uses standard baseball scorecard notation:
+
+- **Fielding positions**: 1 (P), 2 (C), 3 (1B), 4 (2B), 5 (3B), 6 (SS), 7 (LF), 8 (CF), 9 (RF)
+- **Plate appearance outcomes**: `BB`, `HBP`, `CI` (reach base); `1B`, `2B`, `3B`, `HR` (hits); `K` (swinging strikeout), `Ꝁ` (called strikeout); `FC`, `E#`, `SAC`, `SF`, `DP`, `TP`
+- **Putout sequences**: positional strings separated by `–` (e.g., `6–3`, `4–6–3`)
+- **Pitch log (optional)**: Retrosheet call codes per pitch — `B` (ball), `C` (called strike), `S` (swinging strike), `F` (foul), `X` (ball in play)
+- **Scoring**: Diamond in each cell is traced by path lines as the runner advances; filled/circled when a run scores
+
+### Outcome Buttons
+
+Touch targets (min 48px height) organized in rows:
+
+| Group           | Buttons                                                   |
+| --------------- | --------------------------------------------------------- |
+| Hits            | 1B · 2B · 3B · HR                                         |
+| Reach / Special | BB · HBP · FC · E                                         |
+| Strikeouts      | K (swing) · Ꝁ (called) · SAC                              |
+| Other           | SF · CI · DP                                              |
+| Ground/fly out  | 9-position selector → sequence picker → Record Out / + DP |
+
+After selecting fielder sequence and confirming, the app records the putout code, advances runners, and moves to the next batter.
+
+### Base State & Count Panel
+
+- **Diamond `CustomPainter`**: infield diamond with four base squares; bases highlighted amber when occupied; SVG path lines trace runner advancement within the cell
+- **Count dots**: balls (blue), strikes (red), outs (white), matching the Live Game Tracker visual language
+- **Pitch counter**: running total for pitcher pitch count
+
+### Scorecard Grid
+
+Horizontal scroll; rows = batters, columns = innings. Each cell (42×48 dp) contains:
+
+1. Miniature diamond SVG (22×22) with traced path lines colored by result (green = scored, red = out, blue = reach)
+2. Outcome code label below the diamond (`1B`, `K`, `6–3`, etc.)
+3. Run dot (top-right corner) when the batter scored
+
+Total columns: AB, R, H, RBI per batter. Inning row at bottom shows runs per inning.
+
+### Export Formats
+
+| Format   | Content                                                                                                                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| PDF      | Print-ready traditional scorecard; 2 pages (one per team); Letter or A4; includes game header, lineup, inning cells, linescore, and box score totals               |
+| JSON     | Full play-by-play structured data: `{ game, teams, innings: [{ half, plays: [{ batter, outcome, pitches, base_state_before, base_state_after, rbi, scored }] }] }` |
+| Markdown | Linescore table + per-batter stats table; paste-ready for Obsidian, Notion, or any notes app                                                                       |
+
+Export uses `pdf` package (Flutter) for PDF rendering and `share_plus` for the platform share sheet.
+
+### Interactions
+
+- New game → setup form → Start Scoring; returns to hub on game completion or back-button
+- Swipe right from active scoring → scorecard grid (both teams via toggle)
+- Long-press a scorecard cell → edit / annotate play
+- Haptic tick (`HapticFeedback.lightImpact`) on each recorded plate appearance outcome
+- Haptic bump (`HapticFeedback.mediumImpact`) on run scored
+- Undo last action (FAB secondary action)
+
+### Storage
+
+All scorecard data stored in Hive, keyed by game UUID generated at setup. No server sync in v1 — fully offline. Exported files are ephemeral; only the Hive record is persisted.
+
+## Animations
+
+### Approach
+
+The app uses `flutter_animate` as the primary animation toolkit for declarative, composable motion. It provides a chainable API for fades, slides, scales, shimmers, and custom effects without manual `AnimationController` boilerplate. Heavier one-off animations (logo reveals, achievement badges) use Rive or Lottie files.
+
+### Animation Catalog
+
+| Context                        | Effect                                                                | Timing                   |
+| ------------------------------ | --------------------------------------------------------------------- | ------------------------ |
+| List item entrance             | `fadeIn` + `slideY(begin: 0.05)` with stagger interval                | 200ms per item, 50ms gap |
+| Card expand/collapse           | `fadeIn` + `scaleXY(begin: 0.97)` ease-out                            | 250ms                    |
+| Tab/segment switch content     | `fadeIn` + `slideX` directional (left/right based on tab index delta) | 200ms                    |
+| Stat value count-up            | `custom` effect interpolating numeric text from 0 → value             | 400ms ease-out           |
+| Chip/filter selection          | `scale(begin: 0.95)` + `fadeIn` on newly visible filtered content     | 150ms                    |
+| Scoreboard card entrance       | `fadeIn` + `slideX(begin: 0.1)` staggered per card                    | 300ms, 80ms stagger      |
+| Live badge pulse               | `shimmer` looping with team accent color                              | 1.5s loop                |
+| Score change flash             | `tint(color: accent)` + `scale(begin: 1.05)` then settle              | 300ms                    |
+| Spray chart dot entrance       | `fadeIn` + `scaleXY(begin: 0)` staggered radially from home plate     | 15ms stagger, 200ms each |
+| Pitch sequence step            | `fadeIn` + `slideY(begin: -0.1)` per pitch marker                     | 200ms per pitch          |
+| Win probability line draw      | `custom` effect animating `LineChart` path length from 0% → 100%      | 600ms ease-in-out        |
+| Theme transition               | `AnimatedTheme` (built-in), 300ms ease-out — not `flutter_animate`    | 300ms                    |
+| Page route transitions         | Hero + `fadeIn`/`slideY` on non-hero content                          | 300ms                    |
+| Empty state / error appearance | `fadeIn` + `slideY(begin: 0.08)` + `scale(begin: 0.98)`               | 350ms                    |
+
+### Guidelines
+
+- **Stagger, don't flood**: when multiple items animate in (lists, grids, chart dots), use `interval` or explicit delays so items cascade rather than all appearing at once.
+- **Keep durations short**: most transitions 150–300ms; nothing over 600ms except looping decorative effects.
+- **Respect reduced motion**: check `MediaQuery.disableAnimations` and skip or shorten all `flutter_animate` chains when true (the library supports `.toggle(animate: !reduceMotion)`).
+- **No animation on scroll**: items already visible during scroll should not re-animate. Use `Animate.onPlay` or visibility-gated triggers, not rebuild-based animations.
+- **Pair with haptics**: significant state changes (score update, play recorded, quiz answer) combine a visual animation with the corresponding haptic from the spec.
+
 ## Performance Targets
 
 | Metric                           | Target                        |
@@ -607,3 +721,5 @@ Live endpoints bridge MLB Stats API IDs (MLBAM `personId`, `teamId`) to local Re
 [^11]: pub.dev. "dynamic_color package." [pub.dev/packages/dynamic_color](https://pub.dev/packages/dynamic_color). Material.io team package (v1.8.1) for Android 12+ wallpaper-derived dynamic color schemes via `DynamicColorBuilder`.
 
 [^12]: pub.dev. "fl_chart package." [pub.dev/packages/fl_chart](https://pub.dev/packages/fl_chart). Highly customizable Flutter chart library supporting line, bar, pie, scatter, and radar charts with touch interactions, animations, and theming. 7k+ GitHub stars.
+
+[^13]: pub.dev. "flutter_animate package." [pub.dev/packages/flutter_animate](https://pub.dev/packages/flutter_animate). Declarative animation library by gskinner providing chainable effects (fade, slide, scale, shimmer, blur, tint, custom) with stagger/interval support, reduced-motion awareness, and adapter architecture.
