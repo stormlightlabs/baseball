@@ -33,8 +33,8 @@ The CLI handles ETL, database, and server operations so you can rebuild the stac
 ```bash
 task build
 task build:etl
-./tmp/baseball --help
-./tmp/baseball-etl --help
+baseball --help
+baseball-etl --help
 ```
 
 ### Complete Slice Loading
@@ -54,58 +54,61 @@ Quick local example for a complete representative slice:
 
 ```bash
 cp conf/conf.example.toml conf.toml
-./tmp/baseball db recreate --config conf.toml
-./tmp/baseball db migrate --config conf.toml
-./tmp/baseball-etl worker
-./tmp/baseball-etl run --profile=dev
-./tmp/baseball-etl maintenance --profile=dev --mv-refresh-mode=auto
-./tmp/baseball-etl validate --profile=dev
-./tmp/baseball-etl status
+baseball db recreate --config conf.toml
+baseball db migrate --config conf.toml
+baseball-etl worker
+baseball-etl run --profile=dev
+baseball-etl maintenance --profile=dev --mv-refresh-mode=auto
+baseball-etl validate --profile=dev
+baseball-etl status
 ```
 
 Fetch examples (when Retrosheet files for your window are not already present):
 
 ```bash
-./tmp/baseball-etl fetch retrosheet --years=2023-2025
-./tmp/baseball-etl fetch negroleagues
-./tmp/baseball-etl fetch chadwick --force
-./tmp/baseball-etl cleanup retrosheet --dry-run
+baseball-etl fetch retrosheet --years=2023-2025
+baseball-etl fetch negroleagues
+baseball-etl fetch chadwick --force
+baseball-etl cleanup retrosheet --dry-run
 ```
 
 For large Retrosheet slices, keep migration and recomputation separate, and process in bounded year windows:
 
 ```bash
-./tmp/baseball db migrate --config conf.toml
-./tmp/baseball-etl run --profile=dev --years=2023-2025
-./tmp/baseball db refresh-views player_game_batting_stats player_game_pitching_stats player_game_fielding_stats team_game_stats
-./tmp/baseball db refresh-views no_hitters cycles multi_hr_games triple_plays extra_inning_games
-./tmp/baseball db refresh-views season_batting_leaders season_pitching_leaders career_batting_leaders career_pitching_leaders
-./tmp/baseball db refresh-views player_id_map team_franchise_map park_map
+baseball db migrate --config conf.toml
+baseball-etl run --profile=dev --years=2023-2025
+baseball db refresh-views player_game_batting_stats player_game_pitching_stats player_game_fielding_stats team_game_stats
+baseball db refresh-views no_hitters cycles multi_hr_games triple_plays extra_inning_games
+baseball db refresh-views season_batting_leaders season_pitching_leaders career_batting_leaders career_pitching_leaders
+baseball db refresh-views player_id_map team_franchise_map park_map
 ```
 
 `db migrate` is structural/idempotent; treat materialized view refresh as an explicit incremental operation.
 
-`./tmp/baseball-etl worker` is the long-running queue consumer.
-`./tmp/baseball-etl run` is the canonical enqueue entrypoint for extract/load.
-`./tmp/baseball-etl maintenance` is the canonical enqueue entrypoint for MV recompute + serving sync.
+`baseball-etl worker` is the long-running queue consumer.
+
+`baseball-etl run` is the canonical enqueue entrypoint for extract/load.
+
+`baseball-etl maintenance` is the canonical enqueue entrypoint for MV recompute + serving sync.
 Treat ETL as a batched worker flow on shared VMs: prefer scoped `--years` runs over unbounded full-history jobs unless you are operating a larger host.
 
 `run` is enqueue-first by default; use `--enqueue-only=false` only when you explicitly want one command to enqueue + drain locally.
+
 `maintenance` enqueues and drains by default; use `--enqueue-only=true` to enqueue-only.
 
 Queue operator commands:
 
 ```bash
-./tmp/baseball-etl jobs ls --status queued,running,retry_wait --limit 100
-./tmp/baseball-etl jobs clear --reason "recover stale running jobs"
+baseball-etl jobs ls --status queued,running,retry_wait --limit 100
+baseball-etl jobs clear --reason "recover stale running jobs"
 ```
 
 For exhaustive production-style ingestion:
 
 ```bash
-./tmp/baseball-etl run --profile=prod --mode=full
-./tmp/baseball-etl maintenance --profile=prod --mv-refresh-mode=auto
-./tmp/baseball-etl validate --profile=prod
+baseball-etl run --profile=prod --mode=full
+baseball-etl maintenance --profile=prod --mv-refresh-mode=auto
+baseball-etl validate --profile=prod
 ```
 
 Retrosheet `--era` values: `fed`, `nlg`, `boomer`, `pitcher`, `turf`, `steroid`, `moneyball`, `statcast`, `modern`.
@@ -116,28 +119,28 @@ It also accepts `--data-root` when data is mounted outside defaults.
 Batched worker pattern (recommended for VM safety):
 
 ```bash
-./tmp/baseball-etl fetch retrosheet --years=2022-2023
-./tmp/baseball-etl run --profile=prod --years=2022-2023
-./tmp/baseball-etl maintenance --profile=prod --years=2022-2023 --mv-refresh-mode=auto
-./tmp/baseball-etl validate --profile=prod --years=2022-2023
+baseball-etl fetch retrosheet --years=2022-2023
+baseball-etl run --profile=prod --years=2022-2023
+baseball-etl maintenance --profile=prod --years=2022-2023 --mv-refresh-mode=auto
+baseball-etl validate --profile=prod --years=2022-2023
 
-./tmp/baseball-etl fetch retrosheet --years=2024-2025
-./tmp/baseball-etl run --profile=prod --years=2024-2025
-./tmp/baseball-etl maintenance --profile=prod --years=2024-2025 --mv-refresh-mode=auto
-./tmp/baseball-etl validate --profile=prod --years=2024-2025
+baseball-etl fetch retrosheet --years=2024-2025
+baseball-etl run --profile=prod --years=2024-2025
+baseball-etl maintenance --profile=prod --years=2024-2025 --mv-refresh-mode=auto
+baseball-etl validate --profile=prod --years=2024-2025
 ```
 
 ### Server
 
 ```bash
 # Start the HTTP API (pass --debug to disable rate limiting locally)
-./tmp/baseball server start --config conf.toml
+baseball server start --config conf.toml
 
 # Smoke-test endpoints with formatted output
-./tmp/baseball server fetch 'search/games?q=dodgers%202024'
+baseball server fetch 'search/games?q=dodgers%202024'
 
 # Check readiness
-./tmp/baseball server health
+baseball server health
 ```
 
 Every command accepts `--config` to point at a custom `conf.toml`, inherits rate limits from your server configuration, and prints structured output
@@ -192,7 +195,38 @@ Recommended docs entry points:
 - [Computed & Advanced](./web/src/routes/docs/api-computed.md)
 - [Attribution](./web/src/routes/docs/attribution.md)
 
-## Development Notes
+## Development
+
+This project has a dedicated devtooling binary in `cmd/baseball-dev` for API contract generation and testing.
+
+```bash
+# Generate Hurl tests from Swagger into test/artifacts + test/generated
+baseball-dev generate
+
+# Optional cleanup of transitional files after generation
+baseball-dev generate --cleanup
+
+# Remove generated artifacts/tests directories (recreates them empty)
+baseball-dev cleanup
+
+# Generate/fix Swagger docs without a system-installed swag binary
+baseball-dev swagger generate
+baseball-dev swagger fmt
+
+# Run generated Hurl tests with concurrency + fuzzy match support
+baseball-dev run --host http://localhost:8080
+baseball-dev run --host http://localhost:8080 --match pitches --concurrency 8
+```
+
+- Required parameter behavior in generated Hurl defaults to:
+  - query params: `required`
+  - path params: `variables`
+
+You can override generation behavior:
+
+```bash
+baseball-dev generate --query-params all --path-params variables
+```
 
 - Generate Swagger docs after endpoint/comment changes:
 

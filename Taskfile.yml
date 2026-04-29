@@ -3,9 +3,11 @@ version: "3"
 vars:
   BINARY_NAME: baseball
   ETL_BINARY_NAME: baseball-etl
+  DEV_BINARY_NAME: baseball-dev
   BUILD_DIR: tmp
   MAIN_PATH: ./cmd/baseball
   ETL_MAIN_PATH: ./cmd/baseball-etl
+  DEV_MAIN_PATH: ./cmd/baseball-dev
 
 tasks:
   default:
@@ -14,10 +16,11 @@ tasks:
       - task --list
 
   build:
-    desc: Build both binaries (CLI and ETL)
+    desc: Build all binaries (CLI, ETL, Dev tools)
     cmds:
       - task: build:cli
       - task: build:etl
+      - task: build:dev
 
   build:cli:
     desc: Build the baseball CLI
@@ -39,6 +42,16 @@ tasks:
     generates:
       - "{{.BUILD_DIR}}/{{.ETL_BINARY_NAME}}"
 
+  build:dev:
+    desc: Build the baseball dev tools CLI
+    cmds:
+      - go build -o {{.BUILD_DIR}}/{{.DEV_BINARY_NAME}} {{.DEV_MAIN_PATH}}
+    sources:
+      - "**/*.sql"
+      - "**/*.go"
+    generates:
+      - "{{.BUILD_DIR}}/{{.DEV_BINARY_NAME}}"
+
   clean:
     desc: Clean build artifacts
     cmds:
@@ -53,9 +66,7 @@ tasks:
   swagger:generate:
     desc: Generate Swagger/OpenAPI documentation
     cmds:
-      - swag init --dir ./internal/api --generalInfo server.go --output
-        ./internal/docs --parseDependency --parseInternal --md ./internal/api
-      - task: swagger:fix
+      - go run ./cmd/baseball-dev swagger generate
     sources:
       - "internal/**/*.go"
     generates:
@@ -65,26 +76,17 @@ tasks:
   swagger:fix:
     desc: Fix generated swagger docs (remove LeftDelim/RightDelim fields)
     cmds:
-      - |
-        # Remove LeftDelim and RightDelim fields from generated docs.go
-        # These fields cause build errors due to swag version incompatibility
-        if [ -f internal/docs/docs.go ]; then
-          sed -i.bak '/LeftDelim:/d; /RightDelim:/d' internal/docs/docs.go && rm -f internal/docs/docs.go.bak
-          echo "✓ Fixed swagger docs (removed LeftDelim/RightDelim fields)"
-        else
-          echo "⚠ internal/docs/docs.go not found, skipping fix"
-        fi
+      - go run ./cmd/baseball-dev swagger fix
 
   swagger:fmt:
     desc: Format swagger comments
     cmds:
-      - swag fmt
+      - go run ./cmd/baseball-dev swagger fmt
 
   swagger:clean:
     desc: Clean generated swagger files
     cmds:
-      - rm -f internal/docs/docs.go internal/docs/swagger.json
-        internal/docs/swagger.yaml
+      - go run ./cmd/baseball-dev swagger clean
 
   db:migrate:
     desc: Run database migrations
@@ -95,6 +97,26 @@ tasks:
     desc: Run all tests
     cmds:
       - go test ./... -v
+
+  test:hurl:generate:
+    desc: Generate Hurl tests from Swagger via baseball-dev
+    cmds:
+      - go run ./cmd/baseball-dev generate {{.CLI_ARGS}}
+
+  test:hurl:cleanup:
+    desc: Remove generated Hurl artifacts/tests via baseball-dev
+    cmds:
+      - go run ./cmd/baseball-dev cleanup {{.CLI_ARGS}}
+
+  test:hurl:generated:
+    desc: Run generated Hurl tests via baseball-dev (requires BASE_URL env var)
+    cmds:
+      - go run ./cmd/baseball-dev run --host {{env "BASE_URL"}} {{.CLI_ARGS}}
+
+  test:hurl:smoke:
+    desc: Run curated smoke Hurl tests (requires BASE_URL env var)
+    cmds:
+      - hurl --test --variable BASE_URL={{env "BASE_URL"}} test/smoke/*.hurl
 
   vet:
     desc: Run go vet across all packages

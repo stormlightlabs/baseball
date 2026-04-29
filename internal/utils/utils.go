@@ -170,3 +170,25 @@ func ParsePattern(pattern string) (method, path string) {
 	}
 	return "ALL", pattern
 }
+
+func TruncateLines(value string, maxLines int) string {
+	if maxLines <= 0 {
+		return ""
+	}
+	lines := strings.Split(value, "\n")
+	if len(lines) <= maxLines {
+		return strings.Join(lines, "\n")
+	}
+	return strings.Join(lines[:maxLines], "\n") + "\n... output truncated ..."
+}
+
+func IndentLines(value, prefix string) string {
+	if value == "" {
+		return value
+	}
+	lines := strings.Split(value, "\n")
+	for i := range lines {
+		lines[i] = prefix + lines[i]
+	}
+	return strings.Join(lines, "\n")
+}
