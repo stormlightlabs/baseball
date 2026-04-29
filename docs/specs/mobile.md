@@ -18,7 +18,7 @@ The app is not a port of the web dashboard. It is a native companion that focuse
 - **Haptics**: `HapticFeedback` class + `haptic_feedback` package for tactile responses[^5]
 - **Animations**: `flutter_animate` for declarative staggered/sequenced animations[^13]; Hero transitions; `AnimatedSwitcher` for in-place swaps; Rive/Lottie for micro-interactions
 - **Networking**: `dio` for HTTP, `retrofit` for typed API client generation
-- **Caching**: `hive` or `isar` for offline-first local storage
+- **Caching**: `drift` (SQLite) for offline-first local storage
 - **State**: `BLoC` for reactive state management
 
 ## Architecture
@@ -153,7 +153,7 @@ An interactive educational module that teaches baseball rules, strategy, and ana
 
 **Situation quiz**: Pulls from `GET /internal/mobile/quiz/situation` which returns a real historical game state. User guesses outcome or win probability. Compares against actual result and historical win expectancy from `GET /v1/win-expectancy`.
 
-**Gamification**: Track correct answers, streaks, and category completion. Store locally (Hive). No server-side leaderboard in v1.
+**Gamification**: Track correct answers, streaks, and category completion. Store locally (Drift). No server-side leaderboard in v1.
 
 ## Team Accent Colors and Dynamic Theming
 
@@ -387,7 +387,7 @@ A real-time scoreboard of today's MLB games, prominently featured on the Home ta
 - Pull-to-refresh; auto-refresh every 30s when games are in progress
 - Haptic tick on score changes during auto-refresh
 
-**Offline**: Cache last-fetched scoreboard in Hive. Show stale data with "Last updated" timestamp when offline.
+**Offline**: Cache last-fetched scoreboard in Drift. Show stale data with "Last updated" timestamp when offline.
 
 ### 7. Current Standings
 
@@ -651,7 +651,7 @@ Export uses `pdf` package (Flutter) for PDF rendering and `share_plus` for the p
 
 ### Storage
 
-All scorecard data stored in Hive, keyed by game UUID generated at setup. No server sync in v1 — fully offline. Exported files are ephemeral; only the Hive record is persisted.
+All scorecard data stored in Drift/SQLite, keyed by game UUID generated at setup. No server sync in v1 — fully offline. Exported files are ephemeral; only the local record is persisted.
 
 ## Animations
 

@@ -1,22 +1,23 @@
 import 'package:bigfly_mobile/app/app.dart';
+import 'package:bigfly_mobile/core/data/local/app_database.dart';
 import 'package:bigfly_mobile/core/data/local/cache_store.dart';
 import 'package:bigfly_mobile/core/data/network/baseball_api_client.dart';
 import 'package:bigfly_mobile/features/games/data/repositories/game_repository.dart';
 import 'package:bigfly_mobile/features/home/data/repositories/home_repository.dart';
 import 'package:bigfly_mobile/features/more/data/repositories/api_more_repository.dart';
 import 'package:bigfly_mobile/features/players/data/repositories/player_repository.dart';
+import 'package:bigfly_mobile/features/scorekeeper/data/repositories/scorecard_repository.dart';
 import 'package:bigfly_mobile/features/teams/data/repositories/team_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Hive.initFlutter();
-  final cacheBox = await Hive.openBox<String>(CacheStore.appBoxName);
-  final cacheStore = HiveCacheStore(cacheBox);
+  final appDatabase = AppDatabase();
+  final cacheBootstrap = await loadCacheBootstrapSnapshot(appDatabase);
+  final cacheStore = DriftCacheStore(appDatabase, cacheBootstrap);
 
   final dio = buildApiDio();
   final apiClient = BaseballApiClient(dio);
@@ -25,6 +26,7 @@ Future<void> main() async {
   final teamRepository = ApiTeamRepository(apiClient);
   final gameRepository = ApiGameRepository(apiClient);
   final moreRepository = ApiMoreRepository(apiClient);
+  final scorecardRepository = DriftScorecardRepository(appDatabase);
 
   runApp(
     BigFlyApp(
@@ -34,6 +36,7 @@ Future<void> main() async {
       teamRepository: teamRepository,
       gameRepository: gameRepository,
       moreRepository: moreRepository,
+      scorecardRepository: scorecardRepository,
     ),
   );
 }

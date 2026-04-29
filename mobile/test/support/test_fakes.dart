@@ -19,6 +19,8 @@ import 'package:bigfly_mobile/features/more/data/models/season_summary_record.da
 import 'package:bigfly_mobile/features/more/data/repositories/more_repository.dart';
 import 'package:bigfly_mobile/features/players/data/models/player_models.dart';
 import 'package:bigfly_mobile/features/players/data/repositories/player_repository.dart';
+import 'package:bigfly_mobile/features/scorekeeper/data/models/scorecard_models.dart';
+import 'package:bigfly_mobile/features/scorekeeper/data/repositories/scorecard_repository.dart';
 import 'package:bigfly_mobile/features/teams/data/models/team_models.dart';
 import 'package:bigfly_mobile/features/teams/data/repositories/team_repository.dart';
 
@@ -382,6 +384,66 @@ class FakeMoreRepository implements MoreRepository {
       throw dataSourcesError!;
     }
     return dataSourcesSnapshot;
+  }
+}
+
+class FakeScorecardRepository implements ScorecardRepository {
+  FakeScorecardRepository({List<ScorecardGameSummary>? games}) : _games = games ?? <ScorecardGameSummary>[];
+
+  final List<ScorecardGameSummary> _games;
+
+  @override
+  Future<void> appendPlay(ScorecardPlayDraft draft) async {}
+
+  @override
+  Future<void> createGame(ScorecardGameDraft draft) async {
+    _games.insert(
+      0,
+      ScorecardGameSummary(
+        uuid: draft.uuid,
+        awayTeamName: draft.awayTeamName,
+        awayTeamAbbreviation: draft.awayTeamAbbreviation,
+        homeTeamName: draft.homeTeamName,
+        homeTeamAbbreviation: draft.homeTeamAbbreviation,
+        venue: draft.venue,
+        gameDate: draft.gameDate,
+        status: draft.status,
+        awayScore: 0,
+        homeScore: 0,
+        pitchCount: 0,
+        lastModifiedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  @override
+  Future<ScorecardGameDetail?> getGame(String uuid) async {
+    final match = _games.where((game) => game.uuid == uuid).toList(growable: false);
+    if (match.isEmpty) {
+      return null;
+    }
+    return ScorecardGameDetail(
+      summary: match.first,
+      lineups: const <ScorecardLineupSlot>[],
+      innings: const <ScorecardInning>[],
+    );
+  }
+
+  @override
+  Future<List<ScorecardGameSummary>> listGames({ScorecardStatusFilter filter = ScorecardStatusFilter.all}) async {
+    switch (filter) {
+      case ScorecardStatusFilter.all:
+        return List<ScorecardGameSummary>.from(_games);
+      case ScorecardStatusFilter.inProgress:
+        return _games.where((game) => game.status == ScorecardStatus.inProgress).toList(growable: false);
+      case ScorecardStatusFilter.finalGame:
+        return _games.where((game) => game.status == ScorecardStatus.finalGame).toList(growable: false);
+    }
+  }
+
+  @override
+  Future<bool> undoLastPlay({required String gameUuid, required ScorecardGameRuntimeState restoredState}) async {
+    return true;
   }
 }
 

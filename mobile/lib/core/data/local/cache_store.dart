@@ -1,7 +1,18 @@
-import 'package:hive/hive.dart';
+import 'package:bigfly_mobile/core/data/local/app_database.dart';
+
+class CacheBootstrapSnapshot {
+  const CacheBootstrapSnapshot({
+    required this.selectedTeamCode,
+    required this.cachedHealthStatus,
+    required this.recentPlayerIds,
+  });
+
+  final String? selectedTeamCode;
+  final String? cachedHealthStatus;
+  final List<String> recentPlayerIds;
+}
 
 abstract class CacheStore {
-  static const String appBoxName = 'bigfly_cache';
   static const String selectedTeamKey = 'selected_team';
   static const String cachedHealthStatusKey = 'cached_health_status';
   static const String recentPlayerIdsKey = 'recent_player_ids';
@@ -16,44 +27,53 @@ abstract class CacheStore {
   Future<void> pushRecentPlayerId(String playerId);
 }
 
-class HiveCacheStore implements CacheStore {
-  HiveCacheStore(this._box);
+Future<CacheBootstrapSnapshot> loadCacheBootstrapSnapshot(AppDatabase database) async {
+  final settings = await database.readSettings(<String>{CacheStore.selectedTeamKey, CacheStore.cachedHealthStatusKey});
+  final recent = await database.readRecentPlayerIds();
+  return CacheBootstrapSnapshot(
+    selectedTeamCode: settings[CacheStore.selectedTeamKey],
+    cachedHealthStatus: settings[CacheStore.cachedHealthStatusKey],
+    recentPlayerIds: recent,
+  );
+}
 
-  final Box<String> _box;
+class DriftCacheStore implements CacheStore {
+  DriftCacheStore(this._database, CacheBootstrapSnapshot snapshot)
+    : _selectedTeamCode = snapshot.selectedTeamCode,
+      _cachedHealthStatus = snapshot.cachedHealthStatus,
+      _recentPlayerIds = List<String>.from(snapshot.recentPlayerIds);
+
+  final AppDatabase _database;
+
+  String? _selectedTeamCode;
+  String? _cachedHealthStatus;
+  List<String> _recentPlayerIds;
 
   @override
-  String? get selectedTeamCode => _box.get(CacheStore.selectedTeamKey);
+  String? get selectedTeamCode => _selectedTeamCode;
 
   @override
   Future<void> setSelectedTeamCode(String? teamCode) async {
-    if (teamCode == null) {
-      await _box.delete(CacheStore.selectedTeamKey);
-      return;
-    }
-    await _box.put(CacheStore.selectedTeamKey, teamCode);
+    _selectedTeamCode = teamCode;
+    await _database.writeSetting(key: CacheStore.selectedTeamKey, value: teamCode);
   }
 
   @override
-  String? get cachedHealthStatus => _box.get(CacheStore.cachedHealthStatusKey);
+  String? get cachedHealthStatus => _cachedHealthStatus;
 
   @override
   Future<void> setCachedHealthStatus(String status) async {
-    await _box.put(CacheStore.cachedHealthStatusKey, status);
+    _cachedHealthStatus = status;
+    await _database.writeSetting(key: CacheStore.cachedHealthStatusKey, value: status);
   }
 
   @override
-  List<String> get recentPlayerIds {
-    final raw = _box.get(CacheStore.recentPlayerIdsKey);
-    if (raw == null || raw.isEmpty) {
-      return <String>[];
-    }
-    return raw.split('|').map((item) => item.trim()).where((item) => item.isNotEmpty).toList(growable: false);
-  }
+  List<String> get recentPlayerIds => List<String>.unmodifiable(_recentPlayerIds);
 
   @override
   Future<void> pushRecentPlayerId(String playerId) async {
-    final next = <String>[playerId, ...recentPlayerIds.where((id) => id != playerId)];
-    final bounded = next.take(8).toList(growable: false);
-    await _box.put(CacheStore.recentPlayerIdsKey, bounded.join('|'));
+    final next = <String>[playerId, ..._recentPlayerIds.where((id) => id != playerId)];
+    _recentPlayerIds = next.take(8).toList(growable: false);
+    await _database.pushRecentPlayerId(playerId);
   }
 }

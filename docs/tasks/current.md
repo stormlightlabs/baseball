@@ -190,7 +190,7 @@ Acceptance:
 
 - [ ] Season leaders section reads from persisted API (not live proxy):
   - Uses same `GET /api/v1/seasons/{year}/leaders/*` endpoints as web
-  - Cache in Hive for offline access
+  - Cache in Drift for offline access
   - "Updated {time}" display
 - [ ] Scoreboard continues using live proxy for real-time scores
 
@@ -203,7 +203,7 @@ Acceptance:
 ### Teams Tab
 
 - [ ] Current Standings segment reads from `GET /api/v1/standings?season=2026`:
-  - Faster than live proxy, offline-capable via Hive cache
+  - Faster than live proxy, offline-capable via Drift cache
   - Same visual as existing standings design
 
 ### Games Tab

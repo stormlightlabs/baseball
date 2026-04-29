@@ -12,6 +12,13 @@ import 'package:bigfly_mobile/features/more/data/repositories/more_repository.da
 import 'package:bigfly_mobile/features/players/application/player_selection_cubit.dart';
 import 'package:bigfly_mobile/features/players/application/players_cubit.dart';
 import 'package:bigfly_mobile/features/players/data/repositories/player_repository.dart';
+import 'package:bigfly_mobile/features/scorekeeper/data/repositories/scorecard_repository.dart';
+import 'package:bigfly_mobile/features/scorekeeper/presentation/scorekeeper_routes.dart';
+import 'package:bigfly_mobile/features/scorekeeper/presentation/screens/active_scoring_screen.dart';
+import 'package:bigfly_mobile/features/scorekeeper/presentation/screens/game_setup_screen.dart';
+import 'package:bigfly_mobile/features/scorekeeper/presentation/screens/scorecard_export_launcher_screen.dart';
+import 'package:bigfly_mobile/features/scorekeeper/presentation/screens/scorecard_grid_screen.dart';
+import 'package:bigfly_mobile/features/scorekeeper/presentation/screens/scorecard_hub_screen.dart';
 import 'package:bigfly_mobile/features/teams/application/teams_cubit.dart';
 import 'package:bigfly_mobile/features/teams/data/repositories/team_repository.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -27,6 +34,7 @@ class BigFlyApp extends StatelessWidget {
     required this.teamRepository,
     required this.gameRepository,
     required this.moreRepository,
+    required this.scorecardRepository,
     this.useDynamicColor = true,
   });
 
@@ -36,6 +44,7 @@ class BigFlyApp extends StatelessWidget {
   final TeamRepository teamRepository;
   final GameRepository gameRepository;
   final MoreRepository moreRepository;
+  final ScorecardRepository scorecardRepository;
   final bool useDynamicColor;
 
   @override
@@ -62,16 +71,21 @@ class BigFlyApp extends StatelessWidget {
         BlocProvider<GamesCubit>(create: (_) => GamesCubit(gameRepository)),
         BlocProvider<MoreCubit>(create: (_) => MoreCubit(moreRepository)),
       ],
-      child: _AppView(dynamicLightColor: dynamicLightColor, dynamicDarkColor: dynamicDarkColor),
+      child: _AppView(
+        dynamicLightColor: dynamicLightColor,
+        dynamicDarkColor: dynamicDarkColor,
+        scorecardRepository: scorecardRepository,
+      ),
     );
   }
 }
 
 class _AppView extends StatelessWidget {
-  const _AppView({required this.dynamicLightColor, required this.dynamicDarkColor});
+  const _AppView({required this.dynamicLightColor, required this.dynamicDarkColor, required this.scorecardRepository});
 
   final ColorScheme? dynamicLightColor;
   final ColorScheme? dynamicDarkColor;
+  final ScorecardRepository scorecardRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +107,7 @@ class _AppView extends StatelessWidget {
       theme: _buildTheme(lightScheme),
       darkTheme: _buildTheme(darkScheme),
       home: const RootShell(),
+      onGenerateRoute: _onGenerateRoute,
     );
   }
 
@@ -103,5 +118,54 @@ class _AppView extends StatelessWidget {
       textTheme: buildAppTextTheme(base.textTheme),
       extensions: <ThemeExtension<dynamic>>[AppTypography.fallback(colorScheme)],
     );
+  }
+
+  Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+    final name = settings.name;
+    if (name == null) {
+      return null;
+    }
+
+    if (name == ScorekeeperRoutes.hub) {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => ScorecardHubScreen(repository: scorecardRepository),
+      );
+    }
+
+    if (name == ScorekeeperRoutes.newGame) {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => GameSetupScreen(repository: scorecardRepository),
+      );
+    }
+
+    final segments = Uri.parse(name).pathSegments;
+    if (segments.length >= 3 && segments[0] == 'more' && segments[1] == 'scorekeeper') {
+      final uuid = segments[2];
+      if (uuid.isEmpty || uuid == 'new') {
+        return null;
+      }
+
+      if (segments.length == 3) {
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => ActiveScoringScreen(repository: scorecardRepository, gameUuid: uuid),
+        );
+      }
+      if (segments.length == 4 && segments[3] == 'grid') {
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => ScorecardGridScreen(repository: scorecardRepository, gameUuid: uuid),
+        );
+      }
+      if (segments.length == 4 && segments[3] == 'export') {
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => ScorecardExportLauncherScreen(gameUuid: uuid),
+        );
+      }
+    }
+    return null;
   }
 }

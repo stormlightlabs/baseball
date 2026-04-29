@@ -14,7 +14,7 @@
 - [x] Implement team color map (30 teams → primary hex) as a static Dart map.
 - [x] Add `dynamic_color` package; wrap `MaterialApp` with `DynamicColorBuilder` for fallback system palette on neutral screens.
 - [x] Build bottom navigation shell (5 tabs: Home, Players, Teams, Games, More).
-- [x] Configure `hive` for local cache and offline storage.
+- [x] Configure Drift/SQLite for local cache and offline storage.
 
 Acceptance:
 
@@ -256,7 +256,7 @@ Acceptance:
 - [ ] **Historical moments**:
   - Curated list of famous at-bats.
   - Opens at-bat sequencer with narration overlays.
-- [ ] Local progress tracking via Hive (correct answers, streaks, completion %).
+- [ ] Local progress tracking via Drift (correct answers, streaks, completion %).
 
 Acceptance:
 
@@ -346,7 +346,7 @@ Acceptance:
 - [ ] Implement `ScoreboardBloc`:
   - Fetch from `GET /v1/mlb/schedule?date={today}&hydrate=linescore,team,probablePitcher`.
   - Auto-refresh every 30s when `games_in_progress > 0`.
-  - Cache last response in Hive for offline display.
+  - Cache last response in Drift for offline display.
 - [ ] Tap game card → navigate to Live Game Tracker (in progress) or Game Detail (final).
 - [ ] Pull-to-refresh gesture.
 - [ ] Haptic tick on score changes between refreshes.
@@ -371,7 +371,7 @@ Acceptance:
 - [ ] Sort by any column (tap header).
 - [ ] Implement `StandingsBloc`:
   - Fetch from `GET /v1/mlb/standings?season={current}&standingsTypes=regularSeason`.
-  - Cache in Hive for offline.
+  - Cache in Drift for offline.
 - [ ] Tap team row → Team Detail with current-season year pre-selected.
 - [ ] Haptic on section collapse/expand.
 
@@ -421,7 +421,7 @@ Acceptance:
   - Pitching categories: ERA, SO, W, SV, WHIP.
 - [ ] Implement `LeadersBloc`:
   - Fetch from `GET /v1/mlb/stats` category queries for season leaders.
-  - Cache in Hive; refresh on pull-to-refresh.
+  - Cache in Drift; refresh on pull-to-refresh.
 - [ ] Tap player row → Player Detail (via crosswalked `player_id`).
 - [ ] Swipe or tap chip to change category.
 
@@ -437,25 +437,25 @@ Acceptance:
 
 ### Storage & Data Model
 
-- [ ] Define Hive schema for scorecard:
+- [x] Define Drift relational schema for scorecard:
   - `ScorecardGame`: uuid, away/home team names, venue, date, status (in_progress | final), innings list.
   - `ScorecardInning`: half (top/bottom), plays list.
   - `ScorecardPlay`: batter name/pos, outcome code, putout sequence, pitch log (`List<String>` Retrosheet codes), base_state_before, base_state_after, rbi, scored flag.
-- [ ] Register Hive type adapters and box for `scorecards`.
+- [x] Register Drift database tables and repository for `scorecards`.
 
 ### Navigation
 
-- [ ] Add Scorekeeper entry to More tab hub list.
-- [ ] Route `more/scorekeeper` → `ScorecardHubScreen`.
-- [ ] Route `more/scorekeeper/new` → `GameSetupScreen`.
-- [ ] Route `more/scorekeeper/{uuid}` → `ActiveScoringScreen`.
-- [ ] Route `more/scorekeeper/{uuid}/grid` → `ScorecardGridScreen` (swipe from active scoring).
-- [ ] Route `more/scorekeeper/{uuid}/export` → `ExportSheet` (bottom sheet).
+- [x] Add Scorekeeper entry to More tab hub list.
+- [x] Route `more/scorekeeper` → `ScorecardHubScreen`.
+- [x] Route `more/scorekeeper/new` → `GameSetupScreen`.
+- [x] Route `more/scorekeeper/{uuid}` → `ActiveScoringScreen`.
+- [x] Route `more/scorekeeper/{uuid}/grid` → `ScorecardGridScreen` (swipe from active scoring).
+- [x] Route `more/scorekeeper/{uuid}/export` → `ExportSheet` (bottom sheet).
 
 ### Hub Screen
 
 - [ ] `ScorecardHubScreen`:
-  - Load all saved `ScorecardGame` records from Hive, sorted by last-modified descending.
+  - Load all saved `ScorecardGame` records from Drift, sorted by last-modified descending.
   - Filter chips: All / In Progress / Final.
   - Each row: team names, status badge, score, venue/date, pitch count, action buttons (Resume · Box Score · Export).
   - Empty state with illustration and "Start your first scorecard" prompt.
@@ -469,7 +469,7 @@ Acceptance:
   - Venue and date fields (date picker).
   - Optional lineup table: 9 rows, each with batting order number, name input, position input.
   - "Import from API" chip: fetch current roster from `/v1/mlb/teams/{mlb_id}` and populate names.
-  - Start Scoring button → create Hive record, navigate to `ActiveScoringScreen`.
+  - Start Scoring button → create local record, navigate to `ActiveScoringScreen`.
 
 ### Active Scoring Screen
 
@@ -485,7 +485,7 @@ Acceptance:
   - After recording: advance batter, update linescore, update base state, trigger haptics.
   - Undo FAB: revert last recorded play and restore previous state.
   - Swipe-right gesture → `ScorecardGridScreen`.
-- [ ] `ScoringBloc`: manages game state (current inning, half, batter index, base state, count, outs); pure in-memory during play; persists to Hive on each play recorded.
+- [ ] `ScoringBloc`: manages game state (current inning, half, batter index, base state, count, outs); pure in-memory during play; persists to Drift on each play recorded.
 
 ### Scorecard Grid Screen
 
@@ -515,4 +515,4 @@ Acceptance:
 - [ ] JSON export validates against the canonical schema structure.
 - [ ] Markdown export tables render correctly in GitHub Flavored Markdown.
 - [ ] Undo correctly reverts the last play and restores base/count state.
-- [ ] All data survives app kill and relaunch (Hive persistence).
+- [ ] All data survives app kill and relaunch (Drift persistence).

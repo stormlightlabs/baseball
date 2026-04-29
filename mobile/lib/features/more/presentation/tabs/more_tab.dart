@@ -5,6 +5,7 @@ import 'package:bigfly_mobile/features/more/presentation/widgets/compare_screen.
 import 'package:bigfly_mobile/features/more/presentation/widgets/data_sources_screen.dart';
 import 'package:bigfly_mobile/features/more/presentation/widgets/leaders_screen.dart';
 import 'package:bigfly_mobile/features/more/presentation/widgets/seasons_screen.dart';
+import 'package:bigfly_mobile/features/scorekeeper/presentation/scorekeeper_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -54,6 +55,18 @@ class _MoreTabState extends State<MoreTab> with SingleTickerProviderStateMixin {
 
         return Column(
           children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+              child: ListTile(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                tileColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                leading: const Icon(Icons.edit_note),
+                title: const Text('Scorekeeper'),
+                subtitle: const Text('Offline scorecard hub, game setup, and exports'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).pushNamed(ScorekeeperRoutes.hub),
+              ),
+            ),
             Material(
               color: Theme.of(context).colorScheme.surface,
               child: TabBar(

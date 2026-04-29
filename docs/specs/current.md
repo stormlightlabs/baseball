@@ -242,7 +242,7 @@ The Season page for the current year works like any historical season page:
 
 - Scoreboard continues using the live proxy for real-time scores during games
 - "Season Leaders" section below scoreboard reads from persisted current-season data (faster, works offline)
-- Cached in Hive for offline access with "Last updated" timestamp
+- Cached in Drift for offline access with "Last updated" timestamp
 
 ### Players Tab
 
